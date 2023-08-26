@@ -3,6 +3,7 @@
 class Renderer {
   unsigned int VBO;
   unsigned int VAO;
+  unsigned int EBO;
   unsigned int vertexShader;
   unsigned int fragmentShader;
   unsigned int shaderProgram;
