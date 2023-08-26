@@ -6,6 +6,8 @@ class Renderer {
   unsigned int vertexShader;
   unsigned int fragmentShader;
   unsigned int shaderProgram;
+  void initFragmentShader();
+  void initVertexShader();
  public:
   Renderer();
   void render();
