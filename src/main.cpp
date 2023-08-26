@@ -27,12 +27,21 @@ GLFWwindow* init() {
   return window;
 }
 
+void handleEscape(GLFWwindow* window) {
+  if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    glfwSetWindowShouldClose(window, true);
+  }
+}
+
 void loop (GLFWwindow* window) {
   while(!glfwWindowShouldClose(window)) {
+    handleEscape(window);
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 }
+
+
 
 int main() {
   GLFWwindow* window = init();
