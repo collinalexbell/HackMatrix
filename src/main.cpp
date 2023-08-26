@@ -1,7 +1,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "world.h"
+#include "renderer.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -34,9 +34,9 @@ void handleEscape(GLFWwindow* window) {
   }
 }
 
-void loop (GLFWwindow* window, World* world) {
+void loop (GLFWwindow* window, Renderer* renderer) {
   while(!glfwWindowShouldClose(window)) {
-    world->render();
+    renderer->render();
     handleEscape(window);
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -45,12 +45,12 @@ void loop (GLFWwindow* window, World* world) {
 
 int main() {
   GLFWwindow* window = init();
-  World* world = new World();
+  Renderer* renderer = new Renderer();
   if(window == NULL) {
     return -1;
   }
-  loop(window, world);
-  delete world;
+  loop(window, renderer);
+  delete renderer;
   glfwTerminate();
   return 0;
 }

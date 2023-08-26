@@ -1,13 +1,13 @@
-#ifndef __WORLD_H__
+#ifndef __RENDERER_H__
 
-class World {
+class Renderer {
   unsigned int VBO;
   unsigned int VAO;
   unsigned int vertexShader;
   unsigned int fragmentShader;
   unsigned int shaderProgram;
  public:
-  World();
+  Renderer();
   void render();
 };
 
