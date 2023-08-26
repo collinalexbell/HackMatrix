@@ -8,6 +8,7 @@ class Renderer {
   unsigned int shaderProgram;
   void initFragmentShader();
   void initVertexShader();
+  void buildShaderProgram();
  public:
   Renderer();
   void render();

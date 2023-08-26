@@ -53,6 +53,16 @@ void Renderer::initVertexShader() {
   }
 }
 
+void Renderer::buildShaderProgram() {
+  shaderProgram = glCreateProgram();
+  glAttachShader(shaderProgram, vertexShader);
+  glAttachShader(shaderProgram, fragmentShader);
+  glLinkProgram(shaderProgram);
+  glDeleteShader(vertexShader);
+  glDeleteShader(fragmentShader);
+}
+
+
 Renderer::Renderer() {
 
   glGenBuffers(1, &VBO);
@@ -70,12 +80,7 @@ Renderer::Renderer() {
 
   initVertexShader();
   initFragmentShader();
-  shaderProgram = glCreateProgram();
-  glAttachShader(shaderProgram, vertexShader);
-  glAttachShader(shaderProgram, fragmentShader);
-  glLinkProgram(shaderProgram);
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
+  buildShaderProgram();
 
   glUseProgram(shaderProgram);
   glBindVertexArray(VAO);
