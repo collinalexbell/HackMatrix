@@ -1,4 +1,4 @@
-// checkout 5da6932 to compile this exercise
+// checkout 6896148 to compile this exercise
 #include <iostream>
 #include "renderer.h"
 #include <glad/glad.h>
