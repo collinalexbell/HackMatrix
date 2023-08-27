@@ -1,3 +1,4 @@
+// checkout f135f82 to compile this properly
 #include "renderer.h"
 #include <iostream>
 #include <glad/glad.h>
