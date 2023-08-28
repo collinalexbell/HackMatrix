@@ -1,17 +1,14 @@
 #ifndef __RENDERER_H__
+#include "shader.h"
 
 class Renderer {
   unsigned int VBO;
   unsigned int VAO;
   unsigned int EBO;
-  unsigned int vertexShader;
-  unsigned int fragmentShader;
-  unsigned int shaderProgram;
-  void initFragmentShader();
-  void initVertexShader();
-  void buildShaderProgram();
+  Shader* shader;
  public:
   Renderer();
+  ~Renderer();
   void render();
 };
 
