@@ -5,10 +5,14 @@
 #include <sstream>
 #include <iostream>
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath) {
-  // 1. retrieve the vertex/fragment source code from filePath
+struct ShaderCodes {
   std::string vertexCode;
   std::string fragmentCode;
+  bool isError;
+};
+
+ShaderCodes retrieveShaderCodes(const char* vertexPath, const char* fragmentPath) {
+  ShaderCodes codes;
   std::ifstream vShaderFile;
   std::ifstream fShaderFile;
   // ensure ifstream objects can throw exceptions:
@@ -27,14 +31,27 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
       vShaderFile.close();
       fShaderFile.close();
       // convert stream into string
-      vertexCode = vShaderStream.str();
-      fragmentCode = fShaderStream.str();
+      codes.vertexCode = vShaderStream.str();
+      codes.fragmentCode = fShaderStream.str();
+      codes.isError = false;
+      return codes;
     }
   catch(std::ifstream::failure e) {
     std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+    codes.isError = true;
+    return codes;
   }
-  const char* vShaderCode = vertexCode.c_str();
-  const char* fShaderCode = fragmentCode.c_str();
+}
+
+Shader::Shader(const char* vertexPath, const char* fragmentPath) {
+  // 1. retrieve the vertex/fragment source code from filePath
+  ShaderCodes codes = retrieveShaderCodes(vertexPath, fragmentPath);
+  if(codes.isError) {
+    std::cout << "ERROR::SHADER::FAILED_TO_INITIALIZE" << std::endl;
+    return;
+  }
+  const char* vShaderCode = codes.vertexCode.c_str();
+  const char* fShaderCode = codes.fragmentCode.c_str();
 
   // 2. compile shaders
   unsigned int vertex, fragment;

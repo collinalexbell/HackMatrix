@@ -1,6 +1,6 @@
 all: matrix
 
-matrix: main.o renderer.o
+matrix: main.o renderer.o shader.o
 	g++ -o matrix renderer.o main.o shader.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
 
 renderer.o: src/renderer.cpp include/renderer.h
