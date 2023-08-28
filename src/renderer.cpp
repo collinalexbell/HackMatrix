@@ -2,6 +2,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <math.h>
 
 int count = 0;
 
@@ -18,16 +19,24 @@ unsigned int indices[] = { // note that we start from 0!
 
 const char *vertexShaderSource = "#version 330 core\n"
   "layout (location = 0) in vec3 aPos;\n"
+  "out float isLeft;\n"
   "void main()\n"
   "{\n"
+  " if(aPos.x < 0.0){\n"
+  "   isLeft=1.0;\n"
+  " }else{\n"
+  "   isLeft=0.0;\n"
+  " }\n"
   " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
   "}\0";
 
 const char *fragmentShaderSource = "#version 330 core\n"
+  "in float isLeft;\n"
+  "uniform float red;\n"
   "out vec4 FragColor;\n"
   "void main()\n"
   "{\n"
-    "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+    "  FragColor = vec4(red, isLeft, 0.2f, 1.0f);\n"
   "}\0";
 
 void Renderer::initFragmentShader() {
@@ -38,8 +47,8 @@ void Renderer::initFragmentShader() {
   glCompileShader(fragmentShader);
   glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
   if(!success) {
-    glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
+    glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+    std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" <<
       infoLog << std::endl;
   }
 }
@@ -94,12 +103,18 @@ Renderer::Renderer() {
   glUseProgram(shaderProgram);
   glBindVertexArray(VAO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
 }
 
 void Renderer::render() {
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
+
+  float timeValue = glfwGetTime();
+  float redValue = sin(timeValue) / 2.0f + 0.5f;
+  int vertexColorLocation = glGetUniformLocation(shaderProgram, "red");
+  glUniform1f(vertexColorLocation, redValue);
+  glUseProgram(shaderProgram);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
