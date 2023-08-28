@@ -6,52 +6,39 @@
 #include <iostream>
 
 struct ShaderCodes {
-  std::string vertexCode;
-  std::string fragmentCode;
-  bool isError;
+  std::string vertex;
+  std::string fragment;
 };
 
-ShaderCodes retrieveShaderCodes(const char* vertexPath, const char* fragmentPath) {
-  ShaderCodes codes;
-  std::ifstream vShaderFile;
-  std::ifstream fShaderFile;
+std::string retrieveShaderCode(const char* path) {
+  std::ifstream shaderFile;
   // ensure ifstream objects can throw exceptions:
-  vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-  fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+  shaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
   try
     {
-      // open files
-      vShaderFile.open(vertexPath);
-      fShaderFile.open(fragmentPath);
-      std::stringstream vShaderStream, fShaderStream;
-      // read file’s buffer contents into streams
-      vShaderStream << vShaderFile.rdbuf();
-      fShaderStream << fShaderFile.rdbuf();
-      // close file handlers
-      vShaderFile.close();
-      fShaderFile.close();
-      // convert stream into string
-      codes.vertexCode = vShaderStream.str();
-      codes.fragmentCode = fShaderStream.str();
-      codes.isError = false;
-      return codes;
+      shaderFile.open(path);
+      std::stringstream shaderStream;
+      shaderStream << shaderFile.rdbuf();
+      shaderFile.close();
+      return shaderStream.str();
     }
   catch(std::ifstream::failure e) {
     std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-    codes.isError = true;
-    return codes;
+    return "";
   }
 }
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
   // 1. retrieve the vertex/fragment source code from filePath
-  ShaderCodes codes = retrieveShaderCodes(vertexPath, fragmentPath);
-  if(codes.isError) {
+  ShaderCodes codes;
+  codes.vertex = retrieveShaderCode(vertexPath);
+  codes.fragment = retrieveShaderCode(fragmentPath);
+  if(codes.vertex == "" || codes.fragment == "") {
     std::cout << "ERROR::SHADER::FAILED_TO_INITIALIZE" << std::endl;
     return;
   }
-  const char* vShaderCode = codes.vertexCode.c_str();
-  const char* fShaderCode = codes.fragmentCode.c_str();
+  const char* vShaderCode = codes.vertex.c_str();
+  const char* fShaderCode = codes.fragment.c_str();
 
   // 2. compile shaders
   unsigned int vertex, fragment;
