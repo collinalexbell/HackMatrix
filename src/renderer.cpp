@@ -1,11 +1,10 @@
+#include "texture.h"
 #include "renderer.h"
 #include "shader.h"
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
 
 int count = 0;
 
@@ -28,25 +27,10 @@ Renderer::Renderer() {
   glGenVertexArrays(1, &VAO);
   glBindVertexArray(VAO);
 
-  int width, height, nrChannels;
-  unsigned char *data = stbi_load("images/container.jpg", &width, &height, &nrChannels, 0);
-  unsigned int texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  if (data)
-    {
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
-                   GL_UNSIGNED_BYTE, data);
-      glGenerateMipmap(GL_TEXTURE_2D);
-    }
-  else
-    {
-      std::cout << "Failed to load texture" << std::endl;
-    }
-  stbi_image_free(data);
-
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  Texture texture("images/container.jpg");
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
