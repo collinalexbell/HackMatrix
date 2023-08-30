@@ -6,9 +6,15 @@
 #include <iostream>
 
 Texture::Texture(const char* fname){
-  data = stbi_load(fname, &width, &height, &nrChannels, 0);
   glGenTextures(1, &ID);
   glBindTexture(GL_TEXTURE_2D, ID);
+  // set the texture wrapping/filtering options (on currently bound texture)
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  data = stbi_load(fname, &width, &height, &nrChannels, 0);
   if (data)
     {
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
