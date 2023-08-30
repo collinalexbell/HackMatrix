@@ -14,6 +14,8 @@ class Renderer {
   void render();
   void genGlResources();
   void bindGlResourcesForInit();
+  void setupVertexAttributePointers();
+  void fillBuffers();
 };
 
 #endif
