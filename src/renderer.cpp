@@ -30,14 +30,7 @@ void Renderer::bindGlResourcesForInit() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 }
 
-Renderer::Renderer() {
-  genGlResources();
-  bindGlResourcesForInit();
-
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-
+void Renderer::setupVertexAttributePointers() {
   // position attribute
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
@@ -45,21 +38,32 @@ Renderer::Renderer() {
   // texture coord attribute
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
   glEnableVertexAttribArray(2);
+}
 
+void Renderer::fillBuffers() {
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+}
+
+Renderer::Renderer() {
+  genGlResources();
+  bindGlResourcesForInit();
+  fillBuffers();
+  setupVertexAttributePointers();
 
   texture = new Texture("images/container.jpg");
+
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+  shader->use(); // may need to move into loop to use changing uniforms
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 }
 
 void Renderer::render() {
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-  shader->use();
   glBindTexture(GL_TEXTURE_2D, texture->ID);
-  glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
