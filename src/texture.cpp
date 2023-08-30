@@ -5,8 +5,11 @@
 #include <glad/glad.h>
 #include <iostream>
 
+
 Texture::Texture(const char* fname){
   glGenTextures(1, &ID);
+  // need to provide texture binding for multi-texture work
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, ID);
   // set the texture wrapping/filtering options (on currently bound texture)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

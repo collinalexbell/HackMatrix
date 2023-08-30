@@ -28,12 +28,12 @@ std::string retrieveShaderCode(const char* path) {
   }
 }
 
-void printCompileErrors(unsigned int shaderId, char* shaderName) {
+void printCompileErrors(unsigned int shaderId, std::string shaderName) {
   int success;
   char infoLog[512];
   glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
   if(!success) {
-    glGetShaderInfoLog(vertex, 512, NULL, infoLog);
+    glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
     std::cout << "ERROR::SHADER::" << shaderName << "::COMPILATION_FAILED\n" <<
       infoLog << std::endl;
   };
@@ -68,7 +68,10 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
   glAttachShader(ID, vertex);
   glAttachShader(ID, fragment);
   glLinkProgram(ID);
+
   // print linking errors if any
+  int success;
+  char infoLog[512];
   glGetProgramiv(ID, GL_LINK_STATUS, &success);
   if(!success) {
     glGetProgramInfoLog(ID, 512, NULL, infoLog);
