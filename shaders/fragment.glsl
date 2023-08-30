@@ -1,8 +1,12 @@
 #version 330 core
-in float isLeft;
-uniform float red;
 out vec4 FragColor;
+
+in vec3 ourColor;
+in vec2 TexCoord;
+
+uniform sampler2D ourTexture;
+
 void main()
 {
-  FragColor = vec4(red, isLeft, 0.2f, 1.0f);
+  FragColor = texture(ourTexture, TexCoord);
 }
