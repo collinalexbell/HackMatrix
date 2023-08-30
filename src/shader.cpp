@@ -28,6 +28,17 @@ std::string retrieveShaderCode(const char* path) {
   }
 }
 
+void printCompileErrors(unsigned int shaderId, char* shaderName) {
+  int success;
+  char infoLog[512];
+  glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
+  if(!success) {
+    glGetShaderInfoLog(vertex, 512, NULL, infoLog);
+    std::cout << "ERROR::SHADER::" << shaderName << "::COMPILATION_FAILED\n" <<
+      infoLog << std::endl;
+  };
+}
+
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
   // 1. retrieve the vertex/fragment source code from filePath
   ShaderCodes codes;
@@ -42,28 +53,16 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 
   // 2. compile shaders
   unsigned int vertex, fragment;
-  int success;
-  char infoLog[512];
-  // vertex Shader
+
   vertex = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex, 1, &vShaderCode, NULL);
   glCompileShader(vertex);
-  // print compile errors if any
-  glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
-  if(!success) {
-    glGetShaderInfoLog(vertex, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" <<
-      infoLog << std::endl;
-  };
+  printCompileErrors(vertex, "VERTEX");
+
   fragment = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment, 1, &fShaderCode, NULL);
   glCompileShader(fragment);
-  glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
-  if(!success) {
-    glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" <<
-      infoLog << std::endl;
-  }
+  printCompileErrors(fragment, "FRAGMENT");
 
   ID = glCreateProgram();
   glAttachShader(ID, vertex);
