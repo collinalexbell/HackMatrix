@@ -51,10 +51,13 @@ Renderer::Renderer() {
   fillBuffers();
   setupVertexAttributePointers();
 
-  texture = new Texture("images/container.jpg");
+  containerTexture = new Texture("images/container.jpg", GL_TEXTURE0);
+  faceTexture = new Texture("images/awesomeface.png", GL_TEXTURE1);
 
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
+  shader->setInt("texture1", 0);
+  shader->setInt("texture2", 1);
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
@@ -63,11 +66,13 @@ Renderer::Renderer() {
 
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT);
-  glBindTexture(GL_TEXTURE_2D, texture->ID);
+  glBindTexture(GL_TEXTURE_2D, containerTexture->ID);
+  glBindTexture(GL_TEXTURE_2D, faceTexture->ID);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 Renderer::~Renderer() {
   delete shader;
-  delete texture;
+  delete containerTexture;
+  delete faceTexture;
 }

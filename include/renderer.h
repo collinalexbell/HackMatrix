@@ -7,7 +7,8 @@ class Renderer {
   unsigned int VAO;
   unsigned int EBO;
   Shader* shader;
-  Texture* texture;
+  Texture* containerTexture;
+  Texture* faceTexture;
  public:
   Renderer();
   ~Renderer();
