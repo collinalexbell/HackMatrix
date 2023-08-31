@@ -1,14 +1,15 @@
 #ifndef __RENDERER_H__
 #include "shader.h"
 #include "texture.h"
+#include <map>
 
 class Renderer {
   unsigned int VBO;
   unsigned int VAO;
   unsigned int EBO;
   Shader* shader;
-  Texture* containerTexture;
-  Texture* faceTexture;
+  std::map<string, Texture*> textures;
+
  public:
   Renderer();
   ~Renderer();

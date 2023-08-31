@@ -51,8 +51,10 @@ Renderer::Renderer() {
   fillBuffers();
   setupVertexAttributePointers();
 
-  containerTexture = new Texture("images/container.jpg", GL_TEXTURE0);
-  faceTexture = new Texture("images/awesomeface.png", GL_TEXTURE1);
+  textures.insert(std::pair<string, Texture*>("container",
+                                              new Texture("images/container.jpg", GL_TEXTURE0)));
+  textures.insert(std::pair<string, Texture*>("face",
+                                              new Texture("images/awesomeface.png", GL_TEXTURE1)));
 
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
@@ -66,13 +68,14 @@ Renderer::Renderer() {
 
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT);
-  glBindTexture(GL_TEXTURE_2D, containerTexture->ID);
-  glBindTexture(GL_TEXTURE_2D, faceTexture->ID);
+  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
+  glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
 Renderer::~Renderer() {
   delete shader;
-  delete containerTexture;
-  delete faceTexture;
+  for(auto& t: textures) {
+    delete t.second;
+  }
 }
