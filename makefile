@@ -34,6 +34,7 @@ learn_opengl_5.8.3: src/exercises/learn_opengl_5.8.3.cpp include/renderer.h main
 	g++ -c src/exercises/learn_opengl_5.8.3.cpp -Iinclude
 	g++ -o learn_opengl_5.8.3 learn_opengl_5.8.3.o main.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
 
+# checkout b0893cc to compile this exercise
 learn_opengl_7.8.1: src/exercises/learn_opengl_7.8.1.cpp include/renderer.h main.o shader.o texture.o
 	g++ -c src/exercises/learn_opengl_7.8.1.cpp -Iinclude
 	g++ -o learn_opengl_7.8.1 learn_opengl_7.8.1.o main.o shader.o texture.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL 
