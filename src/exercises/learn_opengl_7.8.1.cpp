@@ -1,3 +1,4 @@
+// checkout b0893cc to compile this exercise
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
