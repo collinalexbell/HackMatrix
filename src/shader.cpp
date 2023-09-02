@@ -28,7 +28,7 @@ std::string retrieveShaderCode(const char* path) {
   }
 }
 
-void printCompileErrors(unsigned int shaderId, std::string shaderName) {
+void printCompileErrorsIfAny(unsigned int shaderId, std::string shaderName) {
   int success;
   char infoLog[512];
   glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
@@ -37,6 +37,22 @@ void printCompileErrors(unsigned int shaderId, std::string shaderName) {
     std::cout << "ERROR::SHADER::" << shaderName << "::COMPILATION_FAILED\n" <<
       infoLog << std::endl;
   };
+}
+
+unsigned int createAndCompileShader(GLenum shaderType, const char* sourceCode) {
+  unsigned int rv = glCreateShader(shaderType);
+  glShaderSource(rv, 1, &sourceCode, NULL);
+  glCompileShader(rv);
+
+  std::string shaderName = "UNKNOWN";
+  if(shaderType == GL_FRAGMENT_SHADER) {
+    shaderName = "FRAGMENT";
+  }
+  if(shaderType == GL_VERTEX_SHADER) {
+    shaderName = "VERTEX";
+  }
+  printCompileErrorsIfAny(rv, shaderName);
+  return rv;
 }
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
@@ -54,15 +70,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
   // 2. compile shaders
   unsigned int vertex, fragment;
 
-  vertex = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex, 1, &vShaderCode, NULL);
-  glCompileShader(vertex);
-  printCompileErrors(vertex, "VERTEX");
-
-  fragment = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment, 1, &fShaderCode, NULL);
-  glCompileShader(fragment);
-  printCompileErrors(fragment, "FRAGMENT");
+  vertex = createAndCompileShader(GL_VERTEX_SHADER, vShaderCode);
+  fragment = createAndCompileShader(GL_FRAGMENT_SHADER, fShaderCode);
 
   ID = glCreateProgram();
   glAttachShader(ID, vertex);
