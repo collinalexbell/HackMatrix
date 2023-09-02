@@ -55,6 +55,15 @@ unsigned int createAndCompileShader(GLenum shaderType, const char* sourceCode) {
   return rv;
 }
 
+unsigned int linkShaderProgram(unsigned int vertex, unsigned int fragment) {
+  unsigned int ID;
+  ID = glCreateProgram();
+  glAttachShader(ID, vertex);
+  glAttachShader(ID, fragment);
+  glLinkProgram(ID);
+  return ID;
+}
+
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
   // 1. retrieve the vertex/fragment source code from filePath
   ShaderCodes codes;
@@ -72,11 +81,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 
   vertex = createAndCompileShader(GL_VERTEX_SHADER, vShaderCode);
   fragment = createAndCompileShader(GL_FRAGMENT_SHADER, fShaderCode);
-
-  ID = glCreateProgram();
-  glAttachShader(ID, vertex);
-  glAttachShader(ID, fragment);
-  glLinkProgram(ID);
+  ID = linkShaderProgram(vertex, fragment);
 
   // print linking errors if any
   int success;
