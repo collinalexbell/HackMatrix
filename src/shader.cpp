@@ -64,6 +64,17 @@ unsigned int linkShaderProgram(unsigned int vertex, unsigned int fragment) {
   return ID;
 }
 
+void printLinkingErrors(unsigned int shaderId){
+  int success;
+  char infoLog[512];
+  glGetProgramiv(shaderId, GL_LINK_STATUS, &success);
+  if(!success) {
+    glGetProgramInfoLog(shaderId, 512, NULL, infoLog);
+    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" <<
+      infoLog << std::endl;
+  }
+}
+
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
   // 1. retrieve the vertex/fragment source code from filePath
   ShaderCodes codes;
@@ -82,16 +93,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
   vertex = createAndCompileShader(GL_VERTEX_SHADER, vShaderCode);
   fragment = createAndCompileShader(GL_FRAGMENT_SHADER, fShaderCode);
   ID = linkShaderProgram(vertex, fragment);
+  printLinkingErrors(ID);
 
-  // print linking errors if any
-  int success;
-  char infoLog[512];
-  glGetProgramiv(ID, GL_LINK_STATUS, &success);
-  if(!success) {
-    glGetProgramInfoLog(ID, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" <<
-      infoLog << std::endl;
-  }
   // delete shaders; they’re linked into our program and no longer necessary
   glDeleteShader(vertex);
   glDeleteShader(fragment);
