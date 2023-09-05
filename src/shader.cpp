@@ -5,11 +5,6 @@
 #include <sstream>
 #include <iostream>
 
-struct ShaderCodes {
-  std::string vertex;
-  std::string fragment;
-};
-
 std::string retrieveShaderCode(const char* path) {
   std::ifstream shaderFile;
   // ensure ifstream objects can throw exceptions:
@@ -39,9 +34,10 @@ void printCompileErrorsIfAny(unsigned int shaderId, std::string shaderName) {
   };
 }
 
-unsigned int createAndCompileShader(GLenum shaderType, const char* sourceCode) {
+unsigned int createAndCompileShader(GLenum shaderType, std::string sourceCode) {
   unsigned int rv = glCreateShader(shaderType);
-  glShaderSource(rv, 1, &sourceCode, NULL);
+  const char* src =sourceCode.c_str();
+  glShaderSource(rv, 1, &src, NULL);
   glCompileShader(rv);
 
   std::string shaderName = "UNKNOWN";
@@ -76,26 +72,21 @@ void printLinkingErrors(unsigned int shaderId){
 }
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
-  // 1. retrieve the vertex/fragment source code from filePath
-  ShaderCodes codes;
-  codes.vertex = retrieveShaderCode(vertexPath);
-  codes.fragment = retrieveShaderCode(fragmentPath);
-  if(codes.vertex == "" || codes.fragment == "") {
+
+  std::string vertexCode = retrieveShaderCode(vertexPath);
+  std::string fragmentCode = retrieveShaderCode(fragmentPath);
+  if(vertexCode == "" || fragmentCode == "") {
     std::cout << "ERROR::SHADER::FAILED_TO_INITIALIZE" << std::endl;
     return;
   }
-  const char* vShaderCode = codes.vertex.c_str();
-  const char* fShaderCode = codes.fragment.c_str();
 
-  // 2. compile shaders
   unsigned int vertex, fragment;
+  vertex = createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
+  fragment = createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
 
-  vertex = createAndCompileShader(GL_VERTEX_SHADER, vShaderCode);
-  fragment = createAndCompileShader(GL_FRAGMENT_SHADER, fShaderCode);
   ID = linkShaderProgram(vertex, fragment);
   printLinkingErrors(ID);
 
-  // delete shaders; they’re linked into our program and no longer necessary
   glDeleteShader(vertex);
   glDeleteShader(fragment);
 }
