@@ -4,17 +4,19 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
-std::string retrieveShaderCode(const char* path) {
+std::string retrieveShaderCode(std::string path) {
   std::ifstream shaderFile;
   // ensure ifstream objects can throw exceptions:
   shaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
   try
     {
-      shaderFile.open(path);
+      shaderFile.open(path.c_str());
       std::stringstream shaderStream; shaderStream << shaderFile.rdbuf();
+      std::string rv = shaderStream.str();
       shaderFile.close();
-      return shaderStream.str();
+      return rv;
     }
   catch(std::ifstream::failure e) {
     std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
@@ -33,9 +35,11 @@ void printCompileErrorsIfAny(unsigned int shaderId, std::string shaderName) {
   };
 }
 
-void Shader::createAndCompileShader(GLenum shaderType, std::string sourceCode) {
+void Shader::createAndCompileShader(GLenum shaderType, const std::string sourceCode) {
   unsigned int shaderId = glCreateShader(shaderType);
-  const char* src =sourceCode.c_str();
+  const std::string::size_type size = sourceCode.size();
+  char *src = new char[size + 1];   //we need extra char for NUL
+  memcpy(src, sourceCode.c_str(), size + 1);
   glShaderSource(shaderId, 1, &src, NULL);
   glCompileShader(shaderId);
 
@@ -51,12 +55,7 @@ void Shader::createAndCompileShader(GLenum shaderType, std::string sourceCode) {
   printCompileErrorsIfAny(shaderId, shaderName);
 }
 
-void Shader::linkShaderProgram() {
-  ID = glCreateProgram();
-  glAttachShader(ID, vertex);
-  glAttachShader(ID, fragment);
-  glLinkProgram(ID);
-}
+
 
 void printLinkingErrors(unsigned int shaderId){
   int success;
@@ -69,22 +68,38 @@ void printLinkingErrors(unsigned int shaderId){
   }
 }
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath) {
+void Shader::linkShaderProgram() {
+  ID = glCreateProgram();
+  glAttachShader(ID, vertex);
+  glAttachShader(ID, fragment);
+  glLinkProgram(ID);
+  printLinkingErrors(ID);
+}
 
-  std::string vertexCode = retrieveShaderCode(vertexPath);
-  std::string fragmentCode = retrieveShaderCode(fragmentPath);
+void Shader::createShaders() {
+  createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
+  createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
+}
+
+void Shader::deleteShaders() {
+  glDeleteShader(vertex);
+  glDeleteShader(fragment);
+}
+
+void Shader::loadCode(std::string vertexPath, std::string fragmentPath) {
+  vertexCode = retrieveShaderCode(vertexPath);
+  fragmentCode = retrieveShaderCode(fragmentPath);
   if(vertexCode == "" || fragmentCode == "") {
     std::cout << "ERROR::SHADER::FAILED_TO_INITIALIZE" << std::endl;
     return;
   }
+}
 
-  createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
-  createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
+Shader::Shader(std::string vertexPath, std::string fragmentPath) {
+  loadCode(vertexPath, fragmentPath);
+  createShaders();
   linkShaderProgram();
-  printLinkingErrors(ID);
-
-  glDeleteShader(vertex);
-  glDeleteShader(fragment);
+  deleteShaders();
 }
 
 void Shader::use() {

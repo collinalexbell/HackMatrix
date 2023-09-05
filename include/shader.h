@@ -9,12 +9,17 @@ class Shader
   unsigned int vertex, fragment;
   void linkShaderProgram();
   void createAndCompileShader(GLenum shaderType, std::string sourceCode);
+  void createShaders();
+  void deleteShaders();
+  void loadCode(std::string, std::string);
+  std::string vertexCode;
+  std::string fragmentCode;
 
  public:
   // the program ID
   unsigned int ID;
   // constructor reads and builds the shader
-  Shader(const char* vertexPath, const char* fragmentPath);
+  Shader(std::string vertexPath, std::string fragmentPath);
   // use/activate the shader
   void use();
   // utility uniform functions
