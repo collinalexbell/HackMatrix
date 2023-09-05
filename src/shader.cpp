@@ -12,8 +12,7 @@ std::string retrieveShaderCode(const char* path) {
   try
     {
       shaderFile.open(path);
-      std::stringstream shaderStream;
-      shaderStream << shaderFile.rdbuf();
+      std::stringstream shaderStream; shaderStream << shaderFile.rdbuf();
       shaderFile.close();
       return shaderStream.str();
     }
@@ -34,30 +33,29 @@ void printCompileErrorsIfAny(unsigned int shaderId, std::string shaderName) {
   };
 }
 
-unsigned int createAndCompileShader(GLenum shaderType, std::string sourceCode) {
-  unsigned int rv = glCreateShader(shaderType);
+void Shader::createAndCompileShader(GLenum shaderType, std::string sourceCode) {
+  unsigned int shaderId = glCreateShader(shaderType);
   const char* src =sourceCode.c_str();
-  glShaderSource(rv, 1, &src, NULL);
-  glCompileShader(rv);
+  glShaderSource(shaderId, 1, &src, NULL);
+  glCompileShader(shaderId);
 
   std::string shaderName = "UNKNOWN";
   if(shaderType == GL_FRAGMENT_SHADER) {
+    fragment=shaderId;
     shaderName = "FRAGMENT";
   }
   if(shaderType == GL_VERTEX_SHADER) {
+    vertex=shaderId;
     shaderName = "VERTEX";
   }
-  printCompileErrorsIfAny(rv, shaderName);
-  return rv;
+  printCompileErrorsIfAny(shaderId, shaderName);
 }
 
-unsigned int linkShaderProgram(unsigned int vertex, unsigned int fragment) {
-  unsigned int ID;
+void Shader::linkShaderProgram() {
   ID = glCreateProgram();
   glAttachShader(ID, vertex);
   glAttachShader(ID, fragment);
   glLinkProgram(ID);
-  return ID;
 }
 
 void printLinkingErrors(unsigned int shaderId){
@@ -80,11 +78,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     return;
   }
 
-  unsigned int vertex, fragment;
-  vertex = createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
-  fragment = createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
-
-  ID = linkShaderProgram(vertex, fragment);
+  createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
+  createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
+  linkShaderProgram();
   printLinkingErrors(ID);
 
   glDeleteShader(vertex);
