@@ -31,6 +31,7 @@ void setTextureParameters() {
 //------------
 // Texture::*
 //------------
+
 void Texture::loadTextureData(std::string fname) {
   unsigned char* data = stbi_load(fname.c_str(), &width, &height, &nrChannels, 0);
   if (data)
