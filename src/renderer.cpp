@@ -67,12 +67,21 @@ Renderer::Renderer() {
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+  angle = 0.0;
+
 }
 
 void Renderer::render() {
+  angle = angle + 1;
+  trans = glm::mat4(1.0f);
+  trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
+  trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
   glClear(GL_COLOR_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
   glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
+  unsigned int transformLoc = glGetUniformLocation(shader->ID,"transform");
+  glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
