@@ -7,7 +7,8 @@ using namespace std;
 
 class Texture {
   int width, height, nrChannels;
-  unsigned char *data;
+  void loadTextureData(std::string);
+  void initAndBindGlTexture(GLenum unit);
  public:
   Texture(string, GLenum unit);
   unsigned int ID;
