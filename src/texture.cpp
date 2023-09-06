@@ -6,6 +6,10 @@
 #include <glad/glad.h>
 #include <iostream>
 
+//------------
+// Helpers
+//------------
+
 GLenum textureFormat(std::string fname) {
   std::string ext = fname.substr(fname.find_last_of(".") + 1);
   GLenum rv;
@@ -17,6 +21,16 @@ GLenum textureFormat(std::string fname) {
   return rv;
 }
 
+void setTextureParameters() {
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+//------------
+// Texture::*
+//------------
 void Texture::loadTextureData(std::string fname) {
   unsigned char* data = stbi_load(fname.c_str(), &width, &height, &nrChannels, 0);
   if (data)
@@ -36,13 +50,6 @@ void Texture::initAndBindGlTexture(GLenum unit) {
   glGenTextures(1, &ID);
   glActiveTexture(unit);
   glBindTexture(GL_TEXTURE_2D, ID);
-}
-
-void setTextureParameters() {
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
 Texture::Texture(std::string fname, GLenum unit) {
