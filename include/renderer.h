@@ -15,6 +15,7 @@ class Renderer {
   std::map<string, Texture*> textures;
   glm::mat4 trans;
   float angle;
+  void computeTransform();
 
  public:
   Renderer();
