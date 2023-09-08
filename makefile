@@ -1,7 +1,7 @@
 all: matrix
 
-matrix: main.o renderer.o shader.o texture.o
-	g++ -g -o matrix renderer.o main.o shader.o texture.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
+matrix: main.o renderer.o shader.o texture.o world.o
+	g++ -g -o matrix renderer.o main.o shader.o texture.o world.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
 
 renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h
 	g++ -g -c src/renderer.cpp -Iinclude
@@ -14,6 +14,9 @@ shader.o: src/shader.cpp include/shader.h
 
 texture.o: src/texture.cpp include/texture.h
 	g++ -g -c src/texture.cpp -Iinclude
+
+world.o: src/world.cpp include/world.h
+	g++ -g -c src/world.cpp -Iinclude
 
 #######################
 ###### Exercises ######
