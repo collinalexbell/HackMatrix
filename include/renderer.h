@@ -15,6 +15,7 @@ class Renderer {
   Shader* shader;
   std::map<string, Texture*> textures;
   glm::mat4 trans;
+  glm::mat4 projectionMatrix;
   float angle;
   void computeTransform();
 
