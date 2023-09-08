@@ -2,6 +2,7 @@
 #define __WORLD_H__
 
 class World {
+
 };
 
 #endif

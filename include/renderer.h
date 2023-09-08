@@ -1,6 +1,7 @@
 #ifndef __RENDERER_H__
 #include "shader.h"
 #include "texture.h"
+#include "world.h"
 #include <map>
 
 #include <glm/glm.hpp>
@@ -21,6 +22,7 @@ class Renderer {
   Renderer();
   ~Renderer();
   void render();
+  void render(World* world, float camera[3]);
   void genGlResources();
   void bindGlResourcesForInit();
   void setupVertexAttributePointers();
