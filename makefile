@@ -3,7 +3,7 @@ all: matrix
 matrix: main.o renderer.o shader.o texture.o world.o
 	g++ -g -o matrix renderer.o main.o shader.o texture.o world.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
 
-renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h
+renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h
 	g++ -g -c src/renderer.cpp -Iinclude
 
 main.o: src/main.cpp include/renderer.h
