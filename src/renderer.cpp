@@ -71,9 +71,6 @@ Renderer::Renderer() {
   angle = 0.0;
   orthographicMatrix = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
 
-  model = glm::mat4(1.0f);
-  model = glm::rotate(model, glm::radians(-55.0f),
-                      glm::vec3(1.0f, 0.0f, 0.0f));
 
   view = glm::mat4(1.0f);
   // note that we’re translating the scene in the reverse direction
@@ -82,25 +79,31 @@ Renderer::Renderer() {
   projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f,
                                 100.0f);
 
+  model = glm::mat4(1.0f);
+  model = glm::rotate(model, glm::radians(-55.0f),
+                      glm::vec3(1.0f, 0.0f, 0.0f));
+  model = glm::scale(model, glm::vec3(2,2,1));
 }
 
 void Renderer::computeTransform() {
-  trans = glm::mat4(1.0f);
-  trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-  trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.25, 0.25, 0.5));
-  trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+  model = glm::rotate(model, glm::radians(3.0f), glm::vec3(0.0, 0.0, 1));
 }
 
 void Renderer::render() {
-  angle = angle + 1;
   computeTransform();
 
   glClear(GL_COLOR_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
   glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
 
-  unsigned int transformLoc = glGetUniformLocation(shader->ID,"transform");
-  glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+  unsigned int modelLoc = glGetUniformLocation(shader->ID,"model");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+  unsigned int viewLoc = glGetUniformLocation(shader->ID,"view");
+  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+  unsigned int projectionLoc = glGetUniformLocation(shader->ID,"projection");
+  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
