@@ -21,6 +21,7 @@ class Renderer {
   glm::mat4 orthographicMatrix;
   float angle;
   void computeTransform();
+  void updateTransformMatrices();
 
  public:
   Renderer();
