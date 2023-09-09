@@ -89,13 +89,7 @@ void Renderer::computeTransform() {
   model = glm::rotate(model, glm::radians(3.0f), glm::vec3(0.0, 0.0, 1));
 }
 
-void Renderer::render() {
-  computeTransform();
-
-  glClear(GL_COLOR_BUFFER_BIT);
-  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
-  glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
-
+void Renderer::updateTransformMatrices() {
   unsigned int modelLoc = glGetUniformLocation(shader->ID,"model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -104,7 +98,14 @@ void Renderer::render() {
 
   unsigned int projectionLoc = glGetUniformLocation(shader->ID,"projection");
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+}
 
+void Renderer::render() {
+  computeTransform();
+  glClear(GL_COLOR_BUFFER_BIT);
+  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
+  glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
+  updateTransformMatrices();
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
