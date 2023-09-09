@@ -70,14 +70,14 @@ Renderer::Renderer() {
 
   angle = 0.0;
   orthographicMatrix = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
-  projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+  //projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
 }
 
 void Renderer::computeTransform() {
   trans = glm::mat4(1.0f);
   trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-  trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.0, 0.0, 1.0));
+  trans = glm::rotate(trans, glm::radians(angle), glm::vec3(0.25, 0.25, 0.5));
   trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
 }
 
