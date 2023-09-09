@@ -69,7 +69,8 @@ Renderer::Renderer() {
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 
   angle = 0.0;
-  projectionMatrix = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
+  orthographicMatrix = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
+  projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
 
 }
 
