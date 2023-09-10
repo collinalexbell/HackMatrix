@@ -10,45 +10,70 @@
 #include <glm/gtc/type_ptr.hpp>
 
 float vertices[] = {
-  // positions // colors // texture coords
-  0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
-  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
-  -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
-  -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f // top left
-};
-unsigned int indices[] = { // note that we start from 0!
-  0, 1, 3, // first triangle
-  1, 2, 3 // second triangle
+  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+  0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+  -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
 };
 
 void Renderer::genGlResources() {
   glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
   glGenVertexArrays(1, &VAO);
 }
 
 void Renderer::bindGlResourcesForInit() {
   glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 }
 
 void Renderer::setupVertexAttributePointers() {
   // position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
 
   // texture coord attribute
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-  glEnableVertexAttribArray(2);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
 }
 
 void Renderer::fillBuffers() {
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 }
 
 Renderer::Renderer() {
+  glEnable(GL_DEPTH_TEST);
   genGlResources();
   bindGlResourcesForInit();
   fillBuffers();
@@ -82,7 +107,7 @@ Renderer::Renderer() {
   model = glm::mat4(1.0f);
   model = glm::rotate(model, glm::radians(-55.0f),
                       glm::vec3(1.0f, 0.0f, 0.0f));
-  model = glm::scale(model, glm::vec3(2,2,1));
+  //model = glm::scale(model, glm::vec3(2,2,1));
 }
 
 void Renderer::computeTransform() {
@@ -102,11 +127,11 @@ void Renderer::updateTransformMatrices() {
 
 void Renderer::render() {
   computeTransform();
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
   glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
   updateTransformMatrices();
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 Renderer::~Renderer() {
