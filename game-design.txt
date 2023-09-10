@@ -2,3 +2,10 @@
 
 - voxel
 - 3rd person
+
+
+## mechanics
+? the source code for an object is the path the player took (placing blocks) to make it
+- objects in the world are scriptable
+
+? the voxels could start out large and get progressively smaller as the player advances
