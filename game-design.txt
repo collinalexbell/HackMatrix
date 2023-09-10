@@ -1,0 +1,4 @@
+# matrix game design
+
+- voxel
+- 3rd person
