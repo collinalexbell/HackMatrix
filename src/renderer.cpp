@@ -108,6 +108,9 @@ Renderer::Renderer() {
   model = glm::rotate(model, glm::radians(-55.0f),
                       glm::vec3(1.0f, 0.0f, 0.0f));
   //model = glm::scale(model, glm::vec3(2,2,1));
+
+  cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+  cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
 void Renderer::computeTransform() {
@@ -138,11 +141,23 @@ glm::vec3 cubePositions[] = {
   glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
+glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+void Renderer::moveCamera() {
+  cameraDirection = glm::normalize(cameraPos - cameraTarget);
+  glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+  glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+  const float radius = 10.0f;
+  float camX = sin(glfwGetTime()) * radius;
+  float camZ = cos(glfwGetTime()) * radius;
+  view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+}
+
 void Renderer::render() {
   //computeTransform();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
   glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
+  moveCamera();
   updateTransformMatrices();
   for (unsigned int i = 0; i < 10; i++){
     glm::mat4 model = glm::mat4(1.0f);
