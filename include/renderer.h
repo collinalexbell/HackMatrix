@@ -19,9 +19,13 @@ class Renderer {
   glm::mat4 view;
   glm::mat4 projection;
   glm::mat4 orthographicMatrix;
+  glm::vec3 cameraPos;
+  glm::vec3 cameraTarget;
+  glm::vec3 cameraDirection;
   float angle;
   void computeTransform();
   void updateTransformMatrices();
+  void moveCamera();
 
  public:
   Renderer();
