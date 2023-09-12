@@ -34,18 +34,36 @@ void handleEscape(GLFWwindow* window) {
   }
 }
 
+void handleControls(GLFWwindow* window, Renderer* renderer) {
+
+  bool up = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+  bool down = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+  bool left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+  bool right = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+  renderer->handleKeys(up,down,left,right);
+}
+
 void loop (GLFWwindow* window, Renderer* renderer) {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
     handleEscape(window);
+    handleControls(window, renderer);
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 }
 
+void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
+  Renderer* renderer = (Renderer*) glfwGetWindowUserPointer(window);
+  renderer->mouseCallback(window, xpos, ypos);
+}
+
 int main() {
   GLFWwindow* window = init();
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   Renderer* renderer = new Renderer();
+  glfwSetWindowUserPointer(window, (void*)renderer);
+  glfwSetCursorPosCallback(window, mouseCallback);
   if(window == NULL) {
     return -1;
   }

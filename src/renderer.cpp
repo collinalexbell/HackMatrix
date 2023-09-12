@@ -111,6 +111,43 @@ Renderer::Renderer() {
 
   cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
   cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+  cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+  cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+
+  firstMouse = true;
+  yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+  pitch =  0.0f;
+  lastX =  800.0f / 2.0;
+  lastY =  600.0 / 2.0;
+}
+
+void Renderer::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
+    if (firstMouse)
+      {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+      }
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+    float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+    yaw += xoffset;
+    pitch += yoffset;
+    if(pitch > 89.0f)
+      pitch = 89.0f;
+    if(pitch < -89.0f)
+      pitch = -89.0f;
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
+    std::cout << "called" << std::endl;
 }
 
 void Renderer::computeTransform() {
@@ -143,13 +180,22 @@ glm::vec3 cubePositions[] = {
 
 glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 void Renderer::moveCamera() {
-  cameraDirection = glm::normalize(cameraPos - cameraTarget);
-  glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-  glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
   const float radius = 10.0f;
-  float camX = sin(glfwGetTime()) * radius;
-  float camZ = cos(glfwGetTime()) * radius;
-  view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+  view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+}
+
+void Renderer::handleKeys(bool up, bool down, bool left, bool right) {
+  const float cameraSpeed = 0.35f; // adjust accordingly
+  if (up)
+    cameraPos += cameraSpeed * cameraFront;
+  if (down)
+    cameraPos -= cameraSpeed * cameraFront;
+  if (left)
+    cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) *
+      cameraSpeed;
+  if (right)
+    cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) *
+      cameraSpeed;
 }
 
 void Renderer::render() {
