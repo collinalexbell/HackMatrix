@@ -147,7 +147,6 @@ void Renderer::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
     front.y = sin(glm::radians(pitch));
     front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
     cameraFront = glm::normalize(front);
-    std::cout << "called" << std::endl;
 }
 
 void Renderer::computeTransform() {
