@@ -2,6 +2,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
+#include "camera.h"
 #include <map>
 
 #include <glm/glm.hpp>
@@ -23,33 +24,20 @@ class Renderer {
   glm::mat4 view;
   glm::mat4 projection;
   glm::mat4 orthographicMatrix;
-  glm::vec3 cameraPos;
-  glm::vec3 cameraFront;
-  glm::vec3 cameraUp;
-  glm::vec3 cameraTarget;
-  glm::vec3 cameraDirection;
-  glm::vec3 direction;
-  float yaw;
-  float pitch;
-  float angle;
   void computeTransform();
   void updateTransformMatrices();
-  void moveCamera();
-  bool firstMouse;
-  float lastX;
-  float lastY;
+  Camera* camera;
 
  public:
-  Renderer();
+  Renderer(Camera*);
   ~Renderer();
+  Camera* getCamera();
   void render();
   void render(World* world, float camera[3]);
   void genGlResources();
   void bindGlResourcesForInit();
   void setupVertexAttributePointers();
   void fillBuffers();
-  void handleKeys(bool up, bool down, bool left, bool right);
-  void mouseCallback (GLFWwindow* window, double xpos, double ypos);
 };
 
 #endif

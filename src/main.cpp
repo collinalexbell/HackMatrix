@@ -34,20 +34,20 @@ void handleEscape(GLFWwindow* window) {
   }
 }
 
-void handleControls(GLFWwindow* window, Renderer* renderer) {
+void handleControls(GLFWwindow* window, Camera* camera) {
 
   bool up = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
   bool down = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
   bool left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
   bool right = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
-  renderer->handleKeys(up,down,left,right);
+  camera->handleTranslateForce(up,down,left,right);
 }
 
-void loop (GLFWwindow* window, Renderer* renderer) {
+void loop (GLFWwindow* window, Renderer* renderer, Camera* camera) {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
     handleEscape(window);
-    handleControls(window, renderer);
+    handleControls(window, camera);
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
@@ -55,19 +55,20 @@ void loop (GLFWwindow* window, Renderer* renderer) {
 
 void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
   Renderer* renderer = (Renderer*) glfwGetWindowUserPointer(window);
-  renderer->mouseCallback(window, xpos, ypos);
+  renderer->getCamera()->handleRotateForce(window, xpos, ypos);
 }
 
 int main() {
   GLFWwindow* window = init();
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  Renderer* renderer = new Renderer();
+  Camera* camera = new Camera();
+  Renderer* renderer = new Renderer(camera);
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
   if(window == NULL) {
     return -1;
   }
-  loop(window, renderer);
+  loop(window, renderer, camera);
   delete renderer;
   glfwTerminate();
   return 0;
