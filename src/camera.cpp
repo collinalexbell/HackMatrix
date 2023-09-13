@@ -7,9 +7,9 @@
 #include <GLFW/glfw3.h>
 
 Camera::Camera() {
-  cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-  cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-  cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+  position = glm::vec3(0.0f, 0.0f, 3.0f);
+  front = glm::vec3(0.0f, 0.0f, -1.0f);
+  up = glm::vec3(0.0f, 1.0f, 0.0f);
   firstMouse = true;
   yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
   pitch =  0.0f;
@@ -25,14 +25,14 @@ Camera::~Camera() {
 void Camera::handleTranslateForce(bool up, bool down, bool left, bool right) {
   const float cameraSpeed = 0.35f; // adjust accordingly
   if (up)
-    cameraPos += cameraSpeed * cameraFront;
+    position += cameraSpeed * front;
   if (down)
-    cameraPos -= cameraSpeed * cameraFront;
+    position -= cameraSpeed * front;
   if (left)
-    cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) *
+    position -= glm::normalize(glm::cross(front, this->up)) *
       cameraSpeed;
   if (right)
-    cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) *
+    position += glm::normalize(glm::cross(front, this->up)) *
       cameraSpeed;
 }
 
@@ -59,9 +59,9 @@ void Camera::handleRotateForce(GLFWwindow* window, double xpos, double ypos) {
   front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
   front.y = sin(glm::radians(pitch));
   front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-  cameraFront = glm::normalize(front);
+  this->front = glm::normalize(front);
 }
 
 glm::mat4 Camera::getViewMatrix() {
-  return glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+  return glm::lookAt(position, position + front, up);
 }

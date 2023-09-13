@@ -8,9 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 class Camera {
-  glm::vec3 cameraUp;
-  glm::vec3 cameraPos;
-  glm::vec3 cameraFront;
+  glm::vec3 up;
+  glm::vec3 position;
+  glm::vec3 front;
   bool firstMouse;
   float lastX;
   float lastY;
