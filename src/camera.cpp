@@ -23,7 +23,7 @@ Camera::~Camera() {
 }
 
 void Camera::handleTranslateForce(bool up, bool down, bool left, bool right) {
-  const float cameraSpeed = 0.35f; // adjust accordingly
+  const float cameraSpeed = 2.0f; // adjust accordingly
   if (up)
     position += cameraSpeed * front;
   if (down)

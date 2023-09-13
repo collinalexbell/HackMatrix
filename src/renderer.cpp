@@ -170,9 +170,9 @@ void Renderer::render() {
   glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
   view = camera->getViewMatrix();
   updateTransformMatrices();
-  for (int x = -100; x<100; x++) {
-    for (int y = -100; y<100; y++) {
-      for (int z = -100; z<0; z++) {
+  for (int x = -15; x<15; x++) {
+    for (int y = -15; y<15; y++) {
+      for (int z = -30; z<0; z++) {
         glm::vec3 vec = glm::vec3((float)x, (float)y, (float)z);
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, vec);
