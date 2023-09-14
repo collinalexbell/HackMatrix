@@ -1,7 +1,7 @@
 all: matrix
 
 matrix: main.o renderer.o shader.o texture.o world.o camera.o
-	g++ -g -o matrix renderer.o main.o shader.o texture.o world.o camera.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
+	g++ -g -o matrix renderer.o main.o shader.o texture.o world.o camera.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
 
 renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
 	g++ -g -c src/renderer.cpp -Iinclude
