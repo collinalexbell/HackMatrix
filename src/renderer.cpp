@@ -52,6 +52,7 @@ float vertices[] = {
 
 void Renderer::genGlResources() {
   glGenBuffers(1, &VBO);
+  glGenBuffers(1, &INSTANCE);
   glGenVertexArrays(1, &VAO);
 }
 
@@ -61,6 +62,7 @@ void Renderer::bindGlResourcesForInit() {
 }
 
 void Renderer::setupVertexAttributePointers() {
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
   // position attribute
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
@@ -68,14 +70,26 @@ void Renderer::setupVertexAttributePointers() {
   // texture coord attribute
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
+
+  // instance coord attribute
+  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(2);
+  glVertexAttribDivisor(2, 1);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
 }
 
 void Renderer::fillBuffers() {
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * world->getCubes().size(), world->getCubes().data(), GL_STATIC_DRAW);
 }
 
-Renderer::Renderer(Camera* camera) {
+Renderer::Renderer(Camera* camera, World* world) {
   this->camera = camera;
+  this->world = world;
   glEnable(GL_DEPTH_TEST);
   genGlResources();
   bindGlResourcesForInit();
@@ -106,11 +120,11 @@ Renderer::Renderer(Camera* camera) {
   projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f,
                                 100.0f);
 
+  // this can be used to rotate an entire chunk (call to glDrawArraysInstanced)
   model = glm::mat4(1.0f);
-  model = glm::rotate(model, glm::radians(-55.0f),
-                      glm::vec3(1.0f, 0.0f, 0.0f));
+  //model = glm::rotate(model, glm::radians(-55.0f),
+  //                   glm::vec3(1.0f, 0.0f, 0.0f));
   //model = glm::scale(model, glm::vec3(2,2,1));
-
 
 }
 
@@ -170,18 +184,7 @@ void Renderer::render() {
   glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
   view = camera->getViewMatrix();
   updateTransformMatrices();
-  for (int x = -15; x<15; x++) {
-    for (int y = -15; y<15; y++) {
-      for (int z = -30; z<0; z++) {
-        glm::vec3 vec = glm::vec3((float)x, (float)y, (float)z);
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, vec);
-        unsigned int modelLoc = glGetUniformLocation(shader->ID,"model");
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-      }
-    }
-  }
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->getCubes().size());
 }
 
 Camera* Renderer::getCamera() {

@@ -4,6 +4,7 @@
 #include "world.h"
 #include "camera.h"
 #include <map>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -15,6 +16,7 @@
 
 class Renderer {
   unsigned int VBO;
+  unsigned int INSTANCE;
   unsigned int VAO;
   unsigned int EBO;
   Shader* shader;
@@ -27,9 +29,10 @@ class Renderer {
   void computeTransform();
   void updateTransformMatrices();
   Camera* camera;
+  World* world;
 
  public:
-  Renderer(Camera*);
+  Renderer(Camera*, World*);
   ~Renderer();
   Camera* getCamera();
   void render();

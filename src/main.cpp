@@ -2,9 +2,17 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "renderer.h"
+#include <zmq/zmq.hpp>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
+}
+
+void testZmq() {
+  zmq::context_t ctx;
+  zmq::socket_t sock(ctx, zmq::socket_type::push);
+  sock.bind("inproc://test");
+  sock.send(zmq::str_buffer("Hello, world"), zmq::send_flags::dontwait);
 }
 
 GLFWwindow* init() {
@@ -59,17 +67,21 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 }
 
 int main() {
+  testZmq();
   GLFWwindow* window = init();
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   Camera* camera = new Camera();
-  Renderer* renderer = new Renderer(camera);
+  World* world = new World();
+  Renderer* renderer = new Renderer(camera, world);
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
   if(window == NULL) {
     return -1;
   }
   loop(window, renderer, camera);
-  delete renderer;
   glfwTerminate();
+  delete renderer;
+  delete world;
+  delete camera;
   return 0;
 }
