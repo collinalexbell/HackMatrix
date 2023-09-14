@@ -1,4 +1,5 @@
 #ifndef __RENDERER_H__
+#define __RENDERER_H__
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
@@ -14,6 +15,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+class World;
 class Renderer {
   unsigned int VBO;
   unsigned int INSTANCE;
@@ -41,6 +43,7 @@ class Renderer {
   void bindGlResourcesForInit();
   void setupVertexAttributePointers();
   void fillBuffers();
+  void addCube(int index);
 };
 
 #endif
