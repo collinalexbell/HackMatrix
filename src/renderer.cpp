@@ -84,7 +84,8 @@ void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * world->getCubes().size(), world->getCubes().data(), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 200000, (void*)0 , GL_STATIC_DRAW);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * world->getCubes().size(), world->getCubes().data());
 }
 
 Renderer::Renderer(Camera* camera, World* world) {
@@ -176,6 +177,10 @@ std::vector<glm::vec3> cubePositions = {
   glm::vec3( -1.0f, 3.0f, -5.0f)
 };
 
+void Renderer::addCube(int index) {
+  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
+  glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*index, sizeof(glm::vec3), &world->getCubes()[index]);
+}
 
 void Renderer::render() {
   //computeTransform();

@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "renderer.h"
 #include <zmq/zmq.hpp>
+#include <glm/glm.hpp>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -73,6 +74,8 @@ int main() {
   Camera* camera = new Camera();
   World* world = new World();
   Renderer* renderer = new Renderer(camera, world);
+  world->attachRenderer(renderer);
+  world->addCube(glm::vec3(0, 10, 0));
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
   if(window == NULL) {
