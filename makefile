@@ -1,7 +1,7 @@
 all: matrix
 
-matrix: main.o renderer.o shader.o texture.o world.o camera.o
-	g++ -g -o matrix renderer.o main.o shader.o texture.o world.o camera.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
+matrix: main.o renderer.o shader.o texture.o world.o camera.o api.o
+	g++ -g -o matrix renderer.o main.o shader.o texture.o world.o camera.o api.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
 
 renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
 	g++ -g -c src/renderer.cpp -Iinclude
@@ -20,6 +20,9 @@ world.o: src/world.cpp include/world.h
 
 camera.o: src/camera.cpp include/camera.h
 	g++ -g -c src/camera.cpp -Iinclude
+
+api.o: src/api.cpp include/api.h
+	g++ -g -c src/api.cpp -Iinclude
 
 #######################
 ###### Exercises ######
