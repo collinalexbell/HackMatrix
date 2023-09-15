@@ -4,16 +4,17 @@
 #include "renderer.h"
 #include <zmq/zmq.hpp>
 #include <glm/glm.hpp>
+#include <string>
 
+zmq::context_t context (2);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-void testZmq() {
-  zmq::context_t ctx;
-  zmq::socket_t sock(ctx, zmq::socket_type::push);
-  sock.bind("inproc://test");
-  sock.send(zmq::str_buffer("Hello, world"), zmq::send_flags::dontwait);
+zmq::socket_t initZmq() {
+  zmq::socket_t socket (context, zmq::socket_type::rep);
+  socket.bind ("tcp://*:5555");
+  return socket;
 }
 
 GLFWwindow* init() {
@@ -52,9 +53,35 @@ void handleControls(GLFWwindow* window, Camera* camera) {
   camera->handleTranslateForce(up,down,left,right);
 }
 
-void loop (GLFWwindow* window, Renderer* renderer, Camera* camera) {
+void handleZmq(zmq::socket_t& socket, World* world) {
+  zmq::message_t request;
+
+  zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
+  if(result >= 0) {
+    std::string data(static_cast<char*>(request.data()), request.size());
+    std::cout  << data << std::endl;
+
+    std::istringstream iss(data);
+
+    std::string command;
+    int x,y,z;
+    iss >> command >> x >> y >> z;
+
+    if(command == "c") {
+      world->addCube(glm::vec3(x,y,z));
+    }
+
+    //  Send reply back to client
+    zmq::message_t reply (5);
+    memcpy (reply.data (), "recv", 5);
+    socket.send (reply, zmq::send_flags::none);
+  }
+}
+
+void loop (GLFWwindow* window, Renderer* renderer, Camera* camera, World* world, zmq::socket_t& socket) {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
+    handleZmq(socket, world);
     handleEscape(window);
     handleControls(window, camera);
     glfwSwapBuffers(window);
@@ -68,7 +95,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 }
 
 int main() {
-  testZmq();
+  zmq::socket_t socket = initZmq();
   GLFWwindow* window = init();
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   Camera* camera = new Camera();
@@ -81,7 +108,7 @@ int main() {
   if(window == NULL) {
     return -1;
   }
-  loop(window, renderer, camera);
+  loop(window, renderer, camera, world, socket);
   glfwTerminate();
   delete renderer;
   delete world;
