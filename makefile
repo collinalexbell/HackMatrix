@@ -1,69 +1,33 @@
 all: matrix
 
-matrix: main.o renderer.o shader.o texture.o world.o camera.o api.o
-	g++ -g -o matrix renderer.o main.o shader.o texture.o world.o camera.o api.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o
+	cd build
+	g++ -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
 
-renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
-	g++ -g -c src/renderer.cpp -Iinclude
+build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
+	g++ -g -o build/renderer.o -c src/renderer.cpp -Iinclude
 
-main.o: src/main.cpp include/renderer.h include/camera.h
-	g++ -g -c src/main.cpp -Iinclude
+build/main.o: src/main.cpp include/renderer.h include/camera.h
+	g++ -g -o build/main.o -c src/main.cpp -Iinclude
 
-shader.o: src/shader.cpp include/shader.h
-	g++ -g -c src/shader.cpp -Iinclude
+build/shader.o: src/shader.cpp include/shader.h
+	g++ -g -o build/shader.o -c src/shader.cpp -Iinclude
 
-texture.o: src/texture.cpp include/texture.h
-	g++ -g -c src/texture.cpp -Iinclude
+build/texture.o: src/texture.cpp include/texture.h
+	g++ -g -o build/texture.o -c src/texture.cpp -Iinclude
 
-world.o: src/world.cpp include/world.h
-	g++ -g -c src/world.cpp -Iinclude
+build/world.o: src/world.cpp include/world.h
+	g++ -g -o build/world.o -c src/world.cpp -Iinclude
 
-camera.o: src/camera.cpp include/camera.h
-	g++ -g -c src/camera.cpp -Iinclude
+build/camera.o: src/camera.cpp include/camera.h
+	g++ -g -o build/camera.o -c src/camera.cpp -Iinclude
 
-api.o: src/api.cpp include/api.h
-	g++ -g -c src/api.cpp -Iinclude
-
-#######################
-###### Exercises ######
-#######################
-
-# checkout f135f82 to compile this properly
-learn_opengl_5.8.1: src/exercises/learn_opengl_5.8.1.cpp include/renderer.h main.o
-	g++ -c src/exercises/learn_opengl_5.8.1.cpp -Iinclude
-	g++ -o learn_opengl_5.8.1 learn_opengl_5.8.1.o main.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
-
-# checkout 5da6932 to compile this exercise
-learn_opengl_5.8.2: src/exercises/learn_opengl_5.8.2.cpp include/renderer.h main.o
-	g++ -c src/exercises/learn_opengl_5.8.2.cpp -Iinclude
-	g++ -o learn_opengl_5.8.2 learn_opengl_5.8.2.o main.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
-
-# checkout 6896148 to compile this exercise
-learn_opengl_5.8.3: src/exercises/learn_opengl_5.8.3.cpp include/renderer.h main.o
-	g++ -c src/exercises/learn_opengl_5.8.3.cpp -Iinclude
-	g++ -o learn_opengl_5.8.3 learn_opengl_5.8.3.o main.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -Iinclude
-
-# checkout b0893cc to compile this exercise
-learn_opengl_7.8.1: src/exercises/learn_opengl_7.8.1.cpp include/renderer.h main.o shader.o texture.o
-	g++ -c src/exercises/learn_opengl_7.8.1.cpp -Iinclude
-	g++ -o learn_opengl_7.8.1 learn_opengl_7.8.1.o main.o shader.o texture.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL
-
-# checkout 3faff82 to compile this exercise
-learn_opengl_7.8.2: src/exercises/learn_opengl_7.8.2.cpp include/renderer.h main.o shader.o texture.o
-	g++ -c src/exercises/learn_opengl_7.8.2.cpp -Iinclude
-	g++ -o learn_opengl_7.8.2 learn_opengl_7.8.2.o main.o shader.o texture.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL
-
-# checkout 858813b to compile this exercise
-learn_opengl_7.8.3: src/exercises/learn_opengl_7.8.3.cpp include/renderer.h main.o shader.o texture.o
-	g++ -c src/exercises/learn_opengl_7.8.3.cpp -Iinclude
-	g++ -o learn_opengl_7.8.3 learn_opengl_7.8.3.o main.o shader.o texture.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL
+build/api.o: src/api.cpp include/api.h
+	g++ -g -o build/api.o -c src/api.cpp -Iinclude
 
 #######################
 ######## Utils ########
 #######################
 
 clean:
-	rm *.o 2> /dev/null || true
-	rm learn_opengl_5.8.1 2> /dev/null || true
-	rm learn_opengl_5.8.2 2> /dev/null || true
-	rm learn_opengl_5.8.3 2> /dev/null || true
+	rm build/*.o 2> /dev/null || true
