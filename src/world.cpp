@@ -2,10 +2,12 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-World::World() {
-  for (int x = -5; x<=5; x++) {
-    for (int y = -5; y<=5; y++) {
-      for (int z = -5; z<0; z++) {
+World::World(){}
+World::World(int d){
+  int r = d/2;
+  for (int x = -r; x<=r; x++) {
+    for (int y = -r; y<=r; y++) {
+      for (int z = -d; z<0; z++) {
         cubes.push_back(glm::vec3((float)x, (float)y, (float)z));
       }
     }

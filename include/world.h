@@ -14,6 +14,7 @@ public:
   void addCube(glm::vec3);
   void attachRenderer(Renderer* renderer);
   World();
+  World(int d);
 };
 
 #endif
