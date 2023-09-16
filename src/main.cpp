@@ -1,11 +1,14 @@
 #include <iostream>
+#include <string>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "renderer.h"
-#include "api.h"
 #include <zmq/zmq.hpp>
 #include <glm/glm.hpp>
-#include <string>
+
+#include "renderer.h"
+#include "api.h"
+#include "controls.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -32,22 +35,6 @@ GLFWwindow* init() {
   return window;
 }
 
-void handleEscape(GLFWwindow* window) {
-  if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, true);
-  }
-}
-
-void handleControls(GLFWwindow* window, Camera* camera) {
-
-  bool up = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
-  bool down = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
-  bool left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-  bool right = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
-  camera->handleTranslateForce(up,down,left,right);
-}
-
-
 void loop (GLFWwindow* window, Renderer* renderer, Camera* camera, World* world, Api* api) {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
@@ -57,11 +44,6 @@ void loop (GLFWwindow* window, Renderer* renderer, Camera* camera, World* world,
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
-}
-
-void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
-  Renderer* renderer = (Renderer*) glfwGetWindowUserPointer(window);
-  renderer->getCamera()->handleRotateForce(window, xpos, ypos);
 }
 
 int main() {
@@ -78,6 +60,7 @@ int main() {
   if(window == NULL) {
     return -1;
   }
+  world->addCube(glm::vec3(0,0,-10));
   loop(window, renderer, camera, world, api);
   glfwTerminate();
   delete renderer;

@@ -1,8 +1,8 @@
 all: matrix
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o
 	cd build
-	g++ -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
+	g++ -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
 	g++ -g -o build/renderer.o -c src/renderer.cpp -Iinclude
@@ -24,6 +24,10 @@ build/camera.o: src/camera.cpp include/camera.h
 
 build/api.o: src/api.cpp include/api.h
 	g++ -g -o build/api.o -c src/api.cpp -Iinclude
+
+build/controls.o: src/controls.cpp include/controls.h
+	g++ -g -o build/controls.o -c src/controls.cpp -Iinclude
+
 
 #######################
 ######## Utils ########
