@@ -36,17 +36,8 @@ void Camera::handleTranslateForce(bool up, bool down, bool left, bool right) {
       cameraSpeed;
 }
 
-void Camera::handleRotateForce(GLFWwindow* window, double xpos, double ypos) {
-  if (firstMouse)
-    {
-      lastX = xpos;
-      lastY = ypos;
-      firstMouse = false;
-    }
-  float xoffset = xpos - lastX;
-  float yoffset = lastY - ypos;
-  lastX = xpos;
-  lastY = ypos;
+void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffset) {
+
   float sensitivity = 0.1f; xoffset *= sensitivity;
   yoffset *= sensitivity;
   yaw += xoffset;

@@ -19,7 +19,7 @@ class Camera {
  public:
   Camera();
   void handleTranslateForce(bool up, bool down, bool left, bool right);
-  void handleRotateForce(GLFWwindow* window, double xpos, double ypos);
+  void handleRotateForce(GLFWwindow* window, double xoffset, double yoffset);
   ~Camera();
   glm::mat4 getViewMatrix();
 };
