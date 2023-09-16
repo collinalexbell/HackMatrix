@@ -9,6 +9,15 @@
 #include "renderer.h"
 #include "api.h"
 #include "controls.h"
+#include "camera.h"
+#include "world.h"
+
+World* world;
+Api* api;
+Renderer* renderer;
+Controls* controls;
+Camera* camera;
+GLFWwindow* window;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -32,27 +41,31 @@ GLFWwindow* init() {
     return NULL;
   }
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   return window;
 }
 
-void loop (GLFWwindow* window, Renderer* renderer, Camera* camera, World* world, Api* api) {
+void loop () {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
     api->pollFor(world);
-    handleEscape(window);
-    handleControls(window, camera);
+    controls->handleKeys(window, camera);
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 }
 
+void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
+  controls->mouseCallback(window, xpos, ypos);
+}
+
 int main() {
-  GLFWwindow* window = init();
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  Camera* camera = new Camera();
-  World* world = new World();
-  Api* api = new Api("tcp://*:5555");
-  Renderer* renderer = new Renderer(camera, world);
+  window = init();
+  camera = new Camera();
+  world = new World();
+  api = new Api("tcp://*:5555");
+  renderer = new Renderer(camera, world);
+  controls = new Controls();
   world->attachRenderer(renderer);
   world->addCube(glm::vec3(0, 10, 0));
   glfwSetWindowUserPointer(window, (void*)renderer);
@@ -61,7 +74,7 @@ int main() {
     return -1;
   }
   world->addCube(glm::vec3(0,0,-10));
-  loop(window, renderer, camera, world, api);
+  loop();
   glfwTerminate();
   delete renderer;
   delete world;

@@ -7,7 +7,7 @@ matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
 	g++ -g -o build/renderer.o -c src/renderer.cpp -Iinclude
 
-build/main.o: src/main.cpp include/renderer.h include/camera.h
+build/main.o: src/main.cpp include/renderer.h include/camera.h include/controls.h include/world.h include/api.h
 	g++ -g -o build/main.o -c src/main.cpp -Iinclude
 
 build/shader.o: src/shader.cpp include/shader.h
