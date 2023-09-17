@@ -1,4 +1,4 @@
-all: matrix
+all: matrix x11
 
 matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o
 	cd build
@@ -27,6 +27,9 @@ build/api.o: src/api.cpp include/api.h
 
 build/controls.o: src/controls.cpp include/controls.h
 	g++ -g -o build/controls.o -c src/controls.cpp -Iinclude
+
+x11: src/app.cpp
+	g++ -o x11 src/app.cpp -Iinclude -lX11
 
 
 #######################
