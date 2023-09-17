@@ -9,3 +9,11 @@
 - objects in the world are scriptable
 
 ? the voxels could start out large and get progressively smaller as the player advances
+
+
+## story
+
+While exploring a lost city, a <x>th century player discovers a strange glowing apple growing on a tree.
+When the apple is picked up, it expands into a pair of goggles that the player puts on.
+Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
+to manipulate matter, if only he can find the right Names of Power.

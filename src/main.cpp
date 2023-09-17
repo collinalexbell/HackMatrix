@@ -67,13 +67,12 @@ int main() {
   renderer = new Renderer(camera, world);
   controls = new Controls();
   world->attachRenderer(renderer);
-  world->addCube(glm::vec3(0, 10, 0));
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
   if(window == NULL) {
     return -1;
   }
-  world->addCube(glm::vec3(0,0,-10));
+  //world->addCube(glm::vec3(0,0,-10));
   loop();
   glfwTerminate();
   delete renderer;
