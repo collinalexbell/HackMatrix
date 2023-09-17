@@ -4,27 +4,36 @@
 
 using namespace std;
 
-int main() {
-  Display* display = XOpenDisplay(NULL);
-  //cout << "display:" << XDisplayString(display) << endl;
-  Window target = XDefaultRootWindow(display);
+void traverseWindowTree(Display* display, Window& win, void (*func)(Display*, Window&)) {
+  func(display, win);
+
+  // handle children
   Window parent;
   Window root;
   Window childrenMem[20];
   Window *children = childrenMem;
   unsigned int nchildren_return;
 
-  XQueryTree(display, target, &root, &parent, &children, &nchildren_return);
+  XQueryTree(display, win, &root, &parent, &children, &nchildren_return);
 
-  XWindowAttributes attrs;
   for(int i = 0; i < nchildren_return; i++) {
-    XGetWindowAttributes(display, children[i], &attrs);
-    //cout << "width:" << attrs.width << ", height:" << attrs.height << ", depth:" << attrs.depth << ", isViewable:" << attrs.map_state << endl;
-    char nameMem[100];
-    char* name;
-    XFetchName(display, children[0], &name);
-    if(name != NULL) {
-      cout << name << endl;
-    }
+    traverseWindowTree(display, children[i], func);
   }
+}
+
+void printWindowName(Display* display, Window& win) {
+  XWindowAttributes attrs;
+  char nameMem[100];
+  char* name;
+  XFetchName(display, win, &name);
+  if(name != NULL) {
+    cout << name << endl;
+  }
+}
+
+int main() {
+  Display* display = XOpenDisplay(NULL);
+  //cout << "display:" << XDisplayString(display) << endl;
+  Window win = XDefaultRootWindow(display);
+  traverseWindowTree(display, win, &printWindowName);
 }
