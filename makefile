@@ -1,8 +1,8 @@
-all: matrix x11
+all: matrix
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o
 	cd build
-	g++ -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o src/glad.c -lglfw -lGL -lpthread -Iinclude  -lGL -lzmq -Iinclude
+	g++ -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq -Iinclude -lX11 -lXcomposite -lXext
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
 	g++ -g -o build/renderer.o -c src/renderer.cpp -Iinclude
@@ -28,8 +28,8 @@ build/api.o: src/api.cpp include/api.h
 build/controls.o: src/controls.cpp include/controls.h
 	g++ -g -o build/controls.o -c src/controls.cpp -Iinclude
 
-x11: src/app.cpp
-	g++ -o x11 src/app.cpp -Iinclude -lX11
+build/app.o: src/app.cpp
+	g++ -g -o build/app.o -c src/app.cpp -Iinclude
 
 
 #######################
