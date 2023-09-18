@@ -1,14 +1,30 @@
 # matrix game design
 
-- voxel
-- 3rd person
+## Game Theme
+? solar cyborgs
+? living in a city filled with cybernetic organisms
+? diy ethic
+? automated homestead life
+? exploring an ancient world that contains cyberenetic artifacts
 
 
 ## mechanics
+
+- Players use an in game IDE to write code that influences the game world
+  - Objects in the world are scriptable
+  - Objects can be spawned
+
+? Players can write code for items that can be equiped that can then perform actions based on the code they write
+? Item enchantment with code
+
+? Players unlock API
+? Some objects are immune to API calls
+? Players have API spend/rate/etc
+
 ? the source code for an object is the path the player took (placing blocks) to make it
-- objects in the world are scriptable
 
 ? the voxels could start out large and get progressively smaller as the player advances
+
 
 
 ## story
@@ -17,3 +33,20 @@ While exploring a lost city, a <x>th century player discovers a strange glowing 
 When the apple is picked up, it expands into a pair of goggles that the player puts on.
 Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
 to manipulate matter, if only he can find the right Names of Power.
+
+
+
+## aesthetics
+- voxel
+- 3rd person
+- IDK, IDK, IDK
+
+## technology
+- X Window to allow IDE
+- voxel
+- C++
+- Python API
+- Lisp API
+- ZeroMQ
+- OpenGL
+
