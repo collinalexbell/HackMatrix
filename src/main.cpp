@@ -2,6 +2,7 @@
 #include <string>
 
 #include <glad/glad.h>
+#include <glad/glad_glx.h>
 #include <GLFW/glfw3.h>
 #include <zmq/zmq.hpp>
 #include <glm/glm.hpp>
@@ -18,6 +19,8 @@ Renderer* renderer;
 Controls* controls;
 Camera* camera;
 GLFWwindow* window;
+
+void runApp();
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -40,6 +43,9 @@ GLFWwindow* init() {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return NULL;
   }
+  
+
+
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   return window;
@@ -73,6 +79,7 @@ int main() {
     return -1;
   }
   //world->addCube(glm::vec3(0,0,-10));
+  runApp();
   loop();
   glfwTerminate();
   delete renderer;
