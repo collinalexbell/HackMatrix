@@ -12,43 +12,45 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+float HEIGHT = 0.27;
+
 float vertices[] = {
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-  0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-  -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+  -0.5f, -HEIGHT, -0.5f, 0.0f, 0.0f,
+  0.5f, -HEIGHT, -0.5f, 1.0f, 0.0f,
+  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
+  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
+  -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f,
+  -0.5f, -HEIGHT, -0.5f, 0.0f, 0.0f,
+  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
+  0.5f, -HEIGHT, 0.5f, 1.0f, 0.0f,
+  0.5f, HEIGHT, 0.5f, 1.0f, 1.0f,
+  0.5f, HEIGHT, 0.5f, 1.0f, 1.0f,
+  -0.5f, HEIGHT, 0.5f, 0.0f, 1.0f,
+  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
+  -0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
+  -0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
+  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
+  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
+  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
+  -0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
+  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
+  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
+  0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
+  0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
+  0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
+  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
+  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
+  0.5f, -HEIGHT, -0.5f, 1.0f, 1.0f,
+  0.5f, -HEIGHT, 0.5f, 1.0f, 0.0f,
+  0.5f, -HEIGHT, 0.5f, 1.0f, 0.0f,
+  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
+  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
+  -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f,
+  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
+  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
+  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
+  -0.5f, HEIGHT, 0.5f, 0.0f, 0.0f,
+  -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f
 };
 
 void Renderer::genGlResources() {
@@ -126,7 +128,7 @@ Renderer::Renderer(Camera* camera, World* world) {
   // note that we’re translating the scene in the reverse direction
   view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
-  projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f,
+  projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f,
                                 100.0f);
 
   // this can be used to rotate an entire chunk (call to glDrawArraysInstanced)

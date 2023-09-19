@@ -1,10 +1,15 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_X11
+#include <GLFW/glfw3native.h>
 
 #include "controls.h"
 #include "camera.h"
 #include "renderer.h"
+#include "app.h"
+
+using namespace std;
 
 void Controls::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
   if(cursorDisabled) {
@@ -27,6 +32,7 @@ void Controls::handleKeys(GLFWwindow* window, Camera* camera) {
   handleEscape(window);
   handleControls(window, camera);
   handleToggleFocus(window);
+  handleToggleApp(window);
 }
 
 void Controls::handleControls(GLFWwindow* window, Camera* camera) {
@@ -52,6 +58,12 @@ bool debounce(double& lastTime) {
   return interval > DEBOUNCE_TIME;
 }
 
+void Controls::handleToggleApp(GLFWwindow* window) {
+  if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+    Window x11Window = glfwGetX11Window(window);
+    focus(x11Window);
+  }
+}
 
 void Controls::handleToggleFocus(GLFWwindow* window) {
   if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {

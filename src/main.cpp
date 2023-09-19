@@ -30,7 +30,7 @@ GLFWwindow* init() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  GLFWwindow* window = glfwCreateWindow(800, 600, "matrix", NULL, NULL);
+  GLFWwindow* window = glfwCreateWindow(1920, 1080, "matrix", NULL, NULL);
   if (window == NULL) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -42,8 +42,6 @@ GLFWwindow* init() {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return NULL;
   }
-  
-
 
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
