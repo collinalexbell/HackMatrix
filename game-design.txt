@@ -1,6 +1,12 @@
 # matrix game design
 
 ## Game Theme
+
+- Divine/magical power beyond one's comprehension
+  is available to those who seek it
+  and learn to harmonize themselves
+  with the spirit of the universe
+
 ? solar cyborgs
 ? living in a city filled with cybernetic organisms
 ? diy ethic
@@ -13,6 +19,10 @@
 - Players use an in game IDE to write code that influences the game world
   - Objects in the world are scriptable
   - Objects can be spawned
+
+? Meditation to discover API endpoints for the universe
+
+- Subtle synchronicities that if players follow - will drastically improve their playing experience
 
 ? Players can write code for items that can be equiped that can then perform actions based on the code they write
 ? Item enchantment with code
@@ -35,6 +45,13 @@ When the apple is picked up, it expands into a pair of goggles that the player p
 Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
 to manipulate matter, if only he can find the right Names of Power.
 
+The player comes across a magician:
+
+(rewrite for the sake of the game " We are about to study the idea of a computational process. Computational processes are abstract beings that inhabit computers. As they evolve, processes manipulate other abstract things called data. The evolution of a process is directed by a pattern of rules called a program. People create programs to direct processes. In effect, we conjure the spirits of the computer[matrix] with our spells.
+
+A computational process is indeed much like a sorcerer's idea of a spirit. It cannot be seen or touched. It is not composed of matter at all. However, it is very real. It can perform intellectual work. It can answer questions. It can affect the world by disbursing money at a bank or by controlling a robot arm in a factory. The programs we use to conjure processes are like a sorcerer's spells. They are carefully composed from symbolic expressions in arcane and esoteric programming languages that prescribe the tasks we want our processes to perform.
+
+A computational process, in a correctly working computer, executes programs precisely and accurately. Thus, like the sorcerer's apprentice, novice programmers must learn to understand and to anticipate the consequences of their conjuring. Even small errors (usually called bugs or glitches) in programs can have complex and unanticipated consequences.")
 
 
 ## aesthetics
