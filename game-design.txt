@@ -1,3 +1,4 @@
+
 # matrix game design
 
 ## Game Theme
@@ -12,6 +13,10 @@
 ? diy ethic
 ? automated homestead life
 ? exploring an ancient world that contains cyberenetic artifacts
+
+
+## aesthetic
+crt: https://www.shadertoy.com/view/Ms23DR
 
 
 ## mechanics
@@ -35,6 +40,11 @@
 
 ? the voxels could start out large and get progressively smaller as the player advances
 ? piece components together to build cyborgs
+
+## puzzles
+
+- [Turret Avoidance](https://www.youtube.com/watch?v=dY6jR52fFWo)
+
 
 
 
