@@ -29,7 +29,7 @@ build/controls.o: src/controls.cpp include/controls.h
 	g++ -g -o build/controls.o -c src/controls.cpp -Iinclude
 
 build/app.o: src/app.cpp
-	g++ -g -o build/app.o -c src/app.cpp -Iinclude
+	g++ -g -o build/app.o -c src/app.cpp -Iinclude -Wno-narrowing
 
 
 #######################

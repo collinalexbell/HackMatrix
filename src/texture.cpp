@@ -47,6 +47,10 @@ void Texture::loadTextureData(std::string fname) {
   stbi_image_free(data);
 }
 
+void Texture::blankData() {
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+}
+
 void Texture::initAndBindGlTexture(GLenum unit) {
   glGenTextures(1, &ID);
   glActiveTexture(unit);
@@ -58,4 +62,10 @@ Texture::Texture(std::string fname, GLenum unit) {
   setTextureParameters();
   stbi_set_flip_vertically_on_load(true);
   loadTextureData(fname);
+}
+
+Texture::Texture(GLenum unit) {
+  initAndBindGlTexture(unit);
+  setTextureParameters();
+  blankData();
 }

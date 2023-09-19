@@ -9,8 +9,10 @@ class Texture {
   int width, height, nrChannels;
   void loadTextureData(std::string);
   void initAndBindGlTexture(GLenum unit);
+  void blankData();
  public:
   Texture(string, GLenum unit);
+  Texture(GLenum unit);
   unsigned int ID;
 
 };

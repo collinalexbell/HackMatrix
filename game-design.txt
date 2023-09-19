@@ -24,6 +24,7 @@
 ? the source code for an object is the path the player took (placing blocks) to make it
 
 ? the voxels could start out large and get progressively smaller as the player advances
+? piece components together to build cyborgs
 
 
 
