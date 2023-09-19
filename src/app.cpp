@@ -52,36 +52,90 @@ void printWindowName(Display* display, Window win) {
   }
 }
 
+Display* display;
+int screen;
+Window emacs;
+XWindowAttributes attrs;
+int fbConfigCount;
+GLXFBConfig* fbConfigs;
 
-void runApp() {
-  Display* display = XOpenDisplay(NULL);
+void fetchInfo() {
+ display = XOpenDisplay(NULL);
   //cout << "display:" << XDisplayString(display) << endl;
 
-  int screen = XDefaultScreen(display);
+  screen = XDefaultScreen(display);
   if (!gladLoadGLXLoader((GLADloadproc)glfwGetProcAddress, display, screen)) {
     std::cout << "Failed to initialize GLAD for GLX" << std::endl;
     return;
   }
   cout << screen << endl;
   Window win = XDefaultRootWindow(display);
-  Window emacs = getWindowByName(display, "emacs@phoenix");
-  XWindowAttributes attrs;
+  emacs = getWindowByName(display, "emacs@phoenix");
   XGetWindowAttributes(display, emacs, &attrs);
   cout << "width: " << attrs.width
-       << ", height" << attrs.height
+       << ", height: " << attrs.height
+       << ", depth: " << attrs.depth
+       << ", screen:" << XScreenNumberOfScreen(attrs.screen) << "==" << screen
        << endl;
-
-  int attribs[] = {
-    GLX_RGBA,     // Use an RGBA visual
-    GLX_DEPTH_SIZE, 24,  // Desired depth buffer size
-    None  // End of attribute list
-  };
-
   // Use glXChooseFBConfig to obtain a matching GLXFBConfig
-  int fbConfigCount;
-  GLXFBConfig* fbConfigs = glXChooseFBConfig(display, screen, attribs, &fbConfigCount);
+	const int pixmap_config[] = {
+		GLX_BIND_TO_TEXTURE_RGBA_EXT, 1,
+		GLX_BIND_TO_TEXTURE_TARGETS_EXT, GLX_TEXTURE_2D_BIT_EXT,
+		GLX_RENDER_TYPE, GLX_RGBA_BIT,
+		GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT,
+		GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
+		GLX_X_RENDERABLE, 1,
+		//GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT, (GLint) GLX_DONT_CARE,
+		GLX_BUFFER_SIZE, 32,
+    //		GLX_SAMPLE_BUFFERS, 1,
+    //		GLX_SAMPLES, 4,
+		GLX_DOUBLEBUFFER, 1,
+		GLX_RED_SIZE, 8,
+		GLX_GREEN_SIZE, 8,
+		GLX_BLUE_SIZE, 8,
+		GLX_ALPHA_SIZE, 8,
+		GLX_STENCIL_SIZE, 0,
+		GLX_DEPTH_SIZE, 16, 0
+	};
+
+  fbConfigs = glXChooseFBConfig(display, 0, pixmap_config, &fbConfigCount);
+
+
+
+}
+
+void initApp() {
+  fetchInfo();
+  XCompositeRedirectWindow(display, emacs, CompositeRedirectAutomatic);
+
+}
+
+struct ConfigAndFormat {
+  GLXFBConfig config;
+  int format;
+};
+
+int errorHandler(Display *dpy, XErrorEvent *err)
+{
+  char buf[5000];
+  XGetErrorText(dpy, err->error_code, buf, 5000);
+  printf("error: %s\n", buf);
+
+  return 0;
+}
+
+
+void appTexture() {
 
   Pixmap pixmap = XCompositeNameWindowPixmap(display, emacs);
-  //GLXPixmap glxPixmap = glXCreatePixmap(display, fbConfigs[0], pixmap, pixmap_attributes);
-  //glXBindTexImageEXT(display, glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
+  cout << "pixmap" << pixmap << endl;
+
+  const int pixmap_attribs[] = {
+    GLX_TEXTURE_TARGET_EXT, GLX_TEXTURE_2D_EXT,
+    GLX_TEXTURE_FORMAT_EXT, GLX_TEXTURE_FORMAT_RGBA_EXT,
+    None
+  };
+
+  GLXPixmap glxPixmap = glXCreatePixmap(display, fbConfigs[0], pixmap, pixmap_attribs);
+  glXBindTexImageEXT(display, glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
 }

@@ -2,6 +2,7 @@
 #include "renderer.h"
 #include "shader.h"
 #include "camera.h"
+#include "app.h"
 #include <vector>
 #include <iostream>
 #include <glad/glad.h>
@@ -98,7 +99,7 @@ Renderer::Renderer(Camera* camera, World* world) {
   setupVertexAttributePointers();
 
   textures.insert(std::pair<string, Texture*>("container",
-                                              new Texture("images/container.jpg", GL_TEXTURE0)));
+                                             new Texture(GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
 
@@ -106,6 +107,13 @@ Renderer::Renderer(Camera* camera, World* world) {
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setInt("texture1", 0);
   shader->setInt("texture2", 1);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
+  appTexture();
+
+
+
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
@@ -182,11 +190,18 @@ void Renderer::addCube(int index) {
   glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*index, sizeof(glm::vec3), &world->getCubes()[index]);
 }
 
+float FPS_60 = 1.0/1.0;
+bool ran = false;
 void Renderer::render() {
+
+  // This is a hacky test, need to put this into a seperate method or something
+  if(!ran) {
+        ran = true;
+  }
+  // This is a hacky test, need to put this into a seperate method or something
+
   //computeTransform();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
-  glBindTexture(GL_TEXTURE_2D, textures["face"]->ID);
   view = camera->getViewMatrix();
   updateTransformMatrices();
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->getCubes().size());

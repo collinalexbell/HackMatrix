@@ -12,6 +12,7 @@
 #include "controls.h"
 #include "camera.h"
 #include "world.h"
+#include "app.h"
 
 World* world;
 Api* api;
@@ -19,8 +20,6 @@ Renderer* renderer;
 Controls* controls;
 Camera* camera;
 GLFWwindow* window;
-
-void runApp();
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -59,6 +58,7 @@ void loop () {
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
+  std::cout << "exiting" << std::endl;
 }
 
 void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
@@ -67,6 +67,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 
 int main() {
   window = init();
+  initApp();
   camera = new Camera();
   world = new World();
   api = new Api("tcp://*:5555");
@@ -78,8 +79,7 @@ int main() {
   if(window == NULL) {
     return -1;
   }
-  //world->addCube(glm::vec3(0,0,-10));
-  runApp();
+  world->addCube(glm::vec3(0,0,-10));
   loop();
   glfwTerminate();
   delete renderer;
