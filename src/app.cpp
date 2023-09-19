@@ -6,6 +6,8 @@
 #include <glad/glad_glx.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <thread>
+#include <X11/XKBlib.h>
 
 using namespace std;
 
@@ -104,7 +106,17 @@ void fetchInfo() {
 
 }
 
+int errorHandler(Display *dpy, XErrorEvent *err)
+{
+  char buf[5000];
+  XGetErrorText(dpy, err->error_code, buf, 5000);
+  printf("error: %s\n", buf);
+
+  return 0;
+}
+
 void initApp() {
+  XSetErrorHandler(errorHandler);
   fetchInfo();
   XCompositeRedirectWindow(display, emacs, CompositeRedirectAutomatic);
 
@@ -115,14 +127,50 @@ struct ConfigAndFormat {
   int format;
 };
 
-int errorHandler(Display *dpy, XErrorEvent *err)
-{
-  char buf[5000];
-  XGetErrorText(dpy, err->error_code, buf, 5000);
-  printf("error: %s\n", buf);
-
-  return 0;
+void unfocus(Window matrix) {
+  XSelectInput(display, matrix, 0);
+  XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
+  XSync(display, False);
+  XFlush(display);
 }
+
+void focus(Window matrix) {
+  Window root = DefaultRootWindow(display);
+  XSetInputFocus(display, emacs, RevertToParent, CurrentTime);
+  XSelectInput(display, emacs, KeyPressMask);
+  XSync(display, False);
+  XFlush(display);
+
+  // Create a thread to listen for key events
+  std::thread keyListenerThread([root, matrix]() {
+    try {
+      XEvent event;
+      KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+      KeyCode ctrlKeyCode = XKeysymToKeycode(display, XK_Control_L);
+      KeyCode winKeyCode = XKeysymToKeycode(display, XK_Super_L);
+
+      while (true) {
+        XNextEvent(display, &event);
+
+        if (event.type == KeyPress) {
+          XKeyEvent keyEvent = event.xkey;
+          if (keyEvent.keycode == eKeyCode &&
+              keyEvent.state & ControlMask &&
+              keyEvent.state & Mod4Mask) {
+            // Windows Key (Super_L) + Ctrl + E is pressed
+            unfocus(matrix); // Call your unfocus function
+            break;
+          }
+        }
+      }
+    } catch (const std::exception& ex) {
+      std::cerr << "Exception caught in keyListener: " << ex.what() << std::endl;
+    }
+  });
+
+  keyListenerThread.detach();
+}
+
 
 
 void appTexture() {
