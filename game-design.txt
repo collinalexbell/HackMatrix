@@ -1,6 +1,11 @@
 
 # matrix game design
 
+## essential experience
+concious hackers of their own world
+become fully enlightened technokings
+
+
 ## Game Theme
 
 - Divine/magical power beyond one's comprehension
@@ -16,7 +21,34 @@
 
 
 ## aesthetic
+
+### colors
+
+What if I blended man-made colors and natural colors with a sharp distinction between the two
+
+This would capture the essense of being in a park in the midst of NYC
+
+#### man made
+- [spacemacs colors](https://github.com/nashamri/spacemacs-theme/blob/master/spacemacs-theme.el)
+- all the rainbow parens in lisp
+
+#### nature
+- look at fall over the smokies
+
+
+### architecture
+? greek
+? cyber-greek
+? nyc style
+? colonial
+? steam punk
+? savanah georgia
+
+### shaders
 crt: https://www.shadertoy.com/view/Ms23DR
+outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
+
+
 
 
 ## mechanics
@@ -24,6 +56,9 @@ crt: https://www.shadertoy.com/view/Ms23DR
 - Players use an in game IDE to write code that influences the game world
   - Objects in the world are scriptable
   - Objects can be spawned
+
+- Click in and click out of windows (maybe with a button frame or hotkey)
+- Spawn boxes for things to be drawn in
 
 ? Meditation to discover API endpoints for the universe
 
