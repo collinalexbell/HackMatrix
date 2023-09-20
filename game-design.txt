@@ -37,6 +37,11 @@ This would capture the essense of being in a park in the midst of NYC
 
 
 ### architecture
+
+- trees, lots of trees
+- clasical buildings with futurist twist
+- well designed city blocks (like savanah, good for trees)
+
 ? greek
 ? cyber-greek
 ? nyc style
@@ -59,6 +64,8 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 - Click in and click out of windows (maybe with a button frame or hotkey)
 - Spawn boxes for things to be drawn in
+
+? players make agents that manipulate the environment while sleeping (or doing other things)
 
 ? Meditation to discover API endpoints for the universe
 
@@ -112,4 +119,6 @@ A computational process, in a correctly working computer, executes programs prec
 - Lisp API
 - ZeroMQ
 - OpenGL
+
+- City recreation based on google streetview (or some similar)
 
