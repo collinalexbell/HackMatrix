@@ -65,6 +65,9 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 
 int main() {
   window = init();
+  int maxTextureImageUnits;
+  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
+  std::cout << "max textures: " << maxTextureImageUnits << endl;
   X11App emacs;
   camera = new Camera();
   world = new World();
