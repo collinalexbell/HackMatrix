@@ -58,7 +58,7 @@ Display* display;
 int screen;
 Window emacs;
 XWindowAttributes attrs;
-int fbConfigCount;
+
 GLXFBConfig* fbConfigs;
 
 void fetchInfo() {
@@ -88,7 +88,7 @@ void fetchInfo() {
 		GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
 		GLX_X_RENDERABLE, 1,
 		//GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT, (GLint) GLX_DONT_CARE,
-		GLX_BUFFER_SIZE, 32,
+
     //		GLX_SAMPLE_BUFFERS, 1,
     //		GLX_SAMPLES, 4,
 		GLX_DOUBLEBUFFER, 1,
@@ -122,7 +122,6 @@ void initApp() {
 
 }
 
-struct ConfigAndFormat {
   GLXFBConfig config;
   int format;
 };
@@ -146,8 +145,6 @@ void focus(Window matrix) {
     try {
       XEvent event;
       KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
-      KeyCode ctrlKeyCode = XKeysymToKeycode(display, XK_Control_L);
-      KeyCode winKeyCode = XKeysymToKeycode(display, XK_Super_L);
 
       while (true) {
         XNextEvent(display, &event);
@@ -156,7 +153,7 @@ void focus(Window matrix) {
           XKeyEvent keyEvent = event.xkey;
           if (keyEvent.keycode == eKeyCode &&
               keyEvent.state & ControlMask &&
-              keyEvent.state & Mod4Mask) {
+              keyEvent.state & Mod1Mask) {
             // Windows Key (Super_L) + Ctrl + E is pressed
             unfocus(matrix); // Call your unfocus function
             break;
