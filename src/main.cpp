@@ -65,12 +65,14 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 
 int main() {
   window = init();
-  initApp();
+  X11App emacs;
   camera = new Camera();
   world = new World();
   api = new Api("tcp://*:5555");
   renderer = new Renderer(camera, world);
+  renderer->registerApp(&emacs);
   controls = new Controls();
+  controls->registerApp(&emacs);
   world->attachRenderer(renderer);
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);

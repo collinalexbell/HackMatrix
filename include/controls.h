@@ -4,6 +4,7 @@
 #include "camera.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "app.h"
 
 class Controls {
   bool cursorDisabled = true;
@@ -13,6 +14,7 @@ class Controls {
   bool firstMouse = true;
   float lastX;
   float lastY;
+  X11App* app = NULL;
 
   void handleControls(GLFWwindow* window, Camera* camera);
   void handleEscape(GLFWwindow* window);
@@ -21,5 +23,6 @@ class Controls {
  public:
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
   void handleKeys(GLFWwindow* window, Camera* camera);
+  void registerApp(X11App* app);
 };
 #endif

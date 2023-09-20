@@ -1,13 +1,14 @@
 #include <iostream>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
+#include <X11/XKBlib.h>
 #include <string>
 #include <functional>
 #include <glad/glad_glx.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <thread>
-#include <X11/XKBlib.h>
+#include "app.h"
 
 using namespace std;
 
@@ -54,14 +55,7 @@ void printWindowName(Display* display, Window win) {
   }
 }
 
-Display* display;
-int screen;
-Window emacs;
-XWindowAttributes attrs;
-
-GLXFBConfig* fbConfigs;
-
-void fetchInfo() {
+void X11App::fetchInfo() {
  display = XOpenDisplay(NULL);
   //cout << "display:" << XDisplayString(display) << endl;
 
@@ -115,25 +109,20 @@ int errorHandler(Display *dpy, XErrorEvent *err)
   return 0;
 }
 
-void initApp() {
+X11App::X11App() {
   XSetErrorHandler(errorHandler);
   fetchInfo();
   XCompositeRedirectWindow(display, emacs, CompositeRedirectAutomatic);
-
-}
-
-  GLXFBConfig config;
-  int format;
 };
 
-void unfocus(Window matrix) {
+void X11App::unfocus(Window matrix) {
   XSelectInput(display, matrix, 0);
   XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
   XSync(display, False);
   XFlush(display);
 }
 
-void focus(Window matrix) {
+void X11App::focus(Window matrix) {
   Window root = DefaultRootWindow(display);
   XSetInputFocus(display, emacs, RevertToParent, CurrentTime);
   XSelectInput(display, emacs, KeyPressMask);
@@ -141,7 +130,7 @@ void focus(Window matrix) {
   XFlush(display);
 
   // Create a thread to listen for key events
-  std::thread keyListenerThread([root, matrix]() {
+  std::thread keyListenerThread([this, root, matrix]() {
     try {
       XEvent event;
       KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
@@ -170,7 +159,7 @@ void focus(Window matrix) {
 
 
 
-void appTexture() {
+void X11App::appTexture() {
 
   Pixmap pixmap = XCompositeNameWindowPixmap(display, emacs);
   cout << "pixmap" << pixmap << endl;

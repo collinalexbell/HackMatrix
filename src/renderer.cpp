@@ -110,12 +110,6 @@ Renderer::Renderer(Camera* camera, World* world) {
   shader->setInt("texture1", 0);
   shader->setInt("texture2", 1);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
-  appTexture();
-
-
-
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
@@ -211,6 +205,15 @@ void Renderer::render() {
 
 Camera* Renderer::getCamera() {
   return camera;
+}
+
+void Renderer::registerApp(X11App* app) {
+  this->app = app;
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
+  app->appTexture();
+
+
 }
 
 Renderer::~Renderer() {

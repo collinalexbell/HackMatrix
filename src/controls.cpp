@@ -59,9 +59,9 @@ bool debounce(double& lastTime) {
 }
 
 void Controls::handleToggleApp(GLFWwindow* window) {
-  if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+  if(app != NULL && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
     Window x11Window = glfwGetX11Window(window);
-    focus(x11Window);
+    app->focus(x11Window);
   }
 }
 
@@ -78,4 +78,8 @@ void Controls::handleToggleFocus(GLFWwindow* window) {
       }
     }
   }
+}
+
+void Controls::registerApp(X11App* app) {
+  this->app = app;
 }

@@ -4,6 +4,7 @@
 #include "texture.h"
 #include "world.h"
 #include "camera.h"
+#include "app.h"
 #include <map>
 #include <vector>
 
@@ -32,6 +33,7 @@ class Renderer {
   void updateTransformMatrices();
   Camera* camera;
   World* world;
+  X11App* app = NULL;
 
   unsigned int emacsID;
 
@@ -49,6 +51,7 @@ class Renderer {
   void setupVertexAttributePointers();
   void fillBuffers();
   void addCube(int index);
+  void registerApp(X11App* app);
 };
 
 #endif
