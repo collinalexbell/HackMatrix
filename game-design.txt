@@ -45,9 +45,9 @@ This would capture the essense of being in a park in the midst of NYC
 
 ### architecture
 
-- trees, lots of trees
-- clasical buildings with futurist twist
-- well designed city blocks (like savanah, good for trees)
+? trees, lots of trees
+? clasical buildings with futurist twist
+? well designed city blocks (like savanah, good for trees)
 
 ? greek
 ? cyber-greek
@@ -121,4 +121,5 @@ A computational process, in a correctly working computer, executes programs prec
 - ZeroMQ
 - OpenGL
 ? City recreation based on google streetview (or some similar)
-
+- recompilable while playing
+- snap to flat, draw with pixels
