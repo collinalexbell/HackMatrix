@@ -68,7 +68,7 @@ int main() {
   int maxTextureImageUnits;
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
   std::cout << "max textures: " << maxTextureImageUnits << endl;
-  X11App emacs;
+  X11App emacs("emacs@phoenix");
   camera = new Camera();
   world = new World();
   api = new Api("tcp://*:5555");
