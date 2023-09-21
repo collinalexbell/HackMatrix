@@ -1,5 +1,11 @@
-
 # matrix game design
+
+```
+$ implemented
+* working on
+- committed
+? maybe
+```
 
 ## essential experience
 concious hackers of their own world
@@ -21,16 +27,17 @@ become fully enlightened technokings
 
 
 ## aesthetic
+* voxel
+? 3rd person
+? IDK, IDK, IDK
 
 ### colors
-
 What if I blended man-made colors and natural colors with a sharp distinction between the two
-
 This would capture the essense of being in a park in the midst of NYC
 
 #### man made
-- [spacemacs colors](https://github.com/nashamri/spacemacs-theme/blob/master/spacemacs-theme.el)
-- all the rainbow parens in lisp
+* [spacemacs colors](https://github.com/nashamri/spacemacs-theme/blob/master/spacemacs-theme.el)
+* all the rainbow parens in lisp
 
 #### nature
 - look at fall over the smokies
@@ -58,12 +65,12 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 ## mechanics
 
-- Players use an in game IDE to write code that influences the game world
+$ Players use an in game IDE to write code that influences the game world
   - Objects in the world are scriptable
   - Objects can be spawned
+$ Click in and click out of windows (maybe with a button frame or hotkey)
 
-- Click in and click out of windows (maybe with a button frame or hotkey)
-- Spawn boxes for things to be drawn in
+? Spawn boxes for things to be drawn in
 
 ? players make agents that manipulate the environment while sleeping (or doing other things)
 
@@ -105,12 +112,6 @@ A computational process is indeed much like a sorcerer's idea of a spirit. It ca
 
 A computational process, in a correctly working computer, executes programs precisely and accurately. Thus, like the sorcerer's apprentice, novice programmers must learn to understand and to anticipate the consequences of their conjuring. Even small errors (usually called bugs or glitches) in programs can have complex and unanticipated consequences.")
 
-
-## aesthetics
-- voxel
-- 3rd person
-- IDK, IDK, IDK
-
 ## technology
 - X Window to allow IDE
 - voxel
@@ -119,6 +120,5 @@ A computational process, in a correctly working computer, executes programs prec
 - Lisp API
 - ZeroMQ
 - OpenGL
-
-- City recreation based on google streetview (or some similar)
+? City recreation based on google streetview (or some similar)
 
