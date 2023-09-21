@@ -34,16 +34,22 @@ void traverseWindowTree(Display* display, Window win, std::function<void(Display
 Window getWindowByName(Display* display, string search) {
   Window root = XDefaultRootWindow(display);
   Window rv;
+  bool found = false;
 
-  traverseWindowTree(display, root, [&rv, search](Display* display, Window window) {
+  traverseWindowTree(display, root, [&rv, &found, search](Display* display, Window window) {
     char nameMem[100];
     char* name;
     XFetchName(display, window, &name);
     if(name != NULL && string(name) == search) {
+      found = true;
       rv = window;
     }
   });
 
+  if(!found) {
+    cout << "unable to find window: \"" << search << "\""<< endl;
+    throw "unable to find window";
+  }
   return rv;
 }
 
@@ -68,13 +74,17 @@ void X11App::fetchInfo(string windowName) {
   }
   cout << screen << endl;
   Window win = XDefaultRootWindow(display);
-  emacs = getWindowByName(display, windowName);
-  XGetWindowAttributes(display, emacs, &attrs);
+  appWindow = getWindowByName(display, windowName);
+  XMapWindow(display,appWindow);
+  cout << "window: " << appWindow << endl;
+  XGetWindowAttributes(display, appWindow, &attrs);
+  /*
   cout << "width: " << attrs.width
        << ", height: " << attrs.height
        << ", depth: " << attrs.depth
        << ", screen:" << XScreenNumberOfScreen(attrs.screen) << "==" << screen
        << endl;
+  */
   // Use glXChooseFBConfig to obtain a matching GLXFBConfig
 	const int pixmap_config[] = {
 		GLX_BIND_TO_TEXTURE_RGBA_EXT, 1,
@@ -114,7 +124,7 @@ int errorHandler(Display *dpy, XErrorEvent *err)
 X11App::X11App(string windowName) {
   XSetErrorHandler(errorHandler);
   fetchInfo(windowName);
-  XCompositeRedirectWindow(display, emacs, CompositeRedirectAutomatic);
+  XCompositeRedirectWindow(display, appWindow, CompositeRedirectAutomatic);
 };
 
 void X11App::unfocus(Window matrix) {
@@ -126,8 +136,8 @@ void X11App::unfocus(Window matrix) {
 
 void X11App::focus(Window matrix) {
   Window root = DefaultRootWindow(display);
-  XSetInputFocus(display, emacs, RevertToParent, CurrentTime);
-  XSelectInput(display, emacs, KeyPressMask);
+  XSetInputFocus(display, appWindow, RevertToParent, CurrentTime);
+  XSelectInput(display, appWindow, KeyPressMask);
   XSync(display, False);
   XFlush(display);
 
@@ -162,9 +172,7 @@ void X11App::focus(Window matrix) {
 
 
 void X11App::appTexture() {
-
-  Pixmap pixmap = XCompositeNameWindowPixmap(display, emacs);
-  cout << "pixmap" << pixmap << endl;
+  Pixmap pixmap = XCompositeNameWindowPixmap(display, appWindow);
 
   const int pixmap_attribs[] = {
     GLX_TEXTURE_TARGET_EXT, GLX_TEXTURE_2D_EXT,

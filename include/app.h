@@ -12,7 +12,7 @@ using namespace std;
 class X11App {
   Display* display;
   int screen;
-  Window emacs;
+  Window appWindow;
   XWindowAttributes attrs;
   GLXFBConfig* fbConfigs;
   int fbConfigCount;
