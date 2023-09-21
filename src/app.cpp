@@ -12,6 +12,8 @@
 
 using namespace std;
 
+#define XA_ATOM 4
+
 void traverseWindowTree(Display* display, Window win, std::function<void(Display*, Window)> func) {
   func(display, win);
 
@@ -55,7 +57,7 @@ void printWindowName(Display* display, Window win) {
   }
 }
 
-void X11App::fetchInfo() {
+void X11App::fetchInfo(string windowName) {
  display = XOpenDisplay(NULL);
   //cout << "display:" << XDisplayString(display) << endl;
 
@@ -66,7 +68,7 @@ void X11App::fetchInfo() {
   }
   cout << screen << endl;
   Window win = XDefaultRootWindow(display);
-  emacs = getWindowByName(display, "emacs@phoenix");
+  emacs = getWindowByName(display, windowName);
   XGetWindowAttributes(display, emacs, &attrs);
   cout << "width: " << attrs.width
        << ", height: " << attrs.height
@@ -109,9 +111,9 @@ int errorHandler(Display *dpy, XErrorEvent *err)
   return 0;
 }
 
-X11App::X11App() {
+X11App::X11App(string windowName) {
   XSetErrorHandler(errorHandler);
-  fetchInfo();
+  fetchInfo(windowName);
   XCompositeRedirectWindow(display, emacs, CompositeRedirectAutomatic);
 };
 
