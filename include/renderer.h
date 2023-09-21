@@ -19,10 +19,14 @@
 class World;
 class Renderer {
   unsigned int VBO;
+  unsigned int APP_VBO;
   unsigned int INSTANCE;
+  unsigned int APP_INSTANCE;
   unsigned int VAO;
+  unsigned int APP_VAO;
   unsigned int EBO;
   Shader* shader;
+  Shader* appShader;
   std::map<string, Texture*> textures;
   glm::mat4 trans;
   glm::mat4 model;
@@ -51,6 +55,7 @@ class Renderer {
   void setupVertexAttributePointers();
   void fillBuffers();
   void addCube(int index);
+  void addAppCube(int index);
   void registerApp(X11App* app);
 };
 

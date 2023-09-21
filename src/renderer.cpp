@@ -21,51 +21,54 @@ float appVertices[] = {
   0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
   -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f,
   -0.5f, -HEIGHT, -0.5f, 0.0f, 0.0f,
-}
+};
 
 float vertices[] = {
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 0.0f,
-  0.5f, -HEIGHT, -0.5f, 1.0f, 0.0f,
-  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
-  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
-  -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f,
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 0.0f,
-  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
-  0.5f, -HEIGHT, 0.5f, 1.0f, 0.0f,
-  0.5f, HEIGHT, 0.5f, 1.0f, 1.0f,
-  0.5f, HEIGHT, 0.5f, 1.0f, 1.0f,
-  -0.5f, HEIGHT, 0.5f, 0.0f, 1.0f,
-  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
-  -0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
-  -0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
-  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
-  -0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
-  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
-  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
-  0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
-  0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
-  0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
-  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
-  0.5f, -HEIGHT, -0.5f, 1.0f, 1.0f,
-  0.5f, -HEIGHT, 0.5f, 1.0f, 0.0f,
-  0.5f, -HEIGHT, 0.5f, 1.0f, 0.0f,
-  -0.5f, -HEIGHT, 0.5f, 0.0f, 0.0f,
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 1.0f,
-  -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f,
-  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
-  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
-  0.5f, HEIGHT, 0.5f, 1.0f, 0.0f,
-  -0.5f, HEIGHT, 0.5f, 0.0f, 0.0f,
-  -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f
+  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+  0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
+  -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+  -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
 };
 
 void Renderer::genGlResources() {
   glGenBuffers(1, &VBO);
+  glGenBuffers(1, &APP_VBO);
   glGenBuffers(1, &INSTANCE);
+  glGenBuffers(1, &APP_INSTANCE);
   glGenVertexArrays(1, &VAO);
+  glGenVertexArrays(1, &APP_VAO);
 }
 
 void Renderer::bindGlResourcesForInit() {
@@ -74,6 +77,7 @@ void Renderer::bindGlResourcesForInit() {
 }
 
 void Renderer::setupVertexAttributePointers() {
+  glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   // position attribute
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
@@ -89,15 +93,34 @@ void Renderer::setupVertexAttributePointers() {
   glEnableVertexAttribArray(2);
   glVertexAttribDivisor(2, 1);
 
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBindVertexArray(APP_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+  // position attribute
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+
+  // texture coord attribute
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+
+  // instance coord attribute
+  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(2);
+  glVertexAttribDivisor(2, 1);
 }
 
 void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 200000, (void*)0 , GL_STATIC_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * world->getCubes().size(), world->getCubes().data());
+  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 20, (void*)0 , GL_STATIC_DRAW);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * world->getAppCubes().size(), world->getAppCubes().data());
 }
 
 Renderer::Renderer(Camera* camera, World* world) {
@@ -109,15 +132,17 @@ Renderer::Renderer(Camera* camera, World* world) {
   fillBuffers();
   setupVertexAttributePointers();
 
-  textures.insert(std::pair<string, Texture*>("container",
-                                             new Texture(GL_TEXTURE0)));
+  textures.insert(std::pair<string,Texture*>("container", new Texture("images/container.jpg", GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
+  textures.insert(std::pair<string, Texture*>("app", new Texture(GL_TEXTURE2)));
+
 
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setInt("texture1", 0);
   shader->setInt("texture2", 1);
+  shader->setInt("texture3", 2);
 
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
@@ -157,59 +182,27 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-/*
-glm::vec3 cubePositions[] = {
-  glm::vec3( 0.0f, 0.0f, 0.0f),
-  glm::vec3( 2.0f, 5.0f, -15.0f),
-  glm::vec3( 15.0f, 15.0f, -15.0f),
-  glm::vec3(-1.5f, -2.2f, -2.5f),
-  glm::vec3(-3.8f, -2.0f, -12.3f),
-  glm::vec3( 2.4f, -0.4f, -3.5f),
-  glm::vec3(-1.7f, 3.0f, -7.5f),
-  glm::vec3( 1.3f, -2.0f, -2.5f),
-  glm::vec3( 1.5f, 2.0f, -2.5f),
-  glm::vec3( 1.5f, 0.2f, -1.5f),
-  glm::vec3(-1.3f, 1.0f, -1.5f)
-};
-*/
-
-
-std::vector<glm::vec3> cubePositions = {
-  glm::vec3( -2.0f, 0.0f, -5.0f),
-  glm::vec3( -2.0f, 1.0f, -5.0f),
-  glm::vec3( -2.0f, 2.0f, -5.0f),
-  glm::vec3( -2.0f, 3.0f, -5.0f),
-
-  glm::vec3( 2.0f, 0.0f, -5.0f),
-  glm::vec3( 2.0f, 1.0f, -5.0f),
-  glm::vec3( 2.0f, 2.0f, -5.0f),
-  glm::vec3( 2.0f, 3.0f, -5.0f),
-
-  glm::vec3( 1.0f, 3.0f, -5.0f),
-  glm::vec3( 0.0f, 3.0f, -5.0f),
-  glm::vec3( -1.0f, 3.0f, -5.0f)
-};
-
 void Renderer::addCube(int index) {
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
   glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*index, sizeof(glm::vec3), &world->getCubes()[index]);
 }
 
-float FPS_60 = 1.0/1.0;
-bool ran = false;
+void Renderer::addAppCube(int index) {
+  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
+  glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*index, sizeof(glm::vec3), &world->getAppCubes()[index]);
+}
+
 void Renderer::render() {
-
-  // This is a hacky test, need to put this into a seperate method or something
-  if(!ran) {
-        ran = true;
-  }
-  // This is a hacky test, need to put this into a seperate method or something
-
-  //computeTransform();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->getViewMatrix();
   updateTransformMatrices();
+  shader->use(); // may need to move into loop to use changing uniforms
+  shader->setBool("isApp", false);
+  glBindVertexArray(VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->getCubes().size());
+  shader->setBool("isApp", true);
+  glBindVertexArray(APP_VAO);
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
 }
 
 Camera* Renderer::getCamera() {
@@ -218,11 +211,9 @@ Camera* Renderer::getCamera() {
 
 void Renderer::registerApp(X11App* app) {
   this->app = app;
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, textures["container"]->ID);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, textures["app"]->ID);
   app->appTexture();
-
-
 }
 
 Renderer::~Renderer() {

@@ -82,7 +82,8 @@ int main() {
   if(window == NULL) {
     return -1;
   }
-  world->addCube(glm::vec3(0,0,-10));
+  world->addAppCube(glm::vec3(0,0,-10));
+  world->addCube(glm::vec3(5,0,-10));
   loop();
   glfwTerminate();
   delete renderer;
