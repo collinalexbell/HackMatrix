@@ -17,12 +17,23 @@ World::World(int d){
 const std::vector<glm::vec3>& World::getCubes() {
   return cubes;
 }
+const std::vector<glm::vec3>& World::getAppCubes() {
+  return appCubes;
+}
 
 void World::addCube(glm::vec3 cube) {
   int index = cubes.size();
   cubes.push_back(cube);
   if(renderer != NULL) {
     renderer->addCube(index);
+  }
+}
+
+void World::addAppCube(glm::vec3 cube) {
+  int index = appCubes.size();
+  appCubes.push_back(cube);
+  if(renderer != NULL) {
+    renderer->addAppCube(index);
   }
 }
 
