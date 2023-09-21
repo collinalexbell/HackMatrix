@@ -114,7 +114,7 @@ A computational process, in a correctly working computer, executes programs prec
 
 ## technology
 - X Window to allow IDE
-- voxel
+- micro voxel
 - C++
 - Python API
 - Lisp API
