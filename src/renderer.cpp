@@ -132,7 +132,8 @@ Renderer::Renderer(Camera* camera, World* world) {
   fillBuffers();
   setupVertexAttributePointers();
 
-  textures.insert(std::pair<string,Texture*>("container", new Texture("images/bAndGrey.png", GL_TEXTURE0)));
+  std::vector<std::string> images = {"images/bAndGrey.png"};
+  textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
   textures.insert(std::pair<string, Texture*>("app", new Texture(GL_TEXTURE31)));
