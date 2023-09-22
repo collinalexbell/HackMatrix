@@ -136,3 +136,8 @@ A computational process, in a correctly working computer, executes programs prec
 ? City recreation based on google streetview (or some similar)
 - recompilable while playing
 - snap to flat, draw with pixels
+
+
+#### Game design loops
+
+- roads with purple and dark grey spacemacs colors
