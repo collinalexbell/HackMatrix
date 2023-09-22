@@ -95,33 +95,20 @@ void Texture::loadTextureArrayData(vector<string> fnames) {
     return;
   }
   unsigned char* buffer = stbi_load(fnames[0].c_str(), &width, &height, &nrChannels, 0);
-  GLenum err;
-  while(( err = glGetError()) != GL_NO_ERROR) {
-    cout << "glError pre" << endl;
-    printf("%04x", err);
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB8, width, height, fnames.size());
+    for(int i=0; i<fnames.size(); i++) {
+      buffer = stbi_load(fnames[i].c_str(), &width, &height, &nrChannels, 0);
+      if(!buffer) {
+        cout << "couldn't load image" << endl;
+      } else {
+        cout << width
+             << ", "
+             << height
+             << endl;
       }
-  glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB8, width, height, fnames.size());
-  while(( err = glGetError()) != GL_NO_ERROR) {
-    cout << "glError after glTexStorage3D" << endl;
-    printf("%04x", err);
-      }
-  for(auto fname : fnames) {
-    buffer = stbi_load(fname.c_str(), &width, &height, &nrChannels, 0);
-    if(!buffer) {
-      cout << "couldn't load image" << endl;
-    } else {
-      cout << width
-           << ", "
-           << height
-           << endl;
+      glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+      stbi_image_free(buffer);
     }
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, fnames.size(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
-    stbi_image_free(buffer);
-  }
-  while(( err = glGetError()) != GL_NO_ERROR) {
-    cout << "glError post" << endl;
-    printf("%04x", err);
-  }
 }
 
 void Texture::blankData() {

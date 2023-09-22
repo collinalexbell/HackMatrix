@@ -4,12 +4,13 @@
 
 World::World(){}
 
-const std::vector<glm::vec3> World::getCubes() {
-  std::vector<glm::vec3> cubeKeys(cubes.size());
+const std::vector<Cube> World::getCubes() {
+  std::vector<Cube> rv(cubes.size());
   for(auto kv: cubes) {
-    cubeKeys[kv.second] = kv.first;
+    Cube cube = kv.second;
+    rv[cube.order] = cube;
   }
-  return cubeKeys;
+  return rv;
 }
 const std::vector<glm::vec3> World::getAppCubes() {
   std::vector<glm::vec3> appCubeKeys(appCubes.size());
@@ -19,9 +20,10 @@ const std::vector<glm::vec3> World::getAppCubes() {
   return appCubeKeys;
 }
 
-void World::addCube(glm::vec3 cube) {
+void World::addCube(glm::vec3 pos, int blockType) {
   int index = cubes.size();
-  cubes.insert(std::pair<glm::vec3, int>(cube, index));
+  Cube cube{pos, blockType, index};
+  cubes.insert(std::pair<glm::vec3, Cube>(pos, cube));
   if(renderer != NULL) {
     renderer->addCube(index);
   }

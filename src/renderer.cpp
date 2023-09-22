@@ -89,9 +89,15 @@ void Renderer::setupVertexAttributePointers() {
 
   // instance coord attribute
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)0);
   glEnableVertexAttribArray(2);
   glVertexAttribDivisor(2, 1);
+
+  // instance texture attribute
+  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
+  glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(3);
+  glVertexAttribDivisor(3, 1);
 
   glBindVertexArray(APP_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
@@ -108,6 +114,9 @@ void Renderer::setupVertexAttributePointers() {
   glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(2);
   glVertexAttribDivisor(2, 1);
+
+
+
 }
 
 void Renderer::fillBuffers() {
@@ -116,8 +125,7 @@ void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 200000, (void*)0 , GL_STATIC_DRAW);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * world->getCubes().size(), world->getCubes().data());
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 200000, (void*)0 , GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 20, (void*)0 , GL_STATIC_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * world->getAppCubes().size(), world->getAppCubes().data());
@@ -132,7 +140,7 @@ Renderer::Renderer(Camera* camera, World* world) {
   fillBuffers();
   setupVertexAttributePointers();
 
-  std::vector<std::string> images = {"images/bAndGrey.png"};
+  std::vector<std::string> images = { "images/bAndGrey.png", "images/purpleRoad.png"};
   textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
@@ -185,7 +193,11 @@ void Renderer::updateTransformMatrices() {
 
 void Renderer::addCube(int index) {
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*index, sizeof(glm::vec3), &world->getCubes()[index]);
+  Cube cube = world->getCubes()[index];
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  (sizeof(glm::vec3)+sizeof(int))*index, sizeof(glm::vec3), &cube.position);
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  sizeof(glm::vec3)*(index+1)+sizeof(int)*index, sizeof(int), &cube.blockType);
 }
 
 void Renderer::addAppCube(int index) {
