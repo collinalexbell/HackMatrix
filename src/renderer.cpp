@@ -24,42 +24,42 @@ float appVertices[] = {
 };
 
 float vertices[] = {
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-  0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-  -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+  -0.05f, -0.05f, -0.05f, 0.0f, 0.0f,
+  0.05f, -0.05f, -0.05f, 1.0f, 0.0f,
+  0.05f, 0.05f, -0.05f, 1.0f, 1.0f,
+  0.05f, 0.05f, -0.05f, 1.0f, 1.0f,
+  -0.05f, 0.05f, -0.05f, 0.0f, 1.0f,
+  -0.05f, -0.05f, -0.05f, 0.0f, 0.0f,
+  -0.05f, -0.05f, 0.05f, 0.0f, 0.0f,
+  0.05f, -0.05f, 0.05f, 1.0f, 0.0f,
+  0.05f, 0.05f, 0.05f, 1.0f, 1.0f,
+  0.05f, 0.05f, 0.05f, 1.0f, 1.0f,
+  -0.05f, 0.05f, 0.05f, 0.0f, 1.0f,
+  -0.05f, -0.05f, 0.05f, 0.0f, 0.0f,
+  -0.05f, 0.05f, 0.05f, 1.0f, 0.0f,
+  -0.05f, 0.05f, -0.05f, 1.0f, 1.0f,
+  -0.05f, -0.05f, -0.05f, 0.0f, 1.0f,
+  -0.05f, -0.05f, -0.05f, 0.0f, 1.0f,
+  -0.05f, -0.05f, 0.05f, 0.0f, 0.0f,
+  -0.05f, 0.05f, 0.05f, 1.0f, 0.0f,
+  0.05f, 0.05f, 0.05f, 1.0f, 0.0f,
+  0.05f, 0.05f, -0.05f, 1.0f, 1.0f,
+  0.05f, -0.05f, -0.05f, 0.0f, 1.0f,
+  0.05f, -0.05f, -0.05f, 0.0f, 1.0f,
+  0.05f, -0.05f, 0.05f, 0.0f, 0.0f,
+  0.05f, 0.05f, 0.05f, 1.0f, 0.0f,
+  -0.05f, -0.05f, -0.05f, 0.0f, 1.0f,
+  0.05f, -0.05f, -0.05f, 1.0f, 1.0f,
+  0.05f, -0.05f, 0.05f, 1.0f, 0.0f,
+  0.05f, -0.05f, 0.05f, 1.0f, 0.0f,
+  -0.05f, -0.05f, 0.05f, 0.0f, 0.0f,
+  -0.05f, -0.05f, -0.05f, 0.0f, 1.0f,
+  -0.05f, 0.05f, -0.05f, 0.0f, 1.0f,
+  0.05f, 0.05f, -0.05f, 1.0f, 1.0f,
+  0.05f, 0.05f, 0.05f, 1.0f, 0.0f,
+  0.05f, 0.05f, 0.05f, 1.0f, 0.0f,
+  -0.05f, 0.05f, 0.05f, 0.0f, 0.0f,
+  -0.05f, 0.05f, -0.05f, 0.0f, 1.0f
 };
 
 void Renderer::genGlResources() {
@@ -132,22 +132,22 @@ Renderer::Renderer(Camera* camera, World* world) {
   fillBuffers();
   setupVertexAttributePointers();
 
-  textures.insert(std::pair<string,Texture*>("container", new Texture("images/container.jpg", GL_TEXTURE0)));
+  textures.insert(std::pair<string,Texture*>("container", new Texture("images/bAndGrey.png", GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
-  textures.insert(std::pair<string, Texture*>("app", new Texture(GL_TEXTURE2)));
+  textures.insert(std::pair<string, Texture*>("app", new Texture(GL_TEXTURE31)));
 
 
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setInt("texture1", 0);
   shader->setInt("texture2", 1);
-  shader->setInt("texture3", 2);
+  shader->setInt("texture3", 31);
 
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  glClearColor(178.0/256, 178.0/256, 178.0/256, 1.0f);
 
   orthographicMatrix = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
 
@@ -211,7 +211,7 @@ Camera* Renderer::getCamera() {
 
 void Renderer::registerApp(X11App* app) {
   this->app = app;
-  glActiveTexture(GL_TEXTURE2);
+  glActiveTexture(GL_TEXTURE31);
   glBindTexture(GL_TEXTURE_2D, textures["app"]->ID);
   app->appTexture();
 }

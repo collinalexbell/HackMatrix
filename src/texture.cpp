@@ -14,18 +14,23 @@ GLenum textureFormat(std::string fname) {
   std::string ext = fname.substr(fname.find_last_of(".") + 1);
   GLenum rv;
   if(ext == "png") {
-    rv = GL_RGBA;
+    rv = GL_RGB;
   } else {
     rv = GL_RGB;
   }
   return rv;
 }
 
-void setTextureParameters() {
+void setTextureParameters(bool pixelated = false) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  if(pixelated) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  } else {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  }
 }
 
 //------------
@@ -59,10 +64,11 @@ void Texture::initAndBindGlTexture(GLenum unit) {
 
 Texture::Texture(std::string fname, GLenum unit) {
   initAndBindGlTexture(unit);
-  setTextureParameters();
+  setTextureParameters(true);
   stbi_set_flip_vertically_on_load(true);
   loadTextureData(fname);
 }
+
 
 Texture::Texture(GLenum unit) {
   initAndBindGlTexture(unit);
