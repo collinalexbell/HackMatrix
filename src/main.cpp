@@ -63,6 +63,17 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
   controls->mouseCallback(window, xpos, ypos);
 }
 
+void initWorld(World* world) {
+  world->addAppCube(glm::vec3(0,0,-10));
+  for(float i=-0.5; i<=0.4; i = i+0.1) {
+    world->addCube(glm::vec3(0.6,i,-10.5));
+    world->addCube(glm::vec3(-0.6,i,-10.5));
+  }
+  for(float i = -0.6; i < 0.6; i = i+0.1) {
+    world->addCube(glm::vec3(i,0.4,-10.5));
+  }
+}
+
 int main() {
   window = init();
   int maxTextureImageUnits;
@@ -77,18 +88,12 @@ int main() {
   controls = new Controls();
   controls->registerApp(&emacs);
   world->attachRenderer(renderer);
+  initWorld(world);
+
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
   if(window == NULL) {
     return -1;
-  }
-  world->addAppCube(glm::vec3(0,0,-10));
-  for(float i=-0.5; i<=0.4; i = i+0.1) {
-    world->addCube(glm::vec3(0.6,i,-10.5));
-    world->addCube(glm::vec3(-0.6,i,-10.5));
-  }
-  for(float i = -0.6; i < 0.6; i = i+0.1) {
-    world->addCube(glm::vec3(i,0.4,-10.5));
   }
   loop();
   glfwTerminate();
