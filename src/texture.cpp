@@ -5,6 +5,11 @@
 #include "texture.h"
 #include <glad/glad.h>
 #include <iostream>
+#include <stdio.h>
+#include <cstdlib>
+
+
+using namespace std;
 
 //------------
 // Helpers
@@ -43,6 +48,28 @@ void setTextureParameters(bool mipmapped , bool pixelated) {
   }
 }
 
+void setTextureArrayParameters(bool mipmapped , bool pixelated) {
+  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  if(pixelated) {
+    if(mipmapped) {
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    } else {
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+  } else {
+    if(mipmapped) {
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    } else {
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+  }
+}
+
 //------------
 // Texture::*
 //------------
@@ -62,6 +89,41 @@ void Texture::loadTextureData(std::string fname) {
   stbi_image_free(data);
 }
 
+void Texture::loadTextureArrayData(vector<string> fnames) {
+  if(fnames.size() == 0) {
+    cout << "no data" << endl;
+    return;
+  }
+  unsigned char* buffer = stbi_load(fnames[0].c_str(), &width, &height, &nrChannels, 0);
+  GLenum err;
+  while(( err = glGetError()) != GL_NO_ERROR) {
+    cout << "glError pre" << endl;
+    printf("%04x", err);
+      }
+  glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGB8, width, height, fnames.size());
+  while(( err = glGetError()) != GL_NO_ERROR) {
+    cout << "glError after glTexStorage3D" << endl;
+    printf("%04x", err);
+      }
+  for(auto fname : fnames) {
+    buffer = stbi_load(fname.c_str(), &width, &height, &nrChannels, 0);
+    if(!buffer) {
+      cout << "couldn't load image" << endl;
+    } else {
+      cout << width
+           << ", "
+           << height
+           << endl;
+    }
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, fnames.size(), GL_RGB, GL_UNSIGNED_BYTE, buffer);
+    stbi_image_free(buffer);
+  }
+  while(( err = glGetError()) != GL_NO_ERROR) {
+    cout << "glError post" << endl;
+    printf("%04x", err);
+  }
+}
+
 void Texture::blankData() {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 }
@@ -72,6 +134,12 @@ void Texture::initAndBindGlTexture(GLenum unit) {
   glBindTexture(GL_TEXTURE_2D, ID);
 }
 
+void Texture::initAndBindGlTextureArray(GLenum unit) {
+  glGenTextures(1, &ID);
+  glActiveTexture(unit);
+  glBindTexture(GL_TEXTURE_2D_ARRAY, ID);
+}
+
 Texture::Texture(std::string fname, GLenum unit) {
   initAndBindGlTexture(unit);
   setTextureParameters(true, true);
@@ -79,6 +147,12 @@ Texture::Texture(std::string fname, GLenum unit) {
   loadTextureData(fname);
 }
 
+Texture::Texture(vector<string> fnames, GLenum unit) {
+  initAndBindGlTextureArray(unit);
+  setTextureArrayParameters(false, true);
+  stbi_set_flip_vertically_on_load(true);
+  loadTextureArrayData(fnames);
+}
 
 Texture::Texture(GLenum unit) {
   initAndBindGlTexture(unit);
