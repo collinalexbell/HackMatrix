@@ -24,11 +24,11 @@ void Api::pollFor(World* world) {
     std::istringstream iss(data);
 
     std::string command;
-    int x,y,z;
-    iss >> command >> x >> y >> z;
+    int x,y,z,type;
+    iss >> command >> x >> y >> z >> type;
 
     if(command == "c") {
-      world->addCube(glm::vec3(x,y,z));
+      world->addCube(glm::vec3(x,y,z), type);
     }
 
     //  Send reply back to client

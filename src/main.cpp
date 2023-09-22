@@ -66,11 +66,24 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 void initWorld(World* world) {
   world->addAppCube(glm::vec3(0,0,-10));
   for(float i=-0.5; i<=0.4; i = i+0.1) {
-    world->addCube(glm::vec3(0.6,i,-10.5));
-    world->addCube(glm::vec3(-0.6,i,-10.5));
+    world->addCube(glm::vec3(0.6,i,-10.5),0);
+    world->addCube(glm::vec3(-0.6,i,-10.5),0);
   }
   for(float i = -0.6; i < 0.6; i = i+0.1) {
-    world->addCube(glm::vec3(i,0.4,-10.5));
+    world->addCube(glm::vec3(i,0.4,-10.5), 0);
+  }
+
+  for(float z=-25; z<0; z = z+0.1) {
+    for(float i = -0.6; i < 0.6; i = i+0.1) {
+      world->addCube(glm::vec3(i,-0.5,z), 1);
+    }
+    for(float i=-0.5; i<=0.4; i = i+0.1) {
+      world->addCube(glm::vec3(0.6,i,z),0);
+      world->addCube(glm::vec3(-0.6,i,z),0);
+    }
+    for(float i = -0.6; i < 0.6; i = i+0.1) {
+      world->addCube(glm::vec3(i,0.4,z), 0);
+    }
   }
 }
 
