@@ -95,7 +95,7 @@ void Renderer::setupVertexAttributePointers() {
 
   // instance texture attribute
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribPointer(3, 1, GL_INT, GL_FALSE, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)(3 * sizeof(float)));
+  glVertexAttribIPointer(3, 1, GL_INT, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(3);
   glVertexAttribDivisor(3, 1);
 
@@ -140,7 +140,11 @@ Renderer::Renderer(Camera* camera, World* world) {
   fillBuffers();
   setupVertexAttributePointers();
 
-  std::vector<std::string> images = { "images/bAndGrey.png", "images/purpleRoad.png"};
+  std::vector<std::string> images = {
+    "images/bAndGrey.png",
+    "images/purpleRoad.png",
+    "images/bAndGreySpeckled.png"
+  };
   textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
@@ -150,6 +154,7 @@ Renderer::Renderer(Camera* camera, World* world) {
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setInt("texture1", 0);
+  shader->setInt("totalBlockTypes", images.size());
   shader->setInt("texture2", 1);
   shader->setInt("texture3", 31);
 
