@@ -7,6 +7,13 @@ $ implemented
 ? maybe
 ```
 
+## the toy
+
+How can the matrix be a toy?
+- place blocks
+- code blocks
+- watch blocks do stuff
+
 ## essential experience
 concious hackers of their own world
 become fully enlightened technokings
