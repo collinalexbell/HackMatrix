@@ -21,15 +21,25 @@ GLenum textureFormat(std::string fname) {
   return rv;
 }
 
-void setTextureParameters(bool pixelated = false) {
+void setTextureParameters(bool mipmapped , bool pixelated) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   if(pixelated) {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    if(mipmapped) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    } else {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
   } else {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    if(mipmapped) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    } else {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
   }
 }
 
@@ -64,7 +74,7 @@ void Texture::initAndBindGlTexture(GLenum unit) {
 
 Texture::Texture(std::string fname, GLenum unit) {
   initAndBindGlTexture(unit);
-  setTextureParameters(true);
+  setTextureParameters(true, true);
   stbi_set_flip_vertically_on_load(true);
   loadTextureData(fname);
 }
@@ -72,6 +82,6 @@ Texture::Texture(std::string fname, GLenum unit) {
 
 Texture::Texture(GLenum unit) {
   initAndBindGlTexture(unit);
-  setTextureParameters();
+  setTextureParameters(false, false);
   blankData();
 }
