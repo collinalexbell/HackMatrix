@@ -42,7 +42,9 @@ become fully enlightened technokings
 
 ### colors
 What if I blended man-made colors and natural colors with a sharp distinction between the two
-This would capture the essense of being in a park in the midst of NYC
+This would capture the essense of being in a park in the midst of NYC.
+
+Overall, I'm liking the spacemacs colors... however, it will be nice to see what the contrast between these colors and fall nature colors looks like when I get around to implementing textures like that
 
 #### man made
 * [spacemacs colors](https://github.com/nashamri/spacemacs-theme/blob/master/spacemacs-theme.el)
