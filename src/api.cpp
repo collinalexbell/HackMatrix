@@ -24,7 +24,8 @@ void Api::pollFor(World* world) {
     std::istringstream iss(data);
 
     std::string command;
-    int x,y,z,type;
+    int type;
+    float x,y,z;
     iss >> command >> x >> y >> z >> type;
 
     if(command == "c") {
