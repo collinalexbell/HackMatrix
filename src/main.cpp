@@ -64,7 +64,6 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 }
 
 void initWorld(World* world) {
-  world->addAppCube(glm::vec3(0,0,-10));
   for(float i=-0.5; i<=0.4; i = i+0.1) {
     world->addCube(glm::vec3(0.6,i,-10.5),0);
     world->addCube(glm::vec3(-0.6,i,-10.5),0);
@@ -101,7 +100,8 @@ int main() {
   controls = new Controls();
   controls->registerApp(&emacs);
   world->attachRenderer(renderer);
-  initWorld(world);
+  //initWorld(world);
+  world->addAppCube(glm::vec3(0,0,0));
 
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
