@@ -1,4 +1,4 @@
-# matrix game design
+# Simulation Theory
 
 ```
 $ implemented
@@ -79,6 +79,10 @@ $ Players use an in game IDE to write code that influences the game world
   - Objects can be spawned
 $ Click in and click out of windows (maybe with a button frame or hotkey)
 
+? Blow stuff up!
+
+? Enchant items with software routines
+
 ? Spawn boxes for things to be drawn in
 
 ? players make agents that manipulate the environment while sleeping (or doing other things)
@@ -144,5 +148,5 @@ A computational process, in a correctly working computer, executes programs prec
 
 
 ## target audience
-
-16-35 year olds
+- Elon Musk; I want Elon Musk to play this game!
+- 16-35 year olds
