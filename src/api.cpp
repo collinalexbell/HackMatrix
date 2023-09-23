@@ -23,13 +23,15 @@ void Api::pollFor(World* world) {
 
     std::istringstream iss(data);
 
-    std::string command;
-    int type;
-    float x,y,z;
-    iss >> command >> x >> y >> z >> type;
+    while(!iss.eof()) {
+      std::string command;
+      int type;
+      float x,y,z;
+      iss >> command >> x >> y >> z >> type;
 
-    if(command == "c") {
-      world->addCube(glm::vec3(x,y,z), type);
+      if(command == "c") {
+        world->addCube(glm::vec3(x,y,z), type);
+      }
     }
 
     //  Send reply back to client
