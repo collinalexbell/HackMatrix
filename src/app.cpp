@@ -122,6 +122,7 @@ int errorHandler(Display *dpy, XErrorEvent *err)
 }
 
 X11App::X11App(string windowName) {
+  //TODO: create the app in virtual X
   XSetErrorHandler(errorHandler);
   fetchInfo(windowName);
   XCompositeRedirectWindow(display, appWindow, CompositeRedirectAutomatic);
