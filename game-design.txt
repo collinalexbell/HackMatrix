@@ -39,6 +39,7 @@ become fully enlightened technokings
 ? how will I generate the textures
 ? 3rd person
 ? IDK, IDK, IDK
+? tron
 
 ### colors
 What if I blended man-made colors and natural colors with a sharp distinction between the two
@@ -105,10 +106,14 @@ $ Click in and click out of windows (maybe with a button frame or hotkey)
 ? the voxels could start out large and get progressively smaller as the player advances
 ? piece components together to build cyborgs
 
+## tokens
+
+- earn tokens to make API calls, these tokens can be specific types of manna or something else.
+
 ## puzzles
 
 - [Turret Avoidance](https://www.youtube.com/watch?v=dY6jR52fFWo)
-
+- Create a trajectory to shoot a ball through the hoop
 
 
 
