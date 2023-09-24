@@ -82,7 +82,7 @@ $ Players use an in game IDE to write code that influences the game world
   - Objects can be spawned
 $ Click in and click out of windows (maybe with a button frame or hotkey)
 
-? Blow stuff up!
+? Blow stuff up with placed charges that have customizable size!
 
 ? Enchant items with software routines
 
