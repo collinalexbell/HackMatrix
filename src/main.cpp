@@ -102,7 +102,7 @@ int main() {
   world->attachRenderer(renderer);
   //initWorld(world);
   world->addAppCube(glm::vec3(0,0,0));
-
+  api->initWorld(world, "tcp://localhost:5556");
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
   if(window == NULL) {

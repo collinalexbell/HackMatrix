@@ -2,6 +2,8 @@
 #include "api.h"
 #include <iostream>
 
+using namespace std;
+
 Api::Api(std::string bindAddress) {
   initZmq(bindAddress);
 }
@@ -11,6 +13,21 @@ void Api::initZmq(std::string bindAddress) {
   context = zmq::context_t(2);
   socket = zmq::socket_t(context, zmq::socket_type::rep);
   socket.bind (bindAddress);
+}
+
+void Api::initWorld(World* world, string serverAddr) {
+  zmq::message_t reply;
+  zmq::message_t request(5);
+  zmq::context_t clientContext = zmq::context_t(2);
+  zmq::socket_t clientSocket = zmq::socket_t(clientContext, zmq::socket_type::req);
+  try {
+    clientSocket.connect(serverAddr);
+    memcpy (request.data (), "init", 5);
+    clientSocket.send(request, zmq::send_flags::none);
+    zmq::recv_result_t result = clientSocket.recv(reply, zmq::recv_flags::dontwait);
+  } catch(...) {
+    cout << "couldn't connect to the init server" << endl;
+  }
 }
 
 void Api::pollFor(World* world) {
