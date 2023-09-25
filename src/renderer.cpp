@@ -144,7 +144,8 @@ Renderer::Renderer(Camera* camera, World* world) {
     "images/bAndGrey.png",
     "images/purpleRoad.png",
     "images/bAndGreySpeckled.png",
-    "images/grass.png"
+    "images/grass.png",
+    "images/pillar.png"
   };
   textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",

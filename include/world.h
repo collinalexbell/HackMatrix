@@ -6,7 +6,6 @@
 #include <glm/gtx/hash.hpp>
 #include "renderer.h"
 #include <unordered_map>
-#include <PolyVox/RawVolume.h>
 
 class Renderer;
 struct Cube {
@@ -15,7 +14,6 @@ struct Cube {
   int order;
 };
 class World {
-  PolyVox::RawVolume<uint8_t> *chunk;
   std::unordered_map<glm::vec3, Cube> cubes;
   std::unordered_map<glm::vec3, int> appCubes;
   Renderer* renderer;
@@ -26,6 +24,7 @@ public:
   void addAppCube(glm::vec3);
   void attachRenderer(Renderer* renderer);
   World();
+  ~World();
 };
 
 #endif
