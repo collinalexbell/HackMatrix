@@ -43,3 +43,8 @@ void World::addAppCube(glm::vec3 cube) {
 void World::attachRenderer(Renderer* renderer){
   this->renderer = renderer;
 }
+
+Cube* World::getVoxel(float x, float y, float z) {
+  // I'll probably need to store voxels using integers so then I can index into them easily
+  return NULL;
+}

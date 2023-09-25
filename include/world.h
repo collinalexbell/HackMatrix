@@ -23,6 +23,7 @@ public:
   void addCube(glm::vec3, int blockType);
   void addAppCube(glm::vec3);
   void attachRenderer(Renderer* renderer);
+  Cube* getVoxel(float x, float y, float z);
   World();
   ~World();
 };
