@@ -7,6 +7,10 @@ $ implemented
 ? maybe
 ```
 
+## next up
+- implement block placement (probably using polyvox...)
+
+
 ## the toy
 
 How can the matrix be a toy?
@@ -74,7 +78,6 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 
 
-
 ## mechanics
 
 $ Players use an in game IDE to write code that influences the game world
@@ -138,13 +141,15 @@ A computational process, in a correctly working computer, executes programs prec
 
 ## technology
 - X Window to allow IDE
+  - Direct pixel rendering to keep crisp image
 - micro voxel
 - C++
 - Python API
 - Lisp API
 - ZeroMQ
 - OpenGL
-? City recreation based on google streetview (or some similar)
+? City recreation based on google streetview (or some similar) - This is starting to seem like a better idea...
+? Multiple X windows to allow a browser as well
 - recompilable while playing
 - snap to flat, draw with pixels
 

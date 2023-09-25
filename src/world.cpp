@@ -2,7 +2,10 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+
+
 World::World(){}
+World::~World() {}
 
 const std::vector<Cube> World::getCubes() {
   std::vector<Cube> rv(cubes.size());
