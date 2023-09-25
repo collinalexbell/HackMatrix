@@ -9,6 +9,7 @@ $ implemented
 
 ## next up
 - implement block placement (probably using polyvox...)
+  - ray casting or something
 
 
 ## the toy
