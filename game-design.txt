@@ -8,7 +8,7 @@ $ implemented
 ```
 
 ## next up
-- implement block placement (probably using polyvox...)
+- implement block placement
   - ray casting or something
 
 
