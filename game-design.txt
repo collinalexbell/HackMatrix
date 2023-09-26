@@ -11,6 +11,10 @@ $ implemented
 - implement block placement
   - ray casting or something
 
+## after that
+- reanalyze what I can do to get an MVP out.
+- I may need to drastically rethink my Phoenix workflow to *!CRUNCH!*
+
 
 ## the toy
 
@@ -21,6 +25,7 @@ How can the matrix be a toy?
 
 ## essential experience
 concious hackers of their own world
+         - The Gibson should feature into the game (haha)
 become fully enlightened technokings
 
 
