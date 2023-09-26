@@ -30,10 +30,10 @@ class Renderer {
   std::map<string, Texture*> textures;
   glm::mat4 trans;
   glm::mat4 model;
+  glm::mat4 appModel;
   glm::mat4 view;
   glm::mat4 projection;
   glm::mat4 orthographicMatrix;
-  void computeTransform();
   void updateTransformMatrices();
   Camera* camera;
   World* world;
