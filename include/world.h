@@ -8,22 +8,26 @@
 #include <unordered_map>
 
 class Renderer;
+
 struct Cube {
   glm::vec3 position;
   int blockType;
   int order;
 };
 class World {
-  std::unordered_map<glm::vec3, Cube> cubes;
+  int CHUNK_SIZE = 64;
+  int cubeCount = 0;
+  std::vector<Cube> cubes;
   std::unordered_map<glm::vec3, int> appCubes;
   Renderer* renderer;
 public:
   const std::vector<Cube> getCubes();
   const std::vector<glm::vec3> getAppCubes();
-  void addCube(glm::vec3, int blockType);
+  void addCube(int x, int y, int z, int blockType);
   void addAppCube(glm::vec3);
   void attachRenderer(Renderer* renderer);
   Cube* getVoxel(float x, float y, float z);
+  int size();
   World();
   ~World();
 };

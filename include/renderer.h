@@ -16,6 +16,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+class Cube;
 class World;
 class Renderer {
   unsigned int VBO;
@@ -54,7 +55,7 @@ class Renderer {
   void bindGlResourcesForInit();
   void setupVertexAttributePointers();
   void fillBuffers();
-  void addCube(int index);
+  void addCube(int index, Cube cube);
   void addAppCube(int index);
   void registerApp(X11App* app);
 };

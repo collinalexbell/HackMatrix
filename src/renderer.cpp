@@ -200,9 +200,8 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void Renderer::addCube(int index) {
+void Renderer::addCube(int index, Cube cube) {
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  Cube cube = world->getCubes()[index];
   glBufferSubData(GL_ARRAY_BUFFER,
                   (sizeof(glm::vec3)+sizeof(int))*index, sizeof(glm::vec3), &cube.position);
   glBufferSubData(GL_ARRAY_BUFFER,
@@ -221,7 +220,7 @@ void Renderer::render() {
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setBool("isApp", false);
   glBindVertexArray(VAO);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->getCubes().size());
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());

@@ -43,11 +43,11 @@ void Api::pollFor(World* world) {
     while(!iss.eof()) {
       std::string command;
       int type;
-      float x,y,z;
+      int x,y,z;
       iss >> command >> x >> y >> z >> type;
 
       if(command == "c") {
-        world->addCube(glm::vec3(x,y,z), type);
+        world->addCube(x,y,z,type);
       }
     }
 
