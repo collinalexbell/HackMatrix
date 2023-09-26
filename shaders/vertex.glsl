@@ -8,13 +8,19 @@ out vec2 TexCoord;
 flat out int BlockType;
 
 uniform mat4 model;
+uniform mat4 appModel;
 uniform mat4 view;
 uniform mat4 projection;
+uniform bool isApp;
 
 void main()
 {
   // model in this case is used per call to glDrawArraysInstanced
-  gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
+  if(isApp) {
+    gl_Position = projection * view * appModel * vec4(aPos + aOffset, 1.0);
+  } else {
+    gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
+  }
   TexCoord = aTexCoord;
   BlockType = blockType;
 }
