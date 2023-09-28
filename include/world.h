@@ -6,6 +6,7 @@
 #include <glm/gtx/hash.hpp>
 #include "renderer.h"
 #include <unordered_map>
+#include <octree/octree.h>
 
 class Renderer;
 
@@ -15,9 +16,9 @@ struct Cube {
   int order;
 };
 class World {
-  int CHUNK_SIZE = 64;
+  int CHUNK_SIZE = 128;
   int cubeCount = 0;
-  std::vector<Cube> cubes;
+  Octree<Cube> cubes = Octree<Cube>(128, Cube{glm::vec3(0,0,0), -1, -1});
   std::unordered_map<glm::vec3, int> appCubes;
   Renderer* renderer;
 public:
