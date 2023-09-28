@@ -68,3 +68,20 @@ Cube* World::getVoxel(float x, float y, float z) {
 int World::size() {
   return cubeCount;
 }
+
+
+glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
+  glm::vec3 rv = cameraPosition / glm::vec3(0.1,0.1,0.1);
+  cout << rv.x << ", " << rv.y << ", " << rv.z << endl;
+  return rv;
+}
+
+
+Position World::rayCast(glm::vec3 cameraPosition) {
+  Position rv;
+  glm::vec3 voxelSpace = cameraToVoxelSpace(cameraPosition);
+  int x = (int)voxelSpace.x;
+  int y = (int)voxelSpace.y;
+  int z = (int)voxelSpace.z;
+  return rv;
+}

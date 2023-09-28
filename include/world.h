@@ -10,6 +10,12 @@
 
 class Renderer;
 
+struct Position {
+  int x;
+  int y;
+  int z;
+}
+
 struct Cube {
   glm::vec3 position;
   int blockType;
@@ -21,7 +27,9 @@ class World {
   Octree<Cube> cubes = Octree<Cube>(128, Cube{glm::vec3(0,0,0), -1, -1});
   std::unordered_map<glm::vec3, int> appCubes;
   Renderer* renderer;
+  glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
 public:
+  Position World::rayCast(glm::vec3 cameraPosition);
   const std::vector<Cube> getCubes();
   const std::vector<glm::vec3> getAppCubes();
   void addCube(int x, int y, int z, int blockType);
