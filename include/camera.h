@@ -9,13 +9,13 @@
 
 class Camera {
   glm::vec3 up;
-  glm::vec3 front;
   bool firstMouse;
   float lastX;
   float lastY;
   float yaw;
   float pitch;
  public:
+  glm::vec3 front;
   glm::vec3 position;
   Camera();
   void handleTranslateForce(bool up, bool down, bool left, bool right);

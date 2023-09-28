@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include "renderer.h"
+#include "camera.h"
 #include <unordered_map>
 #include <octree/octree.h>
 
@@ -14,7 +15,7 @@ struct Position {
   int x;
   int y;
   int z;
-}
+};
 
 struct Cube {
   glm::vec3 position;
@@ -29,7 +30,7 @@ class World {
   Renderer* renderer;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
 public:
-  Position World::rayCast(glm::vec3 cameraPosition);
+  Position rayCast(Camera* camera);
   const std::vector<Cube> getCubes();
   const std::vector<glm::vec3> getAppCubes();
   void addCube(int x, int y, int z, int blockType);

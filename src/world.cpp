@@ -77,11 +77,17 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
 }
 
 
-Position World::rayCast(glm::vec3 cameraPosition) {
+Position World::rayCast(Camera* camera) {
   Position rv;
-  glm::vec3 voxelSpace = cameraToVoxelSpace(cameraPosition);
+  glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
   int x = (int)voxelSpace.x;
   int y = (int)voxelSpace.y;
   int z = (int)voxelSpace.z;
+
+  int stepX = ( camera->front.x > 0) ? 1 : -1;
+  int stepY = ( camera->front.y > 0) ? 1 : -1;
+  int stepZ = ( camera->front.z > 0) ? 1 : -1;
+
+  cout << stepX << "," << stepY << "," << stepZ << endl;
   return rv;
 }

@@ -216,6 +216,7 @@ void Renderer::addAppCube(int index) {
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->getViewMatrix();
+  world->rayCast(camera);
   updateTransformMatrices();
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setBool("isApp", false);
