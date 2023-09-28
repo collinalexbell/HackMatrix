@@ -9,7 +9,6 @@
 
 class Camera {
   glm::vec3 up;
-  glm::vec3 position;
   glm::vec3 front;
   bool firstMouse;
   float lastX;
@@ -17,6 +16,7 @@ class Camera {
   float yaw;
   float pitch;
  public:
+  glm::vec3 position;
   Camera();
   void handleTranslateForce(bool up, bool down, bool left, bool right);
   void handleRotateForce(GLFWwindow* window, double xoffset, double yoffset);
