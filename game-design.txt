@@ -7,6 +7,9 @@ $ implemented
 ? maybe
 ```
 
+## process
+Simply make the best game I can
+
 ## next up
 - implement block placement
   - ray casting or something
