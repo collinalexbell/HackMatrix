@@ -174,3 +174,11 @@ A computational process, in a correctly working computer, executes programs prec
 ## target audience
 - Elon Musk; I want Elon Musk to play this game!
 - 16-35 year olds
+
+
+## Maslows needs
+
+- physiological
+    ?housing mechanic
+    ?eating/drinking mechanic
+    ?cold temps (of NYC!)
