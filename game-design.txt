@@ -92,6 +92,15 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 ## mechanics
 
+### Judgements
+- $$
+- API calls
+- Cycles
+- 
+
+
+### Other
+
 $ Players use an in game IDE to write code that influences the game world
   - Objects in the world are scriptable
   - Objects can be spawned
@@ -184,4 +193,3 @@ A computational process, in a correctly working computer, executes programs prec
     ?cold temps (of NYC!)
 - saftey
     ?places where players can have private experiences
-    
