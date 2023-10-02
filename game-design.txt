@@ -182,3 +182,6 @@ A computational process, in a correctly working computer, executes programs prec
     ?housing mechanic
     ?eating/drinking mechanic
     ?cold temps (of NYC!)
+- saftey
+    ?places where players can have private experiences
+    
