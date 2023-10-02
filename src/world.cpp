@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <octree/octree.h>
 #include <iostream>
+#include <limits>
 
 using namespace std;
 
@@ -79,13 +80,9 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
 Position World::rayCast(Camera* camera) {
   Position rv;
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
-  float x = voxelSpace.x;
-  float y = voxelSpace.y;
-  float z = voxelSpace.z;
-
-  int indexX = (int)voxelSpace.x;
-  int indexY = (int)voxelSpace.y;
-  int indexZ = (int)voxelSpace.z;
+  int x = (int)voxelSpace.x;
+  int y = (int)voxelSpace.y;
+  int z = (int)voxelSpace.z;
 
 
   int stepX = ( camera->front.x > 0) ? 1 : -1;
@@ -94,9 +91,24 @@ Position World::rayCast(Camera* camera) {
 
   // index<> already represents boundary if step<> is negative
   // otherwise add 1
-  float tMaxX = indexX + ((stepX == 1) ? 1 : 0) - x;
-  float tMaxY = indexY + ((stepY == 1) ? 1 : 0) - y;
-  float tMaxZ = indexZ + ((stepZ == 1) ? 1 : 0) - z;
+  float tilNextX = x + ((stepX == 1) ? 1 : 0) - voxelSpace.x; // voxelSpace, because float position
+  float tilNextY = y + ((stepY == 1) ? 1 : 0) - voxelSpace.y;
+  float tilNextZ = z + ((stepZ == 1) ? 1 : 0) - voxelSpace.z;
+
+
+  float tMaxX = camera->front.x != 0 ?
+    tilNextX / camera->front.x :
+    std::numeric_limits<float>::infinity();
+
+  float tMaxY = camera->front.y != 0 ?
+    tilNextY / camera->front.y :
+    std::numeric_limits<float>::infinity();
+
+  float tMaxZ = camera->front.z != 0 ?
+    tilNextZ / camera->front.z :
+    std::numeric_limits<float>::infinity();
+
+  int delta = 1;
 
   return rv;
 }
