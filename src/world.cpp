@@ -80,6 +80,8 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
 Position World::rayCast(Camera* camera) {
   Position rv;
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
+
+  // This might be broken.
   int x = (int)voxelSpace.x;
   int y = (int)voxelSpace.y;
   int z = (int)voxelSpace.z;
@@ -94,6 +96,7 @@ Position World::rayCast(Camera* camera) {
   float tilNextX = x + ((stepX == 1) ? 1 : 0) - voxelSpace.x; // voxelSpace, because float position
   float tilNextY = y + ((stepY == 1) ? 1 : 0) - voxelSpace.y;
   float tilNextZ = z + ((stepZ == 1) ? 1 : 0) - voxelSpace.z;
+  // what happens if x is negative though...
 
 
   float tMaxX = camera->front.x != 0 ?
@@ -109,6 +112,25 @@ Position World::rayCast(Camera* camera) {
     std::numeric_limits<float>::infinity();
 
   int delta = 1;
+  int limit = -100;
+
+  do {
+    if(tMaxX < tMaxY) {
+      if(tMaxX < tMaxZ){
+      } else {
+      }
+    } else {
+      if(tMaxY < tMaxZ) {
+      } else {
+      }
+    }
+    cout << tMaxX
+         << ","
+         << tMaxY
+         << ","
+         << tMaxZ
+         << endl;
+  } while(tMaxX < limit || tMaxY < limit || tMaxZ < limit);
 
   return rv;
 }
