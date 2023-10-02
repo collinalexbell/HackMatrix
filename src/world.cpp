@@ -5,6 +5,7 @@
 #include <octree/octree.h>
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 using namespace std;
 
@@ -81,10 +82,9 @@ Position World::rayCast(Camera* camera) {
   Position rv;
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
 
-  // This might be broken.
-  int x = (int)voxelSpace.x;
-  int y = (int)voxelSpace.y;
-  int z = (int)voxelSpace.z;
+  int x = (int)floor(voxelSpace.x);
+  int y = (int)floor(voxelSpace.y);
+  int z = (int)floor(voxelSpace.z);
 
 
   int stepX = ( camera->front.x > 0) ? 1 : -1;
@@ -111,25 +111,59 @@ Position World::rayCast(Camera* camera) {
     tilNextZ / camera->front.z :
     std::numeric_limits<float>::infinity();
 
+
+  float tDeltaX = camera->front.x != 0 ?
+    1 / abs(camera->front.x) :
+    std::numeric_limits<float>::infinity();
+
+  float tDeltaY = camera->front.y != 0 ?
+    1 / abs(camera->front.y) :
+    std::numeric_limits<float>::infinity();
+
+  float tDeltaZ = camera->front.z != 0 ?
+    1 / abs(camera->front.z) :
+    std::numeric_limits<float>::infinity();
+
+
   int delta = 1;
-  int limit = -100;
+  int limit = 5;
 
   do {
     if(tMaxX < tMaxY) {
       if(tMaxX < tMaxZ){
+        tMaxX = tMaxX + tDeltaX;
+        x = x + stepX;
       } else {
+        tMaxZ = tMaxZ + tDeltaZ;
+        z = z + stepZ;
       }
     } else {
       if(tMaxY < tMaxZ) {
+        tMaxY = tMaxY + tDeltaY;
+        y = y + stepY;
       } else {
+        tMaxZ = tMaxZ + tDeltaZ;
+        z = z + stepZ;
       }
     }
-    cout << tMaxX
-         << ","
-         << tMaxY
-         << ","
-         << tMaxZ
-         << endl;
+    // positive guard until chunking is done
+    if(x > 0 && y > 0 && z > 0) {
+      Cube* closest = getVoxel(x,y,z);
+      if(closest!=NULL) {
+        cout << "got one!"
+             << x
+             << ","
+             << y
+             << ","
+             << z
+             << ","
+             << endl;
+        rv.x = x;
+        rv.y = y;
+        rv.z = z;
+        return rv;
+      }
+    }
   } while(tMaxX < limit || tMaxY < limit || tMaxZ < limit);
 
   return rv;
