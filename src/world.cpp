@@ -72,7 +72,6 @@ int World::size() {
 
 glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
   glm::vec3 rv = cameraPosition / glm::vec3(0.1,0.1,0.1);
-  cout << rv.x << ", " << rv.y << ", " << rv.z << endl;
   return rv;
 }
 
@@ -80,14 +79,24 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
 Position World::rayCast(Camera* camera) {
   Position rv;
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
-  int x = (int)voxelSpace.x;
-  int y = (int)voxelSpace.y;
-  int z = (int)voxelSpace.z;
+  float x = voxelSpace.x;
+  float y = voxelSpace.y;
+  float z = voxelSpace.z;
+
+  int indexX = (int)voxelSpace.x;
+  int indexY = (int)voxelSpace.y;
+  int indexZ = (int)voxelSpace.z;
+
 
   int stepX = ( camera->front.x > 0) ? 1 : -1;
   int stepY = ( camera->front.y > 0) ? 1 : -1;
   int stepZ = ( camera->front.z > 0) ? 1 : -1;
 
-  cout << stepX << "," << stepY << "," << stepZ << endl;
+  // index<> already represents boundary if step<> is negative
+  // otherwise add 1
+  float tMaxX = indexX + ((stepX == 1) ? 1 : 0) - x;
+  float tMaxY = indexY + ((stepY == 1) ? 1 : 0) - y;
+  float tMaxZ = indexZ + ((stepZ == 1) ? 1 : 0) - z;
+
   return rv;
 }
