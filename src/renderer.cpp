@@ -161,6 +161,11 @@ Renderer::Renderer(Camera* camera, World* world) {
   shader->setInt("texture3", 31);
 
 
+  shader->setBool("selectedValid", false);
+  shader->setInt("selectedX", 0);
+  shader->setInt("selectedY", 0);
+  shader->setInt("selectedZ", 0);
+
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
   glClearColor(178.0/256, 178.0/256, 178.0/256, 1.0f);
@@ -216,7 +221,19 @@ void Renderer::addAppCube(int index) {
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->getViewMatrix();
-  world->rayCast(camera);
+
+  // handleSelected
+  Point selected = world->rayCast(camera);
+  if(selected.valid) {
+    shader->setBool("selectedValid", true);
+    glm::vec3 selectedVec = glm::vec3(selected.x, selected.y, selected.z);
+    unsigned int selectedLoc = glGetUniformLocation(shader->ID,"selected");
+    glUniform3fv(selectedLoc, 1, glm::value_ptr(selectedVec));
+  } else {
+    shader->setBool("selectedValid", false);
+  }
+
+
   updateTransformMatrices();
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setBool("isApp", false);

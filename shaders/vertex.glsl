@@ -6,12 +6,16 @@ layout (location = 3) in int blockType;
 
 out vec2 TexCoord;
 flat out int BlockType;
+flat out int isSelected;
 
 uniform mat4 model;
 uniform mat4 appModel;
 uniform mat4 view;
 uniform mat4 projection;
 uniform bool isApp;
+
+uniform vec3 selected;
+uniform bool selectedValid;
 
 void main()
 {
@@ -21,6 +25,14 @@ void main()
   } else {
     gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
   }
+
+  isSelected = 0;
+  if(selectedValid) {
+    if(abs(distance(aOffset,selected)) < 0.01) {
+      isSelected = 1;
+    }
+  }
+
   TexCoord = aTexCoord;
   BlockType = blockType;
 }
