@@ -77,7 +77,7 @@ int main() {
   controls = new Controls();
   controls->registerApp(&emacs);
   world->attachRenderer(renderer);
-  world->addAppCube(glm::vec3(0,0,0));
+  world->addAppCube(glm::vec3(4,1,5.5));
   api->initWorld(world, "tcp://localhost:5556");
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
