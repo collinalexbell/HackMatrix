@@ -78,8 +78,9 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
 }
 
 
-Position World::rayCast(Camera* camera) {
-  Position rv;
+Point World::rayCast(Camera* camera) {
+  Point rv;
+  rv.valid = false;
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
 
   int x = (int)floor(voxelSpace.x);
@@ -126,7 +127,7 @@ Position World::rayCast(Camera* camera) {
 
 
   int delta = 1;
-  int limit = 5;
+  int limit = 20;
 
   do {
     if(tMaxX < tMaxY) {
@@ -147,7 +148,7 @@ Position World::rayCast(Camera* camera) {
       }
     }
     // positive guard until chunking is done
-    if(x > 0 && y > 0 && z > 0) {
+    if(x >= 0 && y >= 0 && z >= 0) {
       Cube* closest = getVoxel(x,y,z);
       if(closest!=NULL) {
         cout << "got one!"
@@ -161,6 +162,7 @@ Position World::rayCast(Camera* camera) {
         rv.x = x;
         rv.y = y;
         rv.z = z;
+        rv.valid = true;
         return rv;
       }
     }
