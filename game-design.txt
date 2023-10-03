@@ -102,7 +102,10 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 - physical 3d space of NYC
 - state space of various blocks in the physical 3d space
+- portals
 
+### Building
+   - Players can construct with voxel placement (ugh, another minecraft clone...)
 
 ### Other
 
