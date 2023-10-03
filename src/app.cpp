@@ -129,6 +129,7 @@ X11App::X11App(string windowName) {
 };
 
 void X11App::unfocus(Window matrix) {
+  isFocused=false;
   XSelectInput(display, matrix, 0);
   XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
   XSync(display, False);
@@ -136,6 +137,7 @@ void X11App::unfocus(Window matrix) {
 }
 
 void X11App::focus(Window matrix) {
+  isFocused = true;
   Window root = DefaultRootWindow(display);
   XSetInputFocus(display, appWindow, RevertToParent, CurrentTime);
   XSelectInput(display, appWindow, KeyPressMask);

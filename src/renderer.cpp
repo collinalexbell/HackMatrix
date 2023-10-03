@@ -236,7 +236,11 @@ void Renderer::render() {
 
   updateTransformMatrices();
   shader->use(); // may need to move into loop to use changing uniforms
+  shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
+  if(app != NULL) {
+    shader->setBool("appSelected", app->isFocused);
+  }
   glBindVertexArray(VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());
   shader->setBool("isApp", true);
