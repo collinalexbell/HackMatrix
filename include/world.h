@@ -11,11 +11,12 @@
 
 class Renderer;
 
-struct Point {
+struct Position {
   int x;
   int y;
   int z;
   bool valid;
+  glm::vec3 normal;
 };
 
 struct Cube {
@@ -31,7 +32,7 @@ class World {
   Renderer* renderer;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
 public:
-  Point rayCast(Camera* camera);
+  Position rayCast(Camera* camera);
   const std::vector<Cube> getCubes();
   const std::vector<glm::vec3> getAppCubes();
   void addCube(int x, int y, int z, int blockType);

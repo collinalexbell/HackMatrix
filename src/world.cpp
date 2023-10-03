@@ -73,13 +73,14 @@ int World::size() {
 
 
 glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
-  glm::vec3 rv = cameraPosition / glm::vec3(0.1,0.1,0.1);
+  glm::vec3 halfAVoxel(0.5);
+  glm::vec3 rv = (cameraPosition / glm::vec3(0.1,0.1,0.1)) + halfAVoxel;
   return rv;
 }
 
 
-Point World::rayCast(Camera* camera) {
-  Point rv;
+Position World::rayCast(Camera* camera) {
+  Position rv;
   rv.valid = false;
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
 
@@ -94,9 +95,9 @@ Point World::rayCast(Camera* camera) {
 
   // index<> already represents boundary if step<> is negative
   // otherwise add 1
-  float tilNextX = x + ((stepX == 1) ? 1 : 0) - voxelSpace.x; // voxelSpace, because float position
-  float tilNextY = y + ((stepY == 1) ? 1 : 0) - voxelSpace.y;
-  float tilNextZ = z + ((stepZ == 1) ? 1 : 0) - voxelSpace.z;
+  float tilNextX = x + ((stepX == 1) ? 1 : 0) - (voxelSpace.x); // voxelSpace, because float position
+  float tilNextY = y + ((stepY == 1) ? 1 : 0) - (voxelSpace.y);
+  float tilNextZ = z + ((stepZ == 1) ? 1 : 0) - (voxelSpace.z);
   // what happens if x is negative though...
 
 
@@ -129,39 +130,40 @@ Point World::rayCast(Camera* camera) {
   int delta = 1;
   int limit = 20;
 
+  glm::vec3 normal;
+  glm::vec3 normalX = glm::vec3(stepX*-1, 0, 0);
+  glm::vec3 normalY = glm::vec3(0, stepY*-1, 0);
+  glm::vec3 normalZ = glm::vec3(0, 0, stepZ*-1);
   do {
     if(tMaxX < tMaxY) {
       if(tMaxX < tMaxZ){
         tMaxX = tMaxX + tDeltaX;
         x = x + stepX;
+        normal = normalX;
       } else {
         tMaxZ = tMaxZ + tDeltaZ;
         z = z + stepZ;
+        normal = normalZ;
       }
     } else {
       if(tMaxY < tMaxZ) {
         tMaxY = tMaxY + tDeltaY;
         y = y + stepY;
+        normal = normalY;
       } else {
         tMaxZ = tMaxZ + tDeltaZ;
         z = z + stepZ;
+        normal = normalZ;
       }
     }
     // positive guard until chunking is done
     if(x >= 0 && y >= 0 && z >= 0) {
       Cube* closest = getVoxel(x,y,z);
       if(closest!=NULL) {
-        cout << "got one!"
-             << x
-             << ","
-             << y
-             << ","
-             << z
-             << ","
-             << endl;
         rv.x = x;
         rv.y = y;
         rv.z = z;
+        rv.normal = normal;
         rv.valid = true;
         return rv;
       }
