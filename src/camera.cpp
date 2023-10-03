@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 
 Camera::Camera() {
-  position = glm::vec3(0.0f, 0.0f, 0.5f);
+  position = glm::vec3(4.0f, 1.0f, 5.8f);
   front = glm::vec3(0.0f, 0.0f, -1.0f);
   up = glm::vec3(0.0f, 1.0f, 0.0f);
   firstMouse = true;

@@ -22,6 +22,7 @@ class X11App {
   void appTexture();
   void focus(Window matrix);
   void unfocus(Window matrix);
+  bool isFocused = false;
 };
 
 #endif
