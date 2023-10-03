@@ -48,11 +48,13 @@ become fully enlightened technokings
 
 ## aesthetic
 * voxel
+* shader over unfocused X11 app
 ? what size voxels
 ? how will I generate the textures
 ? 3rd person
 ? IDK, IDK, IDK
 ? tron
+? custom shaders for blocks!!!!
 
 ### colors
 What if I blended man-made colors and natural colors with a sharp distinction between the two
