@@ -19,6 +19,7 @@ Api* api;
 Renderer* renderer;
 Controls* controls;
 Camera* camera;
+X11App* emacs;
 GLFWwindow* window;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -77,9 +78,9 @@ void wireEngineObjects() {
 }
 
 void createAndRegisterEmacs() {
-  X11App emacs("emacs@phoenix");
-  renderer->registerApp(&emacs);
-  controls->registerApp(&emacs);
+  emacs = new X11App("emacs@phoenix");
+  renderer->registerApp(emacs);
+  controls->registerApp(emacs);
 }
 
 void registerCursorCallback() {
@@ -93,6 +94,7 @@ void cleanup() {
   delete world;
   delete camera;
   delete api;
+  delete emacs;
 }
 
 void initEngine() {
