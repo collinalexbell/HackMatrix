@@ -38,6 +38,16 @@ V probably not
 - Will this software allow me to get funding from YC?
 - Am I proud of this software?
 
+## KeyResults
+- 150k
+  - 15,000 @ 10$ or 3,000 @ 50$
+- 4k
+  - 400 @ 10$ or 80 @ 50$
+- YC funding
+  - Users
+  - Revenue
+
+
 ## The toy: How can the matrix be a toy?
 - place blocks
 - code blocks
@@ -45,6 +55,7 @@ V probably not
 
 ## essential experience
 - concious hackers of their own world and become fully enlightened technokings
+- gamify software learning
 
 
 ## Game Theme
