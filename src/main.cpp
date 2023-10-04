@@ -64,7 +64,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 
 void createEngineObjects() {
   camera = new Camera();
-  world = new World();
+  world = new World(camera);
   api = new Api("tcp://*:5555");
   renderer = new Renderer(camera, world);
   controls = new Controls();

@@ -11,7 +11,7 @@ using namespace std;
 
 
 
-World::World(){}
+World::World(Camera* camera):camera(camera){}
 World::~World() {}
 
 const std::vector<Cube> World::getCubes() {
@@ -175,4 +175,12 @@ Position World::rayCast(Camera* camera) {
 
 void World::action() {
   cout << "clicked" << endl;
+  Position lookingAt = rayCast(camera);
+  if(lookingAt.valid) {
+    Cube* lookedAt = getVoxel(lookingAt.x, lookingAt.y, lookingAt.z);
+    int x = lookingAt.x + (int)lookingAt.normal.x;
+    int y = lookingAt.y + (int)lookingAt.normal.y;
+    int z = lookingAt.z + (int)lookingAt.normal.z;
+    addCube(x,y,z, lookedAt->blockType);
+  }
 }
