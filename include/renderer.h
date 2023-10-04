@@ -57,6 +57,7 @@ class Renderer {
   void addCube(int index, Cube cube);
   void addAppCube(int index);
   void registerApp(X11App* app);
+  void reloadChunk();
 };
 
 #endif

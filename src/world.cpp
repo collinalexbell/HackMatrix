@@ -14,14 +14,22 @@ using namespace std;
 World::World(Camera* camera):camera(camera){}
 World::~World() {}
 
+bool Cube::operator==(const Cube &cmp){
+  bool xEq = this->position.x == cmp.position.x;
+  bool yEq = this->position.x == cmp.position.y;
+  bool zEq = this->position.z == cmp.position.z;
+  bool blockTypeEq = this->blockType == cmp.blockType;
+  return xEq && yEq && zEq && blockTypeEq;
+}
+
 const std::vector<Cube> World::getCubes() {
-  std::vector<Cube> rv(cubes.size());
+  std::vector<Cube> rv;
   for(int x=0; x<CHUNK_SIZE; x++) {
     for(int y=0; y<CHUNK_SIZE; y++) {
       for(int z=0; z<CHUNK_SIZE; z++) {
-        Cube cube = cubes(x,y,z);
+        Cube cube = cubes.at(x,y,z);
         if(cube.blockType != -1) {
-          rv[cube.order] = cube;
+          rv.push_back(cube);
         }
       }
     }
@@ -40,10 +48,19 @@ const std::vector<glm::vec3> World::getAppCubes() {
 void World::addCube(int x, int y, int z, int blockType) {
   int orderIndex = cubeCount++;
   glm::vec3 pos(x, y, z);
-  Cube cube{pos, blockType, orderIndex};
+  Cube cube{pos, blockType};
   cubes(x,y,z) = cube;
   if(renderer != NULL) {
     renderer->addCube(orderIndex, cube);
+  }
+}
+
+void World::removeCube(int x, int y, int z) {
+  cubes.erase(x,y,z);
+  vector<Cube> allCubes = getCubes();
+  cubeCount = allCubes.size();
+  for(int i = 0; i < allCubes.size(); i++) {
+    renderer->addCube(i, allCubes[i]);
   }
 }
 
@@ -173,13 +190,18 @@ Position World::rayCast(Camera* camera) {
   return rv;
 }
 
-void World::action() {
+void World::action(int actNum) {
   Position lookingAt = rayCast(camera);
   if(lookingAt.valid) {
     Cube* lookedAt = getVoxel(lookingAt.x, lookingAt.y, lookingAt.z);
-    int x = lookingAt.x + (int)lookingAt.normal.x;
-    int y = lookingAt.y + (int)lookingAt.normal.y;
-    int z = lookingAt.z + (int)lookingAt.normal.z;
-    addCube(x,y,z, lookedAt->blockType);
+    if(actNum == 0) {
+      int x = lookingAt.x + (int)lookingAt.normal.x;
+      int y = lookingAt.y + (int)lookingAt.normal.y;
+      int z = lookingAt.z + (int)lookingAt.normal.z;
+      addCube(x,y,z, lookedAt->blockType);
+    }
+    if(actNum == 1) {
+      removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
+    }
   }
 }
