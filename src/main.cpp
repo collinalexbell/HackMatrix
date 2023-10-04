@@ -52,7 +52,7 @@ void enterGameLoop() {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
     api->pollFor(world);
-    controls->handleKeys(window, camera);
+    controls->poll(window, camera, world);
     glfwSwapBuffers(window);
     glfwPollEvents();
   }

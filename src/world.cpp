@@ -172,3 +172,7 @@ Position World::rayCast(Camera* camera) {
 
   return rv;
 }
+
+void World::action() {
+  cout << "clicked" << endl;
+}
