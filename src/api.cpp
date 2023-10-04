@@ -9,12 +9,12 @@
 using namespace std;
 
 Api::Api(std::string bindAddress) {
-  commandServer = new CommandServer(bindAddress);
+  context = zmq::context_t(2);
+  commandServer = new CommandServer(bindAddress, context);
 }
 
 
-CommandServer::CommandServer(std::string bindAddress) {
-  context = zmq::context_t(2);
+CommandServer::CommandServer(std::string bindAddress, zmq::context_t& context) {
   socket = zmq::socket_t(context, zmq::socket_type::rep);
   socket.bind (bindAddress);
 }
@@ -65,4 +65,9 @@ void Api::pollFor(World* world) {
   if(commandServer != NULL) {
     commandServer->pollForWorldCommands(world);
   }
+}
+
+
+Api::~Api() {
+  delete commandServer;
 }
