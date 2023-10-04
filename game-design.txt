@@ -1,61 +1,71 @@
-# Simulation Theory
+# Simulation Theory (working title)
 
 ```
 $ implemented
+~ kindof have it
 * working on
 - committed
 ? maybe
+V probably not
 ```
 
 ## process
 - Simply make the best game I can
-- Keep polishing and compressing it like a diamond, like how Mickey Singer viewed his medical manager code
+- Keep polishing and compressing it like a diamond
+       - like how Mickey Singer viewed his medical manager code
+- Modulate the time I spend doing various tasks in the short-wave
+       - do important tasks (matrix/phoenix infode improvements longer)
 
 ## next up
-- implement block placement
-  - ray casting or something
+- reanalyze what I can do to get an MVP out.
 
 ## after that
-- reanalyze what I can do to get an MVP out.
-- I may need to drastically rethink my Phoenix workflow to *!CRUNCH!*
+- face highlighting or reticle (so I know where I'm building)
 
 
-## the toy
+## path to MVP
+- (defun ready? (game)
+         (answers-all-the-questions-appropriately game))
 
-How can the matrix be a toy?
+## the questions
+- Will this software make me 150k?
+- Will this software make me 4k so I can go to Florida & Oregon with my dog and pay off storage fees?
+- Am I proud of this software?
+
+## The toy: How can the matrix be a toy?
 - place blocks
 - code blocks
 - watch blocks do stuff
 
 ## essential experience
-concious hackers of their own world
-         - The Gibson should feature into the game (haha)
-become fully enlightened technokings
+- concious hackers of their own world and become fully enlightened technokings
 
 
 ## Game Theme
+- living in a city filled with cybernetic organisms
 
-- Divine/magical power beyond one's comprehension
+? Divine/magical power beyond one's comprehension
   is available to those who seek it
   and learn to harmonize themselves
   with the spirit of the universe
 
-? solar cyborgs
-? living in a city filled with cybernetic organisms
 ? diy ethic
-? automated homestead life
-? exploring an ancient world that contains cyberenetic artifacts
+V solar cyborgs
+V automated homestead life
+V exploring an ancient world that contains cyberenetic artifacts
 
 
 ## aesthetic
-* voxel
-* shader over unfocused X11 app
+$ voxel
+$ shader over unfocused X11 app
+$ tron
+
+~ custom shaders for blocks!!!!
+
 ? what size voxels
 ? how will I generate the textures
-? 3rd person
-? IDK, IDK, IDK
-? tron
-? custom shaders for blocks!!!!
+
+V 3rd person
 
 ### colors
 What if I blended man-made colors and natural colors with a sharp distinction between the two
@@ -72,9 +82,9 @@ Overall, I'm liking the spacemacs colors... however, it will be nice to see what
 
 
 ### architecture
-New York City! End of Story!
-Voxel NYC! (Seems like a challenge, but eh, w.e)
-Textures from the city?
+- New York City! End of Story!
+- Voxel NYC! (Seems like a challenge, but eh, w.e)
+? Textures from the city?
 
 ? trees, lots of trees
 ? clasical buildings with futurist twist
@@ -98,10 +108,16 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 ### Block callback
 - click callback, to do something in the game on click
 
+### Code block
+Press spacebar to enter code into a block
+
 ### Judgements
-- $$
-- API calls
-- Cycles
+? $$
+? API calls
+? Cycles
+? Distance Traveled
+? Lines of code written
+? Lessons learned
 
 ### Actons
 - Write code (all the actions)
@@ -124,29 +140,23 @@ $ Players use an in game IDE to write code that influences the game world
   - Objects can be spawned
 $ Click in and click out of windows (maybe with a button frame or hotkey)
 
-? Blow stuff up with placed charges that have customizable size!
-
-? Enchant items with software routines
-
-? Spawn boxes for things to be drawn in
-
-? players make agents that manipulate the environment while sleeping (or doing other things)
-
-? Meditation to discover API endpoints for the universe
-
 - Subtle synchronicities that if players follow - will drastically improve their playing experience
 
+
+? Enchant items with software routines
+? the voxels could start out large and get progressively smaller as the player advances
+? Spawn boxes/rooms for things to be drawn in
+? players make agents that manipulate the environment while sleeping (or doing other things)
+? Meditation to discover API endpoints for the universe
 ? Players can write code for items that can be equiped that can then perform actions based on the code they write
 ? Item enchantment with code
-
 ? Players unlock API
 ? Some objects are immune to API calls
 ? Players have API spend/rate/etc
-
 ? the source code for an object is the path the player took (placing blocks) to make it
-
-? the voxels could start out large and get progressively smaller as the player advances
 ? piece components together to build cyborgs
+
+V Blow stuff up with placed charges that have customizable size!
 
 ## tokens
 
@@ -161,55 +171,54 @@ $ Click in and click out of windows (maybe with a button frame or hotkey)
 
 ## story
 
-You build an operating system while in the game. It just like teaches you everything to build an operating system in game. WTF ahahahah!!
 
-Or it would be fun to use the game as a teaching tool or virtual digital classroom to teach various computer programming topics (one of which in the end game can be a full fucking operating system).
+- The Gibson should feature into the game (haha)
 
-While exploring a lost city, a <x>th century player discovers a strange glowing apple growing on a tree.
-When the apple is picked up, it expands into a pair of goggles that the player puts on.
-Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
-to manipulate matter, if only he can find the right Names of Power.
+- You build an operating system while in the game. It just like teaches you everything to build an operating system in game. WTF ahahahah!!
 
-The player comes across a magician:
+- Or it would be fun to use the game as a teaching tool or virtual digital classroom to teach various computer programming topics (one of which in the end game can be a full fucking operating system).
 
-(rewrite for the sake of the game " We are about to study the idea of a computational process. Computational processes are abstract beings that inhabit computers. As they evolve, processes manipulate other abstract things called data. The evolution of a process is directed by a pattern of rules called a program. People create programs to direct processes. In effect, we conjure the spirits of the computer[matrix] with our spells.
+- While exploring a lost city, a <x>th century player discovers a strange glowing apple growing on a tree.
+  When the apple is picked up, it expands into a pair of goggles that the player puts on.
+  Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
+  to manipulate matter, if only he can find the right Names of Power.
 
-A computational process is indeed much like a sorcerer's idea of a spirit. It cannot be seen or touched. It is not composed of matter at all. However, it is very real. It can perform intellectual work. It can answer questions. It can affect the world by disbursing money at a bank or by controlling a robot arm in a factory. The programs we use to conjure processes are like a sorcerer's spells. They are carefully composed from symbolic expressions in arcane and esoteric programming languages that prescribe the tasks we want our processes to perform.
+  The player comes across a magician:
 
-A computational process, in a correctly working computer, executes programs precisely and accurately. Thus, like the sorcerer's apprentice, novice programmers must learn to understand and to anticipate the consequences of their conjuring. Even small errors (usually called bugs or glitches) in programs can have complex and unanticipated consequences.")
+  (rewrite for the sake of the game " We are about to study the idea of a computational process. Computational processes are abstract beings that inhabit computers. As they evolve, processes manipulate other abstract things called data. The evolution of a process is directed by a pattern of rules called a program. People create programs to direct processes. In effect, we conjure the spirits of the computer[matrix] with our spells.
+
+  A computational process is indeed much like a sorcerer's idea of a spirit. It cannot be seen or touched. It is not composed of matter at all. However, it is very real. It can perform intellectual work. It can answer questions. It can affect the world by disbursing money at a bank or by controlling a robot arm in a factory. The programs we use to conjure processes are like a sorcerer's spells. They are carefully composed from symbolic expressions in arcane and esoteric programming languages that prescribe the tasks we want our processes to perform.
+
+  A computational process, in a correctly working computer, executes programs precisely and accurately. Thus, like the sorcerer's apprentice, novice programmers must learn to understand and to anticipate the consequences of their conjuring. Even small errors (usually called bugs or glitches) in programs can have complex and unanticipated consequences.")
 
 ### missions
 
-- Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
+? Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
 
 ## technology
-- X Window to allow IDE
+$ X Window to allow IDE
   - Direct pixel rendering to keep crisp image
+  - snap to flat, draw with pixels
 - micro voxel
-- C++
+$ C++
 - Python API
-- Lisp API
-- ZeroMQ
-- OpenGL
+$ Lisp API
+$ ZeroMQ
+$ OpenGL
+
 ? City recreation based on google streetview (or some similar) - This is starting to seem like a better idea...
 ? Multiple X windows to allow a browser as well
 - recompilable while playing
-- snap to flat, draw with pixels
 
 - run like multiple linux VMs, one that you are building in, the other that is playing the engine
 
-#### Game design loops
-
-- roads with purple and dark grey spacemacs colors
-
-
 ## target audience
+- e/acc
 - Elon Musk; I want Elon Musk to play this game!
 - 16-35 year olds
 
 
 ## Maslows needs
-
 - physiological
     ?housing mechanic
     ?eating/drinking mechanic
