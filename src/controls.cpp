@@ -51,7 +51,12 @@ bool debounce(double &lastTime) {
 void Controls::handleClicks(GLFWwindow* window, World* world) {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    world->action();
+    world->action(0);
+  }
+
+  state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
+  if (state == GLFW_PRESS && debounce(lastClickTime)) {
+    world->action(1);
   }
 }
 

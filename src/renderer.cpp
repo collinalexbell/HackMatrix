@@ -131,6 +131,7 @@ void Renderer::fillBuffers() {
   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * world->getAppCubes().size(), world->getAppCubes().data());
 }
 
+
 Renderer::Renderer(Camera* camera, World* world) {
   this->camera = camera;
   this->world = world;
