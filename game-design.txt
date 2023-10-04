@@ -190,6 +190,7 @@ V Blow stuff up with placed charges that have customizable size!
 
 ## story
 
+- VR Hogwartz for hackers.
 
 - The Gibson should feature into the game (haha)
 
