@@ -29,7 +29,7 @@ build/api.o: src/api.cpp include/api.h
 build/controls.o: src/controls.cpp include/controls.h
 	g++  -std=c++20 -g -o build/controls.o -c src/controls.cpp $(INCLUDES)
 
-build/app.o: src/app.cpp
+build/app.o: src/app.cpp include/app.h
 	g++  -std=c++20 -g -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
 
 
