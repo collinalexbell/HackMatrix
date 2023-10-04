@@ -50,7 +50,6 @@ class Renderer {
   ~Renderer();
   Camera* getCamera();
   void render();
-  void render(World* world, float camera[3]);
   void genGlResources();
   void bindGlResourcesForInit();
   void setupVertexAttributePointers();
