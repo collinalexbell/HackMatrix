@@ -14,6 +14,17 @@ using namespace std;
 
 #define XA_ATOM 4
 
+const int pixmap_config[] = {
+    GLX_BIND_TO_TEXTURE_RGBA_EXT, 1, GLX_BIND_TO_TEXTURE_TARGETS_EXT,
+    GLX_TEXTURE_2D_BIT_EXT, GLX_RENDER_TYPE, GLX_RGBA_BIT, GLX_DRAWABLE_TYPE,
+    GLX_PIXMAP_BIT, GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR, GLX_X_RENDERABLE, 1,
+    // GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT, (GLint) GLX_DONT_CARE,
+
+    //		GLX_SAMPLE_BUFFERS, 1,
+    //		GLX_SAMPLES, 4,
+    GLX_DOUBLEBUFFER, 1, GLX_RED_SIZE, 8, GLX_GREEN_SIZE, 8, GLX_BLUE_SIZE, 8,
+    GLX_ALPHA_SIZE, 8, GLX_STENCIL_SIZE, 0, GLX_DEPTH_SIZE, 16, 0};
+
 void traverseWindowTree(Display* display, Window win, std::function<void(Display*, Window)> func) {
   func(display, win);
 
@@ -53,63 +64,22 @@ Window getWindowByName(Display* display, string search) {
   return rv;
 }
 
-void printWindowName(Display* display, Window win) {
-  XWindowAttributes attrs;
-  char nameMem[100];
-  char* name;
-  XFetchName(display, win, &name);
-  if(name != NULL) {
-    cout << name << endl;
-  }
-}
-
 void X11App::fetchInfo(string windowName) {
- display = XOpenDisplay(NULL);
-  //cout << "display:" << XDisplayString(display) << endl;
-
+  display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
+
   if (!gladLoadGLXLoader((GLADloadproc)glfwGetProcAddress, display, screen)) {
     std::cout << "Failed to initialize GLAD for GLX" << std::endl;
     return;
   }
-  cout << screen << endl;
+
   Window win = XDefaultRootWindow(display);
+
   appWindow = getWindowByName(display, windowName);
   XMapWindow(display,appWindow);
-  cout << "window: " << appWindow << endl;
   XGetWindowAttributes(display, appWindow, &attrs);
-  /*
-  cout << "width: " << attrs.width
-       << ", height: " << attrs.height
-       << ", depth: " << attrs.depth
-       << ", screen:" << XScreenNumberOfScreen(attrs.screen) << "==" << screen
-       << endl;
-  */
-  // Use glXChooseFBConfig to obtain a matching GLXFBConfig
-	const int pixmap_config[] = {
-		GLX_BIND_TO_TEXTURE_RGBA_EXT, 1,
-		GLX_BIND_TO_TEXTURE_TARGETS_EXT, GLX_TEXTURE_2D_BIT_EXT,
-		GLX_RENDER_TYPE, GLX_RGBA_BIT,
-		GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT,
-		GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
-		GLX_X_RENDERABLE, 1,
-		//GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT, (GLint) GLX_DONT_CARE,
-
-    //		GLX_SAMPLE_BUFFERS, 1,
-    //		GLX_SAMPLES, 4,
-		GLX_DOUBLEBUFFER, 1,
-		GLX_RED_SIZE, 8,
-		GLX_GREEN_SIZE, 8,
-		GLX_BLUE_SIZE, 8,
-		GLX_ALPHA_SIZE, 8,
-		GLX_STENCIL_SIZE, 0,
-		GLX_DEPTH_SIZE, 16, 0
-	};
 
   fbConfigs = glXChooseFBConfig(display, 0, pixmap_config, &fbConfigCount);
-
-
-
 }
 
 int errorHandler(Display *dpy, XErrorEvent *err)
