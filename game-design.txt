@@ -27,9 +27,17 @@ V probably not
 - (defun ready? (game)
          (answers-all-the-questions-appropriately game))
 
+- make a list of KeyResults that would allow this software to earn 4k
+- make a list of KeyResults that would allow this software to earn 150k
+- make a list of KeyResults that would allow this software to get funding from YC
+- implement the features 1 by 1
+- iterate on game design on each short wave
+- post the game every so often to determine how popular it will be (and to gain a following)
+
 ## the questions
 - Will this software make me 150k?
 - Will this software make me 4k so I can go to Florida & Oregon with my dog and pay off storage fees?
+- Will this software allow me to get funding from YC?
 - Am I proud of this software?
 
 ## The toy: How can the matrix be a toy?
