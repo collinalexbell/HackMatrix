@@ -28,11 +28,31 @@ void Controls::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
   }
 }
 
-void Controls::handleKeys(GLFWwindow* window, Camera* camera) {
+void Controls::poll(GLFWwindow* window, Camera* camera, World* world) {
+  handleKeys(window, camera);
+  handleClicks(window, world);
+}
+
+void Controls::handleKeys(GLFWwindow *window, Camera *camera) {
   handleEscape(window);
   handleControls(window, camera);
   handleToggleFocus(window);
   handleToggleApp(window);
+}
+
+double DEBOUNCE_TIME = 0.1;
+bool debounce(double &lastTime) {
+  double curTime = glfwGetTime();
+  double interval = curTime - lastTime;
+  lastTime = curTime;
+  return interval > DEBOUNCE_TIME;
+}
+
+void Controls::handleClicks(GLFWwindow* window, World* world) {
+  int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+  if (state == GLFW_PRESS && debounce(lastClickTime)) {
+    world->action();
+  }
 }
 
 void Controls::handleControls(GLFWwindow* window, Camera* camera) {
@@ -48,14 +68,6 @@ void Controls::handleEscape(GLFWwindow* window) {
   if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(window, true);
   }
-}
-
-double DEBOUNCE_TIME = 0.1;
-bool debounce(double& lastTime) {
-  double curTime = glfwGetTime();
-  double interval = curTime - lastTime;
-  lastTime = curTime;
-  return interval > DEBOUNCE_TIME;
 }
 
 void Controls::handleToggleApp(GLFWwindow* window) {

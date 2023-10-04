@@ -4,7 +4,6 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
-#include "renderer.h"
 #include "camera.h"
 #include <unordered_map>
 #include <octree/octree.h>
@@ -40,6 +39,7 @@ public:
   void attachRenderer(Renderer* renderer);
   Cube* getVoxel(float x, float y, float z);
   int size();
+  void action();
   World();
   ~World();
 };
