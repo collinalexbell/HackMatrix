@@ -157,6 +157,10 @@ $ Click in and click out of windows (maybe with a button frame or hotkey)
 
 ## story
 
+You build an operating system while in the game. It just like teaches you everything to build an operating system in game. WTF ahahahah!!
+
+Or it would be fun to use the game as a teaching tool or virtual digital classroom to teach various computer programming topics (one of which in the end game can be a full fucking operating system).
+
 While exploring a lost city, a <x>th century player discovers a strange glowing apple growing on a tree.
 When the apple is picked up, it expands into a pair of goggles that the player puts on.
 Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
