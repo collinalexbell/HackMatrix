@@ -94,6 +94,9 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 ## mechanics
 
+### Block callback
+- click callback, to do something in the game on click
+
 ### Judgements
 - $$
 - API calls
