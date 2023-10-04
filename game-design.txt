@@ -17,11 +17,9 @@ V probably not
        - do important tasks (matrix/phoenix infode improvements longer)
 
 ## next up
-- reanalyze what I can do to get an MVP out.
-
-## after that
 - face highlighting or reticle (so I know where I'm building)
 
+## after that
 
 ## path to MVP
 - (defun ready? (game)
@@ -112,6 +110,8 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 
 ## mechanics
+- physics
+- collisions
 
 ### Block callback
 - click callback, to do something in the game on click
