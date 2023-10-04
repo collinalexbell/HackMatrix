@@ -30,6 +30,7 @@ class World {
   std::unordered_map<glm::vec3, int> appCubes;
   Renderer* renderer;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
+  Camera* camera;
 public:
   Position rayCast(Camera* camera);
   const std::vector<Cube> getCubes();
@@ -40,7 +41,7 @@ public:
   Cube* getVoxel(float x, float y, float z);
   int size();
   void action();
-  World();
+  World(Camera* camera);
   ~World();
 };
 
