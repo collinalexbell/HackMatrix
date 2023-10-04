@@ -103,6 +103,10 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 - API calls
 - Cycles
 
+### Actons
+- Write code (all the actions)
+- Move blocks
+- Click on blocks
 
 ### Space
 
