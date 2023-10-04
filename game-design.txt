@@ -8,7 +8,8 @@ $ implemented
 ```
 
 ## process
-Simply make the best game I can
+- Simply make the best game I can
+- Keep polishing and compressing it like a diamond, like how Mickey Singer viewed his medical manager code
 
 ## next up
 - implement block placement
