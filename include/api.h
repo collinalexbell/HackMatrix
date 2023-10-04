@@ -7,17 +7,18 @@
 using namespace std;
 
 class CommandServer {
-  zmq::context_t context;
   zmq::socket_t socket;
 public:
   void pollForWorldCommands(World* world);
-  CommandServer(std::string bindAddress);
+  CommandServer(std::string bindAddress, zmq::context_t& context);
 };
 
 class Api {
+  zmq::context_t context;
   CommandServer* commandServer;
  public:
   Api(std::string bindAddress);
+  ~Api();
   void pollFor(World* world);
   void requestWorldData(World*, string);
 };
