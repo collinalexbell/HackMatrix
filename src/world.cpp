@@ -174,7 +174,6 @@ Position World::rayCast(Camera* camera) {
 }
 
 void World::action() {
-  cout << "clicked" << endl;
   Position lookingAt = rayCast(camera);
   if(lookingAt.valid) {
     Cube* lookedAt = getVoxel(lookingAt.x, lookingAt.y, lookingAt.z);
