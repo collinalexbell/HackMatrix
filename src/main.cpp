@@ -25,7 +25,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-GLFWwindow* init() {
+GLFWwindow* initGraphics() {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -48,7 +48,7 @@ GLFWwindow* init() {
   return window;
 }
 
-void loop () {
+void enterGameLoop() {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
     api->pollFor(world);
@@ -63,32 +63,54 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
   controls->mouseCallback(window, xpos, ypos);
 }
 
-int main() {
-  window = init();
-  int maxTextureImageUnits;
-  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureImageUnits);
-  std::cout << "max textures: " << maxTextureImageUnits << endl;
-  X11App emacs("emacs@phoenix");
+void createEngineObjects() {
   camera = new Camera();
   world = new World();
   api = new Api("tcp://*:5555");
   renderer = new Renderer(camera, world);
-  renderer->registerApp(&emacs);
   controls = new Controls();
-  controls->registerApp(&emacs);
+}
+
+void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addAppCube(glm::vec3(4,1,5.5));
   api->initWorld(world, "tcp://localhost:5556");
+}
+
+void createAndRegisterEmacs() {
+  X11App emacs("emacs@phoenix");
+  renderer->registerApp(&emacs);
+  controls->registerApp(&emacs);
+}
+
+void registerCursorCallback() {
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
-  if(window == NULL) {
-    return -1;
-  }
-  loop();
+}
+
+void cleanup() {
   glfwTerminate();
   delete renderer;
   delete world;
   delete camera;
   delete api;
+}
+
+void initEngine() {
+  createEngineObjects();
+  createAndRegisterEmacs();
+  wireEngineObjects();
+  registerCursorCallback();
+}
+
+
+int main() {
+  window = initGraphics();
+  if(window == NULL) {
+    return -1;
+  }
+  initEngine();
+  enterGameLoop();
+  cleanup();
   return 0;
 }
