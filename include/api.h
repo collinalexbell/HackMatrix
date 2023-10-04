@@ -6,14 +6,20 @@
 
 using namespace std;
 
-class Api {
+class CommandServer {
   zmq::context_t context;
   zmq::socket_t socket;
-  void initZmq(string bindAddress);
+public:
+  void pollForWorldCommands(World* world);
+  CommandServer(std::string bindAddress);
+};
+
+class Api {
+  CommandServer* commandServer;
  public:
   Api(std::string bindAddress);
   void pollFor(World* world);
-  void initWorld(World*, string );
+  void requestWorldData(World*, string);
 };
 
 #endif

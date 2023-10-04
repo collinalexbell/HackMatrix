@@ -192,6 +192,7 @@ A computational process, in a correctly working computer, executes programs prec
 - recompilable while playing
 - snap to flat, draw with pixels
 
+- run like multiple linux VMs, one that you are building in, the other that is playing the engine
 
 #### Game design loops
 
