@@ -56,7 +56,6 @@ void enterGameLoop() {
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
-  std::cout << "exiting" << std::endl;
 }
 
 void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
