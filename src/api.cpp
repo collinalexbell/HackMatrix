@@ -1,21 +1,25 @@
 #include <zmq/zmq.hpp>
 #include "api.h"
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+#include <cstring>
 
 using namespace std;
 
 Api::Api(std::string bindAddress) {
-  initZmq(bindAddress);
+  commandServer = new CommandServer(bindAddress);
 }
 
 
-void Api::initZmq(std::string bindAddress) {
+CommandServer::CommandServer(std::string bindAddress) {
   context = zmq::context_t(2);
   socket = zmq::socket_t(context, zmq::socket_type::rep);
   socket.bind (bindAddress);
 }
 
-void Api::initWorld(World* world, string serverAddr) {
+void Api::requestWorldData(World* world, string serverAddr) {
   zmq::message_t reply;
   zmq::message_t request(5);
   zmq::context_t clientContext = zmq::context_t(2);
@@ -30,13 +34,12 @@ void Api::initWorld(World* world, string serverAddr) {
   }
 }
 
-void Api::pollFor(World* world) {
+void CommandServer::pollForWorldCommands(World* world) {
   zmq::message_t request;
 
   zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
   if(result >= 0) {
     std::string data(static_cast<char*>(request.data()), request.size());
-    std::cout  << data << std::endl;
 
     std::istringstream iss(data);
 
@@ -55,5 +58,11 @@ void Api::pollFor(World* world) {
     zmq::message_t reply (5);
     memcpy (reply.data (), "recv", 5);
     socket.send (reply, zmq::send_flags::none);
+  }
+}
+
+void Api::pollFor(World* world) {
+  if(commandServer != NULL) {
+    commandServer->pollForWorldCommands(world);
   }
 }

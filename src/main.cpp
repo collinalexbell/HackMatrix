@@ -73,7 +73,7 @@ void createEngineObjects() {
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addAppCube(glm::vec3(4,1,5.5));
-  api->initWorld(world, "tcp://localhost:5556");
+  api->requestWorldData(world, "tcp://localhost:5556");
 }
 
 void createAndRegisterEmacs() {
