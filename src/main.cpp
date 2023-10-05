@@ -6,6 +6,8 @@
 #include "app.h"
 
 #include <X11/X.h>
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/xfixeswire.h>
 #include <iostream>
 #include <string>
 #include <signal.h>
@@ -60,6 +62,8 @@ GLFWwindow* initGraphics() {
   overlay = XCompositeGetOverlayWindow(display, RootWindow(display, screen));
   XReparentWindow(display, matriXWindow, overlay, 0, 0);
 
+  XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
+
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return NULL;
@@ -95,6 +99,7 @@ void createEngineObjects() {
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addAppCube(glm::vec3(4,1,5.5));
+  world->addCube(20,20,20,1);
   //api->requestWorldData(world, "tcp://localhost:5556");
 }
 
@@ -102,13 +107,13 @@ int emacsPid = -1;
 void createAndRegisterEmacs() {
   int pid = fork();
   if(pid == 0) {
-    //execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
+    execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
   sleep(1);
   glfwFocusWindow(window);
-  emacs = new X11App("emacs@phoenix", display, screen);
-  //emacs = new X11App("@cgDISMfxT:T", display, screen);
+  //emacs = new X11App("emacs@phoenix", display, screen);
+  emacs = new X11App("@cgDISMfxT:T", display, screen);
   renderer->registerApp(emacs);
   controls->registerApp(emacs);
 }

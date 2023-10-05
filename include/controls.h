@@ -17,6 +17,7 @@ class Controls {
   float lastX;
   float lastY;
   X11App* app = NULL;
+  int clickY = 100;
 
   void handleControls(GLFWwindow* window, Camera* camera);
   void handleEscape(GLFWwindow* window);
