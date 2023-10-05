@@ -20,6 +20,7 @@ class X11App {
  public:
   X11App(string windowName, Display* display, int screen);
   void appTexture();
+  void click(int x, int y);
   void focus(Window matrix);
   void takeInputFocus();
   void unfocus(Window matrix);

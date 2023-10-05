@@ -52,7 +52,12 @@ bool debounce(double &lastTime) {
 void Controls::handleClicks(GLFWwindow* window, World* world) {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    world->action(PLACE_CUBE);
+    if(!appFocused) {
+      world->action(PLACE_CUBE);
+    } else {
+      app->click(100,clickY);
+      clickY = clickY + 100;
+    }
   }
 
   state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
@@ -79,6 +84,7 @@ void Controls::handleEscape(GLFWwindow* window) {
 void Controls::handleToggleApp(GLFWwindow* window) {
   if(app != NULL && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
     Window x11Window = glfwGetX11Window(window);
+    appFocused = true;
     app->focus(x11Window);
   }
 }

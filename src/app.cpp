@@ -1,3 +1,4 @@
+#include <X11/X.h>
 #include <iostream>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
@@ -9,6 +10,9 @@
 #include <GLFW/glfw3.h>
 #include <thread>
 #include "app.h"
+
+#include <X11/extensions/Xfixes.h>
+#include <X11/extensions/xfixeswire.h>
 
 using namespace std;
 
@@ -51,7 +55,6 @@ Window getWindowByName(Display* display, string search) {
     char nameMem[100];
     char* name;
     XFetchName(display, window, &name);
-    if(name != NULL) cout << name << endl;
     if(name != NULL && string(name).find(search) != string::npos) {
       found = true;
       rv = window;
@@ -96,9 +99,32 @@ X11App::X11App(string windowName, Display* display, int screen): display(display
   fetchInfo(windowName);
 };
 
+void X11App::click(int x, int y) {
+  cout << "click" << x << ", " << y << endl;
+  XEvent event;
+  event.xbutton.type = ButtonPress;
+  event.xbutton.display = display;
+  event.xbutton.window = appWindow;
+  event.xbutton.root = DefaultRootWindow(display);
+  event.xbutton.subwindow = None;
+  event.xbutton.time = CurrentTime;
+  event.xbutton.x = x;
+  event.xbutton.y = y;
+  event.xbutton.x_root = x;
+  event.xbutton.y_root = y;
+  event.xbutton.button = Button1;
+  event.xbutton.same_screen = True;
+  XSendEvent(display, appWindow, True, ButtonPressMask, &event);
+  XSync(display, False);
+  XFlush(display);
+}
+
 void X11App::unfocus(Window matrix) {
   isFocused=false;
   XSelectInput(display, matrix, 0);
+  Window root = DefaultRootWindow(display);
+  KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+  XUngrabKey(display, eKeyCode, AnyModifier, root);
   XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
   XSync(display, False);
   XFlush(display);
@@ -113,8 +139,11 @@ void X11App::takeInputFocus() {
 void X11App::focus(Window matrix) {
   isFocused = true;
   Window root = DefaultRootWindow(display);
-  XSelectInput(display, appWindow, KeyPressMask);
+  KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   takeInputFocus();
+  XGrabKey(display, eKeyCode, AnyModifier, root, false, GrabModeAsync, GrabModeAsync);
+  XSync(display, False);
+  XFlush(display);
 
   // Create a thread to listen for key events
   std::thread keyListenerThread([this, root, matrix]() {
@@ -124,12 +153,10 @@ void X11App::focus(Window matrix) {
 
       while (true) {
         XNextEvent(display, &event);
-
         if (event.type == KeyPress) {
           XKeyEvent keyEvent = event.xkey;
           if (keyEvent.keycode == eKeyCode &&
-              keyEvent.state & ControlMask &&
-              keyEvent.state & Mod1Mask) {
+              keyEvent.state & Mod4Mask) {
             // Windows Key (Super_L) + Ctrl + E is pressed
             unfocus(matrix); // Call your unfocus function
             break;
