@@ -18,7 +18,7 @@ class X11App {
   int fbConfigCount;
   void fetchInfo(string windowName);
  public:
-  X11App(string windowName);
+  X11App(string windowName, Display* display, int screen);
   void appTexture();
   void focus(Window matrix);
   void unfocus(Window matrix);
