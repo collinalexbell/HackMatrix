@@ -51,7 +51,8 @@ Window getWindowByName(Display* display, string search) {
     char nameMem[100];
     char* name;
     XFetchName(display, window, &name);
-    if(name != NULL && string(name) == search) {
+    if(name != NULL) cout << name << endl;
+    if(name != NULL && string(name).find(search) != string::npos) {
       found = true;
       rv = window;
     }
