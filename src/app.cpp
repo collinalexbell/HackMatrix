@@ -95,7 +95,7 @@ X11App::X11App(string windowName) {
   //TODO: create the app in virtual X
   XSetErrorHandler(errorHandler);
   fetchInfo(windowName);
-  XCompositeRedirectWindow(display, appWindow, CompositeRedirectAutomatic);
+  XCompositeRedirectSubwindows(display, RootWindow(display, screen), CompositeRedirectAutomatic);
 };
 
 void X11App::unfocus(Window matrix) {
