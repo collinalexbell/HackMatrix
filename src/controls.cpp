@@ -1,3 +1,4 @@
+#include "world.h"
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -51,12 +52,12 @@ bool debounce(double &lastTime) {
 void Controls::handleClicks(GLFWwindow* window, World* world) {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    world->action(0);
+    world->action(PLACE_CUBE);
   }
 
   state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    world->action(1);
+    world->action(REMOVE_CUBE);
   }
 }
 

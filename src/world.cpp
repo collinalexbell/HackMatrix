@@ -76,7 +76,7 @@ void World::attachRenderer(Renderer* renderer){
   this->renderer = renderer;
 }
 
-Cube* World::getVoxel(float x, float y, float z) {
+Cube* World::getCube(float x, float y, float z) {
   Cube* rv = &cubes(x,y,z);
   if(rv->blockType != -1) {
     return rv;
@@ -96,7 +96,7 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
 }
 
 
-Position World::rayCast(Camera* camera) {
+Position World::getLookedAtCube() {
   Position rv;
   rv.valid = false;
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
@@ -175,7 +175,7 @@ Position World::rayCast(Camera* camera) {
     }
     // positive guard until chunking is done
     if(x >= 0 && y >= 0 && z >= 0) {
-      Cube* closest = getVoxel(x,y,z);
+      Cube* closest = getCube(x,y,z);
       if(closest!=NULL) {
         rv.x = x;
         rv.y = y;
@@ -190,17 +190,17 @@ Position World::rayCast(Camera* camera) {
   return rv;
 }
 
-void World::action(int actNum) {
-  Position lookingAt = rayCast(camera);
+void World::action(Action toTake) {
+  Position lookingAt = getLookedAtCube();
   if(lookingAt.valid) {
-    Cube* lookedAt = getVoxel(lookingAt.x, lookingAt.y, lookingAt.z);
-    if(actNum == 0) {
+    Cube* lookedAt = getCube(lookingAt.x, lookingAt.y, lookingAt.z);
+    if(toTake == PLACE_CUBE) {
       int x = lookingAt.x + (int)lookingAt.normal.x;
       int y = lookingAt.y + (int)lookingAt.normal.y;
       int z = lookingAt.z + (int)lookingAt.normal.z;
       addCube(x,y,z, lookedAt->blockType);
     }
-    if(actNum == 1) {
+    if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
     }
   }
