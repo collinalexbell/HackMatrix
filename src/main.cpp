@@ -77,7 +77,7 @@ GLFWwindow* initGraphics() {
 void enterGameLoop() {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
-    //api->pollFor(world);
+    api->pollFor(world);
     controls->poll(window, camera, world);
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -91,7 +91,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 void createEngineObjects() {
   camera = new Camera();
   world = new World(camera);
-  //api = new Api("tcp://*:5555");
+  api = new Api("tcp://*:5555");
   renderer = new Renderer(camera, world);
   controls = new Controls();
 }
@@ -99,21 +99,20 @@ void createEngineObjects() {
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addAppCube(glm::vec3(4,1,5.5));
-  world->addCube(20,20,20,1);
-  //api->requestWorldData(world, "tcp://localhost:5556");
+  api->requestWorldData(world, "tcp://localhost:5556");
 }
 
 int emacsPid = -1;
 void createAndRegisterEmacs() {
   int pid = fork();
   if(pid == 0) {
-    execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
+    //execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
   sleep(1);
   glfwFocusWindow(window);
-  //emacs = new X11App("emacs@phoenix", display, screen);
-  emacs = new X11App("@cgDISMfxT:T", display, screen);
+  emacs = new X11App("emacs@phoenix", display, screen);
+  //emacs = new X11App("@cgDISMfxT:T", display, screen);
   renderer->registerApp(emacs);
   controls->registerApp(emacs);
 }
