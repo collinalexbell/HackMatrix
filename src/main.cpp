@@ -82,7 +82,7 @@ int emacsPid = -1;
 void createAndRegisterEmacs() {
   int pid = fork();
   if(pid == 0) {
-    execl("", "");
+    //execl("", "");
     exit(0);
   }
   emacs = new X11App("emacs@phoenix");
