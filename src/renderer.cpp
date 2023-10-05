@@ -224,7 +224,7 @@ void Renderer::render() {
   view = camera->getViewMatrix();
 
   // handleSelected
-  Position selected = world->rayCast(camera);
+  Position selected = world->getLookedAtCube();
   if(selected.valid) {
     shader->setBool("selectedValid", true);
     glm::vec3 selectedVec = glm::vec3(selected.x, selected.y, selected.z);
