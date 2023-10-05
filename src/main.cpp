@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <string>
+#include <signal.h>
 
 #include <glad/glad.h>
 #include <glad/glad_glx.h>
@@ -77,7 +78,13 @@ void wireEngineObjects() {
   //api->requestWorldData(world, "tcp://localhost:5556");
 }
 
+int emacsPid = -1;
 void createAndRegisterEmacs() {
+  int pid = fork();
+  if(pid == 0) {
+    execl("", "");
+    exit(0);
+  }
   emacs = new X11App("emacs@phoenix");
   renderer->registerApp(emacs);
   controls->registerApp(emacs);
@@ -90,6 +97,9 @@ void registerCursorCallback() {
 
 void cleanup() {
   glfwTerminate();
+  if(emacsPid != -1) {
+    kill(emacsPid, SIGKILL);
+  }
   delete renderer;
   delete world;
   delete camera;
