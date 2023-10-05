@@ -14,6 +14,7 @@
 #include <GLFW/glfw3.h>
 #include <zmq/zmq.hpp>
 #include <glm/glm.hpp>
+#include <X11/extensions/Xcomposite.h>
 
 World* world;
 Api* api;
@@ -22,6 +23,8 @@ Controls* controls;
 Camera* camera;
 X11App* emacs;
 GLFWwindow* window;
+Display *display;
+int screen;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -39,6 +42,11 @@ GLFWwindow* initGraphics() {
     return NULL;
   }
   glfwMakeContextCurrent(window);
+
+  display = XOpenDisplay(NULL);
+  screen = XDefaultScreen(display);
+  XCompositeRedirectSubwindows(display, RootWindow(display, screen),
+                               CompositeRedirectAutomatic);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
@@ -82,12 +90,12 @@ int emacsPid = -1;
 void createAndRegisterEmacs() {
   int pid = fork();
   if(pid == 0) {
-    execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
+    //execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
   sleep(1);
   glfwFocusWindow(window);
-  emacs = new X11App("emacs@phoenix");
+  emacs = new X11App("emacs@phoenix", display, screen);
   renderer->registerApp(emacs);
   controls->registerApp(emacs);
 }

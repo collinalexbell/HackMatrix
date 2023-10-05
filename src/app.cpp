@@ -65,8 +65,6 @@ Window getWindowByName(Display* display, string search) {
 }
 
 void X11App::fetchInfo(string windowName) {
-  display = XOpenDisplay(NULL);
-  screen = XDefaultScreen(display);
 
   if (!gladLoadGLXLoader((GLADloadproc)glfwGetProcAddress, display, screen)) {
     std::cout << "Failed to initialize GLAD for GLX" << std::endl;
@@ -91,11 +89,10 @@ int errorHandler(Display *dpy, XErrorEvent *err)
   return 0;
 }
 
-X11App::X11App(string windowName) {
+X11App::X11App(string windowName, Display* display, int screen): display(display), screen(screen) {
   //TODO: create the app in virtual X
   XSetErrorHandler(errorHandler);
   fetchInfo(windowName);
-  XCompositeRedirectSubwindows(display, RootWindow(display, screen), CompositeRedirectAutomatic);
 };
 
 void X11App::unfocus(Window matrix) {
