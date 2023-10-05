@@ -192,6 +192,8 @@ V Blow stuff up with placed charges that have customizable size!
 
 - VR Hogwartz for hackers.
 
+- Key by using 3d position and orientation to unlock a space (like hogwartz picture)
+
 - The Gibson should feature into the game (haha)
 
 - You build an operating system while in the game. It just like teaches you everything to build an operating system in game. WTF ahahahah!!
