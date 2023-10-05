@@ -82,9 +82,11 @@ int emacsPid = -1;
 void createAndRegisterEmacs() {
   int pid = fork();
   if(pid == 0) {
-    //execl("", "");
+    execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
+  sleep(1);
+  glfwFocusWindow(window);
   emacs = new X11App("emacs@phoenix");
   renderer->registerApp(emacs);
   controls->registerApp(emacs);
