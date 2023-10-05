@@ -21,6 +21,7 @@ class X11App {
   X11App(string windowName, Display* display, int screen);
   void appTexture();
   void focus(Window matrix);
+  void takeInputFocus();
   void unfocus(Window matrix);
   bool isFocused = false;
 };

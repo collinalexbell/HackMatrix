@@ -103,13 +103,17 @@ void X11App::unfocus(Window matrix) {
   XFlush(display);
 }
 
+void X11App::takeInputFocus() {
+  XSetInputFocus(display, appWindow, RevertToParent, CurrentTime);
+  XSync(display, False);
+  XFlush(display);
+}
+
 void X11App::focus(Window matrix) {
   isFocused = true;
   Window root = DefaultRootWindow(display);
-  XSetInputFocus(display, appWindow, RevertToParent, CurrentTime);
   XSelectInput(display, appWindow, KeyPressMask);
-  XSync(display, False);
-  XFlush(display);
+  takeInputFocus();
 
   // Create a thread to listen for key events
   std::thread keyListenerThread([this, root, matrix]() {

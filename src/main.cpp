@@ -5,16 +5,20 @@
 #include "world.h"
 #include "app.h"
 
+#include <X11/X.h>
 #include <iostream>
 #include <string>
 #include <signal.h>
 
+#define GLFW_EXPOSE_NATIVE_X11
+#include <GLFW/glfw3native.h>
+#include <GLFW/glfw3.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/Xcomposite.h>
 #include <glad/glad.h>
 #include <glad/glad_glx.h>
-#include <GLFW/glfw3.h>
-#include <zmq/zmq.hpp>
 #include <glm/glm.hpp>
-#include <X11/extensions/Xcomposite.h>
+#include <zmq/zmq.hpp>
 
 World* world;
 Api* api;
@@ -25,6 +29,9 @@ X11App* emacs;
 GLFWwindow* window;
 Display *display;
 int screen;
+
+Window matriXWindow;
+Window overlay;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -47,6 +54,11 @@ GLFWwindow* initGraphics() {
   screen = XDefaultScreen(display);
   XCompositeRedirectSubwindows(display, RootWindow(display, screen),
                                CompositeRedirectAutomatic);
+
+  matriXWindow = glfwGetX11Window(window);
+
+  overlay = XCompositeGetOverlayWindow(display, RootWindow(display, screen));
+  XReparentWindow(display, matriXWindow, overlay, 0, 0);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
@@ -110,10 +122,13 @@ void cleanup() {
   if(emacsPid != -1) {
     kill(emacsPid, SIGKILL);
   }
+  //XCompositeUnredirectSubwindows(display, RootWindow(display, screen), int update);
+  XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
   delete renderer;
   delete world;
   delete camera;
   delete api;
+  emacs->takeInputFocus();
   delete emacs;
 }
 
