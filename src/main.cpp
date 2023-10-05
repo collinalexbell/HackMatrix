@@ -108,6 +108,7 @@ void createAndRegisterEmacs() {
   sleep(1);
   glfwFocusWindow(window);
   emacs = new X11App("emacs@phoenix", display, screen);
+  //emacs = new X11App("@cgDISMfxT:T", display, screen);
   renderer->registerApp(emacs);
   controls->registerApp(emacs);
 }
