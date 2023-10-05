@@ -52,7 +52,7 @@ GLFWwindow* initGraphics() {
 void enterGameLoop() {
   while(!glfwWindowShouldClose(window)) {
     renderer->render();
-    api->pollFor(world);
+    //api->pollFor(world);
     controls->poll(window, camera, world);
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -66,7 +66,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 void createEngineObjects() {
   camera = new Camera();
   world = new World(camera);
-  api = new Api("tcp://*:5555");
+  //api = new Api("tcp://*:5555");
   renderer = new Renderer(camera, world);
   controls = new Controls();
 }
@@ -74,7 +74,7 @@ void createEngineObjects() {
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addAppCube(glm::vec3(4,1,5.5));
-  api->requestWorldData(world, "tcp://localhost:5556");
+  //api->requestWorldData(world, "tcp://localhost:5556");
 }
 
 void createAndRegisterEmacs() {
