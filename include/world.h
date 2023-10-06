@@ -4,6 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
+#include "app.h"
 #include "camera.h"
 #include <unordered_map>
 #include <octree/octree.h>
@@ -24,6 +25,11 @@ struct Cube {
   bool operator==(const Cube& cmp);
 };
 
+struct App {
+  X11App* app;
+  glm::vec3 position;
+};
+
 enum Action {
   PLACE_CUBE,
   REMOVE_CUBE
@@ -41,12 +47,15 @@ class World {
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
   Cube *getCube(float x, float y, float z);
   const std::vector<Cube> getCubes();
+  void refreshRenderer();
 
 public:
-  World(Camera *camera);
+  const float CUBE_SIZE = 0.1;
+  World(Camera *camera, bool debug = false);
   ~World();
   void attachRenderer(Renderer *renderer);
 
+  App* getLookedAtApp();
   Position getLookedAtCube();
   const std::vector<glm::vec3> getAppCubes();
 

@@ -90,7 +90,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 
 void createEngineObjects() {
   camera = new Camera();
-  world = new World(camera);
+  world = new World(camera, true);
   api = new Api("tcp://*:5555");
   renderer = new Renderer(camera, world);
   controls = new Controls();
@@ -106,13 +106,13 @@ int emacsPid = -1;
 void createAndRegisterEmacs() {
   int pid = fork();
   if(pid == 0) {
-    //execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
+    execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
   sleep(1);
   glfwFocusWindow(window);
-  emacs = new X11App("emacs@phoenix", display, screen);
-  //emacs = new X11App("@cgDISMfxT:T", display, screen);
+  //emacs = new X11App("emacs@phoenix", display, screen);
+  emacs = new X11App("@cgDISMfxT:T", display, screen);
   renderer->registerApp(emacs);
   controls->registerApp(emacs);
 }
