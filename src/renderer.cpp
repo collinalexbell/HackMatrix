@@ -183,7 +183,7 @@ Renderer::Renderer(Camera* camera, World* world) {
 
   // this can be used to rotate an entire chunk (call to glDrawArraysInstanced)
   model = glm::mat4(1.0f);
-  model = glm::scale(model, glm::vec3(0.1,0.1,0.1));
+  model = glm::scale(model, glm::vec3(world->CUBE_SIZE));
 
   appModel = glm::mat4(1.0f);
   //model = glm::rotate(model, glm::radians(-55.0f),

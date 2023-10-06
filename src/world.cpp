@@ -11,7 +11,20 @@ using namespace std;
 
 
 
-World::World(Camera* camera):camera(camera){}
+World::World(Camera *camera, bool debug) : camera(camera) {
+  if(debug) {
+    int max = CHUNK_SIZE - 1;
+    addCube(0, 0, 0, 0);
+    addCube(max, 0, 0, 0);
+    addCube(0,max,0,0);
+    addCube(0,0,max, 0);
+    addCube(max, max, 0, 0);
+    addCube(0, max, max,0);
+    addCube(max,0, max, 0);
+    addCube(max, 0, max, 0);
+    addCube(max, max, max, 0);
+  }
+}
 World::~World() {}
 
 bool Cube::operator==(const Cube &cmp){
@@ -55,13 +68,17 @@ void World::addCube(int x, int y, int z, int blockType) {
   }
 }
 
-void World::removeCube(int x, int y, int z) {
-  cubes.erase(x,y,z);
+void World::refreshRenderer() {
   vector<Cube> allCubes = getCubes();
   cubeCount = allCubes.size();
-  for(int i = 0; i < allCubes.size(); i++) {
+  for (int i = 0; i < allCubes.size(); i++) {
     renderer->addCube(i, allCubes[i]);
   }
+}
+
+void World::removeCube(int x, int y, int z) {
+  cubes.erase(x,y,z);
+  refreshRenderer();
 }
 
 void World::addAppCube(glm::vec3 cube) {
@@ -74,6 +91,7 @@ void World::addAppCube(glm::vec3 cube) {
 
 void World::attachRenderer(Renderer* renderer){
   this->renderer = renderer;
+  refreshRenderer();
 }
 
 Cube* World::getCube(float x, float y, float z) {
@@ -91,7 +109,7 @@ int World::size() {
 
 glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
   glm::vec3 halfAVoxel(0.5);
-  glm::vec3 rv = (cameraPosition / glm::vec3(0.1,0.1,0.1)) + halfAVoxel;
+  glm::vec3 rv = (cameraPosition / glm::vec3(CUBE_SIZE)) + halfAVoxel;
   return rv;
 }
 
@@ -174,7 +192,7 @@ Position World::getLookedAtCube() {
       }
     }
     // positive guard until chunking is done
-    if(x >= 0 && y >= 0 && z >= 0) {
+    if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE && y < CHUNK_SIZE && z < CHUNK_SIZE) {
       Cube* closest = getCube(x,y,z);
       if(closest!=NULL) {
         rv.x = x;
