@@ -256,7 +256,7 @@ Camera* Renderer::getCamera() {
 
 void Renderer::registerApp(X11App* app) {
   this->app = app;
-  glActiveTexture(GL_TEXTURE31);
+  glActiveTexture(GL_TEXTURE0 + 31);
   glBindTexture(GL_TEXTURE_2D, textures["app"]->ID);
   app->appTexture();
 }
