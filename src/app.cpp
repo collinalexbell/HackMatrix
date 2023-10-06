@@ -141,7 +141,7 @@ void X11App::focus(Window matrix) {
   Window root = DefaultRootWindow(display);
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   takeInputFocus();
-  XGrabKey(display, eKeyCode, AnyModifier, root, false, GrabModeAsync, GrabModeAsync);
+  XGrabKey(display, eKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
   XSync(display, False);
   XFlush(display);
 
