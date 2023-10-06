@@ -22,7 +22,7 @@
 #include <glm/glm.hpp>
 #include <zmq/zmq.hpp>
 
-//#define API
+#define API
 
 World* world;
 Api* api;
@@ -31,6 +31,7 @@ Controls* controls;
 Camera* camera;
 X11App* emacs;
 X11App *surf;
+X11App *obs;
 GLFWwindow* window;
 Display *display;
 int screen;
@@ -106,7 +107,7 @@ void createEngineObjects() {
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addApp(glm::vec3(4.0,1.0,5.5), emacs);
-  world->addApp(glm::vec3(3,1.0,5.5), surf);
+  world->addApp(glm::vec3(2.5,1.0,5.5), surf);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
