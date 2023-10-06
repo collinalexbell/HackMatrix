@@ -121,6 +121,16 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 
 ## mechanics
+
+## multiplayer
+- occupy the same space as others
+- view screens that others can view
+  - if permissions
+- interact with screens that others own
+  - if permissions of course
+
+
+## physical
 - physics
 - collisions
 
@@ -235,6 +245,7 @@ $ OpenGL
 - run like multiple linux VMs, one that you are building in, the other that is playing the engine
 
 ## target audience
+- people wanting to get really good at software engineering and cybernetics
 - e/acc
 - Elon Musk; I want Elon Musk to play this game!
 - 16-35 year olds
