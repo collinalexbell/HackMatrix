@@ -140,8 +140,10 @@ void X11App::focus(Window matrix) {
   isFocused = true;
   Window root = DefaultRootWindow(display);
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+  KeyCode wKeyCode = XKeysymToKeycode(display, XK_w);
   takeInputFocus();
   XGrabKey(display, eKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+  XGrabKey(display, wKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
   XSync(display, False);
   XFlush(display);
 
@@ -150,6 +152,7 @@ void X11App::focus(Window matrix) {
     try {
       XEvent event;
       KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+      KeyCode wKeyCode = XKeysymToKeycode(display, XK_w);
 
       while (true) {
         XNextEvent(display, &event);
@@ -160,6 +163,16 @@ void X11App::focus(Window matrix) {
             // Windows Key (Super_L) + Ctrl + E is pressed
             unfocus(matrix); // Call your unfocus function
             break;
+          }
+          if (keyEvent.keycode == wKeyCode && keyEvent.state & Mod4Mask) {
+            // use world or control pointer to direct render
+            // need to use mutex
+            // move camera while keeping it pointed at the same position
+            // get camera->front to be 0,0,1
+            // compute height and width
+            // resize window
+            // direct render using direct pixel manipulations
+            // may want to do this automatically when the angle(front, (0,0,1)) is close to 0
           }
         }
       }
