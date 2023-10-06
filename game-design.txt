@@ -1,4 +1,4 @@
-# Hackwitz Uni of Codecraft and Gadgetry
+# Hackwitz Uni
 
 ```
 $ implemented
