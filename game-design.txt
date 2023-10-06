@@ -200,7 +200,7 @@ V Blow stuff up with placed charges that have customizable size!
 
 ## story
 
-- VR Hogwartz for hackers.
+- VR Hogwartz for hackers. By the end of the game, the user must build an OS
 
 - Key by using 3d position and orientation to unlock a space (like hogwartz picture)
 
@@ -224,6 +224,8 @@ V Blow stuff up with placed charges that have customizable size!
   A computational process, in a correctly working computer, executes programs precisely and accurately. Thus, like the sorcerer's apprentice, novice programmers must learn to understand and to anticipate the consequences of their conjuring. Even small errors (usually called bugs or glitches) in programs can have complex and unanticipated consequences.")
 
 ### missions
+
+- Build an OS
 
 ? Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
 
