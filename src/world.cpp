@@ -84,10 +84,10 @@ void World::removeCube(int x, int y, int z) {
   refreshRenderer();
 }
 
-void World::addAppCube(glm::vec3 cube, X11App* app) {
+void World::addApp(glm::vec3 pos, X11App* app) {
   int index = appCubes.size();
-  appCubes.insert(std::pair<glm::vec3, int>(cube, index));
-  //apps.push_back(app);
+  appCubes.insert(std::pair<glm::vec3, int>(pos, index));
+  apps.push_back(app);
   if(renderer != NULL) {
     renderer->addAppCube(index);
   }
@@ -130,9 +130,8 @@ Intersection intersectLineAndPlane(glm::vec3 linePos, glm::vec3 lineDir, glm::ve
   return intersection;
 }
 
-App* World::getLookedAtApp(){
+X11App* World::getLookedAtApp(){
   float DIST_LIMIT = 1.5;
-
   float height = 0.74;
   float width = 1.0;
   for (glm::vec3 appPosition : getAppCubes()) {
@@ -144,8 +143,9 @@ App* World::getLookedAtApp(){
     float x = intersection.intersectionPoint.x;
     float y = intersection.intersectionPoint.y;
     if(x>minX && x<maxX && y>minY && y<maxY && intersection.dist < DIST_LIMIT) {
-      gotItCount++;
-      cout << "got it:" << gotItCount << endl;
+      int index = appCubes.at(appPosition);
+      X11App* app = apps[index];
+      return app;
     }
   }
   return NULL;

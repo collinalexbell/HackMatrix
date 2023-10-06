@@ -30,15 +30,15 @@ void Controls::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 }
 
 void Controls::poll(GLFWwindow* window, Camera* camera, World* world) {
-  handleKeys(window, camera);
+  handleKeys(window, camera, world);
   handleClicks(window, world);
 }
 
-void Controls::handleKeys(GLFWwindow *window, Camera *camera) {
+void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleEscape(window);
   handleControls(window, camera);
   handleToggleFocus(window);
-  handleToggleApp(window);
+  handleToggleApp(window, world);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -55,8 +55,7 @@ void Controls::handleClicks(GLFWwindow* window, World* world) {
     if(!appFocused) {
       world->action(PLACE_CUBE);
     } else {
-      app->click(100,clickY);
-      clickY = clickY + 100;
+      // click the app if possible
     }
   }
 
@@ -81,7 +80,8 @@ void Controls::handleEscape(GLFWwindow* window) {
   }
 }
 
-void Controls::handleToggleApp(GLFWwindow* window) {
+void Controls::handleToggleApp(GLFWwindow* window, World* world) {
+  X11App* app = world->getLookedAtApp();
   if(app != NULL && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
     Window x11Window = glfwGetX11Window(window);
     appFocused = true;
@@ -104,6 +104,3 @@ void Controls::handleToggleFocus(GLFWwindow* window) {
   }
 }
 
-void Controls::registerApp(X11App* app) {
-  this->app = app;
-}

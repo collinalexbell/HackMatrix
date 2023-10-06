@@ -104,7 +104,7 @@ void createEngineObjects() {
 
 void wireEngineObjects() {
   world->attachRenderer(renderer);
-  world->addAppCube(glm::vec3(4,1,5.5), emacs);
+  world->addApp(glm::vec3(4,1,5.5), emacs);
   #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
@@ -122,7 +122,6 @@ void createAndRegisterEmacs() {
   emacs = new X11App("emacs@phoenix", display, screen);
   //emacs = new X11App("@cgDISMfxT:T", display, screen);
   renderer->registerApp(emacs);
-  controls->registerApp(emacs);
 }
 
 void registerCursorCallback() {
