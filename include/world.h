@@ -1,13 +1,13 @@
 #ifndef __WORLD_H__
 #define __WORLD_H__
 
-#include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtx/hash.hpp>
 #include "app.h"
 #include "camera.h"
-#include <unordered_map>
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 #include <octree/octree.h>
+#include <unordered_map>
+#include <vector>
 
 class Renderer;
 
@@ -36,14 +36,14 @@ enum Action {
 };
 
 class World {
-  Renderer *renderer;
-  Camera *camera;
+  Renderer *renderer = NULL;
+  Camera *camera = NULL;
 
+  int gotItCount = 0;
   int CHUNK_SIZE = 128;
   int cubeCount = 0;
-  Octree<Cube> cubes = Octree<Cube>(128, Cube{glm::vec3(0,0,0), -1});
   std::unordered_map<glm::vec3, int> appCubes;
-
+  Octree<Cube> cubes = Octree<Cube>(128, Cube{glm::vec3(0, 0, 0), -1});
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
   Cube *getCube(float x, float y, float z);
   const std::vector<Cube> getCubes();
@@ -61,7 +61,7 @@ public:
 
   void addCube(int x, int y, int z, int blockType);
   void removeCube(int x, int y, int z);
-  void addAppCube(glm::vec3);
+  void addAppCube(glm::vec3, X11App* app);
   int size();
 
   void action(Action);
