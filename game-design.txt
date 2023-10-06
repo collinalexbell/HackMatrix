@@ -202,6 +202,8 @@ V Blow stuff up with placed charges that have customizable size!
 
 - VR Hogwartz for hackers. By the end of the game, the user must build an OS
 
+- Start them with a single bit switch or something (haha)
+
 - Key by using 3d position and orientation to unlock a space (like hogwartz picture)
 
 - The Gibson should feature into the game (haha)
@@ -226,6 +228,13 @@ V Blow stuff up with placed charges that have customizable size!
 ### missions
 
 - Build an OS
+
+- Users must write a computer program that solves problems in the environment.
+
+- Over time it becomes clear that they are building an Operating System
+
+Example:
+- Users must draw an image to their screen and take a picture of it. Neural networks will analyze that the image is accurate
 
 ? Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
 
