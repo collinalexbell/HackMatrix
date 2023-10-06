@@ -17,13 +17,13 @@ build/shader.o: src/shader.cpp include/shader.h
 build/texture.o: src/texture.cpp include/texture.h
 	g++  -std=c++20 -g -o build/texture.o -c src/texture.cpp $(INCLUDES)
 
-build/world.o: src/world.cpp include/world.h
+build/world.o: src/world.cpp include/world.h include/app.h
 	g++ -std=c++20  -g -o build/world.o -c src/world.cpp $(INCLUDES)
 
 build/camera.o: src/camera.cpp include/camera.h
 	g++  -std=c++20 -g -o build/camera.o -c src/camera.cpp $(INCLUDES)
 
-build/api.o: src/api.cpp include/api.h
+build/api.o: src/api.cpp include/api.h include/world.h
 	g++  -std=c++20 -g -o build/api.o -c src/api.cpp $(INCLUDES)
 
 build/controls.o: src/controls.cpp include/controls.h

@@ -1,7 +1,10 @@
 #include "world.h"
+#include "app.h"
+#include "glm/geometric.hpp"
 #include "renderer.h"
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtx/intersect.hpp>
 #include <octree/octree.h>
 #include <iostream>
 #include <limits>
@@ -81,9 +84,10 @@ void World::removeCube(int x, int y, int z) {
   refreshRenderer();
 }
 
-void World::addAppCube(glm::vec3 cube) {
+void World::addAppCube(glm::vec3 cube, X11App* app) {
   int index = appCubes.size();
   appCubes.insert(std::pair<glm::vec3, int>(cube, index));
+  //apps.push_back(app);
   if(renderer != NULL) {
     renderer->addAppCube(index);
   }
@@ -111,6 +115,40 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
   glm::vec3 halfAVoxel(0.5);
   glm::vec3 rv = (cameraPosition / glm::vec3(CUBE_SIZE)) + halfAVoxel;
   return rv;
+}
+
+struct Intersection {
+  glm::vec3 intersectionPoint;
+  float dist;
+};
+
+Intersection intersectLineAndPlane(glm::vec3 linePos, glm::vec3 lineDir, glm::vec3 planePos) {
+  Intersection intersection;
+  glm::vec3 normLineDir = glm::normalize(lineDir);
+  glm::intersectRayPlane(linePos, normLineDir, planePos, glm::vec3(0,0,1), intersection.dist);
+  intersection.intersectionPoint = (normLineDir * intersection.dist) + linePos;
+  return intersection;
+}
+
+App* World::getLookedAtApp(){
+  float DIST_LIMIT = 1.5;
+
+  float height = 0.74;
+  float width = 1.0;
+  for (glm::vec3 appPosition : getAppCubes()) {
+    Intersection intersection = intersectLineAndPlane(camera->position, camera->front, appPosition);
+    float minX = appPosition.x - (width / 3);
+    float maxX = appPosition.x + (width / 3);
+    float minY = appPosition.y - (height / 3);
+    float maxY = appPosition.y + (height / 3);
+    float x = intersection.intersectionPoint.x;
+    float y = intersection.intersectionPoint.y;
+    if(x>minX && x<maxX && y>minY && y<maxY && intersection.dist < DIST_LIMIT) {
+      gotItCount++;
+      cout << "got it:" << gotItCount << endl;
+    }
+  }
+  return NULL;
 }
 
 

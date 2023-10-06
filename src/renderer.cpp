@@ -171,15 +171,14 @@ Renderer::Renderer(Camera* camera, World* world) {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
   glClearColor(178.0/256, 178.0/256, 178.0/256, 1.0f);
 
-  orthographicMatrix = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
+  //projection = glm::ortho(0.0f, 1920.0f, 0.0f, 1080.0f, 0.1f, 100.0f);
 
 
   view = glm::mat4(1.0f);
   // note that we’re translating the scene in the reverse direction
   view = glm::translate(view, glm::vec3(0.0f, 0.0f, 3.0f));
 
-  projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f,
-                                100.0f);
+  projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
 
   // this can be used to rotate an entire chunk (call to glDrawArraysInstanced)
   model = glm::mat4(1.0f);
@@ -233,6 +232,8 @@ void Renderer::render() {
   } else {
     shader->setBool("selectedValid", false);
   }
+
+  world->getLookedAtApp();
 
 
   updateTransformMatrices();
