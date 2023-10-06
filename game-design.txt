@@ -233,6 +233,8 @@ V Blow stuff up with placed charges that have customizable size!
 
 - Over time it becomes clear that they are building an Operating System
 
+- Students learn by doing side quests that teach them the concepts required for OS work
+
 Example:
 - Users must draw an image to their screen and take a picture of it. Neural networks will analyze that the image is accurate
 
