@@ -1,4 +1,4 @@
-# Simulation Theory (working title)
+# Hackwitz Uni of Codecraft and Gadgetry
 
 ```
 $ implemented

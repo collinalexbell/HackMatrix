@@ -62,7 +62,7 @@ void main()
       FragColor = colorFromTexture(app2, TexCoord);
     }
     if(!appSelected) {
-      FragColor = mix(FragColor, floor(TexCoord), 0.2);
+      FragColor = mix(FragColor, floor(TexCoord), 0.1);
     }
   } else {
     if(BlockType == 1) {
