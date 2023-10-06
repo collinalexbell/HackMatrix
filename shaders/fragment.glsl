@@ -6,7 +6,9 @@ flat in int isSelected;
 
 uniform sampler2DArray texture1;
 uniform sampler2D texture2;
-uniform sampler2D texture3;
+uniform sampler2D app0;
+uniform sampler2D app1;
+uniform sampler2D app2;
 uniform bool isApp;
 uniform bool appSelected;
 uniform int totalBlockTypes;
@@ -44,10 +46,21 @@ vec4 floor( vec2 fragCoord ) {
   return vec4(finalColor, 1.0);
 }
 
+vec4 colorFromTexture(sampler2D tex, vec2 coord) {
+  return texture(tex, TexCoord * vec2(1,-1));
+}
+
 void main()
 {
+  // need to pass this in as vertex data, but hold for now
   if(isApp) {
-    FragColor = texture(texture3, TexCoord * vec2(1,-1));
+    if(BlockType == 0) {
+      FragColor = colorFromTexture(app0, TexCoord);
+    } else if (BlockType == 1) {
+      FragColor = colorFromTexture(app1, TexCoord);
+    } else if (BlockType == 2) {
+      FragColor = colorFromTexture(app2, TexCoord);
+    }
     if(!appSelected) {
       FragColor = mix(FragColor, floor(TexCoord), 0.2);
     }

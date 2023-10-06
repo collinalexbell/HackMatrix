@@ -89,7 +89,8 @@ void World::addApp(glm::vec3 pos, X11App* app) {
   appCubes.insert(std::pair<glm::vec3, int>(pos, index));
   apps.push_back(app);
   if(renderer != NULL) {
-    renderer->addAppCube(index);
+    renderer->registerApp(app, index);
+    renderer->addAppCube(index, pos);
   }
 }
 

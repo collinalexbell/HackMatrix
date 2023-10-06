@@ -30,6 +30,7 @@ Renderer* renderer;
 Controls* controls;
 Camera* camera;
 X11App* emacs;
+X11App *surf;
 GLFWwindow* window;
 Display *display;
 int screen;
@@ -104,8 +105,9 @@ void createEngineObjects() {
 
 void wireEngineObjects() {
   world->attachRenderer(renderer);
-  world->addApp(glm::vec3(4,1,5.5), emacs);
-  #ifdef API
+  world->addApp(glm::vec3(4.0,1.0,5.5), emacs);
+  world->addApp(glm::vec3(3,1.0,5.5), surf);
+#ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
 }
@@ -114,14 +116,13 @@ int emacsPid = -1;
 void createAndRegisterEmacs() {
   int pid = fork();
   if(pid == 0) {
-    //execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
+    execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
   sleep(1);
   glfwFocusWindow(window);
   emacs = new X11App("emacs@phoenix", display, screen);
-  //emacs = new X11App("@cgDISMfxT:T", display, screen);
-  renderer->registerApp(emacs);
+  surf = new X11App("@cgDISMfxT:T", display, screen);
 }
 
 void registerCursorCallback() {
