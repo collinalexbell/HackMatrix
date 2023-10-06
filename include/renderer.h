@@ -36,9 +36,8 @@ class Renderer {
   glm::mat4 projection;
   glm::mat4 orthographicMatrix;
   void updateTransformMatrices();
-  Camera* camera;
-  World* world;
-  X11App* app = NULL;
+  Camera* camera = NULL;
+  World* world = NULL;
 
   unsigned int emacsID;
 
@@ -55,8 +54,8 @@ class Renderer {
   void setupVertexAttributePointers();
   void fillBuffers();
   void addCube(int index, Cube cube);
-  void addAppCube(int index);
-  void registerApp(X11App* app);
+  void addAppCube(int index, glm::vec3 pos);
+  void registerApp(X11App* app, int index);
   void reloadChunk();
 };
 

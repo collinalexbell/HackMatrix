@@ -111,12 +111,16 @@ void Renderer::setupVertexAttributePointers() {
 
   // instance coord attribute
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)0);
   glEnableVertexAttribArray(2);
   glVertexAttribDivisor(2, 1);
 
-
-
+  // instance app number attribute
+  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
+  glVertexAttribIPointer(3, 1, GL_INT, (3 * sizeof(float)) + (1 * sizeof(int)),
+                         (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(3);
+  glVertexAttribDivisor(3, 1);
 }
 
 void Renderer::fillBuffers() {
@@ -127,8 +131,7 @@ void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 200000, (void*)0 , GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 20, (void*)0 , GL_STATIC_DRAW);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * world->getAppCubes().size(), world->getAppCubes().data());
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20, (void*)0 , GL_STATIC_DRAW);
 }
 
 
@@ -151,16 +154,18 @@ Renderer::Renderer(Camera* camera, World* world) {
   textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
-  textures.insert(std::pair<string, Texture*>("app", new Texture(GL_TEXTURE31)));
-
+  textures.insert(std::pair<string, Texture*>("app0", new Texture(GL_TEXTURE31)));
+  textures.insert(std::pair<string, Texture *>("app1", new Texture(GL_TEXTURE30)));
+  textures.insert(std::pair<string, Texture *>("app2", new Texture(GL_TEXTURE29)));
 
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setInt("texture1", 0);
   shader->setInt("totalBlockTypes", images.size());
   shader->setInt("texture2", 1);
-  shader->setInt("texture3", 31);
-
+  shader->setInt("app0", 31);
+  shader->setInt("app1", 30);
+  shader->setInt("app2", 29);
 
   shader->setBool("selectedValid", false);
   shader->setInt("selectedX", 0);
@@ -213,9 +218,13 @@ void Renderer::addCube(int index, Cube cube) {
                   sizeof(glm::vec3)*(index+1)+sizeof(int)*index, sizeof(int), &cube.blockType);
 }
 
-void Renderer::addAppCube(int index) {
+void Renderer::addAppCube(int index, glm::vec3 pos) {
+  cout << "pos:" << pos.x << "," << pos.y << ", " << pos.z << endl;
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*index, sizeof(glm::vec3), &world->getAppCubes()[index]);
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * index,
+                  sizeof(glm::vec3), &pos);
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  sizeof(glm::vec3)*(index+1)+sizeof(int)*index, sizeof(int), &index);
 }
 
 void Renderer::render() {
@@ -233,8 +242,7 @@ void Renderer::render() {
     shader->setBool("selectedValid", false);
   }
 
-  world->getLookedAtApp();
-
+  X11App* app = world->getLookedAtApp();
 
   updateTransformMatrices();
   shader->use(); // may need to move into loop to use changing uniforms
@@ -254,10 +262,10 @@ Camera* Renderer::getCamera() {
   return camera;
 }
 
-void Renderer::registerApp(X11App* app) {
-  this->app = app;
-  glActiveTexture(GL_TEXTURE0 + 31);
-  glBindTexture(GL_TEXTURE_2D, textures["app"]->ID);
+void Renderer::registerApp(X11App* app, int index) {
+  int textureN = 31 - index;
+  glActiveTexture(GL_TEXTURE0 + textureN);
+  glBindTexture(GL_TEXTURE_2D, textures["app" + to_string(index)]->ID);
   app->appTexture();
 }
 
