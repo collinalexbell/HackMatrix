@@ -256,6 +256,14 @@ void Renderer::render() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
+  if(frameBuffers.size() > 0) {
+    glBlitNamedFramebuffer(frameBuffers[0],0,
+                           //start x, start y (flip)
+                           0,200,
+                           // end x, end y (flip)
+                           200,0,
+                           0, 0, 200, 200, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+  }
 }
 
 Camera* Renderer::getCamera() {
@@ -264,9 +272,18 @@ Camera* Renderer::getCamera() {
 
 void Renderer::registerApp(X11App* app, int index) {
   int textureN = 31 - index;
-  glActiveTexture(GL_TEXTURE0 + textureN);
+  int texId = GL_TEXTURE0 + textureN;
+  glActiveTexture(texId);
   glBindTexture(GL_TEXTURE_2D, textures["app" + to_string(index)]->ID);
   app->appTexture();
+
+  unsigned int framebufferId;
+  glGenFramebuffers(1, &framebufferId);
+  frameBuffers.push_back(framebufferId);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferId);
+  glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                         GL_TEXTURE_2D, textures["app" + to_string(index)]->ID,
+                         0);
 }
 
 Renderer::~Renderer() {
