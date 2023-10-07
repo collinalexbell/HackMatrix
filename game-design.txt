@@ -16,11 +16,6 @@ V probably not
 - Modulate the time I spend doing various tasks in the short-wave
        - do important tasks (matrix/phoenix infode improvements longer)
 
-## next up
-- face highlighting or reticle (so I know where I'm building)
-
-## after that
-
 ## path to MVP
 - (defun ready? (game)
          (answers-all-the-questions-appropriately game))
@@ -244,6 +239,7 @@ Example:
 $ X Window to allow IDE
   - Direct pixel rendering to keep crisp image
   - snap to flat, draw with pixels
+  - hotkeys for fast window switching
 - micro voxel
 $ C++
 - Python API
