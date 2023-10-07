@@ -63,6 +63,7 @@ public:
   void addCube(int x, int y, int z, int blockType);
   void removeCube(int x, int y, int z);
   void addApp(glm::vec3, X11App* app);
+  int getIndexOfApp(X11App* app);
   int size();
 
   void action(Action);

@@ -262,3 +262,12 @@ void World::action(Action toTake) {
     }
   }
 }
+
+int World::getIndexOfApp(X11App *app) {
+  for(int i = 0; i < apps.size(); i++) {
+    if(app == apps[i]){
+      return i;
+    }
+  }
+  return -1;
+}
