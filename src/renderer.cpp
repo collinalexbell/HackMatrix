@@ -256,13 +256,16 @@ void Renderer::render() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
-  if(frameBuffers.size() > 0) {
-    glBlitNamedFramebuffer(frameBuffers[0],0,
-                           //start x, start y (flip)
-                           0,200,
+  if(app != NULL && app->isFocused) {
+    int index = world->getIndexOfApp(app);
+    if(index >= 0) {
+      glBlitNamedFramebuffer(frameBuffers[index], 0,
+                           // start x, start y (flip)
+                           0, 1080,
                            // end x, end y (flip)
-                           200,0,
-                           0, 0, 200, 200, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                           1920, 0, 0, 0, 1920, 1080, GL_COLOR_BUFFER_BIT,
+                           GL_NEAREST);
+    }
   }
 }
 
