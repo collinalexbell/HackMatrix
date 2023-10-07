@@ -258,13 +258,19 @@ void Renderer::render() {
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
   if(app != NULL && app->isFocused) {
     int index = world->getIndexOfApp(app);
+    int appWidth = 1920;
+    int appHeight = 1080;
     if(index >= 0) {
       glBlitNamedFramebuffer(frameBuffers[index], 0,
-                           // start x, start y (flip)
-                           0, 1080,
-                           // end x, end y (flip)
-                           1920, 0, 0, 0, 1920, 1080, GL_COLOR_BUFFER_BIT,
-                           GL_NEAREST);
+                             // src x1, src y1 (flip)
+                             0, appHeight,
+                             // end x2, end y2 (flip)
+                             appWidth, 0,
+
+                             // dest x1,y1,x2,y2
+                             0, 0, appWidth, appHeight,
+
+                             GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
   }
 }
