@@ -222,8 +222,11 @@ V Blow stuff up with placed charges that have customizable size!
 
 ### missions
 
+- Perhaps, I could structure the game by class, where each class is itself a game!
+
 - Build an OS... but look an OS might be a little to complex... but maybe its not
-- Perhaps they should build a cyberlogos or an IDE (although, I don't know why they would).
+  - Perhaps they should build a cyberlogos or an IDE (although, I don't know why they would).
+  - I'm asking people to commit a lot of time to the game.
 
 - Users must write a computer program that solves problems in the environment.
 
