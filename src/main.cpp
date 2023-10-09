@@ -106,8 +106,8 @@ void createEngineObjects() {
 
 void wireEngineObjects() {
   world->attachRenderer(renderer);
-  world->addApp(glm::vec3(4.0,1.0,5.5), emacs);
-  world->addApp(glm::vec3(2.5,1.0,5.5), surf);
+  world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
+  world->addApp(glm::vec3(2.5,1.0,5.0), surf);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
