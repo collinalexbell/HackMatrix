@@ -245,6 +245,7 @@ $ X Window to allow IDE
   - snap to flat, draw with pixels
   - hotkeys for fast window switching
 - micro voxel
+- Maybe use gaussian splatting
 $ C++
 - Python API
 $ Lisp API
