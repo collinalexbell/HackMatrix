@@ -9,6 +9,9 @@ $ implemented
 V probably not
 ```
 
+## Kickstarter Launch Date
+Sun Oct 15th
+
 ## process
 - Simply make the best game I can
 - Keep polishing and compressing it like a diamond
