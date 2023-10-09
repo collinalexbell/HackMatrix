@@ -24,6 +24,7 @@ class X11App {
   void focus(Window matrix);
   void takeInputFocus();
   void unfocus(Window matrix);
+  void resize(int width, int height);
   bool isFocused = false;
 };
 
