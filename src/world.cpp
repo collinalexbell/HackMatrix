@@ -271,3 +271,12 @@ int World::getIndexOfApp(X11App *app) {
   }
   return -1;
 }
+
+void getViewDistanceForWindowSize(X11App *app) {
+  // gl_vertex = projection * view * vertex
+  // (gl_vertexX,0,0,1) = projection * view * (-0.5,0,0, 1)
+  // gl_vertexX = windowWidth/screenWidth/2
+  // view = projection^-1 * gl_vertex * vertex^-1
+  // extract z translation from view
+  // that z is the distance away required for a window size
+}
