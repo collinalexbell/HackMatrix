@@ -260,10 +260,9 @@ void Renderer::render() {
     int index = world->getIndexOfApp(app);
     int screenWidth = 1920;
     int screenHeight = 1080;
-    int appWidth = 1920 * 0.85;
-    int appHeight = 1080 * 0.85;
+    int appWidth = app->width;
+    int appHeight = app->height;
     if(index >= 0) {
-      app->resize(appWidth,appHeight);
       glBlitNamedFramebuffer(frameBuffers[index], 0,
                              // src x1, src y1 (flip)
                              0, appHeight,
@@ -287,9 +286,9 @@ Camera* Renderer::getCamera() {
 
 void Renderer::registerApp(X11App* app, int index) {
   int textureN = 31 - index;
-  int texId = GL_TEXTURE0 + textureN;
-  glActiveTexture(texId);
-  glBindTexture(GL_TEXTURE_2D, textures["app" + to_string(index)]->ID);
+  int textureUnit = GL_TEXTURE0 + textureN;
+  int textureId = textures["app" + to_string(index)]->ID;
+  app->attachTexture(textureUnit, textureId);
   app->appTexture();
 
   unsigned int framebufferId;

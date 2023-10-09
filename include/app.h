@@ -17,15 +17,21 @@ class X11App {
   GLXFBConfig* fbConfigs;
   int fbConfigCount;
   void fetchInfo(string windowName);
+  int textureUnit = -1;
+  int textureId = -1;
  public:
-  X11App(string windowName, Display* display, int screen);
-  void appTexture();
-  void click(int x, int y);
-  void focus(Window matrix);
-  void takeInputFocus();
-  void unfocus(Window matrix);
-  void resize(int width, int height);
-  bool isFocused = false;
+   int width;
+   int height;
+   X11App(string windowName, Display *display, int screen, int width,
+          int height);
+   void appTexture();
+   void attachTexture(int textureUnit, int textureId);
+   void click(int x, int y);
+   void focus(Window matrix);
+   void takeInputFocus();
+   void unfocus(Window matrix);
+   void resize(int width, int height);
+   bool isFocused = false;
 };
 
 #endif
