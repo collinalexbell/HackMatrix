@@ -227,6 +227,29 @@ void Renderer::addAppCube(int index, glm::vec3 pos) {
                   sizeof(glm::vec3)*(index+1)+sizeof(int)*index, sizeof(int), &index);
 }
 
+void Renderer::drawAppDirect(X11App* app) {
+  int index = world->getIndexOfApp(app);
+  int screenWidth = 1920;
+  int screenHeight = 1080;
+  int appWidth = app->width;
+  int appHeight = app->height;
+  if (index >= 0) {
+    glBlitNamedFramebuffer(frameBuffers[index], 0,
+                           // src x1, src y1 (flip)
+                           0, appHeight,
+                           // end x2, end y2 (flip)
+                           appWidth, 0,
+
+                           // dest x1,y1,x2,y2
+                           (screenWidth - appWidth) / 2,
+                           (screenHeight - appHeight) / 2,
+                           appWidth + (screenWidth - appWidth) / 2,
+                           appHeight + (screenHeight - appHeight) / 2,
+
+                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
+  }
+}
+
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->getViewMatrix();
@@ -256,27 +279,9 @@ void Renderer::render() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
+
   if(app != NULL && app->isFocused) {
-    int index = world->getIndexOfApp(app);
-    int screenWidth = 1920;
-    int screenHeight = 1080;
-    int appWidth = app->width;
-    int appHeight = app->height;
-    if(index >= 0) {
-      glBlitNamedFramebuffer(frameBuffers[index], 0,
-                             // src x1, src y1 (flip)
-                             0, appHeight,
-                             // end x2, end y2 (flip)
-                             appWidth, 0,
-
-                             // dest x1,y1,x2,y2
-                             (screenWidth - appWidth) / 2,
-                             (screenHeight - appHeight) / 2,
-                             appWidth + (screenWidth - appWidth) / 2,
-                             appHeight + (screenHeight - appHeight) / 2,
-
-                             GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    }
+    drawAppDirect(app);
   }
 }
 

@@ -45,8 +45,9 @@ class Renderer {
   float lastFrame = 0.0f; // Time of last frame
 
   vector<unsigned int> frameBuffers;
+  void drawAppDirect(X11App* app);
 
- public:
+public:
   Renderer(Camera*, World*);
   ~Renderer();
   Camera* getCamera();
