@@ -15,12 +15,12 @@
 float HEIGHT = 0.27;
 
 float appVertices[] = {
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 0.0f,
-  0.5f, -HEIGHT, -0.5f, 1.0f, 0.0f,
-  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
-  0.5f, HEIGHT, -0.5f, 1.0f, 1.0f,
-  -0.5f, HEIGHT, -0.5f, 0.0f, 1.0f,
-  -0.5f, -HEIGHT, -0.5f, 0.0f, 0.0f,
+  -0.5f, -HEIGHT, 0, 0.0f, 0.0f,
+  0.5f, -HEIGHT, 0, 1.0f, 0.0f,
+  0.5f, HEIGHT, 0, 1.0f, 1.0f,
+  0.5f, HEIGHT, 0, 1.0f, 1.0f,
+  -0.5f, HEIGHT, 0, 0.0f, 1.0f,
+  -0.5f, -HEIGHT, 0, 0.0f, 0.0f,
 };
 
 float vertices[] = {
@@ -258,9 +258,12 @@ void Renderer::render() {
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
   if(app != NULL && app->isFocused) {
     int index = world->getIndexOfApp(app);
-    int appWidth = 1920;
-    int appHeight = 1080;
+    int screenWidth = 1920;
+    int screenHeight = 1080;
+    int appWidth = 1920 * 0.85;
+    int appHeight = 1080 * 0.85;
     if(index >= 0) {
+      app->resize(appWidth,appHeight);
       glBlitNamedFramebuffer(frameBuffers[index], 0,
                              // src x1, src y1 (flip)
                              0, appHeight,
@@ -268,7 +271,10 @@ void Renderer::render() {
                              appWidth, 0,
 
                              // dest x1,y1,x2,y2
-                             0, 0, appWidth, appHeight,
+                             (screenWidth - appWidth) / 2,
+                             (screenHeight - appHeight) / 2,
+                             appWidth + (screenWidth - appWidth) / 2,
+                             appHeight + (screenHeight - appHeight) / 2,
 
                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }

@@ -198,3 +198,9 @@ void X11App::appTexture() {
   GLXPixmap glxPixmap = glXCreatePixmap(display, fbConfigs[0], pixmap, pixmap_attribs);
   glXBindTexImageEXT(display, glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
 }
+
+void X11App::resize(int width, int height) {
+  XMoveResizeWindow(display, appWindow, 0, 0, width, height);
+  XFlush(display);
+  XSync(display, false);
+}
