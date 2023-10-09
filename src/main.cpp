@@ -122,8 +122,10 @@ void createAndRegisterEmacs() {
   }
   sleep(1);
   glfwFocusWindow(window);
-  emacs = new X11App("emacs@phoenix", display, screen);
-  surf = new X11App("@cgDISMfxT:T", display, screen);
+  int width = 1920 * .85;
+  int height = 1080 * .85;
+  emacs = new X11App("emacs@phoenix", display, screen, width, height);
+  surf = new X11App("@cgDISMfxT:T", display, screen, width, height);
 }
 
 void registerCursorCallback() {

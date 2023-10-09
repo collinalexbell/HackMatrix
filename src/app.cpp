@@ -93,10 +93,11 @@ int errorHandler(Display *dpy, XErrorEvent *err)
   return 0;
 }
 
-X11App::X11App(string windowName, Display* display, int screen): display(display), screen(screen) {
+X11App::X11App(string windowName, Display* display, int screen, int width, int height): display(display), screen(screen) {
   //TODO: create the app in virtual X
   XSetErrorHandler(errorHandler);
   fetchInfo(windowName);
+  resize(width, height);
 };
 
 void X11App::click(int x, int y) {
@@ -154,6 +155,7 @@ void X11App::focus(Window matrix) {
       KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
       KeyCode wKeyCode = XKeysymToKeycode(display, XK_w);
 
+
       while (true) {
         XNextEvent(display, &event);
         if (event.type == KeyPress) {
@@ -173,6 +175,7 @@ void X11App::focus(Window matrix) {
             // resize window
             // direct render using direct pixel manipulations
             // may want to do this automatically when the angle(front, (0,0,1)) is close to 0
+
           }
         }
       }
@@ -187,6 +190,8 @@ void X11App::focus(Window matrix) {
 
 
 void X11App::appTexture() {
+  glActiveTexture(textureUnit);
+  glBindTexture(GL_TEXTURE_2D, textureId);
   Pixmap pixmap = XCompositeNameWindowPixmap(display, appWindow);
 
   const int pixmap_attribs[] = {
@@ -200,7 +205,18 @@ void X11App::appTexture() {
 }
 
 void X11App::resize(int width, int height) {
+  this->width = width;
+  this->height = height;
   XMoveResizeWindow(display, appWindow, 0, 0, width, height);
   XFlush(display);
   XSync(display, false);
+  if(textureId != -1) {
+    appTexture();
+  }
+}
+
+
+void X11App::attachTexture(int textureUnit, int textureId) {
+  this->textureUnit = textureUnit;
+  this->textureId = textureId;
 }
