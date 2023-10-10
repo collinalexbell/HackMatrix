@@ -1,4 +1,4 @@
-# Hackwitz
+# Hackwitz City of Cybernetics
 
 ```
 $ implemented
@@ -163,6 +163,13 @@ Press spacebar to enter code into a block
 
 ### Building
    - Players can construct with voxel placement (ugh, another minecraft clone...)
+
+### Factions
+    - Assist the city through various factions
+      - NYPD
+      - NYC Community Garden Association
+      - Tree Cybernetics
+      - GNU
 
 ### Other
 
