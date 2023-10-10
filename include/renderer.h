@@ -33,7 +33,6 @@ class Renderer {
   glm::mat4 model;
   glm::mat4 appModel;
   glm::mat4 view;
-  glm::mat4 projection;
   glm::mat4 orthographicMatrix;
   void updateTransformMatrices();
   Camera* camera = NULL;
@@ -60,6 +59,7 @@ public:
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);
   void reloadChunk();
+  glm::mat4 projection;
 };
 
 #endif

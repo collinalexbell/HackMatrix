@@ -55,6 +55,7 @@ public:
   World(Camera *camera, bool debug = false);
   ~World();
   void attachRenderer(Renderer *renderer);
+  void getViewDistanceForWindowSize(X11App *app);
 
   X11App *getLookedAtApp();
   Position getLookedAtCube();
