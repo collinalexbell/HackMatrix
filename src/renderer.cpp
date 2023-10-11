@@ -273,6 +273,9 @@ void Renderer::render() {
   shader->setBool("isApp", false);
   if(app != NULL) {
     shader->setBool("appSelected", app->isFocused);
+    if(!app->isFocused) {
+      world->getViewDistanceForWindowSize(app);
+    }
   }
   glBindVertexArray(VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());

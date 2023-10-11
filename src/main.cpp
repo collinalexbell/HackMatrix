@@ -123,7 +123,7 @@ void createAndRegisterEmacs() {
   sleep(1);
   glfwFocusWindow(window);
   int width = 1920 * .85;
-  int height = 1080 * .85;
+  int height = 1920 * .85 * .54;
   emacs = new X11App("emacs@phoenix", display, screen, width, height);
   surf = new X11App("@cgDISMfxT:T", display, screen, width, height);
 }

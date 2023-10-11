@@ -273,12 +273,23 @@ int World::getIndexOfApp(X11App *app) {
 }
 
 void World::getViewDistanceForWindowSize(X11App *app) {
-  // gl_vertex = projection * view * vertex
-  // (gl_vertexX,0,0,1) = projection * view * (-0.5,0,0, 1)
-  // gl_vertexX = windowWidth/screenWidth/2
   // view = projection^-1 * gl_vertex * vertex^-1
-  float glVertexX = float(app->width)/1920/2;
-  glm::mat4 view; // = glm::inverse(renderer->projection) * glm::vec4(glVertexX,0,0,1) * glm::vec4(0.5,0,0,1);
-  // extract z translation from view
-  // that z is the distance away required for a window size
+  float glVertexX = float(app->width)/1920;
+  glm::vec4 gl_pos = glm::vec4(10000,0,0,0);
+  float z_best;
+  float target = glVertexX;
+    for (float z = 0.0; z <= 10.5; z = z + 0.001) {
+      glm::vec4 candidate;
+      candidate = renderer->projection * glm::vec4(0.5, 0, -z, 1);
+      candidate = candidate/candidate.w;
+      if(abs(candidate.x - target) < abs(gl_pos.x - target)) {
+        gl_pos = candidate;
+        z_best = z;
+      }
+    }
+
+    cout << "dist:" << z_best
+         << ", camera.x: " << camera->position.x
+         << ", camera.z:" << camera->position.z-5
+         << endl;
 }
