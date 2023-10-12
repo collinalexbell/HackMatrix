@@ -13,7 +13,7 @@
 using namespace std;
 
 void Controls::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
-  if(cursorDisabled) {
+  if(grabbedCursor) {
     if (resetMouse) {
         lastX = xpos;
         lastY = ypos;
@@ -88,11 +88,15 @@ void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
     glm::vec3 targetPosition = world->getAppPosition(app);
     targetPosition.z = targetPosition.z + deltaZ;
     glm::vec3 front = glm::vec3(0,0,-1);
-    float moveSeconds = 1.0;
+    float moveSeconds = 0.25;
     resetMouse = true;
-
+    grabbedCursor=false;
     shared_ptr<bool> isDone = camera->moveTo(targetPosition, front, moveSeconds);
-    doAfter(isDone, [app, x11Window](){app->focus(x11Window);});
+    auto &grabbedCursor = this->grabbedCursor;
+    doAfter(isDone, [app, x11Window, &grabbedCursor](){
+      grabbedCursor = true;
+      app->focus(x11Window);
+    });
   }
 }
 
@@ -106,7 +110,7 @@ void Controls::doAfter(shared_ptr<bool> isDone, function<void()> actionFn) {
 void Controls::doDeferedActions() {
   vector<vector<DeferedAction>::iterator> toDelete;
   for(auto it=deferedActions.begin(); it!=deferedActions.end(); it++) {
-    if(it->isDone) {
+    if(*it->isDone) {
       it->fn();
       toDelete.push_back(it);
     }
@@ -119,11 +123,11 @@ void Controls::doDeferedActions() {
 void Controls::handleToggleFocus(GLFWwindow* window) {
   if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
     if(debounce(lastToggleFocusTime)) {
-      if(cursorDisabled) {
-        cursorDisabled = false;
+      if(grabbedCursor) {
+        grabbedCursor = false;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
       } else {
-        cursorDisabled = true;
+        grabbedCursor = true;
         resetMouse = true;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
       }

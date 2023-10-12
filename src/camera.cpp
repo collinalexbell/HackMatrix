@@ -6,6 +6,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <memory>
+#include <iostream>
 
 Camera::Camera() {
   position = glm::vec3(4.0f, 1.0f, 5.799f);
@@ -54,16 +55,53 @@ void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffse
   this->front = glm::normalize(front);
 }
 
+glm::mat4 Camera::tick() {
+  //cout << movements.size() << endl;
+  if(movements.size() > 0){
+    Movement& currentMovement = movements.front();
+    interpolateMovement(currentMovement);
+    if(*currentMovement.isDone) {
+      movements.pop();
+    }
+  }
+  return getViewMatrix();
+}
+
+void Camera::interpolateMovement(Movement& movement) {
+  double time = glfwGetTime();
+  float completionRatio = (time - movement.startTime)/(movement.endTime-movement.startTime);
+  cout << completionRatio << endl;
+  if(completionRatio >= 1.0) {
+    completionRatio = 1.0;
+    *movement.isDone = true;
+    position = movement.finishPosition;
+    front = movement.finishFront;
+  }
+  position = movement.startPosition +
+    ((movement.finishPosition-movement.startPosition) * completionRatio);
+
+  front = movement.startFront +
+    ((movement.finishFront-movement.startFront) * completionRatio);
+}
+
 glm::mat4 Camera::getViewMatrix() {
   return glm::lookAt(position, position + front, up);
 }
 
 std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetFront,
                     float moveSeconds) {
-  this->position = targetPosition;
-  this->front = targetFront;
   yaw = -90;
   pitch = 0;
+  std::shared_ptr<bool> isDone(new bool(false));
+  double curTime = glfwGetTime();
+  double finishTime = curTime + moveSeconds;
 
-  return std::shared_ptr<bool>(new bool(true));
+  Movement movement{
+    position, targetPosition,
+    front, targetFront,
+    curTime, finishTime,
+    isDone
+  };
+  movements.push(movement);
+  return isDone;
 }

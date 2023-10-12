@@ -15,7 +15,7 @@ struct DeferedAction {
 };
 
 class Controls {
-  bool cursorDisabled = true;
+  bool grabbedCursor = true;
   bool appFocused = false;
   double lastToggleFocusTime = 0;
   double lastToggleAppTime = 0;

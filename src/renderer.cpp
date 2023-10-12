@@ -252,7 +252,7 @@ void Renderer::drawAppDirect(X11App* app) {
 
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  view = camera->getViewMatrix();
+  view = camera->tick();
 
   // handleSelected
   Position selected = world->getLookedAtCube();
