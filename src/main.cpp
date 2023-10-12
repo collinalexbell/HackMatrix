@@ -7,6 +7,7 @@
 
 #include <X11/X.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/shape.h>
 #include <X11/extensions/xfixeswire.h>
 #include <iostream>
 #include <string>
@@ -43,6 +44,15 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
+void allow_input_passthrough(Window window){
+  XserverRegion region = XFixesCreateRegion(display, NULL, 0);
+
+  XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0,0,0);
+  XFixesSetWindowShapeRegion(display, window, ShapeInput, 0, 0, region);
+
+  XFixesDestroyRegion(display, region);
+}
+
 GLFWwindow* initGraphics() {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -67,6 +77,8 @@ GLFWwindow* initGraphics() {
   XReparentWindow(display, matriXWindow, overlay, 0, 0);
 
   XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
+  allow_input_passthrough(overlay);
+  allow_input_passthrough(matriXWindow);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
