@@ -204,10 +204,15 @@ void X11App::appTexture() {
   glXBindTexImageEXT(display, glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
 }
 
+float SCREEN_WIDTH = 1920;
+float SCREEN_HEIGHT = 1080;
+
 void X11App::resize(int width, int height) {
   this->width = width;
   this->height = height;
-  XMoveResizeWindow(display, appWindow, 0, 0, width, height);
+  int x = (SCREEN_WIDTH - width) / 2;
+  int y = (SCREEN_HEIGHT - height) / 2;
+      XMoveResizeWindow(display, appWindow, x, y, width, height);
   XFlush(display);
   XSync(display, false);
   if(textureId != -1) {
