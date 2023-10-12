@@ -219,7 +219,6 @@ void Renderer::addCube(int index, Cube cube) {
 }
 
 void Renderer::addAppCube(int index, glm::vec3 pos) {
-  cout << "pos:" << pos.x << "," << pos.y << ", " << pos.z << endl;
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * index,
                   sizeof(glm::vec3), &pos);
