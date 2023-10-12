@@ -107,7 +107,7 @@ void createEngineObjects() {
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
-  world->addApp(glm::vec3(2.5,1.0,5.0), surf);
+  //world->addApp(glm::vec3(2.5,1.0,5.0), surf);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
@@ -122,17 +122,19 @@ void createAndRegisterEmacs() {
     exit(0);
   }
   */
+  /*
   int pid = fork();
   if (pid == 0) {
     execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
+  */
   sleep(1);
   glfwFocusWindow(window);
   int width = 1920 * .85;
   int height = 1920 * .85 * .54;
   emacs = new X11App("emacs@phoenix", display, screen, width, height);
-  surf = new X11App("@cgDISMfxT:T", display, screen, width, height);
+  //surf = new X11App("@cgDISMfxT:T", display, screen, width, height);
 }
 
 void registerCursorCallback() {

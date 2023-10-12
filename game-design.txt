@@ -78,6 +78,8 @@ $ voxel
 $ shader over unfocused X11 app
 $ tron
 
+- put yourself in the view of other creatures
+
 ~ custom shaders for blocks!!!!
 
 ? what size voxels
