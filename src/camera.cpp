@@ -56,7 +56,6 @@ void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffse
 }
 
 glm::mat4 Camera::tick() {
-  //cout << movements.size() << endl;
   if(movements.size() > 0){
     Movement& currentMovement = movements.front();
     interpolateMovement(currentMovement);
@@ -70,7 +69,6 @@ glm::mat4 Camera::tick() {
 void Camera::interpolateMovement(Movement& movement) {
   double time = glfwGetTime();
   float completionRatio = (time - movement.startTime)/(movement.endTime-movement.startTime);
-  cout << completionRatio << endl;
   if(completionRatio >= 1.0) {
     completionRatio = 1.0;
     *movement.isDone = true;
