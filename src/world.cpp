@@ -272,11 +272,11 @@ int World::getIndexOfApp(X11App *app) {
   return -1;
 }
 
-void World::getViewDistanceForWindowSize(X11App *app) {
+float World::getViewDistanceForWindowSize(X11App *app) {
   // view = projection^-1 * gl_vertex * vertex^-1
   float glVertexX = float(app->width)/1920;
   glm::vec4 gl_pos = glm::vec4(10000,0,0,0);
-  float z_best;
+  float zBest;
   float target = glVertexX;
     for (float z = 0.0; z <= 10.5; z = z + 0.001) {
       glm::vec4 candidate;
@@ -284,12 +284,24 @@ void World::getViewDistanceForWindowSize(X11App *app) {
       candidate = candidate/candidate.w;
       if(abs(candidate.x - target) < abs(gl_pos.x - target)) {
         gl_pos = candidate;
-        z_best = z;
+        zBest = z;
       }
     }
+    return zBest;
+}
 
-    cout << "dist:" << z_best
-         << ", camera.x: " << camera->position.x
-         << ", camera.z:" << camera->position.z-5
-         << endl;
+
+glm::vec3 World::getAppPosition(X11App* app) {
+  int index = -1;
+  for(int i=0; i<apps.size(); i++) {
+    if(app == apps[i]) {
+      index = i;
+    }
+  }
+  if(index == -1) {
+    throw "app not found";
+  }
+
+  return getAppCubes()[index];
+
 }

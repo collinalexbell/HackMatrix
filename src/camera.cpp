@@ -5,6 +5,7 @@
 #include <math.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <memory>
 
 Camera::Camera() {
   position = glm::vec3(4.0f, 1.0f, 5.799f);
@@ -55,4 +56,14 @@ void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffse
 
 glm::mat4 Camera::getViewMatrix() {
   return glm::lookAt(position, position + front, up);
+}
+
+std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetFront,
+                    float moveSeconds) {
+  this->position = targetPosition;
+  this->front = targetFront;
+  yaw = -90;
+  pitch = 0;
+
+  return std::shared_ptr<bool>(new bool(true));
 }

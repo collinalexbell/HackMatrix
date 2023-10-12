@@ -14,10 +14,10 @@ using namespace std;
 
 void Controls::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
   if(cursorDisabled) {
-    if (firstMouse) {
+    if (resetMouse) {
         lastX = xpos;
         lastY = ypos;
-        firstMouse = false;
+        resetMouse = false;
     }
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos;
@@ -32,13 +32,14 @@ void Controls::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 void Controls::poll(GLFWwindow* window, Camera* camera, World* world) {
   handleKeys(window, camera, world);
   handleClicks(window, world);
+  doDeferedActions();
 }
 
 void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleEscape(window);
   handleControls(window, camera);
   handleToggleFocus(window);
-  handleToggleApp(window, world);
+  handleToggleApp(window, world, camera);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -76,11 +77,42 @@ void Controls::handleEscape(GLFWwindow* window) {
   }
 }
 
-void Controls::handleToggleApp(GLFWwindow* window, World* world) {
+void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera) {
   X11App* app = world->getLookedAtApp();
   if(app != NULL && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
     Window x11Window = glfwGetX11Window(window);
     app->focus(x11Window);
+  } else if (app != NULL && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+    Window x11Window = glfwGetX11Window(window);
+    float deltaZ = world->getViewDistanceForWindowSize(app);
+    glm::vec3 targetPosition = world->getAppPosition(app);
+    targetPosition.z = targetPosition.z + deltaZ;
+    glm::vec3 front = glm::vec3(0,0,-1);
+    float moveSeconds = 1.0;
+    resetMouse = true;
+
+    shared_ptr<bool> isDone = camera->moveTo(targetPosition, front, moveSeconds);
+    doAfter(isDone, [app, x11Window](){app->focus(x11Window);});
+  }
+}
+
+void Controls::doAfter(shared_ptr<bool> isDone, function<void()> actionFn) {
+  DeferedAction action;
+  action.isDone = isDone;
+  action.fn = actionFn;
+  deferedActions.push_back(action);
+}
+
+void Controls::doDeferedActions() {
+  vector<vector<DeferedAction>::iterator> toDelete;
+  for(auto it=deferedActions.begin(); it!=deferedActions.end(); it++) {
+    if(it->isDone) {
+      it->fn();
+      toDelete.push_back(it);
+    }
+  }
+  for(auto it: toDelete) {
+    deferedActions.erase(it);
   }
 }
 
@@ -92,7 +124,7 @@ void Controls::handleToggleFocus(GLFWwindow* window) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
       } else {
         cursorDisabled = true;
-        firstMouse = true;
+        resetMouse = true;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
       }
     }
