@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <memory>
 
 class Camera {
   glm::vec3 up;
@@ -22,6 +23,7 @@ class Camera {
   void handleRotateForce(GLFWwindow* window, double xoffset, double yoffset);
   ~Camera();
   glm::mat4 getViewMatrix();
+  std::shared_ptr<bool> moveTo(glm::vec3 position, glm::vec3 front, float moveSeconds);
 };
 
 

@@ -55,11 +55,12 @@ public:
   World(Camera *camera, bool debug = false);
   ~World();
   void attachRenderer(Renderer *renderer);
-  void getViewDistanceForWindowSize(X11App *app);
+  float getViewDistanceForWindowSize(X11App *app);
 
   X11App *getLookedAtApp();
   Position getLookedAtCube();
   const std::vector<glm::vec3> getAppCubes();
+  glm::vec3 getAppPosition(X11App* app);
 
   void addCube(int x, int y, int z, int blockType);
   void removeCube(int x, int y, int z);
@@ -68,6 +69,7 @@ public:
   int size();
 
   void action(Action);
+  glm::vec3 getAppPosition(int appIndex);
 };
 
 #endif

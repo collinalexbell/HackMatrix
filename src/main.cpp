@@ -115,8 +115,15 @@ void wireEngineObjects() {
 
 int emacsPid = -1;
 void createAndRegisterEmacs() {
-  int pid = fork();
+  //int pid = fork();
+  /*
   if(pid == 0) {
+    execl("/usr/bin/emacs", "/usr/bin/emacs");
+    exit(0);
+  }
+  */
+  int pid = fork();
+  if (pid == 0) {
     execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
