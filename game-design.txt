@@ -298,3 +298,11 @@ $ OpenGL
   - Show character walking up to the editors and then hopping between them
   - Make it look like they are selecting between pokemon in a lab or something
 
+- "Imerse yourself in the code"
+
+
+## Perks
+
+- Sponser name on the VoxelWM github repo
+- Meme of your choice (subject to approval)
+  on the wall in the central part of the game
