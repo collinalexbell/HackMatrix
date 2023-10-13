@@ -219,6 +219,8 @@ V Blow stuff up with placed charges that have customizable size!
   but like why would they need to make it in the game...
   - There is a hacker club that requires users to have made their own VM, too keep
     the script kiddies out.
+  - The hacker lounge is where all the devs hang out to work on their WM
+    and share their WM with 
   - Add the window manager to the hall of fame!
 
 - VR Hogwartz for hackers. By the end of the game, the user must build an OS
