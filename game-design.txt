@@ -1,6 +1,5 @@
-# Window Manager Simulator
+# Waylandia: A game about window managers
 
-A Linux window manager that is also a game that teaches you how to code a window manager
 
 ```
 $ implemented
