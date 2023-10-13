@@ -32,7 +32,7 @@ Controls* controls;
 Camera* camera;
 X11App* emacs;
 X11App *surf;
-X11App *obs;
+X11App *chrome;
 GLFWwindow* window;
 Display *display;
 int screen;
@@ -120,6 +120,7 @@ void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
   world->addApp(glm::vec3(2.5,1.0,5.0), surf);
+  //world->addApp(glm::vec3(6.5, 1.0, 5.0), chrome);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
@@ -127,24 +128,25 @@ void wireEngineObjects() {
 
 int emacsPid = -1;
 void createAndRegisterEmacs() {
-  //int pid = fork();
-  /*
-  if(pid == 0) {
-    execl("/usr/bin/emacs", "/usr/bin/emacs");
-    exit(0);
-  }
-  */
   int pid = fork();
   if (pid == 0) {
     execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
     exit(0);
   }
+  /*
+  int pid = fork();
+  if (pid == 0) {
+    execl("/usr/bin/firefox", "/usr/bin/firefox", "google.com");
+    exit(0);
+  }
+  */
   sleep(2);
   glfwFocusWindow(window);
   int width = 1920 * .85;
   int height = 1920 * .85 * .54;
   emacs = new X11App("emacs@phoenix", display, screen, width, height);
   surf = new X11App("@cgDISMfxT:T", display, screen, width, height);
+  //chrome = new X11App("Mozilla Firefox", display, screen, width, height);
 }
 
 void registerCursorCallback() {

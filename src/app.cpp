@@ -19,15 +19,25 @@ using namespace std;
 #define XA_ATOM 4
 
 const int pixmap_config[] = {
-    GLX_BIND_TO_TEXTURE_RGBA_EXT, 1, GLX_BIND_TO_TEXTURE_TARGETS_EXT,
-    GLX_TEXTURE_2D_BIT_EXT, GLX_RENDER_TYPE, GLX_RGBA_BIT, GLX_DRAWABLE_TYPE,
-    GLX_PIXMAP_BIT, GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR, GLX_X_RENDERABLE, 1,
+    GLX_BIND_TO_TEXTURE_RGB_EXT, 1,
+    GLX_BIND_TO_TEXTURE_TARGETS_EXT, GLX_TEXTURE_2D_BIT_EXT,
+    //GLX_RENDER_TYPE, GLX_RGBA_BIT,
+    GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT | GLX_WINDOW_BIT,
+    //GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
+    //GLX_X_RENDERABLE, 1,
     // GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT, (GLint) GLX_DONT_CARE,
 
     //		GLX_SAMPLE_BUFFERS, 1,
     //		GLX_SAMPLES, 4,
-    GLX_DOUBLEBUFFER, 1, GLX_RED_SIZE, 8, GLX_GREEN_SIZE, 8, GLX_BLUE_SIZE, 8,
-    GLX_ALPHA_SIZE, 8, GLX_STENCIL_SIZE, 0, GLX_DEPTH_SIZE, 16, 0};
+    GLX_DOUBLEBUFFER, 1,
+    GLX_BUFFER_SIZE, 24,
+    GLX_RED_SIZE, 8,
+    GLX_GREEN_SIZE, 8,
+    GLX_BLUE_SIZE, 8,
+    GLX_ALPHA_SIZE, 0,
+    //GLX_STENCIL_SIZE, 0,
+    //GLX_DEPTH_SIZE, 16,
+    0};
 
 void traverseWindowTree(Display* display, Window win, std::function<void(Display*, Window)> func) {
   func(display, win);
@@ -80,7 +90,6 @@ void X11App::fetchInfo(string windowName) {
   appWindow = getWindowByName(display, windowName);
   XMapWindow(display,appWindow);
   XGetWindowAttributes(display, appWindow, &attrs);
-
   fbConfigs = glXChooseFBConfig(display, 0, pixmap_config, &fbConfigCount);
 }
 
@@ -133,6 +142,7 @@ void X11App::unfocus(Window matrix) {
 
 void X11App::takeInputFocus() {
   XSetInputFocus(display, appWindow, RevertToParent, CurrentTime);
+  XRaiseWindow(display, appWindow);
   XSync(display, False);
   XFlush(display);
 }
@@ -196,7 +206,7 @@ void X11App::appTexture() {
 
   const int pixmap_attribs[] = {
     GLX_TEXTURE_TARGET_EXT, GLX_TEXTURE_2D_EXT,
-    GLX_TEXTURE_FORMAT_EXT, GLX_TEXTURE_FORMAT_RGBA_EXT,
+    GLX_TEXTURE_FORMAT_EXT, GLX_TEXTURE_FORMAT_RGB_EXT,
     None
   };
 
