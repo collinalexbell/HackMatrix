@@ -296,3 +296,5 @@ $ OpenGL
 
 - "Use your favorite editor"
   - Show character walking up to the editors and then hopping between them
+  - Make it look like they are selecting between pokemon in a lab or something
+
