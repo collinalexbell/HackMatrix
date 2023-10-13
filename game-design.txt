@@ -290,3 +290,9 @@ $ OpenGL
     ?cold temps (of NYC!)
 - saftey
     ?places where players can have private experiences
+
+
+## Pitch
+
+- "Use your favorite editor"
+  - Show character walking up to the editors and then hopping between them
