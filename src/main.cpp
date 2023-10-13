@@ -128,25 +128,24 @@ void wireEngineObjects() {
   #endif
 }
 
-void createAndRegisterEmacs(char** envp) {
-  int width = 1920 * .85;
-  int height = 1920 * .85 * .54;
+int width = 1920 * .85;
+int height = 1920 * .85 * .54;
+void forkApp(string cmd, string appName, int& appPid, X11App*& app,char** envp) {
   int pid = fork();
   if (pid == 0) {
-    execle("/snap/bin/epiphany", "/snap/bin/epiphany", NULL, envp);
+    execle(cmd.c_str(), cmd.c_str(), NULL, envp);
     exit(0);
   }
   sleep(2);
-  epiphanyPid = pid;
-  epiphany = new X11App("New Tab", display, screen, width, height);
-  pid = fork();
-  if (pid == 0) {
-    execle("./boot-vm.sh", "./boot-vm.sh", NULL, envp);
-    exit(0);
-  }
-  sleep(2);
-  qemuPid = pid;
-  qemu = new X11App("QEMU", display, screen, width, height);
+  appPid = pid;
+  app = new X11App(appName, display, screen, width, height);
+}
+
+
+void createAndRegisterApps(char** envp) {
+  forkApp("/snap/bin/epiphany","New Tab",
+          epiphanyPid, epiphany, envp);
+  forkApp("./boot-vm.sh", "QEMU", qemuPid, qemu, envp);
   glfwFocusWindow(window);
   emacs = new X11App("emacs@phoenix", display, screen, width, height);
 }
@@ -178,7 +177,7 @@ void cleanup() {
 
 void initEngine(char** envp) {
   createEngineObjects();
-  createAndRegisterEmacs(envp);
+  createAndRegisterApps(envp);
   wireEngineObjects();
   registerCursorCallback();
 }
