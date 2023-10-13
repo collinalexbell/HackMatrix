@@ -128,8 +128,8 @@ void wireEngineObjects() {
   #endif
 }
 
-int width = 1920 * .85;
-int height = 1920 * .85 * .54;
+int APP_WIDTH = 1920 * .85;
+int APP_HEIGHT = 1920 * .85 * .54;
 void forkApp(string cmd, string appName, int& appPid, X11App*& app,char** envp) {
   int pid = fork();
   if (pid == 0) {
@@ -138,7 +138,7 @@ void forkApp(string cmd, string appName, int& appPid, X11App*& app,char** envp) 
   }
   sleep(2);
   appPid = pid;
-  app = new X11App(appName, display, screen, width, height);
+  app = new X11App(appName, display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 
@@ -147,7 +147,7 @@ void createAndRegisterApps(char** envp) {
           epiphanyPid, epiphany, envp);
   forkApp("./boot-vm.sh", "QEMU", qemuPid, qemu, envp);
   glfwFocusWindow(window);
-  emacs = new X11App("emacs@phoenix", display, screen, width, height);
+  emacs = new X11App("emacs@phoenix", display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 void registerCursorCallback() {
