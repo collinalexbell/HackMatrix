@@ -31,8 +31,8 @@ Renderer* renderer;
 Controls* controls;
 Camera* camera;
 X11App* emacs;
-X11App *surf;
-X11App *chrome;
+X11App *epiphany;
+int epiphanyPid = -1;
 GLFWwindow* window;
 Display *display;
 int screen;
@@ -119,34 +119,25 @@ void createEngineObjects() {
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
-  world->addApp(glm::vec3(2.5,1.0,5.0), surf);
-  //world->addApp(glm::vec3(6.5, 1.0, 5.0), chrome);
+  world->addApp(glm::vec3(2.8, 1.0, 5.0), epiphany);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
 }
 
-int emacsPid = -1;
-void createAndRegisterEmacs() {
+void createAndRegisterEmacs(char** envp) {
   int pid = fork();
   if (pid == 0) {
-    execl("/usr/bin/surf", "/usr/bin/surf", "google.com");
+    execle("/snap/bin/epiphany", "/snap/bin/epiphany", NULL, envp);
     exit(0);
   }
-  /*
-  int pid = fork();
-  if (pid == 0) {
-    execl("/usr/bin/firefox", "/usr/bin/firefox", "google.com");
-    exit(0);
-  }
-  */
+  epiphanyPid = pid;
   sleep(2);
   glfwFocusWindow(window);
   int width = 1920 * .85;
   int height = 1920 * .85 * .54;
   emacs = new X11App("emacs@phoenix", display, screen, width, height);
-  surf = new X11App("@cgDISMfxT:T", display, screen, width, height);
-  //chrome = new X11App("Mozilla Firefox", display, screen, width, height);
+  epiphany = new X11App("New Tab", display, screen, width, height);
 }
 
 void registerCursorCallback() {
@@ -156,8 +147,8 @@ void registerCursorCallback() {
 
 void cleanup() {
   glfwTerminate();
-  if(emacsPid != -1) {
-    kill(emacsPid, SIGKILL);
+  if(epiphanyPid != -1) {
+    kill(epiphanyPid, SIGKILL);
   }
   //XCompositeUnredirectSubwindows(display, RootWindow(display, screen), int update);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
@@ -171,20 +162,20 @@ void cleanup() {
   delete emacs;
 }
 
-void initEngine() {
+void initEngine(char** envp) {
   createEngineObjects();
-  createAndRegisterEmacs();
+  createAndRegisterEmacs(envp);
   wireEngineObjects();
   registerCursorCallback();
 }
 
 
-int main() {
+int main(int argc, char** argv, char** envp) {
   window = initGraphics();
   if(window == NULL) {
     return -1;
   }
-  initEngine();
+  initEngine(envp);
   enterGameLoop();
   cleanup();
   return 0;
