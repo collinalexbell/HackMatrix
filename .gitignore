@@ -2,3 +2,4 @@ matrix
 **/*.o
 tinygrad
 .cache/
+wm.img
