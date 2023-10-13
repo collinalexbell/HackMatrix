@@ -213,6 +213,9 @@ V Blow stuff up with placed charges that have customizable size!
 
 ## story
 
+- Why would user need to make a window manager? Not like as in real life,
+  but like why would they need to make it in the game...
+
 - VR Hogwartz for hackers. By the end of the game, the user must build an OS
 
 - Start them with a single bit switch or something (haha)
