@@ -210,11 +210,16 @@ V Blow stuff up with placed charges that have customizable size!
 - Create a trajectory to shoot a ball through the hoop
 
 
+## Hall of fame
+- Show off all the window managers!
 
 ## story
 
 - Why would user need to make a window manager? Not like as in real life,
   but like why would they need to make it in the game...
+  - There is a hacker club that requires users to have made their own VM, too keep
+    the script kiddies out.
+  - Add the window manager to the hall of fame!
 
 - VR Hogwartz for hackers. By the end of the game, the user must build an OS
 
