@@ -32,7 +32,9 @@ Controls* controls;
 Camera* camera;
 X11App* emacs;
 X11App *epiphany;
+X11App *qemu;
 int epiphanyPid = -1;
+int qemuPid = -1;
 GLFWwindow* window;
 Display *display;
 int screen;
@@ -120,24 +122,33 @@ void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
   world->addApp(glm::vec3(2.8, 1.0, 5.0), epiphany);
+  world->addApp(glm::vec3(5.2, 1.0, 5.0), qemu);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
 }
 
 void createAndRegisterEmacs(char** envp) {
+  int width = 1920 * .85;
+  int height = 1920 * .85 * .54;
   int pid = fork();
   if (pid == 0) {
     execle("/snap/bin/epiphany", "/snap/bin/epiphany", NULL, envp);
     exit(0);
   }
-  epiphanyPid = pid;
   sleep(2);
-  glfwFocusWindow(window);
-  int width = 1920 * .85;
-  int height = 1920 * .85 * .54;
-  emacs = new X11App("emacs@phoenix", display, screen, width, height);
+  epiphanyPid = pid;
   epiphany = new X11App("New Tab", display, screen, width, height);
+  pid = fork();
+  if (pid == 0) {
+    execle("./boot-vm.sh", "./boot-vm.sh", NULL, envp);
+    exit(0);
+  }
+  sleep(2);
+  qemuPid = pid;
+  qemu = new X11App("QEMU", display, screen, width, height);
+  glfwFocusWindow(window);
+  emacs = new X11App("emacs@phoenix", display, screen, width, height);
 }
 
 void registerCursorCallback() {
@@ -149,6 +160,9 @@ void cleanup() {
   glfwTerminate();
   if(epiphanyPid != -1) {
     kill(epiphanyPid, SIGKILL);
+  }
+  if (qemuPid != -1) {
+    kill(qemuPid, SIGKILL);
   }
   //XCompositeUnredirectSubwindows(display, RootWindow(display, screen), int update);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
