@@ -1,6 +1,6 @@
 # Window Manager Simulator
 
-A window manager that is itself a game that teaches you how to build a window manager
+A window manager that is also a game that teaches you how to build a window manager
 
 ```
 $ implemented
