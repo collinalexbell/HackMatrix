@@ -1,4 +1,5 @@
 #include <X11/X.h>
+#include <X11/Xutil.h>
 #include <iostream>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
@@ -78,7 +79,42 @@ Window getWindowByName(Display* display, string search) {
   return rv;
 }
 
-void X11App::fetchInfo(string windowName) {
+
+Window getWindowByClass(Display *display, string search) {
+  Window root = XDefaultRootWindow(display);
+  Window rv;
+  int largestWidth = 0;
+  bool found = false;
+
+  traverseWindowTree(
+                     display, root, [&rv, &found, search, &largestWidth](Display *display, Window window) {
+        char nameMem[100];
+        XClassHint classHint;
+        classHint.res_class = NULL;
+        classHint.res_name = NULL;
+        char* className = NULL;
+        XGetClassHint(display, window, &classHint);
+        className = classHint.res_class;
+        if (className != NULL &&
+            string(className).find(search) != string::npos) {
+          XWindowAttributes attrs;
+          XGetWindowAttributes(display, window, &attrs);
+          if(attrs.width > largestWidth) {
+            largestWidth = attrs.width;
+            rv = window;
+            found = true;
+          }
+        }
+                     });
+
+  if (!found) {
+    cout << "unable to find window: \"" << search << "\"" << endl;
+    throw "unable to find window";
+  }
+  return rv;
+}
+
+void X11App::fetchInfo(string identifier, IdentifierType identifierType) {
 
   if (!gladLoadGLXLoader((GLADloadproc)glfwGetProcAddress, display, screen)) {
     std::cout << "Failed to initialize GLAD for GLX" << std::endl;
@@ -87,7 +123,14 @@ void X11App::fetchInfo(string windowName) {
 
   Window win = XDefaultRootWindow(display);
 
-  appWindow = getWindowByName(display, windowName);
+  switch(identifierType) {
+  case NAME:
+    appWindow = getWindowByName(display, identifier);
+    break;
+  case CLASS:
+    appWindow = getWindowByClass(display, identifier);
+    break;
+  }
   XMapWindow(display,appWindow);
   XGetWindowAttributes(display, appWindow, &attrs);
   fbConfigs = glXChooseFBConfig(display, 0, pixmap_config, &fbConfigCount);
@@ -102,12 +145,25 @@ int errorHandler(Display *dpy, XErrorEvent *err)
   return 0;
 }
 
-X11App::X11App(string windowName, Display* display, int screen, int width, int height): display(display), screen(screen) {
-  //TODO: create the app in virtual X
+X11App::X11App(Display* display, int screen): display(display), screen(screen) {
   XSetErrorHandler(errorHandler);
-  fetchInfo(windowName);
-  resize(width, height);
 };
+
+
+X11App* X11App::byName(string windowName, Display *display, int screen,
+                      int width, int height) {
+  X11App* rv = new X11App(display, screen);
+  rv->fetchInfo(windowName, NAME);
+  rv->resize(width, height);
+  return rv;
+}
+X11App* X11App::byClass(string windowClass, Display *display, int screen,
+                       int width, int height) {
+  X11App *rv = new X11App(display, screen);
+  rv->fetchInfo(windowClass, CLASS);
+  rv->resize(width, height);
+  return rv;
+}
 
 void X11App::click(int x, int y) {
   cout << "click" << x << ", " << y << endl;

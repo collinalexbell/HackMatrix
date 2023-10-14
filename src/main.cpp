@@ -122,7 +122,7 @@ void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
   world->addApp(glm::vec3(2.8, 1.0, 5.0), epiphany);
-  world->addApp(glm::vec3(5.2, 1.0, 5.0), qemu);
+  //world->addApp(glm::vec3(5.2, 1.0, 5.0), qemu);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
@@ -130,7 +130,7 @@ void wireEngineObjects() {
 
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;
-void forkApp(string cmd, string appName, int& appPid, X11App*& app,char** envp) {
+void forkApp(string cmd, string className, int& appPid, X11App*& app,char** envp) {
   int pid = fork();
   if (pid == 0) {
     execle(cmd.c_str(), cmd.c_str(), NULL, envp);
@@ -138,16 +138,14 @@ void forkApp(string cmd, string appName, int& appPid, X11App*& app,char** envp) 
   }
   sleep(2);
   appPid = pid;
-  app = new X11App(appName, display, screen, APP_WIDTH, APP_HEIGHT);
+  app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 
 void createAndRegisterApps(char** envp) {
-  forkApp("/snap/bin/epiphany","New Tab",
-          epiphanyPid, epiphany, envp);
-  forkApp("./boot-vm.sh", "QEMU", qemuPid, qemu, envp);
+  forkApp("/snap/bin/epiphany","Epiphany", epiphanyPid, epiphany, envp);
   glfwFocusWindow(window);
-  emacs = new X11App("emacs@phoenix", display, screen, APP_WIDTH, APP_HEIGHT);
+  emacs = X11App::byName("emacs@phoenix", display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 void registerCursorCallback() {
