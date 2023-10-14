@@ -130,7 +130,7 @@ void X11App::click(int x, int y) {
 }
 
 void X11App::unfocus(Window matrix) {
-  isFocused=false;
+  focused=false;
   XSelectInput(display, matrix, 0);
   Window root = DefaultRootWindow(display);
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
@@ -147,8 +147,14 @@ void X11App::takeInputFocus() {
   XFlush(display);
 }
 
+int isFocusedCount = 0;
+bool X11App::isFocused() {
+  bool rv = focused;
+  return rv;
+}
+
 void X11App::focus(Window matrix) {
-  isFocused = true;
+  focused = true;
   Window root = DefaultRootWindow(display);
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode wKeyCode = XKeysymToKeycode(display, XK_w);
