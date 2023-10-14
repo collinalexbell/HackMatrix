@@ -271,7 +271,9 @@ void Renderer::render() {
   shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
   if(app != NULL) {
-    shader->setBool("appSelected", app->isFocused);
+    shader->setBool("appSelected", app->isFocused());
+  } else {
+    shader->setBool("appSelected", false);
   }
   glBindVertexArray(VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());
@@ -279,7 +281,7 @@ void Renderer::render() {
   glBindVertexArray(APP_VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
 
-  if(app != NULL && app->isFocused) {
+  if(app != NULL && app->isFocused()) {
     drawAppDirect(app);
   }
 }

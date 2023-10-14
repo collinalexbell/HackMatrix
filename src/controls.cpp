@@ -79,24 +79,31 @@ void Controls::handleEscape(GLFWwindow* window) {
 
 void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera) {
   X11App* app = world->getLookedAtApp();
-  if(app != NULL && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-    Window x11Window = glfwGetX11Window(window);
-    app->focus(x11Window);
-  } else if (app != NULL && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-    Window x11Window = glfwGetX11Window(window);
-    float deltaZ = world->getViewDistanceForWindowSize(app);
-    glm::vec3 targetPosition = world->getAppPosition(app);
-    targetPosition.z = targetPosition.z + deltaZ;
-    glm::vec3 front = glm::vec3(0,0,-1);
-    float moveSeconds = 0.25;
-    resetMouse = true;
-    grabbedCursor=false;
-    shared_ptr<bool> isDone = camera->moveTo(targetPosition, front, moveSeconds);
-    auto &grabbedCursor = this->grabbedCursor;
-    doAfter(isDone, [app, x11Window, &grabbedCursor](){
-      grabbedCursor = true;
+  int eKeyPressed = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
+  int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
+  if((eKeyPressed || rKeyPressed) && debounce(lastToggleAppTime)) {
+    // seperate if statements to detect which key, because must call
+    // debounce only once
+    if (app != NULL && eKeyPressed) {
+      Window x11Window = glfwGetX11Window(window);
       app->focus(x11Window);
-    });
+    } else if (app != NULL && rKeyPressed) {
+      Window x11Window = glfwGetX11Window(window);
+      float deltaZ = world->getViewDistanceForWindowSize(app);
+      glm::vec3 targetPosition = world->getAppPosition(app);
+      targetPosition.z = targetPosition.z + deltaZ;
+      glm::vec3 front = glm::vec3(0, 0, -1);
+      float moveSeconds = 0.25;
+      resetMouse = true;
+      grabbedCursor = false;
+      shared_ptr<bool> isDone =
+          camera->moveTo(targetPosition, front, moveSeconds);
+      auto &grabbedCursor = this->grabbedCursor;
+      doAfter(isDone, [app, x11Window, &grabbedCursor]() {
+        grabbedCursor = true;
+        app->focus(x11Window);
+      });
+    }
   }
 }
 
