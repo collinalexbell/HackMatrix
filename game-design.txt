@@ -1,4 +1,4 @@
-# Waylandia: A game about window managers
+# Waylandia: A 3d adventure into programing window managers
 
 
 ```
@@ -22,6 +22,15 @@ I am building a Jewell
        - like how Mickey Singer viewed his medical manager code
 - Modulate the time I spend doing various tasks in the short-wave
        - do important tasks (matrix/phoenix infode improvements longer)
+
+## MVP
+- functioning 3d window manager
+- breakdown manager into x components
+  - x levels
+
+## Levels
+
+Create a server
 
 ## path to MVP
 - (defun ready? (game)
