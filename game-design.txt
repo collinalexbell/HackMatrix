@@ -323,3 +323,8 @@ $ OpenGL
 - Sponser name on the VoxelWM github repo
 - Meme of your choice (subject to approval)
   on the wall in the central part of the game
+
+
+## Funding milestones
+- Multiplayer
+- 
