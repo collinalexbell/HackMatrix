@@ -9,9 +9,15 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/shape.h>
 #include <X11/extensions/xfixeswire.h>
+#include <cstddef>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fstream>
+
 
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3native.h>
@@ -31,11 +37,11 @@ Renderer* renderer;
 Controls* controls;
 Camera* camera;
 X11App* emacs;
-X11App *epiphany;
-X11App *code;
+X11App *microsoftEdge;
+X11App *obs;
 X11App *terminator;
-int epiphanyPid = -1;
-int codePid = -1;
+int microsoftEdgePid = -1;
+int obsPid = -1;
 int terminatorPid = -1;
 GLFWwindow* window;
 Display *display;
@@ -124,8 +130,8 @@ void wireEngineObjects() {
   world->attachRenderer(renderer);
   world->addApp(glm::vec3(2.8, 1.0, 5.0), terminator);
   world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
-  world->addApp(glm::vec3(4.0, 2.0, 5.0), epiphany);
-  //world->addApp(glm::vec3(5.2, 1.0, 5.0), code);
+  world->addApp(glm::vec3(4.0, 2.0, 5.0), microsoftEdge);
+  world->addApp(glm::vec3(5.2, 1.0, 5.0), obs);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
@@ -136,20 +142,34 @@ int APP_HEIGHT = 1920 * .85 * .54;
 void forkApp(string cmd, string className, int& appPid, X11App*& app,char** envp) {
   int pid = fork();
   if (pid == 0) {
+    setsid();
     execle(cmd.c_str(), cmd.c_str(), NULL, envp);
     exit(0);
   }
-  sleep(1);
+  if(className == "obs") {
+    sleep(30);
+  } else {
+    sleep(1);
+  }
   appPid = pid;
   app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 
 void createAndRegisterApps(char** envp) {
-  forkApp("/usr/bin/microsoft-edge", "Microsoft-edge", epiphanyPid, epiphany,
+  forkApp("/usr/bin/microsoft-edge", "Microsoft-edge", microsoftEdgePid, microsoftEdge,
           envp);
-  //forkApp("/usr/bin/code", "Code", codePid, code, envp);
-  forkApp("/usr/bin/terminator", "Terminator", terminatorPid, terminator, envp);
+  char* line;
+  std::size_t len = 0;
+  FILE *obsPidPipe = popen("pidof obs", "r");
+  if (getline(&line, &len, obsPidPipe) == -1) {
+    forkApp("/usr/bin/obs", "obs", obsPid, obs, envp);
+  } else {
+     obs = X11App::byClass("obs", display, screen, APP_WIDTH, APP_HEIGHT);
+  }
+
+    forkApp("/usr/bin/terminator", "Terminator", terminatorPid, terminator,
+            envp);
   glfwFocusWindow(window);
   emacs = X11App::byName("emacs@phoenix", display, screen, APP_WIDTH, APP_HEIGHT);
 }
@@ -161,11 +181,8 @@ void registerCursorCallback() {
 
 void cleanup() {
   glfwTerminate();
-  if(epiphanyPid != -1) {
-    kill(epiphanyPid, SIGKILL);
-  }
-  if (codePid != -1) {
-    execl("/usr/bin/pkill", "/usr/bin/pkill", "code");
+  if(microsoftEdgePid != -1) {
+    kill(microsoftEdgePid, SIGKILL);
   }
   if (terminatorPid != -1) {
     kill(terminatorPid, SIGKILL);
