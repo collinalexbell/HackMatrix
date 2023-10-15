@@ -328,7 +328,7 @@ $ OpenGL
 - "Imerse yourself in your projects"
   - Show off cool 3d coding utilities
 
-- Hack with friends
+- "Hack with friends"
 
 "MatrixShell"
 
