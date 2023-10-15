@@ -33,8 +33,10 @@ Camera* camera;
 X11App* emacs;
 X11App *epiphany;
 X11App *code;
+X11App *terminator;
 int epiphanyPid = -1;
 int codePid = -1;
+int terminatorPid = -1;
 GLFWwindow* window;
 Display *display;
 int screen;
@@ -120,9 +122,10 @@ void createEngineObjects() {
 
 void wireEngineObjects() {
   world->attachRenderer(renderer);
+  world->addApp(glm::vec3(2.8, 1.0, 5.0), terminator);
   world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
-  world->addApp(glm::vec3(2.8, 1.0, 5.0), epiphany);
-  world->addApp(glm::vec3(5.2, 1.0, 5.0), code);
+  world->addApp(glm::vec3(4.0, 2.0, 5.0), epiphany);
+  //world->addApp(glm::vec3(5.2, 1.0, 5.0), code);
 #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
@@ -136,15 +139,17 @@ void forkApp(string cmd, string className, int& appPid, X11App*& app,char** envp
     execle(cmd.c_str(), cmd.c_str(), NULL, envp);
     exit(0);
   }
-  sleep(4);
+  sleep(1);
   appPid = pid;
   app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 
 void createAndRegisterApps(char** envp) {
-  forkApp("/snap/bin/epiphany","Epiphany", epiphanyPid, epiphany, envp);
-  forkApp("/usr/bin/code", "Code", codePid, code, envp);
+  forkApp("/usr/bin/microsoft-edge", "Microsoft-edge", epiphanyPid, epiphany,
+          envp);
+  //forkApp("/usr/bin/code", "Code", codePid, code, envp);
+  forkApp("/usr/bin/terminator", "Terminator", terminatorPid, terminator, envp);
   glfwFocusWindow(window);
   emacs = X11App::byName("emacs@phoenix", display, screen, APP_WIDTH, APP_HEIGHT);
 }
@@ -160,7 +165,10 @@ void cleanup() {
     kill(epiphanyPid, SIGKILL);
   }
   if (codePid != -1) {
-    kill(codePid, SIGKILL);
+    execl("/usr/bin/pkill", "/usr/bin/pkill", "code");
+  }
+  if (terminatorPid != -1) {
+    kill(terminatorPid, SIGKILL);
   }
   //XCompositeUnredirectSubwindows(display, RootWindow(display, screen), int update);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));

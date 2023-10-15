@@ -9,6 +9,7 @@ uniform sampler2D texture2;
 uniform sampler2D app0;
 uniform sampler2D app1;
 uniform sampler2D app2;
+uniform sampler2D app3;
 uniform bool isApp;
 uniform bool appSelected;
 uniform int totalBlockTypes;
@@ -60,9 +61,11 @@ void main()
       FragColor = colorFromTexture(app1, TexCoord);
     } else if (BlockType == 2) {
       FragColor = colorFromTexture(app2, TexCoord);
+    } else if (BlockType == 3) {
+      FragColor = colorFromTexture(app3, TexCoord);
     }
     if(!appSelected) {
-      FragColor = mix(FragColor, floor(TexCoord), 0.1);
+      //FragColor = mix(FragColor, floor(TexCoord), 0.1);
     }
   } else {
       FragColor = texture(texture1, vec3(TexCoord.x, TexCoord.y, BlockType));
