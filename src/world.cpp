@@ -255,7 +255,8 @@ void World::action(Action toTake) {
       int x = lookingAt.x + (int)lookingAt.normal.x;
       int y = lookingAt.y + (int)lookingAt.normal.y;
       int z = lookingAt.z + (int)lookingAt.normal.z;
-      addCube(x,y,z, lookedAt->blockType);
+      // addCube(x,y,z, lookedAt->blockType);
+       addCube(x,y,z, 5);
     }
     if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z);

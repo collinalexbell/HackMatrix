@@ -144,12 +144,14 @@ Renderer::Renderer(Camera* camera, World* world) {
   fillBuffers();
   setupVertexAttributePointers();
 
+
   std::vector<std::string> images = {
     "images/bAndGrey.png",
     "images/purpleRoad.png",
     "images/bAndGreySpeckled.png",
     "images/grass.png",
-    "images/pillar.png"
+    "images/pillar.png",
+    "images/reactor_texture.png"
   };
   textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
@@ -157,6 +159,7 @@ Renderer::Renderer(Camera* camera, World* world) {
   textures.insert(std::pair<string, Texture*>("app0", new Texture(GL_TEXTURE31)));
   textures.insert(std::pair<string, Texture *>("app1", new Texture(GL_TEXTURE30)));
   textures.insert(std::pair<string, Texture *>("app2", new Texture(GL_TEXTURE29)));
+  textures.insert(std::pair<string, Texture *>("app3", new Texture(GL_TEXTURE28)));
 
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
@@ -166,6 +169,7 @@ Renderer::Renderer(Camera* camera, World* world) {
   shader->setInt("app0", 31);
   shader->setInt("app1", 30);
   shader->setInt("app2", 29);
+  shader->setInt("app3", 28);
 
   shader->setBool("selectedValid", false);
   shader->setInt("selectedX", 0);
