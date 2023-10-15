@@ -40,9 +40,6 @@ X11App* emacs;
 X11App *microsoftEdge;
 X11App *obs;
 X11App *terminator;
-int microsoftEdgePid = -1;
-int obsPid = -1;
-int terminatorPid = -1;
 GLFWwindow* window;
 Display *display;
 int screen;
@@ -139,39 +136,33 @@ void wireEngineObjects() {
 
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;
-void forkApp(string cmd, string className, int& appPid, X11App*& app,char** envp) {
-  int pid = fork();
-  if (pid == 0) {
-    setsid();
-    execle(cmd.c_str(), cmd.c_str(), NULL, envp);
-    exit(0);
+void forkOrFindApp(string cmd, string className, X11App*& app,char** envp) {
+  char *line;
+  std::size_t len = 0;
+  FILE *pidPipe = popen(string("pidof " + cmd).c_str(), "r");
+  if (getline(&line, &len, pidPipe) == -1) {
+    int pid = fork();
+    if (pid == 0) {
+      setsid();
+      execle(cmd.c_str(), cmd.c_str(), NULL, envp);
+      exit(0);
+    }
+    if(className == "obs") {
+      sleep(30);
+    } else {
+      sleep(1);
+    }
   }
-  if(className == "obs") {
-    sleep(30);
-  } else {
-    sleep(1);
-  }
-  appPid = pid;
   app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 
 void createAndRegisterApps(char** envp) {
-  forkApp("/usr/bin/microsoft-edge", "Microsoft-edge", microsoftEdgePid, microsoftEdge,
-          envp);
-  char* line;
-  std::size_t len = 0;
-  FILE *obsPidPipe = popen("pidof obs", "r");
-  if (getline(&line, &len, obsPidPipe) == -1) {
-    forkApp("/usr/bin/obs", "obs", obsPid, obs, envp);
-  } else {
-     obs = X11App::byClass("obs", display, screen, APP_WIDTH, APP_HEIGHT);
-  }
-
-    forkApp("/usr/bin/terminator", "Terminator", terminatorPid, terminator,
-            envp);
+  forkOrFindApp("/usr/bin/microsoft-edge", "Microsoft-edge", microsoftEdge, envp);
+  forkOrFindApp("/usr/bin/terminator", "Terminator", terminator, envp);
+  forkOrFindApp("/usr/bin/obs", "obs", obs, envp);
+  emacs = X11App::byClass("Emacs", display, screen, APP_WIDTH, APP_HEIGHT);
   glfwFocusWindow(window);
-  emacs = X11App::byName("emacs@phoenix", display, screen, APP_WIDTH, APP_HEIGHT);
 }
 
 void registerCursorCallback() {
@@ -181,12 +172,6 @@ void registerCursorCallback() {
 
 void cleanup() {
   glfwTerminate();
-  if(microsoftEdgePid != -1) {
-    kill(microsoftEdgePid, SIGKILL);
-  }
-  if (terminatorPid != -1) {
-    kill(terminatorPid, SIGKILL);
-  }
   //XCompositeUnredirectSubwindows(display, RootWindow(display, screen), int update);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
   delete renderer;
