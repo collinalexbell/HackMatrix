@@ -311,7 +311,7 @@ $ OpenGL
 
 ## Pitch
 
-- "Chose your IDE"
+- "bring your own IDE"
   - Show character walking up to the editors and then hopping between them
   - Make it look like they are selecting between pokemon in a lab or something
 
@@ -330,18 +330,26 @@ $ OpenGL
 
 - Hack with friends
 
-"Matrix Hacker"
+"MatrixShell"
 
 ## Development Milestones
 - Choose IDE level
 - 3 challenges
-- 3 enchantments
+  - path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
+  - neural network with visualization: https://github.com/wmvanvliet/scns/tree/main/visualizations/multilayer_perceptron & https://www.youtube.com/watch?v=Tsvxx-GGlTg
+  - cellular automata: https://www.youtube.com/watch?v=dQJ5aEsP6Fs
+
+- 3 enchant objects in your environment
+  - Open a video when you click on a fictional character
+  - Make a voxel follow you.
+  - Make voxel shoot you when you try to go on twitter.
+
 - Cyberpunk castle
+  - art gallery
 - 3 coding utlities
 - Fake multiplayer (or some shit)
 
 ## Perks
-
 - Sponser name on the VoxelWM github repo
 - Meme of your choice (subject to approval)
   on the wall in the central part of the game
@@ -349,4 +357,4 @@ $ OpenGL
 
 ## Funding milestones
 - Multiplayer
-- 
+-
