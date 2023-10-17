@@ -2,6 +2,7 @@
 #include "api.h"
 #include "controls.h"
 #include "camera.h"
+#include "wm.h"
 #include "world.h"
 #include "app.h"
 
@@ -17,13 +18,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fstream>
+#include <thread>
 
 
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3native.h>
 #include <GLFW/glfw3.h>
-#include <X11/Xlib.h>
-#include <X11/extensions/Xcomposite.h>
 #include <glad/glad.h>
 #include <glad/glad_glx.h>
 #include <glm/glm.hpp>
@@ -34,14 +34,11 @@ Api* api;
 Renderer* renderer;
 Controls* controls;
 Camera* camera;
-X11App* emacs;
-X11App *microsoftEdge;
-X11App *obs;
-X11App *terminator;
 GLFWwindow* window;
-Display *display;
 int screen;
 
+WM *wm;
+Display *display;
 Window matriXWindow;
 Window overlay;
 
@@ -51,14 +48,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-void allow_input_passthrough(Window window){
-  XserverRegion region = XFixesCreateRegion(display, NULL, 0);
 
-  XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0,0,0);
-  XFixesSetWindowShapeRegion(display, window, ShapeInput, 0, 0, region);
-
-  XFixesDestroyRegion(display, region);
-}
 
 GLFWwindow* initGraphics() {
   glfwInit();
@@ -85,10 +75,9 @@ GLFWwindow* initGraphics() {
   XReparentWindow(display, matriXWindow, overlay, 0, 0);
 
   XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
-  allow_input_passthrough(overlay);
-  allow_input_passthrough(matriXWindow);
 
   XSelectInput(display, root, SubstructureRedirectMask | SubstructureNotifyMask);
+  XSync(display, false);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
@@ -98,6 +87,26 @@ GLFWwindow* initGraphics() {
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   return window;
+}
+
+void handleSubstructure() {
+    XEvent e;
+    XNextEvent(display, &e);
+
+    switch (e.type) {
+    case CreateNotify:
+      cout << "created window" << endl;
+        //OnCreateNotify(e.xcreatewindow);
+      break;
+    case DestroyNotify:
+      cout << "destroyed window" << endl;
+      //OnDestroyNotify(e.xdestroywindow);
+      break;
+    case ReparentNotify:
+      cout << "reparented window" << endl;
+      //OnReparentNotify(e.xreparent);
+      break;
+    }
 }
 
 int enterGameLoop() {
@@ -133,45 +142,14 @@ void createEngineObjects() {
 
 void wireEngineObjects() {
   world->attachRenderer(renderer);
-  world->addApp(glm::vec3(2.8, 1.0, 5.0), terminator);
-  world->addApp(glm::vec3(4.0,1.0,5.0), emacs);
-  world->addApp(glm::vec3(4.0, 2.0, 5.0), microsoftEdge);
-  world->addApp(glm::vec3(5.2, 1.0, 5.0), obs);
-#ifdef API
+  wm->attachWorld(world);
+  wm->addAppsToWorld();
+  #ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
   #endif
 }
 
-int APP_WIDTH = 1920 * .85;
-int APP_HEIGHT = 1920 * .85 * .54;
-void forkOrFindApp(string cmd, string pidOf, string className, X11App*& app,char** envp) {
-  char *line;
-  std::size_t len = 0;
-  FILE *pidPipe = popen(string("pidof " + pidOf).c_str(), "r");
-  if (getline(&line, &len, pidPipe) == -1) {
-    int pid = fork();
-    if (pid == 0) {
-      setsid();
-      execle(cmd.c_str(), cmd.c_str(), NULL, envp);
-      exit(0);
-    }
-    if(className == "obs") {
-      sleep(30);
-    } else {
-      sleep(1);
-    }
-  }
-  app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
-}
 
-
-void createAndRegisterApps(char** envp) {
-  forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
-  forkOrFindApp("/usr/bin/microsoft-edge","microsoft-edge", "Microsoft-edge", microsoftEdge, envp);
-  forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator, envp);
-  forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
-  glfwFocusWindow(window);
-}
 
 void registerCursorCallback() {
   glfwSetWindowUserPointer(window, (void*)renderer);
@@ -187,25 +165,33 @@ void cleanup() {
   #ifdef API
   delete api;
   #endif
-  emacs->takeInputFocus();
-  delete emacs;
+  delete wm;
 }
 
 void initEngine(char** envp) {
   createEngineObjects();
-  createAndRegisterApps(envp);
+  wm->createAndRegisterApps(envp);
+  glfwFocusWindow(window);
   wireEngineObjects();
   registerCursorCallback();
 }
 
 
 int main(int argc, char** argv, char** envp) {
-  window = initGraphics();
-  if(window == NULL) {
+  try {
+    window = initGraphics();
+    if(window == NULL) {
+      return -1;
+    }
+    wm = new WM(overlay, matriXWindow, display, screen);
+    std::thread substructureThread(handleSubstructure);
+    substructureThread.detach();
+    initEngine(envp);
+    int exit = enterGameLoop();
+    cleanup();
+    return exit;
+  } catch (...) {
+    // signal the trampoline to boot an xterm for rollback
     return -1;
   }
-  initEngine(envp);
-  int exit = enterGameLoop();
-  cleanup();
-  return exit;
 }
