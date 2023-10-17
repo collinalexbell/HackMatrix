@@ -193,6 +193,7 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 ## physical
 - physics
 - collisions
+- multiscale voxels
 
 ### Block callback
 - click callback, to do something in the game on click
