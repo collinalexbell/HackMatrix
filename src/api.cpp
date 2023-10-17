@@ -40,6 +40,9 @@ void Api::requestWorldData(World* world, string serverAddr) {
 void CommandServer::pollForWorldCommands(World *world) {
   zmq::message_t recv;
 
+  // this only renders 1 per frame
+  // I can run this in a thread or figure out how fast it goes
+  // and do zmq_fq/framerate of them
   zmq::recv_result_t result = socket.recv(recv, zmq::recv_flags::dontwait);
   if (result >= 0) {
     AddCube cubeToAdd;
