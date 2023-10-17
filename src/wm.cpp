@@ -1,9 +1,12 @@
 #include "wm.h"
 #include "app.h"
+#include <X11/Xlib.h>
 #include <glm/glm.hpp>
 #include <iostream>
 
 #include <X11/extensions/shape.h>
+#include <spdlog/common.h>
+#include <sstream>
 #include <thread>
 
 int APP_WIDTH = 1920 * .85;
@@ -50,31 +53,46 @@ void WM::allow_input_passthrough(Window window) {
 void WM::addAppsToWorld() {
   world->addApp(glm::vec3(2.8, 1.0, 5.0), terminator);
   world->addApp(glm::vec3(4.0, 1.0, 5.0), emacs);
-  world->addApp(glm::vec3(4.0, 2.0, 5.0), microsoftEdge);
+  world->addApp(glm::vec3(4.0, 1.75, 5.0), microsoftEdge);
   world->addApp(glm::vec3(5.2, 1.0, 5.0), obs);
 }
 
-void WM::handleSubstructure() {
-  XEvent e;
-  XNextEvent(display, &e);
+void WM::onCreateNotify(XCreateWindowEvent event) {
+  char *name;
+  XFetchName(display, event.window, &name);
+  stringstream ss;
+  ss << "window created: " << event.window << " "<< name;
+  logger->info(ss.str());
+}
 
-  switch (e.type) {
-  case CreateNotify:
-    cout << "created window" << endl;
-    // OnCreateNotify(e.xcreatewindow);
-    break;
-  case DestroyNotify:
-    cout << "destroyed window" << endl;
-    // OnDestroyNotify(e.xdestroywindow);
-    break;
-  case ReparentNotify:
-    cout << "reparented window" << endl;
-    // OnReparentNotify(e.xreparent);
-    break;
+
+void WM::handleSubstructure() {
+  for(;;) {
+    XEvent e;
+    XNextEvent(display, &e);
+
+    switch (e.type) {
+    case CreateNotify:
+      cout << "created window" << endl;
+      onCreateNotify(e.xcreatewindow);
+      break;
+    case DestroyNotify:
+      cout << "destroyed window" << endl;
+      // OnDestroyNotify(e.xdestroywindow);
+      break;
+    case ReparentNotify:
+      cout << "reparented window" << endl;
+      // OnReparentNotify(e.xreparent);
+      break;
+    }
   }
 }
 
 WM::WM(Window matrix) {
+  logger = spdlog::basic_logger_mt("wm_logger", "logs/wm.txt");
+  logger->set_level(spdlog::level::info);
+  logger->flush_on(spdlog::level::info);
+  logger->info("WM()");
   display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
   Window root = RootWindow(display, screen);
@@ -89,6 +107,7 @@ WM::WM(Window matrix) {
   XSelectInput(display, root,
                SubstructureRedirectMask | SubstructureNotifyMask);
   XSync(display, false);
+  XFlush(display);
 
   allow_input_passthrough(overlay);
   allow_input_passthrough(matrix);
