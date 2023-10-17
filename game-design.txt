@@ -182,6 +182,8 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 ## mechanics
 
+code tools, like spells
+
 ## multiplayer
 - occupy the same space as others
 - view screens that others can view
