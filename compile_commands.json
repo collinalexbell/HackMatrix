@@ -2,147 +2,28 @@
   {
     "arguments": [
       "/usr/bin/g++",
+      "-c",
       "-std=c++20",
       "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
-      "build/main.o",
-      "src/main.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/main.cpp",
-    "output": "/home/collin/matrix/build/main.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
       "build/renderer.o",
-      "src/renderer.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/renderer.cpp",
-    "output": "/home/collin/matrix/build/renderer.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
+      "build/main.o",
       "build/shader.o",
-      "src/shader.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/shader.cpp",
-    "output": "/home/collin/matrix/build/shader.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
       "build/texture.o",
-      "src/texture.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/texture.cpp",
-    "output": "/home/collin/matrix/build/texture.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
       "build/world.o",
-      "src/world.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/world.cpp",
-    "output": "/home/collin/matrix/build/world.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
       "build/camera.o",
-      "src/camera.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/camera.cpp",
-    "output": "/home/collin/matrix/build/camera.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
       "build/api.o",
-      "src/api.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/api.cpp",
-    "output": "/home/collin/matrix/build/api.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
-      "-Iinclude",
-      "-I/usr/local/include",
-      "-o",
       "build/controls.o",
-      "src/controls.cpp"
-    ],
-    "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/controls.cpp",
-    "output": "/home/collin/matrix/build/controls.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-std=c++20",
-      "-g",
-      "-c",
+      "build/app.o",
+      "-Iinclude",
       "-Iinclude",
       "-I/usr/local/include",
-      "-Wno-narrowing",
       "-o",
-      "build/app.o",
-      "src/app.cpp"
+      "matrix",
+      "include/protos/api.pb.cc"
     ],
     "directory": "/home/collin/matrix",
-    "file": "/home/collin/matrix/src/app.cpp",
-    "output": "/home/collin/matrix/build/app.o"
+    "file": "/home/collin/matrix/include/protos/api.pb.cc",
+    "output": "/home/collin/matrix/matrix"
   },
   {
     "arguments": [

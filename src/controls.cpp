@@ -37,6 +37,7 @@ void Controls::poll(GLFWwindow* window, Camera* camera, World* world) {
 
 void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleEscape(window);
+  handleModEscape(window);
   handleControls(window, camera);
   handleToggleFocus(window);
   handleToggleApp(window, world, camera);
@@ -72,8 +73,14 @@ void Controls::handleControls(GLFWwindow* window, Camera* camera) {
 }
 
 void Controls::handleEscape(GLFWwindow* window) {
-  if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+  if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
     glfwSetWindowShouldClose(window, true);
+  }
+}
+
+void Controls::handleModEscape(GLFWwindow* window) {
+  if (glfwGetKey(window, GLFW_KEY_DELETE) == GLFW_PRESS) {
+    throw "errorEscape";
   }
 }
 

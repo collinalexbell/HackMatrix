@@ -29,8 +29,6 @@
 #include <glm/glm.hpp>
 #include <zmq/zmq.hpp>
 
-#define API
-
 World* world;
 Api* api;
 Renderer* renderer;
@@ -46,6 +44,8 @@ int screen;
 
 Window matriXWindow;
 Window overlay;
+
+#define API
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
@@ -75,17 +75,20 @@ GLFWwindow* initGraphics() {
 
   display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
+  Window root = RootWindow(display, screen);
   XCompositeRedirectSubwindows(display, RootWindow(display, screen),
                                CompositeRedirectAutomatic);
 
   matriXWindow = glfwGetX11Window(window);
 
-  overlay = XCompositeGetOverlayWindow(display, RootWindow(display, screen));
+  overlay = XCompositeGetOverlayWindow(display, root);
   XReparentWindow(display, matriXWindow, overlay, 0, 0);
 
   XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
   allow_input_passthrough(overlay);
   allow_input_passthrough(matriXWindow);
+
+  XSelectInput(display, root, SubstructureRedirectMask | SubstructureNotifyMask);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
@@ -97,15 +100,20 @@ GLFWwindow* initGraphics() {
   return window;
 }
 
-void enterGameLoop() {
-  while(!glfwWindowShouldClose(window)) {
-    renderer->render();
-    #ifdef API
-    api->pollFor(world);
-    #endif
-    controls->poll(window, camera, world);
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+int enterGameLoop() {
+  try {
+    while(!glfwWindowShouldClose(window)) {
+      renderer->render();
+      #ifdef API
+      api->pollFor(world);
+      #endif
+      controls->poll(window, camera, world);
+      glfwSwapBuffers(window);
+      glfwPollEvents();
+    }
+    return 0;
+  } catch(...) {
+    return -1;
   }
 }
 
@@ -117,7 +125,7 @@ void createEngineObjects() {
   camera = new Camera();
   world = new World(camera, true);
   #ifdef API
-  api = new Api("tcp://*:5555");
+  api = new Api("tcp://*:3333");
   #endif
   renderer = new Renderer(camera, world);
   controls = new Controls();
@@ -136,10 +144,10 @@ void wireEngineObjects() {
 
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;
-void forkOrFindApp(string cmd, string className, X11App*& app,char** envp) {
+void forkOrFindApp(string cmd, string pidOf, string className, X11App*& app,char** envp) {
   char *line;
   std::size_t len = 0;
-  FILE *pidPipe = popen(string("pidof " + cmd).c_str(), "r");
+  FILE *pidPipe = popen(string("pidof " + pidOf).c_str(), "r");
   if (getline(&line, &len, pidPipe) == -1) {
     int pid = fork();
     if (pid == 0) {
@@ -158,10 +166,10 @@ void forkOrFindApp(string cmd, string className, X11App*& app,char** envp) {
 
 
 void createAndRegisterApps(char** envp) {
-  forkOrFindApp("/usr/bin/microsoft-edge", "Microsoft-edge", microsoftEdge, envp);
-  forkOrFindApp("/usr/bin/terminator", "Terminator", terminator, envp);
-  forkOrFindApp("/usr/bin/obs", "obs", obs, envp);
-  emacs = X11App::byClass("Emacs", display, screen, APP_WIDTH, APP_HEIGHT);
+  forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
+  forkOrFindApp("/usr/bin/microsoft-edge","microsoft-edge", "Microsoft-edge", microsoftEdge, envp);
+  forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator, envp);
+  forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   glfwFocusWindow(window);
 }
 
@@ -174,8 +182,7 @@ void cleanup() {
   glfwTerminate();
   //XCompositeUnredirectSubwindows(display, RootWindow(display, screen), int update);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
-  delete renderer;
-  delete world;
+  delete renderer; delete world;
   delete camera;
   #ifdef API
   delete api;
@@ -198,7 +205,7 @@ int main(int argc, char** argv, char** envp) {
     return -1;
   }
   initEngine(envp);
-  enterGameLoop();
+  int exit = enterGameLoop();
   cleanup();
-  return 0;
+  return exit;
 }

@@ -1,9 +1,17 @@
+PROTO_DIR = include/protos
+PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
+PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
+PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
 INCLUDES        = -Iinclude -I/usr/local/include
-all: matrix
+all: matrix trampoline
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o $(PROTO_H_FILES) $(PROTO_CPP_FILES)
+	echo $(PROTO_H_FILES)
 	cd build
-	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes
+	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o $(PROTO_CPP_FILES) src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf
+
+trampoline: src/trampoline.cpp build/x-raise
+	g++ -o trampoline src/trampoline.cpp
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
 	g++  -std=c++20 -g -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
@@ -23,7 +31,7 @@ build/world.o: src/world.cpp include/world.h include/app.h include/camera.h
 build/camera.o: src/camera.cpp include/camera.h
 	g++  -std=c++20 -g -o build/camera.o -c src/camera.cpp $(INCLUDES)
 
-build/api.o: src/api.cpp include/api.h include/world.h
+build/api.o: src/api.cpp include/api.h include/world.h $(PROTO_DIR)/api.pb.h
 	g++  -std=c++20 -g -o build/api.o -c src/api.cpp $(INCLUDES)
 
 build/controls.o: src/controls.cpp include/controls.h include/camera.h
@@ -32,6 +40,11 @@ build/controls.o: src/controls.cpp include/controls.h include/camera.h
 build/app.o: src/app.cpp include/app.h
 	g++  -std=c++20 -g -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
 
+include/protos/api.pb.h include/protos/api.pb.cc: $(PROTO_FILES)
+	protoc --cpp_out=include include/protos/api.proto
+
+build/x-raise: src/x-raise.c
+	gcc -o build/x-raise src/x-raise.c -lX11
 
 #######################
 ######## Utils ########
