@@ -38,24 +38,17 @@ void Api::requestWorldData(World* world, string serverAddr) {
 }
 
 void CommandServer::pollForWorldCommands(World *world) {
-  zmq::message_t request;
+  zmq::message_t recv;
 
-  zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
+  zmq::recv_result_t result = socket.recv(recv, zmq::recv_flags::dontwait);
   if (result >= 0) {
-    std::string data(static_cast<char *>(request.data()), request.size());
+    AddCube cubeToAdd;
+    cubeToAdd.ParseFromArray(recv.data(), recv.size());
 
-    std::istringstream iss(data);
-
-    while (!iss.eof()) {
-      std::string command;
-      int type;
-      int x, y, z;
-      iss >> command >> x >> y >> z >> type;
-
-      if (command == "c") {
-        world->addCube(x, y, z, type);
-      }
-    }
+    world->addCube(cubeToAdd.x(),
+                   cubeToAdd.y(),
+                   cubeToAdd.z(),
+                   cubeToAdd.blocktype());
 
     //  Send reply back to client
     zmq::message_t reply(5);
@@ -94,7 +87,9 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
   void Api::pollFor(World * world) {
     if (legacyCommandServer != NULL) {
       legacyCommandServer->legacyPollForWorldCommands(world);
-      legacyCommandServer->pollForWorldCommands(world);
+    }
+    if (commandServer != NULL) {
+      commandServer->pollForWorldCommands(world);
     }
   }
 
