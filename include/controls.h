@@ -1,5 +1,4 @@
-#ifndef __CONTROLS_H__
-#define __CONTROLS_H__
+#pragma once
 
 #include "camera.h"
 #include <functional>
@@ -10,6 +9,8 @@
 #include "world.h"
 #include "wm.h"
 
+class WM;
+
 struct DeferedAction {
   shared_ptr<bool> isDone;
   function<void()> fn;
@@ -17,6 +18,8 @@ struct DeferedAction {
 
 class Controls {
   WM* wm;
+  World *world;
+  Camera *camera;
   bool grabbedCursor = true;
   bool appFocused = false;
   double lastToggleFocusTime = 0;
@@ -39,8 +42,9 @@ class Controls {
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
 public:
-  Controls(WM *wm) : wm(wm) {}
+  Controls(WM *wm, World *world, Camera *camera) : wm(wm), world(world), camera(camera) {}
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
+  void goToApp(X11App * app);
+  void disable();
 };
-#endif

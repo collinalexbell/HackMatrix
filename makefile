@@ -16,7 +16,7 @@ trampoline: src/trampoline.cpp build/x-raise
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
 	g++  -std=c++20 -g -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
 
-build/main.o: src/main.cpp include/renderer.h include/camera.h include/controls.h include/world.h include/api.h
+build/main.o: src/main.cpp include/renderer.h include/camera.h include/controls.h include/world.h include/api.h include/wm.h
 	g++ -std=c++20  -g -o build/main.o -c src/main.cpp $(INCLUDES)
 
 build/shader.o: src/shader.cpp include/shader.h
@@ -40,7 +40,7 @@ build/controls.o: src/controls.cpp include/controls.h include/camera.h include/w
 build/app.o: src/app.cpp include/app.h
 	g++  -std=c++20 -g -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
 
-build/wm.o: src/wm.cpp include/wm.h
+build/wm.o: src/wm.cpp include/wm.h include/controls.h
 	g++ -std=c++20 -g -o build/wm.o -c src/wm.cpp $(INCLUDES)
 
 include/protos/api.pb.h include/protos/api.pb.cc: $(PROTO_FILES)
