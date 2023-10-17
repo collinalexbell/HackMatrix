@@ -91,16 +91,17 @@ void createEngineObjects() {
   api = new Api("tcp://*:3333");
   #endif
   renderer = new Renderer(camera, world);
-  controls = new Controls(wm);
+  controls = new Controls(wm, world, camera);
+  wm->registerControls(controls);
 }
 
 void wireEngineObjects() {
   world->attachRenderer(renderer);
   wm->attachWorld(world);
   wm->addAppsToWorld();
-  #ifdef API
+#ifdef API
   api->requestWorldData(world, "tcp://localhost:5556");
-  #endif
+#endif
 }
 
 void registerCursorCallback() {

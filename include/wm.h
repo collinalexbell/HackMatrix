@@ -2,15 +2,19 @@
 #include "app.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "world.h"
+#include "controls.h"
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
 #include <memory>
 #include <thread>
 
+class Controls;
+
 class WM {
   // hardcoded apps on boot (will fix later)
 
   Display *display = NULL;
+  Controls *controls = NULL;
   int screen;
   X11App *emacs = NULL;
   X11App *microsoftEdge = NULL;
@@ -36,4 +40,6 @@ public:
   void attachWorld(World *world) {this->world = world;}
   void addAppsToWorld();
   void handleSubstructure();
+  void goToLookedAtApp();
+  void registerControls(Controls *controls);
 };

@@ -67,9 +67,19 @@ void WM::onCreateNotify(XCreateWindowEvent event) {
 
 void WM::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+  KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
+  vector<X11App*> appsWithHotKeys = {emacs, microsoftEdge, terminator, obs};
+  
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
+  }
+  for (int i = 0; i < appsWithHotKeys.size(); i++) {
+    KeyCode code = XKeysymToKeycode(display, XK_1 + i);
+    if (event.keycode == code && event.state & Mod4Mask) {
+      unfocusApp();
+      controls->goToApp(appsWithHotKeys[i]);
+    }
   }
 }
 
@@ -110,6 +120,10 @@ void WM::unfocusApp() {
   }
 }
 
+void WM::registerControls(Controls *controls) {
+  this->controls = controls;
+}
+
 WM::WM(Window matrix): matrix(matrix) {
   logger = spdlog::basic_logger_mt("wm_logger", "logs/wm.txt");
   logger->set_level(spdlog::level::info);
@@ -128,6 +142,12 @@ WM::WM(Window matrix): matrix(matrix) {
 
   XSelectInput(display, root,
                SubstructureRedirectMask | SubstructureNotifyMask);
+
+
+  for(int i = 0; i<9; i++) {
+    KeyCode code = XKeysymToKeycode(display, XK_1+i);
+    XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+  }
   XSync(display, false);
   XFlush(display);
 

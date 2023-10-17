@@ -84,8 +84,24 @@ void Controls::handleModEscape(GLFWwindow* window) {
   }
 }
 
+void Controls::goToApp(X11App* app) {
+  float deltaZ = world->getViewDistanceForWindowSize(app);
+  glm::vec3 targetPosition = world->getAppPosition(app);
+  targetPosition.z = targetPosition.z + deltaZ;
+  glm::vec3 front = glm::vec3(0, 0, -1);
+  float moveSeconds = 0.25;
+  resetMouse = true;
+  grabbedCursor = false;
+  shared_ptr<bool> isDone = camera->moveTo(targetPosition, front, moveSeconds);
+  auto &grabbedCursor = this->grabbedCursor;
+  doAfter(isDone, [app, &grabbedCursor, this]() {
+    grabbedCursor = true;
+    wm->focusApp(app);
+  });
+}
+
 void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera) {
-  X11App* app = world->getLookedAtApp();
+  X11App *app = world->getLookedAtApp();
   int eKeyPressed = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
   int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
   if((eKeyPressed || rKeyPressed) && debounce(lastToggleAppTime)) {
@@ -94,21 +110,7 @@ void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
     if (app != NULL && eKeyPressed) {
       wm->focusApp(app);
     } else if (app != NULL && rKeyPressed) {
-      Window x11Window = glfwGetX11Window(window);
-      float deltaZ = world->getViewDistanceForWindowSize(app);
-      glm::vec3 targetPosition = world->getAppPosition(app);
-      targetPosition.z = targetPosition.z + deltaZ;
-      glm::vec3 front = glm::vec3(0, 0, -1);
-      float moveSeconds = 0.25;
-      resetMouse = true;
-      grabbedCursor = false;
-      shared_ptr<bool> isDone =
-        camera->moveTo(targetPosition, front, moveSeconds);
-      auto &grabbedCursor = this->grabbedCursor;
-      doAfter(isDone, [app, x11Window, &grabbedCursor, this]() {
-        grabbedCursor = true;
-        wm->focusApp(app);
-      });
+      goToApp(app);
     }
   }
 }
