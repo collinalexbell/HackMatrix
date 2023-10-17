@@ -1,20 +1,22 @@
 // Write a path finder
 const protobuf = require("protobufjs");
 const zmq = require("zeromq");
-const root = protobuf.loadSync("include/protos/api.proto");
+const root = protobuf.loadSync("../../include/protos/api.proto");
 const AddCube = root.lookupType("AddCube");
 
-async function runRequester() {
-    const requester = new zmq.Request();
+async function addCube(x, y, z, blockType) {
+    const socket = new zmq.Request();
 
-    await requester.connect("tcp://127.0.0.1:5555");
+    await socket.connect("tcp://127.0.0.1:3333");
 
-    const request = AddCube.encode({ x:4, y:4, z:4, blockType:0 }).finish();
-
-    requester.on("message", (response) => {});
+    const request = AddCube.encode({ x, y, z, blockType }).finish();
 
     // Send the request to the server
-    requester.send(request);
+    socket.send(request);
+    const [result] = await socket.receive();
 }
 
-runRequester();
+
+module.exports = {
+    addCube
+};

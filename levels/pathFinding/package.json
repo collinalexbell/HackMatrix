@@ -1,13 +1,22 @@
 {
 
     "scripts": {
+
         "start": "node pathFinding.js",
+
         "test": "mocha tests",
+
         "my-script": "node my-script.js"
+
     },
 
     "dependencies": {
+
         "protobufjs": "^7.2.5",
+
         "zeromq": "^6.0.0-beta.17"
+
     }
+
 }
+
