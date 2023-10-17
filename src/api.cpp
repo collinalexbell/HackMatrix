@@ -5,11 +5,14 @@
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
+#undef Status
+#include "protos/api.pb.h"
 
 using namespace std;
 
 Api::Api(std::string bindAddress) {
   context = zmq::context_t(2);
+  legacyCommandServer = new CommandServer("tcp://*:5555", context);
   commandServer = new CommandServer(bindAddress, context);
 }
 
@@ -34,40 +37,68 @@ void Api::requestWorldData(World* world, string serverAddr) {
   }
 }
 
-void CommandServer::pollForWorldCommands(World* world) {
+void CommandServer::pollForWorldCommands(World *world) {
   zmq::message_t request;
 
   zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
-  if(result >= 0) {
-    std::string data(static_cast<char*>(request.data()), request.size());
+  if (result >= 0) {
+    std::string data(static_cast<char *>(request.data()), request.size());
 
     std::istringstream iss(data);
 
-    while(!iss.eof()) {
+    while (!iss.eof()) {
       std::string command;
       int type;
-      int x,y,z;
+      int x, y, z;
       iss >> command >> x >> y >> z >> type;
 
-      if(command == "c") {
-        world->addCube(x,y,z,type);
+      if (command == "c") {
+        world->addCube(x, y, z, type);
       }
     }
 
     //  Send reply back to client
-    zmq::message_t reply (5);
-    memcpy (reply.data (), "recv", 5);
-    socket.send (reply, zmq::send_flags::none);
+    zmq::message_t reply(5);
+    memcpy(reply.data(), "recv", 5);
+    socket.send(reply, zmq::send_flags::none);
   }
 }
 
-void Api::pollFor(World* world) {
-  if(commandServer != NULL) {
-    commandServer->pollForWorldCommands(world);
+void CommandServer::legacyPollForWorldCommands(World *world) {
+  zmq::message_t request;
+
+  zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
+  if (result >= 0) {
+    std::string data(static_cast<char *>(request.data()), request.size());
+
+    std::istringstream iss(data);
+
+    while (!iss.eof()) {
+      std::string command;
+      int type;
+      int x, y, z;
+      iss >> command >> x >> y >> z >> type;
+
+      if (command == "c") {
+        world->addCube(x, y, z, type);
+      }
+    }
+
+    //  Send reply back to client
+    zmq::message_t reply(5);
+    memcpy(reply.data(), "recv", 5);
+    socket.send(reply, zmq::send_flags::none);
   }
 }
 
+  void Api::pollFor(World * world) {
+    if (legacyCommandServer != NULL) {
+      legacyCommandServer->legacyPollForWorldCommands(world);
+      legacyCommandServer->pollForWorldCommands(world);
+    }
+  }
 
-Api::~Api() {
-  delete commandServer;
-}
+  Api::~Api() {
+    delete legacyCommandServer;
+    delete commandServer;
+  }

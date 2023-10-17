@@ -9,14 +9,18 @@ using namespace std;
 class CommandServer {
   zmq::socket_t socket;
 public:
-  void pollForWorldCommands(World* world);
+  void legacyPollForWorldCommands(World* world);
+  void pollForWorldCommands(World *world);
   CommandServer(std::string bindAddress, zmq::context_t& context);
+  void poll(World* world);
 };
 
 class Api {
   zmq::context_t context;
-  CommandServer* commandServer;
- public:
+  CommandServer* legacyCommandServer;
+  CommandServer *commandServer;
+
+public:
   Api(std::string bindAddress);
   ~Api();
   void pollFor(World* world);
