@@ -74,9 +74,28 @@ void WM::handleSubstructure() {
   }
 }
 
-WM::WM(Window overlay, Window matrix, Display *display, int screen) : display(display), screen(screen) {
+WM::WM(Window matrix) {
+  display = XOpenDisplay(NULL);
+  screen = XDefaultScreen(display);
+  Window root = RootWindow(display, screen);
+  XCompositeRedirectSubwindows(display, RootWindow(display, screen),
+                               CompositeRedirectAutomatic);
+
+  Window overlay = XCompositeGetOverlayWindow(display, root);
+  XReparentWindow(display, matrix, overlay, 0, 0);
+
+  XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
+
+  XSelectInput(display, root,
+               SubstructureRedirectMask | SubstructureNotifyMask);
+  XSync(display, false);
+
   allow_input_passthrough(overlay);
   allow_input_passthrough(matrix);
   substructureThread = thread(&WM::handleSubstructure, this);
   substructureThread.detach();
+}
+
+WM::~WM() {
+  XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
 }

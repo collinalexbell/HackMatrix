@@ -21,7 +21,8 @@ class WM {
 
 public:
   void createAndRegisterApps(char **envp);
-  WM(Window overlay, Window matrix, Display *display, int screen);
+  WM(Window);
+  ~WM();
   void attachWorld(World *world) {this->world = world;}
   void addAppsToWorld();
   void handleSubstructure();
