@@ -10,3 +10,6 @@ build
 # executables
 matrix
 trampoline
+
+# ignore jpgs, because they are working images that are really large from Dalle
+images/*.jpg
