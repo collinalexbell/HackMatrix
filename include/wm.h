@@ -16,17 +16,23 @@ class WM {
   X11App *microsoftEdge = NULL;
   X11App *obs = NULL;
   X11App *terminator = NULL;
+  X11App *currentlyFocusedApp = NULL;
   World *world = NULL;
+  Window matrix;
   void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
                      char **envp);
   void allow_input_passthrough(Window window);
   std::thread substructureThread;
   void onCreateNotify(XCreateWindowEvent);
   std::shared_ptr<spdlog::logger> logger;
+  void onHotkeyPress(XKeyEvent event);
+  void unfocusApp();
+
 public:
   void createAndRegisterApps(char **envp);
   WM(Window);
   ~WM();
+  void focusApp(X11App *app);
   void attachWorld(World *world) {this->world = world;}
   void addAppsToWorld();
   void handleSubstructure();

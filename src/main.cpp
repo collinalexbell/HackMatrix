@@ -91,7 +91,7 @@ void createEngineObjects() {
   api = new Api("tcp://*:3333");
   #endif
   renderer = new Renderer(camera, world);
-  controls = new Controls();
+  controls = new Controls(wm);
 }
 
 void wireEngineObjects() {

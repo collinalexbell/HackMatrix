@@ -34,7 +34,7 @@ build/camera.o: src/camera.cpp include/camera.h
 build/api.o: src/api.cpp include/api.h include/world.h $(PROTO_DIR)/api.pb.h
 	g++  -std=c++20 -g -o build/api.o -c src/api.cpp $(INCLUDES)
 
-build/controls.o: src/controls.cpp include/controls.h include/camera.h
+build/controls.o: src/controls.cpp include/controls.h include/camera.h include/wm.h
 	g++  -std=c++20 -g -o build/controls.o -c src/controls.cpp $(INCLUDES)
 
 build/app.o: src/app.cpp include/app.h
