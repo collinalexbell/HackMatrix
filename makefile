@@ -5,10 +5,10 @@ PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
 INCLUDES        = -Iinclude -I/usr/local/include
 all: matrix trampoline
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o $(PROTO_H_FILES) $(PROTO_CPP_FILES)
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o $(PROTO_H_FILES) $(PROTO_CPP_FILES)
 	echo $(PROTO_H_FILES)
 	cd build
-	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o $(PROTO_CPP_FILES) src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf
+	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o $(PROTO_CPP_FILES) src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -39,6 +39,9 @@ build/controls.o: src/controls.cpp include/controls.h include/camera.h
 
 build/app.o: src/app.cpp include/app.h
 	g++  -std=c++20 -g -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
+
+build/wm.o: src/wm.cpp include/wm.h
+	g++ -std=c++20 -g -o build/wm.o -c src/wm.cpp $(INCLUDES)
 
 include/protos/api.pb.h include/protos/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=include include/protos/api.proto
