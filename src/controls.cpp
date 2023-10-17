@@ -92,8 +92,7 @@ void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
     // seperate if statements to detect which key, because must call
     // debounce only once
     if (app != NULL && eKeyPressed) {
-      Window x11Window = glfwGetX11Window(window);
-      app->focus(x11Window);
+      wm->focusApp(app);
     } else if (app != NULL && rKeyPressed) {
       Window x11Window = glfwGetX11Window(window);
       float deltaZ = world->getViewDistanceForWindowSize(app);
@@ -104,11 +103,11 @@ void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
       resetMouse = true;
       grabbedCursor = false;
       shared_ptr<bool> isDone =
-          camera->moveTo(targetPosition, front, moveSeconds);
+        camera->moveTo(targetPosition, front, moveSeconds);
       auto &grabbedCursor = this->grabbedCursor;
-      doAfter(isDone, [app, x11Window, &grabbedCursor]() {
+      doAfter(isDone, [app, x11Window, &grabbedCursor, this]() {
         grabbedCursor = true;
-        app->focus(x11Window);
+        wm->focusApp(app);
       });
     }
   }

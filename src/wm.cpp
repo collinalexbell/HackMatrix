@@ -65,9 +65,16 @@ void WM::onCreateNotify(XCreateWindowEvent event) {
   logger->info(ss.str());
 }
 
+void WM::onHotkeyPress(XKeyEvent event) {
+  KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+  if (event.keycode == eKeyCode && event.state & Mod4Mask) {
+    // Windows Key (Super_L) + Ctrl + E is pressed
+    unfocusApp();
+  }
+}
 
 void WM::handleSubstructure() {
-  for(;;) {
+  for (;;) {
     XEvent e;
     XNextEvent(display, &e);
 
@@ -84,11 +91,26 @@ void WM::handleSubstructure() {
       cout << "reparented window" << endl;
       // OnReparentNotify(e.xreparent);
       break;
+    case KeyPress:
+      onHotkeyPress(e.xkey);
+      break;
     }
   }
 }
 
-WM::WM(Window matrix) {
+void WM::focusApp(X11App* app) {
+  currentlyFocusedApp = app;
+  app->focus(matrix);
+}
+
+void WM::unfocusApp() {
+  if(currentlyFocusedApp != NULL) {
+    currentlyFocusedApp->unfocus(matrix);
+    currentlyFocusedApp = NULL;
+  }
+}
+
+WM::WM(Window matrix): matrix(matrix) {
   logger = spdlog::basic_logger_mt("wm_logger", "logs/wm.txt");
   logger->set_level(spdlog::level::info);
   logger->flush_on(spdlog::level::info);

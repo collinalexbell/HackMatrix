@@ -8,6 +8,7 @@
 #include <memory>
 #include "app.h"
 #include "world.h"
+#include "wm.h"
 
 struct DeferedAction {
   shared_ptr<bool> isDone;
@@ -15,6 +16,7 @@ struct DeferedAction {
 };
 
 class Controls {
+  WM* wm;
   bool grabbedCursor = true;
   bool appFocused = false;
   double lastToggleFocusTime = 0;
@@ -37,6 +39,7 @@ class Controls {
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
 public:
+  Controls(WM *wm) : wm(wm) {}
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
 };
