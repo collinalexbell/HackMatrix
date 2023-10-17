@@ -61,22 +61,6 @@ GLFWwindow* initGraphics() {
   }
   glfwMakeContextCurrent(window);
 
-  display = XOpenDisplay(NULL);
-  screen = XDefaultScreen(display);
-  Window root = RootWindow(display, screen);
-  XCompositeRedirectSubwindows(display, RootWindow(display, screen),
-                               CompositeRedirectAutomatic);
-
-  matriXWindow = glfwGetX11Window(window);
-
-  overlay = XCompositeGetOverlayWindow(display, root);
-  XReparentWindow(display, matriXWindow, overlay, 0, 0);
-
-  XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
-
-  XSelectInput(display, root, SubstructureRedirectMask | SubstructureNotifyMask);
-  XSync(display, false);
-
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     std::cout << "Failed to initialize GLAD" << std::endl;
     return NULL;
@@ -104,7 +88,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 }
 
 void createEngineObjects() {
-  wm = new WM(overlay, matriXWindow, display, screen);
+  wm = new WM(glfwGetX11Window(window));
   camera = new Camera();
   world = new World(camera, true);
   #ifdef API
@@ -130,8 +114,7 @@ void registerCursorCallback() {
 
 void cleanup() {
   glfwTerminate();
-  XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
-  delete renderer; delete world; delete camera; delete wm;
+  delete controls; delete renderer; delete world; delete camera; delete wm;
 #ifdef API
   delete api;
 #endif
