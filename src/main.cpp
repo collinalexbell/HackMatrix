@@ -48,8 +48,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-
-
 GLFWwindow* initGraphics() {
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -87,26 +85,6 @@ GLFWwindow* initGraphics() {
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   return window;
-}
-
-void handleSubstructure() {
-    XEvent e;
-    XNextEvent(display, &e);
-
-    switch (e.type) {
-    case CreateNotify:
-      cout << "created window" << endl;
-        //OnCreateNotify(e.xcreatewindow);
-      break;
-    case DestroyNotify:
-      cout << "destroyed window" << endl;
-      //OnDestroyNotify(e.xdestroywindow);
-      break;
-    case ReparentNotify:
-      cout << "reparented window" << endl;
-      //OnReparentNotify(e.xreparent);
-      break;
-    }
 }
 
 int enterGameLoop() {
@@ -184,8 +162,6 @@ int main(int argc, char** argv, char** envp) {
       return -1;
     }
     wm = new WM(overlay, matriXWindow, display, screen);
-    std::thread substructureThread(handleSubstructure);
-    substructureThread.detach();
     initEngine(envp);
     int exit = enterGameLoop();
     cleanup();

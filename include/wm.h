@@ -3,6 +3,7 @@
 #include "world.h"
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
+#include <thread>
 
 class WM {
   // hardcoded apps on boot (will fix later)
@@ -16,10 +17,12 @@ class WM {
   void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
                      char **envp);
   void allow_input_passthrough(Window window);
+  std::thread substructureThread;
 
 public:
   void createAndRegisterApps(char **envp);
   WM(Window overlay, Window matrix, Display *display, int screen);
   void attachWorld(World *world) {this->world = world;}
   void addAppsToWorld();
+  void handleSubstructure();
 };

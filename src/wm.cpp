@@ -1,8 +1,10 @@
 #include "wm.h"
 #include "app.h"
 #include <glm/glm.hpp>
+#include <iostream>
 
 #include <X11/extensions/shape.h>
+#include <thread>
 
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;
@@ -52,7 +54,29 @@ void WM::addAppsToWorld() {
   world->addApp(glm::vec3(5.2, 1.0, 5.0), obs);
 }
 
+void WM::handleSubstructure() {
+  XEvent e;
+  XNextEvent(display, &e);
+
+  switch (e.type) {
+  case CreateNotify:
+    cout << "created window" << endl;
+    // OnCreateNotify(e.xcreatewindow);
+    break;
+  case DestroyNotify:
+    cout << "destroyed window" << endl;
+    // OnDestroyNotify(e.xdestroywindow);
+    break;
+  case ReparentNotify:
+    cout << "reparented window" << endl;
+    // OnReparentNotify(e.xreparent);
+    break;
+  }
+}
+
 WM::WM(Window overlay, Window matrix, Display *display, int screen) : display(display), screen(screen) {
   allow_input_passthrough(overlay);
   allow_input_passthrough(matrix);
+  substructureThread = thread(&WM::handleSubstructure, this);
+  substructureThread.detach();
 }
