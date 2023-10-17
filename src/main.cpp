@@ -87,20 +87,15 @@ GLFWwindow* initGraphics() {
   return window;
 }
 
-int enterGameLoop() {
-  try {
-    while(!glfwWindowShouldClose(window)) {
-      renderer->render();
-      #ifdef API
-      api->pollFor(world);
-      #endif
-      controls->poll(window, camera, world);
-      glfwSwapBuffers(window);
-      glfwPollEvents();
-    }
-    return 0;
-  } catch(...) {
-    return -1;
+void enterGameLoop() {
+  while (!glfwWindowShouldClose(window)) {
+    renderer->render();
+#ifdef API
+    api->pollFor(world);
+#endif
+    controls->poll(window, camera, world);
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
 }
 
@@ -109,6 +104,7 @@ void mouseCallback (GLFWwindow* window, double xpos, double ypos) {
 }
 
 void createEngineObjects() {
+  wm = new WM(overlay, matriXWindow, display, screen);
   camera = new Camera();
   world = new World(camera, true);
   #ifdef API
@@ -127,8 +123,6 @@ void wireEngineObjects() {
   #endif
 }
 
-
-
 void registerCursorCallback() {
   glfwSetWindowUserPointer(window, (void*)renderer);
   glfwSetCursorPosCallback(window, mouseCallback);
@@ -136,14 +130,11 @@ void registerCursorCallback() {
 
 void cleanup() {
   glfwTerminate();
-  //XCompositeUnredirectSubwindows(display, RootWindow(display, screen), int update);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
-  delete renderer; delete world;
-  delete camera;
-  #ifdef API
+  delete renderer; delete world; delete camera; delete wm;
+#ifdef API
   delete api;
-  #endif
-  delete wm;
+#endif
 }
 
 void initEngine(char** envp) {
@@ -154,20 +145,16 @@ void initEngine(char** envp) {
   registerCursorCallback();
 }
 
-
 int main(int argc, char** argv, char** envp) {
   try {
     window = initGraphics();
-    if(window == NULL) {
-      return -1;
-    }
-    wm = new WM(overlay, matriXWindow, display, screen);
+    if(window == NULL) return -1;
     initEngine(envp);
-    int exit = enterGameLoop();
+    enterGameLoop();
     cleanup();
-    return exit;
   } catch (...) {
-    // signal the trampoline to boot an xterm for rollback
+    // signal the trampoline
+    // to boot an xterm for rollback
     return -1;
   }
 }
