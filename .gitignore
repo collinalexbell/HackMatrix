@@ -7,6 +7,8 @@ debian-testing-amd64-netinst.iso
 wlroots
 build
 
+**/node_modules
+
 # executables
 matrix
 trampoline
