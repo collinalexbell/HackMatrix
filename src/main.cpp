@@ -6,10 +6,6 @@
 #include "world.h"
 #include "app.h"
 
-#include <X11/X.h>
-#include <X11/extensions/Xfixes.h>
-#include <X11/extensions/shape.h>
-#include <X11/extensions/xfixeswire.h>
 #include <cstddef>
 #include <iostream>
 #include <sstream>
