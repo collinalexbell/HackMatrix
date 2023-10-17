@@ -4,8 +4,6 @@ tinygrad
 wm.img
 debian.qcow
 debian-testing-amd64-netinst.iso
-wlroots
-build
 
 **/node_modules
 
@@ -19,3 +17,6 @@ images/*.jpg
 # protos
 include/protos/*.cc
 include/protos/*.h
+
+logs
+build
