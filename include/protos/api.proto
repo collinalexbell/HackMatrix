@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message AddCube {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  int32 blockType = 4;
+}
