@@ -1,23 +1,31 @@
-#include <zmq/zmq.hpp>
 #include "api.h"
-#include <iostream>
-#include <string>
-#include <sstream>
+#include "logger.h"
+#include "world.h"
+
+#include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <zmq/zmq.hpp>
 #undef Status
 #include "protos/api.pb.h"
 
 using namespace std;
 
-Api::Api(std::string bindAddress) {
+Api::Api(std::string bindAddress, World* world): world(world) {
   context = zmq::context_t(2);
-  legacyCommandServer = new CommandServer("tcp://*:5555", context);
-  commandServer = new CommandServer(bindAddress, context);
+  logger = make_shared<spdlog::logger>("Api", fileSink);
+  legacyCommandServer = new CommandServer(this, "tcp://*:5555", context);
+  commandServer = new CommandServer(this, bindAddress, context);
+  offRenderThread = thread(&Api::pollFor, this);
 }
 
 
-CommandServer::CommandServer(std::string bindAddress, zmq::context_t& context) {
+CommandServer::CommandServer(Api* api, std::string bindAddress, zmq::context_t& context): api(api) {
+  logger = make_shared<spdlog::logger>("CommandServer", fileSink);
   socket = zmq::socket_t(context, zmq::socket_type::rep);
   socket.bind (bindAddress);
 }
@@ -33,7 +41,7 @@ void Api::requestWorldData(World* world, string serverAddr) {
     clientSocket.send(request, zmq::send_flags::none);
     zmq::recv_result_t result = clientSocket.recv(reply, zmq::recv_flags::dontwait);
   } catch(...) {
-    cout << "couldn't connect to the init server" << endl;
+    logger->critical("couldn't connect to the init server");
   }
 }
 
@@ -48,12 +56,12 @@ void CommandServer::pollForWorldCommands(World *world) {
     AddCube cubeToAdd;
     cubeToAdd.ParseFromArray(recv.data(), recv.size());
 
-    world->addCube(cubeToAdd.x(),
-                   cubeToAdd.y(),
-                   cubeToAdd.z(),
-                   cubeToAdd.blocktype());
+    auto batchedCubes = api->grabBatchedCubes();
+    glm::vec3 pos = glm::vec3(cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z());
+    batchedCubes->push(Cube{pos, cubeToAdd.blocktype()});
+    api->releaseBatchedCubes();
 
-    //  Send reply back to client
+       //  Send reply back to client
     zmq::message_t reply(5);
     memcpy(reply.data(), "recv", 5);
     socket.send(reply, zmq::send_flags::none);
@@ -65,19 +73,27 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
 
   zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
   if (result >= 0) {
+    logger->critical("result");
     std::string data(static_cast<char *>(request.data()), request.size());
 
     std::istringstream iss(data);
 
     while (!iss.eof()) {
+      auto cubesToAdd = api->grabBatchedCubes();
       std::string command;
       int type;
       int x, y, z;
       iss >> command >> x >> y >> z >> type;
 
+      stringstream ss;
+      ss << command << "," << x << "," << y << "," << z  << endl;
+      logger->critical(ss.str());
+
       if (command == "c") {
-        world->addCube(x, y, z, type);
+        glm::vec3 pos(x,y,z);
+        cubesToAdd->push(Cube{pos,type});
       }
+      api->releaseBatchedCubes();
     }
 
     //  Send reply back to client
@@ -87,16 +103,46 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
   }
 }
 
-  void Api::pollFor(World * world) {
-    if (legacyCommandServer != NULL) {
-      legacyCommandServer->legacyPollForWorldCommands(world);
+  void Api::pollFor() {
+    logger->critical("entering pollFor");
+    while(continuePolling) {
+      if (legacyCommandServer != NULL) {
+        legacyCommandServer->legacyPollForWorldCommands(world);
+      }
+      if (commandServer != NULL) {
+        commandServer->pollForWorldCommands(world);
+      }
     }
-    if (commandServer != NULL) {
-      commandServer->pollForWorldCommands(world);
-    }
+    logger->critical("exiting pollFor");
   }
 
-  Api::~Api() {
+  void Api::mutateWorld() {
+    long time = glfwGetTime();
+    long target = time + 0.10;
+    auto cubesToAdd = grabBatchedCubes();
+    stringstream logStream;
+    for(;time <= target && cubesToAdd->size() != 0; time = glfwGetTime()) {
+      Cube c = cubesToAdd->front();
+      logStream << "addingCube:" << c.position.x << "," << c.position.y << "," << c.position.z << endl;
+        logger->critical(logStream.str());
+      world->addCube(c);
+      cubesToAdd->pop();
+    }
+    releaseBatchedCubes();
+  }
+
+queue<Cube>* Api::grabBatchedCubes() {
+  renderMutex.lock();
+  return &batchedCubes;
+}
+
+void Api::releaseBatchedCubes() {
+  renderMutex.unlock();
+}
+
+Api::~Api() {
+    continuePolling = false;
+    offRenderThread.join();
     delete legacyCommandServer;
     delete commandServer;
   }

@@ -63,6 +63,7 @@ public:
   glm::vec3 getAppPosition(X11App* app);
 
   void addCube(int x, int y, int z, int blockType);
+  void addCube(Cube cube);
   void removeCube(int x, int y, int z);
   void addApp(glm::vec3, X11App* app);
   int getIndexOfApp(X11App* app);

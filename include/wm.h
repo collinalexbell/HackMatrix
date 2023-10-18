@@ -1,6 +1,6 @@
 #pragma once
 #include "app.h"
-#include "spdlog/sinks/basic_file_sink.h"
+#include "logger.h"
 #include "world.h"
 #include "controls.h"
 #include <X11/Xlib.h>

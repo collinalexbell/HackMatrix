@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <signal.h>
@@ -37,6 +38,8 @@ WM *wm;
 Display *display;
 Window matriXWindow;
 Window overlay;
+
+shared_ptr<spdlog::logger> logger = make_shared<spdlog::logger>("api_logger", fileSink);
 
 #define API
 
@@ -71,7 +74,7 @@ void enterGameLoop() {
   while (!glfwWindowShouldClose(window)) {
     renderer->render();
 #ifdef API
-    api->pollFor(world);
+    api->mutateWorld();
 #endif
     controls->poll(window, camera, world);
     glfwSwapBuffers(window);
@@ -88,7 +91,7 @@ void createEngineObjects() {
   camera = new Camera();
   world = new World(camera, true);
   #ifdef API
-  api = new Api("tcp://*:3333");
+  api = new Api("tcp://*:3333", world);
   #endif
   renderer = new Renderer(camera, world);
   controls = new Controls(wm, world, camera);
@@ -132,10 +135,11 @@ int main(int argc, char** argv, char** envp) {
     initEngine(envp);
     enterGameLoop();
     cleanup();
-  } catch (...) {
+  } catch (const std::exception &e) {
     // signal the trampoline
     // to boot an xterm for rollback
+    logger->error(e.what());
+    logger->flush();
     return -1;
   }
-
 }

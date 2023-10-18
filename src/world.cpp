@@ -62,11 +62,18 @@ const std::vector<glm::vec3> World::getAppCubes() {
 }
 
 void World::addCube(int x, int y, int z, int blockType) {
-  int orderIndex = cubeCount++;
   glm::vec3 pos(x, y, z);
   Cube cube{pos, blockType};
-  cubes(x,y,z) = cube;
-  if(renderer != NULL) {
+  addCube(cube);
+}
+
+void World::addCube(Cube cube) {
+  int orderIndex = cubeCount++;
+  // I may want to think about replacing glm::vec3 with int position in cube
+  cubes((int)cube.position.x,
+        (int)cube.position.y,
+        (int)cube.position.z) = cube;
+  if (renderer != NULL) {
     renderer->addCube(orderIndex, cube);
   }
 }
@@ -255,8 +262,7 @@ void World::action(Action toTake) {
       int x = lookingAt.x + (int)lookingAt.normal.x;
       int y = lookingAt.y + (int)lookingAt.normal.y;
       int z = lookingAt.z + (int)lookingAt.normal.z;
-      // addCube(x,y,z, lookedAt->blockType);
-       addCube(x,y,z, 5);
+      addCube(x,y,z, lookedAt->blockType);
     }
     if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z);

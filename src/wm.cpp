@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include <X11/extensions/shape.h>
+#include <memory>
 #include <spdlog/common.h>
 #include <sstream>
 #include <thread>
@@ -125,7 +126,7 @@ void WM::registerControls(Controls *controls) {
 }
 
 WM::WM(Window matrix): matrix(matrix) {
-  logger = spdlog::basic_logger_mt("wm_logger", "logs/wm.txt");
+  logger = make_shared<spdlog::logger>("wm_logger", fileSink);
   logger->set_level(spdlog::level::info);
   logger->flush_on(spdlog::level::info);
   logger->info("WM()");
