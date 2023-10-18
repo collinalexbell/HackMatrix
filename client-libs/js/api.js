@@ -4,10 +4,13 @@ const zmq = require("zeromq");
 const root = protobuf.loadSync("../../include/protos/api.proto");
 const AddCube = root.lookupType("AddCube");
 
-async function addCube(x, y, z, blockType) {
-    const socket = new zmq.Request();
-
+const socket = new zmq.Request();
+async function init() {
     await socket.connect("tcp://127.0.0.1:3333");
+}
+
+async function addCube(x, y, z, blockType) {
+
 
     const request = AddCube.encode({ x, y, z, blockType }).finish();
 
@@ -18,5 +21,6 @@ async function addCube(x, y, z, blockType) {
 
 
 module.exports = {
+    init,
     addCube
 };
