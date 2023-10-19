@@ -20,3 +20,5 @@ include/protos/*.h
 
 logs
 build
+
+py/scns
