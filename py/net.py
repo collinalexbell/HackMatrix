@@ -31,10 +31,15 @@ class Net():
                 np.save(f, par.numpy())
 
     def load(self, filename):
+        print("loading")
         with open(filename+'.npy', 'rb') as f:
             for par in get_parameters(self):
                 #if par.requires_grad:
                 try:
-                    par.numpy()[:] = np.load(f)
+                    data = np.load(f)
+                    print(data[0])
+                    par.assign(data)
+                    par.gpu()
+                    print(par.numpy()[0])
                 except:
                     print('Could not load parameter')
