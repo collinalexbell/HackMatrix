@@ -43,8 +43,9 @@ if(len(sys.argv) == 2):
     fc4 = list()
     output = list()
 
-    result = model.forward(Tensor(X_test))
-    print(result.numpy()[0])
+
+    accuracy = evaluate(model, X_test, Y_test, BS=batch_size)
+    print(accuracy)
 
     for i in range(100):
         x = Tensor(X_test[i])

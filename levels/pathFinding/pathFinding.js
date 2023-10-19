@@ -1,4 +1,4 @@
-const api = require("../../client-libs/js/api");
+const api = require("../../client_libs/js/api");
 const maze = require("./maze.js");
 
 

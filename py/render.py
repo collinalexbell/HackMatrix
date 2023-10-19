@@ -63,17 +63,18 @@ y = np.hstack((in_y, fc1_y, fc2_y, fc3_y, out_y))
 z = np.hstack((in_z, fc1_z, fc2_z, fc3_z, out_z))
 
 
-x = np.round(x).astype(int) + 16
+x = np.round(x).astype(int) + 100
 y = np.round(y).astype(int) + 20
-z = np.round(z).astype(int) + 16
+z = np.round(z).astype(int) + 100
 
 for i in range(100):
-    clear_box(min(x), min(y), min(z), max(x), max(y), max(z))
+    clear_box(min(x), min(y), min(z), max(x), max(y)+6, max(z))
     act_input = activity['input'][i]
     act_fc1 = activity['fc1'][i]
     act_fc2 = activity['fc2'][i]
     act_fc3 = activity['fc3'][i]
     act_out = activity['fc4'][i]
+    out = activity['output'][i]
     s = np.hstack((
         act_input.ravel() / act_input.max(),
         act_fc1 / act_fc1.max(),
@@ -83,7 +84,6 @@ for i in range(100):
     ))
 
 
-    print(act_out / act_out.max())
     for xi, yi, zi,si in zip(x,y,z,s):
         if(si > 0.85):
             add_cube(xi, yi, zi, 4)

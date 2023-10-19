@@ -36,5 +36,21 @@ def clear_box(x1, y1, z1, x2, y2, z2):
     # Receive the response
     socket.recv()
 
+def add_line(x1, y1, z1, x2, y2, z2):
+    add_line_msg = api_pb2.AddLine(x1=x1, y1=y1, z1=z1, x2=x2, y2=y2, z2=z2)
+
+    # Create an API request
+    api_request = api_pb2.ApiRequest(type="AddLine", addLine=add_line_msg)
+
+    serialized_request = api_request.SerializeToString()
+
+    # Send the serialized request to the server
+    socket.send(serialized_request)
+
+    # Receive the response
+    socket.recv()
+
+
+
 if __name__ == "__main__":
     add_cube(2, 2, 2, 0)
