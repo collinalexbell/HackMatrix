@@ -1,4 +1,4 @@
-const api = require("../../client-libs/js/api");
+const api = require("../../client_libs/js/api");
 
 function generate(width, height) {
     const grid = new Array(height);
@@ -42,10 +42,10 @@ function generate(width, height) {
 const yOffset = 10;
 const xOffset = 0;
 const zOffset = 0;
+const wallH = 1;
+const passageW = 1;
+const passageH = 1;
 async function render(maze, width, height) {
-    const passageW = 1;
-    const passageH = 1;
-    const wallH = 1;
     cubes = [];
     for(x=0; x<width*passageW; x++) {
         for(y=0;y<height*passageH; y++) {
@@ -70,6 +70,13 @@ async function render(maze, width, height) {
     }
 }
 
+async function clear(width,height){
+    await api.clearBox(xOffset,yOffset,zOffset,
+                       xOffset+(width*passageW),
+                       yOffset+(width*passageW),
+                       zOffset+wallH+1);
+}
+
 async function drawVisit(pos) {
     const x = pos[0];
     const y = pos[1];
@@ -78,4 +85,4 @@ async function drawVisit(pos) {
 }
 
 
-module.exports = {generate, render, drawVisit};
+module.exports = {generate, render, drawVisit, clear};

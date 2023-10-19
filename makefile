@@ -46,6 +46,7 @@ build/logger.o: src/logger.cpp include/logger.h
 
 include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=./ protos/api.proto
+	protoc --python_out=client-libs/python protos/api.proto
 	mv protos/api.pb.cc src
 	mv protos/api.pb.h include/protos
 

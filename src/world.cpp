@@ -68,13 +68,19 @@ void World::addCube(int x, int y, int z, int blockType) {
 }
 
 void World::addCube(Cube cube) {
-  int orderIndex = cubeCount++;
-  // I may want to think about replacing glm::vec3 with int position in cube
-  cubes((int)cube.position.x,
-        (int)cube.position.y,
-        (int)cube.position.z) = cube;
-  if (renderer != NULL) {
-    renderer->addCube(orderIndex, cube);
+  if(cube.blockType >= 0) {
+    int orderIndex = cubeCount++;
+    // I may want to think about replacing glm::vec3 with int position in cube
+    cubes((int)cube.position.x,
+          (int)cube.position.y,
+          (int)cube.position.z) = cube;
+    if (renderer != NULL) {
+      renderer->addCube(orderIndex, cube);
+    }
+  } else {
+    removeCube((int)cube.position.x,
+               (int)cube.position.y,
+               (int)cube.position.z);
   }
 }
 
@@ -88,7 +94,6 @@ void World::refreshRenderer() {
 
 void World::removeCube(int x, int y, int z) {
   cubes.erase(x,y,z);
-  refreshRenderer();
 }
 
 void World::addApp(glm::vec3 pos, X11App* app) {
@@ -266,6 +271,7 @@ void World::action(Action toTake) {
     }
     if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
+      refreshRenderer();
     }
   }
 }

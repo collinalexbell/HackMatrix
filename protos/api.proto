@@ -3,6 +3,7 @@ syntax = "proto3";
 enum MessageType {
   ADD_CUBE = 0;
   CLEAR_BOX = 1;
+  ADD_LINE = 2;
 }
 
 message AddCube {
@@ -22,10 +23,21 @@ message ClearBox {
   float z2 = 6;
 }
 
+message AddLine {
+  float x1 = 1;
+  float y1 = 2;
+  float z1 = 3;
+
+  float x2 = 4;
+  float y2 = 5;
+  float z2 = 6;
+}
+
 message ApiRequest {
   MessageType type = 1;
   oneof payload {
     AddCube addCube = 2;
     ClearBox clearBox = 3;
+    AddLine addLine = 4;
   }
 }
