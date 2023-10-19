@@ -1,0 +1,18 @@
+{
+    "env": {
+        "browser": true,  // Enable browser globals like window and document
+        "node": true,     // Enable Node.js environment
+        "es2021": true    // Enable ES2021 features
+    },
+    "extends": [
+        "eslint:recommended",  // Use ESLint's recommended rules
+        "plugin:prettier/recommended"  // Use Prettier with ESLint
+    ],
+    "parserOptions": {
+        "ecmaVersion": 12,  // Set to the version of ECMAScript/JavaScript you're using (ECMAScript 2021 in this example)
+        "sourceType": "module"  // Enable ES6 modules
+    },
+    "rules": {
+        // Add or customize rules as needed
+    }
+}
