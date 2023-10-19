@@ -1,0 +1,5 @@
+setup.py
+hackMatrix.egg-info/PKG-INFO
+hackMatrix.egg-info/SOURCES.txt
+hackMatrix.egg-info/dependency_links.txt
+hackMatrix.egg-info/top_level.txt

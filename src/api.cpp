@@ -64,6 +64,37 @@ void CommandServer::pollForWorldCommands(World *world) {
         }
         case CLEAR_BOX: {
           const ClearBox &boxToClear = apiRequest.clearbox();
+          auto batchedCubes = api->grabBatchedCubes();
+
+          bool x1Smaller = boxToClear.x1() < boxToClear.x2();
+          float x1 = x1Smaller ? boxToClear.x1() : boxToClear.x2();
+          float x2 = x1Smaller ? boxToClear.x2() : boxToClear.x1();
+
+          bool y1Smaller = boxToClear.y1() < boxToClear.y2();
+          float y1 = y1Smaller ? boxToClear.y1() : boxToClear.y2();
+          float y2 = y1Smaller ? boxToClear.y2() : boxToClear.y1();
+
+          bool z1Smaller = boxToClear.z1() < boxToClear.z2();
+          float z1 = z1Smaller ? boxToClear.z1() : boxToClear.z2();
+          float z2 = z1Smaller ? boxToClear.z2() : boxToClear.z1();
+
+          stringstream boxString;
+          boxString << "clearBox: "
+                    << x1 << ", " << y1 << ", " << z1 << ", "
+                    << x2 << ", " << y2 << ", " << z2 << endl;
+
+
+          logger->critical(boxString.str());
+          logger->flush();
+          for(int x = x1; x <= x2; x++) {
+            for(int y = y1; y <= y2; y++) {
+              for(int z = z1; z <= z2; z++) {
+                glm::vec3 pos(x,y,z);
+                batchedCubes->push(Cube{pos, -1});
+              }
+            }
+          }
+          api->releaseBatchedCubes();
           break;
         }
         default:
@@ -82,7 +113,6 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
 
   zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
   if (result >= 0) {
-    logger->critical("result");
     std::string data(static_cast<char *>(request.data()), request.size());
 
     std::istringstream iss(data);
@@ -96,7 +126,6 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
 
       stringstream ss;
       ss << command << "," << x << "," << y << "," << z << endl;
-      logger->critical(ss.str());
 
       if (command == "c") {
         glm::vec3 pos(x, y, z);
@@ -113,7 +142,6 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
 }
 
 void Api::pollFor() {
-  logger->critical("entering pollFor");
   while (continuePolling) {
     if (legacyCommandServer != NULL) {
       legacyCommandServer->legacyPollForWorldCommands(world);
@@ -122,21 +150,24 @@ void Api::pollFor() {
       commandServer->pollForWorldCommands(world);
     }
   }
-  logger->critical("exiting pollFor");
 }
 
 void Api::mutateWorld() {
   long time = glfwGetTime();
   long target = time + 0.10;
+  bool hasDelete = false;
   auto cubesToAdd = grabBatchedCubes();
   stringstream logStream;
   for (; time <= target && cubesToAdd->size() != 0; time = glfwGetTime()) {
     Cube c = cubesToAdd->front();
-    logStream << "addingCube:" << c.position.x << "," << c.position.y << ","
-              << c.position.z << endl;
-    logger->critical(logStream.str());
+    if(c.blockType == -1) {
+      hasDelete = true;
+    }
     world->addCube(c);
     cubesToAdd->pop();
+  }
+  if(hasDelete) {
+    world->refreshRenderer();
   }
   releaseBatchedCubes();
 }

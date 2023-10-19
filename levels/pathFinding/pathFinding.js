@@ -7,8 +7,8 @@ const height = 80;
 
 
 const moves = [[0,1], [0,-1], [1,0], [-1,0]];
-const visited = [];
-const next = [];
+let visited = [];
+let next = [];
 
 const movesPerSecond = 300;
 
@@ -58,14 +58,21 @@ async function bfs(pos, target, mazeGrid) {
 
 async function solve(mazeGrid) {
     const start = [0,1];
+    visited = [];
+    next = [];
     await bfs(start, [width-2, height-1], mazeGrid);
+    await (new Promise(resolve => setTimeout(resolve, 3)));
+    await maze.clear(width, height);
 }
 
 async function main() {
     await api.init();
-    mazeGrid = maze.generate(width, height);
-    await maze.render(mazeGrid, width, height);
-    await solve(mazeGrid);
+    while(true) {
+        await maze.clear(width, height);
+        mazeGrid = maze.generate(width, height);
+        await maze.render(mazeGrid, width, height);
+        await solve(mazeGrid);
+    }
 }
 
 main();
