@@ -1,8 +1,31 @@
 syntax = "proto3";
 
+enum MessageType {
+  ADD_CUBE = 0;
+  CLEAR_BOX = 1;
+}
+
 message AddCube {
   float x = 1;
   float y = 2;
   float z = 3;
   int32 blockType = 4;
+}
+
+message ClearBox {
+  float x1 = 1;
+  float y1 = 2;
+  float z1 = 3;
+
+  float x2 = 4;
+  float y2 = 5;
+  float z2 = 6;
+}
+
+message ApiRequest {
+  MessageType type = 1;
+  oneof payload {
+    AddCube addCube = 2;
+    ClearBox clearBox = 3;
+  }
 }

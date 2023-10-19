@@ -46,5 +46,6 @@ public:
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
   void goToApp(X11App * app);
+  void moveTo(glm::vec3 pos, float secs);
   void disable();
 };

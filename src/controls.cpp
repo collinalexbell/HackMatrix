@@ -84,6 +84,10 @@ void Controls::handleModEscape(GLFWwindow* window) {
   }
 }
 
+void Controls::moveTo(glm::vec3 pos, float secs) {
+  camera->moveTo(pos, camera->front, secs);
+}
+
 void Controls::goToApp(X11App* app) {
   float deltaZ = world->getViewDistanceForWindowSize(app);
   glm::vec3 targetPosition = world->getAppPosition(app);
