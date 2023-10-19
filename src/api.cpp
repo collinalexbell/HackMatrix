@@ -47,27 +47,28 @@ void Api::requestWorldData(World* world, string serverAddr) {
 
 void CommandServer::pollForWorldCommands(World *world) {
     zmq::message_t recv;
-
-    // Receive a message
     zmq::recv_result_t result = socket.recv(recv, zmq::recv_flags::dontwait);
+
     if (result >= 0) {
-        // Parse the received message as an ApiRequest
         ApiRequest apiRequest;
         apiRequest.ParseFromArray(recv.data(), recv.size());
 
-        if (apiRequest.type() == MessageType::ADD_CUBE) {
-            // Process an AddCube request
-            const AddCube& cubeToAdd = apiRequest.addcube();
-
+        switch(apiRequest.type()) {
+        case ADD_CUBE:
+          {
+            const AddCube &cubeToAdd = apiRequest.addcube();
             auto batchedCubes = api->grabBatchedCubes();
             glm::vec3 pos(cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z());
             batchedCubes->push(Cube{pos, cubeToAdd.blocktype()});
             api->releaseBatchedCubes();
-        } else if (apiRequest.type() == MessageType::CLEAR_BOX) {
-            // Process a ClearBox request
-            const ClearBox& boxToClear = apiRequest.clearbox();
-
-            // Perform ClearBox specific operations here
+            break;
+          }
+        case CLEAR_BOX: {
+          const ClearBox &boxToClear = apiRequest.clearbox();
+          break;
+        }
+        default:
+          break;
         }
 
         // Send a reply back to the client
@@ -95,12 +96,12 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
       iss >> command >> x >> y >> z >> type;
 
       stringstream ss;
-      ss << command << "," << x << "," << y << "," << z  << endl;
+      ss << command << "," << x << "," << y << "," << z << endl;
       logger->critical(ss.str());
 
       if (command == "c") {
-        glm::vec3 pos(x,y,z);
-        cubesToAdd->push(Cube{pos,type});
+        glm::vec3 pos(x, y, z);
+        cubesToAdd->push(Cube{pos, type});
       }
       api->releaseBatchedCubes();
     }
@@ -112,46 +113,45 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
   }
 }
 
-  void Api::pollFor() {
-    logger->critical("entering pollFor");
-    while(continuePolling) {
-      if (legacyCommandServer != NULL) {
-        legacyCommandServer->legacyPollForWorldCommands(world);
-      }
-      if (commandServer != NULL) {
-        commandServer->pollForWorldCommands(world);
-      }
+void Api::pollFor() {
+  logger->critical("entering pollFor");
+  while (continuePolling) {
+    if (legacyCommandServer != NULL) {
+      legacyCommandServer->legacyPollForWorldCommands(world);
     }
-    logger->critical("exiting pollFor");
-  }
-
-  void Api::mutateWorld() {
-    long time = glfwGetTime();
-    long target = time + 0.10;
-    auto cubesToAdd = grabBatchedCubes();
-    stringstream logStream;
-    for(;time <= target && cubesToAdd->size() != 0; time = glfwGetTime()) {
-      Cube c = cubesToAdd->front();
-      logStream << "addingCube:" << c.position.x << "," << c.position.y << "," << c.position.z << endl;
-        logger->critical(logStream.str());
-      world->addCube(c);
-      cubesToAdd->pop();
+    if (commandServer != NULL) {
+      commandServer->pollForWorldCommands(world);
     }
-    releaseBatchedCubes();
   }
+  logger->critical("exiting pollFor");
+}
 
-queue<Cube>* Api::grabBatchedCubes() {
+void Api::mutateWorld() {
+  long time = glfwGetTime();
+  long target = time + 0.10;
+  auto cubesToAdd = grabBatchedCubes();
+  stringstream logStream;
+  for (; time <= target && cubesToAdd->size() != 0; time = glfwGetTime()) {
+    Cube c = cubesToAdd->front();
+    logStream << "addingCube:" << c.position.x << "," << c.position.y << ","
+              << c.position.z << endl;
+    logger->critical(logStream.str());
+    world->addCube(c);
+    cubesToAdd->pop();
+  }
+  releaseBatchedCubes();
+}
+
+queue<Cube> *Api::grabBatchedCubes() {
   renderMutex.lock();
   return &batchedCubes;
 }
 
-void Api::releaseBatchedCubes() {
-  renderMutex.unlock();
-}
+void Api::releaseBatchedCubes() { renderMutex.unlock(); }
 
 Api::~Api() {
-    continuePolling = false;
-    offRenderThread.join();
-    delete legacyCommandServer;
-    delete commandServer;
-  }
+  continuePolling = false;
+  offRenderThread.join();
+  delete legacyCommandServer;
+  delete commandServer;
+}
