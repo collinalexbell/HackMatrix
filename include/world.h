@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 #include <octree/octree.h>
+#include "logger.h"
 #include <unordered_map>
 #include <vector>
 
@@ -17,6 +18,11 @@ struct Position {
   int z;
   bool valid;
   glm::vec3 normal;
+};
+
+struct Line {
+  glm::vec3 points[2];
+  glm::vec3 color;
 };
 
 struct Cube {
@@ -36,12 +42,14 @@ enum Action {
 };
 
 class World {
+  std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
 
   int gotItCount = 0;
   int CHUNK_SIZE = 128;
   int cubeCount = 0;
+  vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
   Octree<Cube> cubes = Octree<Cube>(128, Cube{glm::vec3(0, 0, 0), -1});
@@ -63,6 +71,7 @@ public:
 
   void addCube(int x, int y, int z, int blockType);
   void addCube(Cube cube);
+  void addLine(Line line);
   void removeCube(int x, int y, int z);
   void addApp(glm::vec3, X11App* app);
   int getIndexOfApp(X11App* app);
@@ -71,6 +80,7 @@ public:
   void refreshRenderer();
   void action(Action);
   glm::vec3 getAppPosition(int appIndex);
+  vector<Line> getLines();
 };
 
 #endif
