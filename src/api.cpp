@@ -54,15 +54,14 @@ void CommandServer::pollForWorldCommands(World *world) {
         apiRequest.ParseFromArray(recv.data(), recv.size());
 
         switch(apiRequest.type()) {
-        case ADD_CUBE:
-          {
+        case ADD_CUBE: {
             const AddCube &cubeToAdd = apiRequest.addcube();
             auto batchedCubes = api->grabBatchedCubes();
             glm::vec3 pos(cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z());
             batchedCubes->push(Cube{pos, cubeToAdd.blocktype()});
             api->releaseBatchedCubes();
             break;
-          }
+        }
         case CLEAR_BOX: {
           const ClearBox &boxToClear = apiRequest.clearbox();
           break;
