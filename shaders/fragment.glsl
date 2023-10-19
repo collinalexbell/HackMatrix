@@ -1,6 +1,7 @@
 #version 330 core
 out vec4 FragColor;
 in vec2 TexCoord;
+in vec3 lineColor;
 flat in int BlockType;
 flat in int isSelected;
 
@@ -11,6 +12,7 @@ uniform sampler2D app1;
 uniform sampler2D app2;
 uniform sampler2D app3;
 uniform bool isApp;
+uniform bool isLine;
 uniform bool appSelected;
 uniform int totalBlockTypes;
 uniform float time;
@@ -67,6 +69,8 @@ void main()
     if(!appSelected) {
       //FragColor = mix(FragColor, floor(TexCoord), 0.1);
     }
+  } else if(isLine) {
+    FragColor = vec4(lineColor, 1.0);
   } else {
     if(BlockType == 6) {
       FragColor = vec4(255.0/255,222.0/255,100.0/255, 0.2);

@@ -67,8 +67,14 @@ void Renderer::genGlResources() {
   glGenBuffers(1, &APP_VBO);
   glGenBuffers(1, &INSTANCE);
   glGenBuffers(1, &APP_INSTANCE);
+
+  glGenBuffers(1, &LINE_VBO);
+  glGenBuffers(1, &LINE_INSTANCE);
+
+
   glGenVertexArrays(1, &VAO);
   glGenVertexArrays(1, &APP_VAO);
+  glGenVertexArrays(1, &LINE_VAO);
 }
 
 void Renderer::bindGlResourcesForInit() {
@@ -106,9 +112,7 @@ void Renderer::setupVertexAttributePointers() {
   glEnableVertexAttribArray(0);
 
   // texture coord attribute
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
   // instance coord attribute
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)0);
@@ -121,6 +125,18 @@ void Renderer::setupVertexAttributePointers() {
                          (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(3);
   glVertexAttribDivisor(3, 1);
+
+
+  // line
+  glBindVertexArray(LINE_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
+  glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(4);
+  glVertexAttribDivisor(1, 1);
 }
 
 void Renderer::fillBuffers() {
@@ -132,6 +148,10 @@ void Renderer::fillBuffers() {
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 200000, (void*)0 , GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20, (void*)0 , GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 200000), (void*)0, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 100000), (void *)0, GL_STATIC_DRAW);
 }
 
 
@@ -180,6 +200,8 @@ Renderer::Renderer(Camera* camera, World* world) {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
   glClearColor(178.0/256, 178.0/256, 178.0/256, 1.0f);
 
+  glLineWidth(10.0);
+
   //projection = glm::ortho(0.0f, 1920.0f, 0.0f, 1080.0f, 0.1f, 100.0f);
 
 
@@ -204,9 +226,7 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
 
-  unsigned int appModelLoc = glGetUniformLocation(shader->ID,"appModel");
-  glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
-
+  unsigned int appModelLoc = glGetUniformLocation(shader->ID,"appModel"); glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
   unsigned int viewLoc = glGetUniformLocation(shader->ID,"view");
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -228,6 +248,20 @@ void Renderer::addAppCube(int index, glm::vec3 pos) {
                   sizeof(glm::vec3), &pos);
   glBufferSubData(GL_ARRAY_BUFFER,
                   sizeof(glm::vec3)*(index+1)+sizeof(int)*index, sizeof(int), &index);
+}
+
+void Renderer::addLine(int index, Line line) {
+  glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  (sizeof(glm::vec3) * 2)*index,
+                  sizeof(glm::vec3), &line.points[0]);
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 2) * index + (sizeof(glm::vec3)),
+                  sizeof(glm::vec3), &line.points[1]);
+
+  glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  (sizeof(glm::vec3)*index),
+                  (sizeof(glm::vec3)), &line.color);
 }
 
 void Renderer::drawAppDirect(X11App* app) {
@@ -274,6 +308,7 @@ void Renderer::render() {
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
+  shader->setBool("isLine", false);
   if(app != NULL) {
     shader->setBool("appSelected", app->isFocused());
   } else {
@@ -288,6 +323,12 @@ void Renderer::render() {
   if(app != NULL && app->isFocused()) {
     drawAppDirect(app);
   }
+  shader->setBool("isApp", false);
+
+  shader->setBool("isLine", true);
+  glBindVertexArray(LINE_VAO);
+  glDrawArraysInstanced(GL_LINES, 0, 2, world->getLines().size());
+  shader->setBool("isLine", false);
 }
 
 Camera* Renderer::getCamera() {

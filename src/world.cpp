@@ -2,6 +2,7 @@
 #include "app.h"
 #include "glm/geometric.hpp"
 #include "renderer.h"
+#include <sstream>
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtx/intersect.hpp>
@@ -15,8 +16,8 @@ using namespace std;
 
 
 World::World(Camera *camera, bool debug) : camera(camera) {
+  int max = CHUNK_SIZE - 1;
   if(debug) {
-    int max = CHUNK_SIZE - 1;
     addCube(0, 0, 0, 0);
     addCube(max, 0, 0, 0);
     addCube(0,max,0,0);
@@ -27,6 +28,11 @@ World::World(Camera *camera, bool debug) : camera(camera) {
     addCube(max, 0, max, 0);
     addCube(max, max, max, 0);
   }
+
+  Line line = {{glm::vec3(0, 0, 0), glm::vec3(max/10.0, max/10.0, max/10.0)},
+               glm::vec3(0.1, 0.1, 0.1)};
+  addLine(line);
+  logger = make_shared<spdlog::logger>("World", fileSink);
 }
 World::~World() {}
 
@@ -84,11 +90,32 @@ void World::addCube(Cube cube) {
   }
 }
 
+void World::addLine(Line line) {
+  int i = lines.size();
+  lines.push_back(line);
+  if(renderer != NULL) {
+    renderer->addLine(i, lines[i]);
+  }
+}
+
 void World::refreshRenderer() {
   vector<Cube> allCubes = getCubes();
   cubeCount = allCubes.size();
   for (int i = 0; i < allCubes.size(); i++) {
     renderer->addCube(i, allCubes[i]);
+  }
+  for(int i = 0; i < lines.size(); i++) {
+    stringstream lineInfo;
+    Line l = lines[i];
+    lineInfo << "adding line:"
+             << l.points[0].x << ", "
+             << l.points[0].y << ","
+             << l.points[0].z << ","
+             << l.points[1].x << ","
+             << l.points[1].y << ","
+             << l.points[1].z;
+    logger->critical(lineInfo.str());
+    renderer->addLine(i, lines[i]);
   }
 }
 
@@ -317,4 +344,8 @@ glm::vec3 World::getAppPosition(X11App* app) {
 
   return getAppCubes()[index];
 
+}
+
+vector<Line> World::getLines() {
+  return lines;
 }

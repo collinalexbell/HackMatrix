@@ -26,6 +26,11 @@ class Renderer {
   unsigned int VAO;
   unsigned int APP_VAO;
   unsigned int EBO;
+
+  unsigned int LINE_VBO;
+  unsigned int LINE_INSTANCE;
+  unsigned int LINE_VAO;
+
   Shader* shader;
   Shader* appShader;
   std::map<string, Texture*> textures;
@@ -56,6 +61,7 @@ public:
   void setupVertexAttributePointers();
   void fillBuffers();
   void addCube(int index, Cube cube);
+  void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);
   void reloadChunk();
