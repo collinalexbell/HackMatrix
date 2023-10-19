@@ -52,10 +52,11 @@ void WM::allow_input_passthrough(Window window) {
 }
 
 void WM::addAppsToWorld() {
-  world->addApp(glm::vec3(2.8, 1.0, 5.0), terminator);
-  world->addApp(glm::vec3(4.0, 1.0, 5.0), emacs);
-  world->addApp(glm::vec3(4.0, 1.75, 5.0), microsoftEdge);
-  world->addApp(glm::vec3(5.2, 1.0, 5.0), obs);
+  float z = 10.0;
+  world->addApp(glm::vec3(2.8, 1.0, z), terminator);
+  world->addApp(glm::vec3(4.0, 1.0, z), emacs);
+  world->addApp(glm::vec3(4.0, 1.75, z), microsoftEdge);
+  world->addApp(glm::vec3(5.2, 1.0, z), obs);
 }
 
 void WM::onCreateNotify(XCreateWindowEvent event) {
@@ -70,7 +71,6 @@ void WM::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
   vector<X11App*> appsWithHotKeys = {emacs, microsoftEdge, terminator, obs};
-  
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
@@ -81,6 +81,11 @@ void WM::onHotkeyPress(XKeyEvent event) {
       unfocusApp();
       controls->goToApp(appsWithHotKeys[i]);
     }
+  }
+  KeyCode code = XKeysymToKeycode(display, XK_0);
+  if (event.keycode == code && event.state & Mod4Mask) {
+    unfocusApp();
+    controls->moveTo(glm::vec3(3.0, 5.0, 16), 4);
   }
 }
 
@@ -145,8 +150,8 @@ WM::WM(Window matrix): matrix(matrix) {
                SubstructureRedirectMask | SubstructureNotifyMask);
 
 
-  for(int i = 0; i<9; i++) {
-    KeyCode code = XKeysymToKeycode(display, XK_1+i);
+  for(int i = 0; i<10; i++) {
+    KeyCode code = XKeysymToKeycode(display, XK_0+i);
     XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
   }
   XSync(display, false);

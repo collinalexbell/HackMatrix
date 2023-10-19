@@ -68,7 +68,11 @@ void main()
       //FragColor = mix(FragColor, floor(TexCoord), 0.1);
     }
   } else {
+    if(BlockType == 6) {
+      FragColor = vec4(255.0/255,222.0/255,100.0/255, 0.2);
+    } else {
       FragColor = texture(texture1, vec3(TexCoord.x, TexCoord.y, BlockType));
+    }
   }
   if(isSelected == 1) {
     FragColor = FragColor * vec4(2.0,2.0,2.0,1.0);
