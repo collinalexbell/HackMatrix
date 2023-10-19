@@ -1,8 +1,9 @@
 // Write a path finder
 const protobuf = require("protobufjs");
 const zmq = require("zeromq");
-const root = protobuf.loadSync("../../include/protos/api.proto");
-const AddCube = root.lookupType("AddCube");
+const proto = protobuf.loadSync("../../include/protos/api.proto");
+const AddCube = proto.lookupType("AddCube");
+const ApiRequest = proto.lookupType("ApiRequest");
 
 const socket = new zmq.Request();
 async function init() {
@@ -10,14 +11,21 @@ async function init() {
 }
 
 async function addCube(x, y, z, blockType) {
+    // Create an AddCube message
+    const addCube = AddCube.create({x,y,z,blockType});
 
+    // Create an API request
+    const request = ApiRequest.create({type:proto.MessageType.ADD_CUBE,
+                                       addCube: addCube});
 
-    const request = AddCube.encode({ x, y, z, blockType }).finish();
+    const serializedRequest = ApiRequest.encode(request).finish();
+    // Send the serialized request to the server
+    socket.send(serializedRequest);
 
-    // Send the request to the server
-    socket.send(request);
+    // Receive the response
     const [result] = await socket.receive();
 }
+
 
 
 module.exports = {

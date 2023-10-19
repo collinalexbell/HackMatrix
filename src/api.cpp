@@ -46,26 +46,35 @@ void Api::requestWorldData(World* world, string serverAddr) {
 }
 
 void CommandServer::pollForWorldCommands(World *world) {
-  zmq::message_t recv;
+    zmq::message_t recv;
 
-  // this only renders 1 per frame
-  // I can run this in a thread or figure out how fast it goes
-  // and do zmq_fq/framerate of them
-  zmq::recv_result_t result = socket.recv(recv, zmq::recv_flags::dontwait);
-  if (result >= 0) {
-    AddCube cubeToAdd;
-    cubeToAdd.ParseFromArray(recv.data(), recv.size());
+    // Receive a message
+    zmq::recv_result_t result = socket.recv(recv, zmq::recv_flags::dontwait);
+    if (result >= 0) {
+        // Parse the received message as an ApiRequest
+        ApiRequest apiRequest;
+        apiRequest.ParseFromArray(recv.data(), recv.size());
 
-    auto batchedCubes = api->grabBatchedCubes();
-    glm::vec3 pos = glm::vec3(cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z());
-    batchedCubes->push(Cube{pos, cubeToAdd.blocktype()});
-    api->releaseBatchedCubes();
+        if (apiRequest.type() == MessageType::ADD_CUBE) {
+            // Process an AddCube request
+            const AddCube& cubeToAdd = apiRequest.addcube();
 
-       //  Send reply back to client
-    zmq::message_t reply(5);
-    memcpy(reply.data(), "recv", 5);
-    socket.send(reply, zmq::send_flags::none);
-  }
+            auto batchedCubes = api->grabBatchedCubes();
+            glm::vec3 pos(cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z());
+            batchedCubes->push(Cube{pos, cubeToAdd.blocktype()});
+            api->releaseBatchedCubes();
+        } else if (apiRequest.type() == MessageType::CLEAR_BOX) {
+            // Process a ClearBox request
+            const ClearBox& boxToClear = apiRequest.clearbox();
+
+            // Perform ClearBox specific operations here
+        }
+
+        // Send a reply back to the client
+        zmq::message_t reply(5);
+        memcpy(reply.data(), "recv", 5);
+        socket.send(reply, zmq::send_flags::none);
+    }
 }
 
 void CommandServer::legacyPollForWorldCommands(World *world) {

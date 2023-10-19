@@ -47,7 +47,7 @@ build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 -g -o build/logger.o -c src/logger.cpp $(INCLUDES)
 
 include/protos/api.pb.h include/protos/api.pb.cc: $(PROTO_FILES)
-	protoc --cpp_out=include include/protos/api.proto
+	protoc --cpp_out=./ include/protos/api.proto
 
 build/x-raise: src/x-raise.c
 	gcc -o build/x-raise src/x-raise.c -lX11
