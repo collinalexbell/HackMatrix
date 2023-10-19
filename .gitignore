@@ -15,7 +15,7 @@ trampoline
 images/*.jpg
 
 # protos
-include/protos/*.cc
+src/*pb.cc
 include/protos/*.h
 
 logs

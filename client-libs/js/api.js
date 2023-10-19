@@ -1,7 +1,7 @@
 // Write a path finder
 const protobuf = require("protobufjs");
 const zmq = require("zeromq");
-const proto = protobuf.loadSync("../../include/protos/api.proto");
+const proto = protobuf.loadSync("../../protos/api.proto");
 const AddCube = proto.lookupType("AddCube");
 const ApiRequest = proto.lookupType("ApiRequest");
 
