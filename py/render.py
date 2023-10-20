@@ -90,5 +90,15 @@ while(True):
                 add_cube(xi, yi, zi, 4)
             else:
                 add_cube(xi, yi, zi, 0)
+
+        connections = np.vstack((
+            np.hstack((fr_in, fr_fc1, fr_fc2, fr_fc3)),
+            np.hstack((to_fc1, to_fc2, to_fc3, to_out)),
+        )).T
+
+        for _,connection in enumerate(connections):
+            print(connection)
+        print(connections.shape)
+
         time.sleep(5)
 

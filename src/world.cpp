@@ -28,10 +28,6 @@ World::World(Camera *camera, bool debug) : camera(camera) {
     addCube(max, 0, max, 0);
     addCube(max, max, max, 0);
   }
-
-  Line line = {{glm::vec3(0, 0, 0), glm::vec3(max/10.0, max/10.0, max/10.0)},
-               glm::vec3(0.1, 0.1, 0.1)};
-  addLine(line);
   logger = make_shared<spdlog::logger>("World", fileSink);
 }
 World::~World() {}
@@ -91,10 +87,14 @@ void World::addCube(Cube cube) {
 }
 
 void World::addLine(Line line) {
-  int i = lines.size();
-  lines.push_back(line);
-  if(renderer != NULL) {
-    renderer->addLine(i, lines[i]);
+  if(line.color.r >= 0) {
+    int i = lines.size();
+    lines.push_back(line);
+    if(renderer != NULL) {
+      renderer->addLine(i, lines[i]);
+    }
+  } else {
+    removeLine(line);
   }
 }
 
@@ -121,6 +121,19 @@ void World::refreshRenderer() {
 
 void World::removeCube(int x, int y, int z) {
   cubes.erase(x,y,z);
+}
+
+void World::removeLine(Line l) {
+  float EPSILON = 0.001;
+  for(auto it = lines.begin(); it != lines.end(); it++) {
+    glm::vec3 a0 = it->points[0];
+    glm::vec3 b0 = it->points[1];
+    glm::vec3 a1 = l.points[0];
+    glm::vec3 b1 = l.points[1];
+    if(glm::distance(a0,a1)<EPSILON && glm::distance(b0,b1)<EPSILON) {
+      lines.erase(it);
+    }
+  }
 }
 
 void World::addApp(glm::vec3 pos, X11App* app) {

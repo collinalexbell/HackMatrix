@@ -25,6 +25,7 @@ class Controls {
   double lastToggleFocusTime = 0;
   double lastToggleAppTime = 0;
   double lastClickTime = 0;
+  double lastScreenshotTime = 0;
   bool resetMouse = true;
   float lastX;
   float lastY;
@@ -36,6 +37,7 @@ class Controls {
   void handleModEscape(GLFWwindow* window);
   void handleToggleFocus(GLFWwindow* window);
   void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
+  void handleScreenshot(GLFWwindow *window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleClicks(GLFWwindow* window, World* world);
