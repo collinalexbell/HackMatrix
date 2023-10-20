@@ -56,15 +56,17 @@ void CommandServer::pollForWorldCommands(World *world) {
         switch(apiRequest.type()) {
         case ADD_CUBE: {
             const AddCube &cubeToAdd = apiRequest.addcube();
-            auto batchedCubes = api->grabBatchedCubes();
+            api->grabBatched();
+            auto batchedCubes = api->getBatchedCubes();
             glm::vec3 pos(cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z());
             batchedCubes->push(Cube{pos, cubeToAdd.blocktype()});
-            api->releaseBatchedCubes();
+            api->releaseBatched();
             break;
         }
         case CLEAR_BOX: {
           const ClearBox &boxToClear = apiRequest.clearbox();
-          auto batchedCubes = api->grabBatchedCubes();
+          api->grabBatched();
+          auto batchedCubes = api->getBatchedCubes();
 
           bool x1Smaller = boxToClear.x1() < boxToClear.x2();
           float x1 = x1Smaller ? boxToClear.x1() : boxToClear.x2();
@@ -94,7 +96,18 @@ void CommandServer::pollForWorldCommands(World *world) {
               }
             }
           }
-          api->releaseBatchedCubes();
+          api->releaseBatched();
+          break;
+        }
+        case ADD_LINE: {
+          const AddLine &lineToAdd = apiRequest.addline();
+          api->grabBatched();
+          auto batchedLines = api->getBatchedLines();
+          glm::vec3 pos1(lineToAdd.x1(), lineToAdd.y1(), lineToAdd.z1());
+          glm::vec3 pos2(lineToAdd.x2(), lineToAdd.y2(), lineToAdd.z2());
+          glm::vec3 color(0.5, 0.5, 0.5);
+          batchedLines->push(Line{{pos1, pos2}, color});
+          api->releaseBatched();
           break;
         }
         default:
@@ -118,7 +131,8 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
     std::istringstream iss(data);
 
     while (!iss.eof()) {
-      auto cubesToAdd = api->grabBatchedCubes();
+      api->grabBatched();
+      auto cubesToAdd = api->getBatchedCubes();
       std::string command;
       int type;
       int x, y, z;
@@ -131,7 +145,7 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
         glm::vec3 pos(x, y, z);
         cubesToAdd->push(Cube{pos, type});
       }
-      api->releaseBatchedCubes();
+      api->releaseBatched();
     }
 
     //  Send reply back to client
@@ -156,28 +170,45 @@ void Api::mutateWorld() {
   long time = glfwGetTime();
   long target = time + 0.10;
   bool hasDelete = false;
-  auto cubesToAdd = grabBatchedCubes();
+  grabBatched();
   stringstream logStream;
-  for (; time <= target && cubesToAdd->size() != 0; time = glfwGetTime()) {
-    Cube c = cubesToAdd->front();
+  for (; time <= target && batchedCubes.size() != 0; time = glfwGetTime()) {
+    Cube c = batchedCubes.front();
     if(c.blockType == -1) {
       hasDelete = true;
     }
     world->addCube(c);
-    cubesToAdd->pop();
+    batchedCubes.pop();
+  }
+  time = glfwGetTime();
+  target = time + 0.10;
+  for (; time <= target && batchedLines.size() != 0; time = glfwGetTime()) {
+    Line l = batchedLines.front();
+    if (l.color.r < 0) {
+      hasDelete = true;
+    }
+    world->addLine(l);
+    batchedLines.pop();
   }
   if(hasDelete) {
     world->refreshRenderer();
   }
-  releaseBatchedCubes();
+  releaseBatched();
 }
 
-queue<Cube> *Api::grabBatchedCubes() {
+void Api::grabBatched() {
   renderMutex.lock();
+}
+
+void Api::releaseBatched() { renderMutex.unlock(); }
+
+queue<Cube> *Api::getBatchedCubes(){
   return &batchedCubes;
 }
 
-void Api::releaseBatchedCubes() { renderMutex.unlock(); }
+queue<Line> *Api::getBatchedLines() {
+  return &batchedLines;
+}
 
 Api::~Api() {
   continuePolling = false;

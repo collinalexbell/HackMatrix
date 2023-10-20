@@ -12,6 +12,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image_write.h"
+#include <ctime>
+#include <iomanip>
+
 float HEIGHT = 0.27;
 
 float appVertices[] = {
@@ -287,6 +292,31 @@ void Renderer::drawAppDirect(X11App* app) {
   }
 }
 
+void Renderer::screenshot() {
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  stbi_flip_vertically_on_write(true);
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  stringstream filenameSS;
+  filenameSS
+    << "screenshots/"
+    << std::put_time(&tm, "%d-%m-%Y %H-%M-%S.png");
+
+  string filename = filenameSS.str();
+
+  // Capture the screenshot and save it as a PNG file
+  int width = 1920;          // Width of your rendering area
+  int height = 1080;     // Height of your rendering area
+  int channels = 4; // 4 for RGBA
+  unsigned char *data = new unsigned char[width * height * channels];
+  glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  std::thread saver([filename, width, height, channels, data](){
+    stbi_write_png(filename.c_str(), width, height, channels, data, width * channels);
+    delete[] data;
+  });
+  saver.detach();
+}
+
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->tick();
@@ -329,6 +359,7 @@ void Renderer::render() {
   glBindVertexArray(LINE_VAO);
   glDrawArraysInstanced(GL_LINES, 0, 2, world->getLines().size());
   shader->setBool("isLine", false);
+
 }
 
 Camera* Renderer::getCamera() {

@@ -41,6 +41,7 @@ void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleControls(window, camera);
   handleToggleFocus(window);
   handleToggleApp(window, world, camera);
+  handleScreenshot(window);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -49,6 +50,14 @@ bool debounce(double &lastTime) {
   double interval = curTime - lastTime;
   lastTime = curTime;
   return interval > DEBOUNCE_TIME;
+}
+
+void Controls::handleScreenshot(GLFWwindow *window) {
+  bool shouldCapture = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+  if (shouldCapture && debounce(lastScreenshotTime)) {
+    Renderer *renderer = (Renderer *)glfwGetWindowUserPointer(window);
+    renderer->screenshot();
+  }
 }
 
 void Controls::handleClicks(GLFWwindow* window, World* world) {

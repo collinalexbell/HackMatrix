@@ -25,6 +25,7 @@ public:
 
 class Api {
   queue<Cube> batchedCubes;
+  queue<Line> batchedLines;
   World* world;
   mutex renderMutex;
   thread offRenderThread;
@@ -40,8 +41,10 @@ public:
   void pollFor();
   void requestWorldData(World*, string);
   void mutateWorld();
-  queue<Cube> *grabBatchedCubes();
-  void releaseBatchedCubes();
+  void grabBatched();
+  void releaseBatched();
+  queue<Cube> *getBatchedCubes();
+  queue<Line> *getBatchedLines();
 };
 
 #endif

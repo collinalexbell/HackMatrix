@@ -40,7 +40,7 @@ def add_line(x1, y1, z1, x2, y2, z2):
     add_line_msg = api_pb2.AddLine(x1=x1, y1=y1, z1=z1, x2=x2, y2=y2, z2=z2)
 
     # Create an API request
-    api_request = api_pb2.ApiRequest(type="AddLine", addLine=add_line_msg)
+    api_request = api_pb2.ApiRequest(type="ADD_LINE", addLine=add_line_msg)
 
     serialized_request = api_request.SerializeToString()
 

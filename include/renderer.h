@@ -50,7 +50,6 @@ class Renderer {
 
   vector<unsigned int> frameBuffers;
   void drawAppDirect(X11App* app);
-
 public:
   Renderer(Camera*, World*);
   ~Renderer();
@@ -65,6 +64,8 @@ public:
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);
   void reloadChunk();
+  void screenshot();
+
   glm::mat4 projection;
 };
 
