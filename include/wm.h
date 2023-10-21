@@ -5,6 +5,7 @@
 #include "controls.h"
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
+#include <atomic>
 #include <map>
 #include <memory>
 #include <thread>
@@ -24,7 +25,10 @@ class WM {
   X11App *currentlyFocusedApp = NULL;
   World *world = NULL;
   Window matrix;
+  atomic_bool firstRenderComplete = false;
   map<Window, X11App*> dynamicApps;
+  mutex renderLoopMutex;
+  vector<X11App*> appsToAdd;
   void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
                      char **envp);
   void allow_input_passthrough(Window window);
@@ -44,4 +48,5 @@ public:
   void handleSubstructure();
   void goToLookedAtApp();
   void registerControls(Controls *controls);
+  void mutateWorld();
 };
