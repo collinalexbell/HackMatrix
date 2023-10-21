@@ -114,7 +114,7 @@ Window getWindowByClass(Display *display, string search) {
   return rv;
 }
 
-void X11App::fetchInfo(string identifier, IdentifierType identifierType) {
+void X11App::fetchInfo(Identifier identifier) {
 
   if (!gladLoadGLXLoader((GLADloadproc)glfwGetProcAddress, display, screen)) {
     std::cout << "Failed to initialize GLAD for GLX" << std::endl;
@@ -123,13 +123,15 @@ void X11App::fetchInfo(string identifier, IdentifierType identifierType) {
 
   Window win = XDefaultRootWindow(display);
 
-  switch(identifierType) {
+  switch(identifier.type) {
   case NAME:
-    appWindow = getWindowByName(display, identifier);
+    appWindow = getWindowByName(display, identifier.strId);
     break;
   case CLASS:
-    appWindow = getWindowByClass(display, identifier);
+    appWindow = getWindowByClass(display, identifier.strId);
     break;
+  case WINDOW:
+    appWindow = identifier.intId;
   }
   XMapWindow(display,appWindow);
   XGetWindowAttributes(display, appWindow, &attrs);
@@ -153,14 +155,29 @@ X11App::X11App(Display* display, int screen): display(display), screen(screen) {
 X11App* X11App::byName(string windowName, Display *display, int screen,
                       int width, int height) {
   X11App* rv = new X11App(display, screen);
-  rv->fetchInfo(windowName, NAME);
+  Identifier id;
+  id.type = NAME;
+  id.strId = windowName;
+  rv->fetchInfo(id);
   rv->resize(width, height);
   return rv;
 }
 X11App* X11App::byClass(string windowClass, Display *display, int screen,
                        int width, int height) {
   X11App *rv = new X11App(display, screen);
-  rv->fetchInfo(windowClass, CLASS);
+  Identifier id;
+  id.type = CLASS;
+  id.strId = windowClass;
+  rv->fetchInfo(id);
+  rv->resize(width, height);
+  return rv;
+}
+X11App* X11App::byWindow(Window window, Display *display, int screen, int width, int height) {
+  X11App *rv = new X11App(display, screen);
+  Identifier id;
+  id.type = WINDOW;
+  id.intId = window;
+  rv->fetchInfo(id);
   rv->resize(width, height);
   return rv;
 }

@@ -63,9 +63,9 @@ y = np.hstack((in_y, fc1_y, fc2_y, fc3_y, out_y))
 z = np.hstack((in_z, fc1_z, fc2_z, fc3_z, out_z))
 
 
-x = np.round(x).astype(int) + 100
-y = np.round(y).astype(int) + 20
-z = np.round(z).astype(int) + 100
+x = np.round(x).astype(int) + 50
+y = np.round(y).astype(int) + 40
+z = np.round(z).astype(int) + 50
 
 while(True):
     for i in range(100):

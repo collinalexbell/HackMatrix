@@ -185,6 +185,9 @@ Renderer::Renderer(Camera* camera, World* world) {
   textures.insert(std::pair<string, Texture *>("app1", new Texture(GL_TEXTURE30)));
   textures.insert(std::pair<string, Texture *>("app2", new Texture(GL_TEXTURE29)));
   textures.insert(std::pair<string, Texture *>("app3", new Texture(GL_TEXTURE28)));
+  textures.insert(std::pair<string, Texture *>("app4", new Texture(GL_TEXTURE28)));
+  textures.insert(std::pair<string, Texture *>("app5", new Texture(GL_TEXTURE27)));
+  textures.insert(std::pair<string, Texture *>("app6", new Texture(GL_TEXTURE26)));
 
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
@@ -195,6 +198,9 @@ Renderer::Renderer(Camera* camera, World* world) {
   shader->setInt("app1", 30);
   shader->setInt("app2", 29);
   shader->setInt("app3", 28);
+  shader->setInt("app4", 27);
+  shader->setInt("app5", 26);
+  shader->setInt("app6", 25);
 
   shader->setBool("selectedValid", false);
   shader->setInt("selectedX", 0);
