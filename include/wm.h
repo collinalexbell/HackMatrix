@@ -5,6 +5,7 @@
 #include "controls.h"
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
+#include <map>
 #include <memory>
 #include <thread>
 
@@ -23,6 +24,7 @@ class WM {
   X11App *currentlyFocusedApp = NULL;
   World *world = NULL;
   Window matrix;
+  map<Window, X11App*> dynamicApps;
   void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
                      char **envp);
   void allow_input_passthrough(Window window);

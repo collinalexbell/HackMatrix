@@ -12,7 +12,14 @@ using namespace std;
 
 enum IdentifierType {
   NAME,
-  CLASS
+  CLASS,
+  WINDOW
+};
+
+struct Identifier {
+  IdentifierType type;
+  string strId;
+  int intId;
 };
 
 class X11App {
@@ -22,7 +29,7 @@ class X11App {
   XWindowAttributes attrs;
   GLXFBConfig* fbConfigs;
   int fbConfigCount;
-  void fetchInfo(string windowName, IdentifierType identifierType);
+  void fetchInfo(Identifier identifier);
   int textureUnit = -1;
   int textureId = -1;
   atomic_bool focused = false;
@@ -33,6 +40,9 @@ public:
                         int width, int height);
   static X11App *byClass(string windowClass, Display *display, int screen,
                          int width, int height);
+
+  static X11App *byWindow(Window window, Display *display, int screen, int width, int height);
+
   int width;
   int height;
   void appTexture();

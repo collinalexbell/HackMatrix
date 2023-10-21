@@ -1,5 +1,6 @@
 #include "wm.h"
 #include "app.h"
+#include <X11/X.h>
 #include <X11/Xlib.h>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -62,6 +63,11 @@ void WM::addAppsToWorld() {
 void WM::onCreateNotify(XCreateWindowEvent event) {
   char *name;
   XFetchName(display, event.window, &name);
+  /*
+  X11App *app = X11App::byWindow(event.window, display, screen, APP_WIDTH,
+  APP_HEIGHT); world->addApp(glm::vec3(4.0, 1.75, 10.0), app);
+  dynamicApps.at(event.window)=app;
+  */
   stringstream ss;
   ss << "window created: " << event.window << " "<< name;
   logger->info(ss.str());
@@ -93,19 +99,33 @@ void WM::handleSubstructure() {
   for (;;) {
     XEvent e;
     XNextEvent(display, &e);
+    stringstream eventInfo;
 
     switch (e.type) {
     case CreateNotify:
-      cout << "created window" << endl;
+      logger->info("CreateNotify event");
+      logger->flush();
       onCreateNotify(e.xcreatewindow);
       break;
     case DestroyNotify:
-      cout << "destroyed window" << endl;
+      logger->info("DestroyNotify event");
+      logger->flush();
       // OnDestroyNotify(e.xdestroywindow);
       break;
     case ReparentNotify:
-      cout << "reparented window" << endl;
-      // OnReparentNotify(e.xreparent);
+      logger->info("ReparentNotify event");
+      logger->flush();
+      break;
+    case ConfigureNotify:
+      logger->info("ConfigureNotify event");
+      eventInfo <<
+        "width: " <<
+        e.xconfigure.width <<
+        ", height: " <<
+        e.xconfigure.height;
+
+      logger->info(eventInfo.str());
+      logger->flush();
       break;
     case KeyPress:
       onHotkeyPress(e.xkey);
