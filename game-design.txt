@@ -1,6 +1,7 @@
 # Matrix Shell
 
-
+## Design Mindset
+I am building a Jewell
 
 ```
 $ implemented
@@ -37,7 +38,7 @@ V probably not
 ## Development Milestones
 - Choose IDE level
 - 3 challenges
-  - path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
+  $ path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
   - neural network with visualization: https://github.com/wmvanvliet/scns/tree/main/visualizations/multilayer_perceptron & https://www.youtube.com/watch?v=Tsvxx-GGlTg
   - cellular automata: https://www.youtube.com/watch?v=dQJ5aEsP6Fs
 
@@ -60,8 +61,6 @@ V probably not
 ## Kickstarter Launch Date
 Sun Oct 20th
 
-## Design Mindset
-I am building a Jewell
 
 ## process
 - Simply make the best game I can

@@ -11,11 +11,19 @@
 #include <GLFW/glfw3.h>
 #include <thread>
 #include "app.h"
+#include "logger.h"
 
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/xfixeswire.h>
 
 using namespace std;
+
+std::shared_ptr<spdlog::logger> app_logger;
+
+void initAppLogger() {
+  app_logger  = make_shared<spdlog::logger>("wm", fileSink);
+}
+;
 
 #define XA_ATOM 4
 
@@ -143,11 +151,14 @@ int errorHandler(Display *dpy, XErrorEvent *err)
   char buf[5000];
   XGetErrorText(dpy, err->error_code, buf, 5000);
   printf("error: %s\n", buf);
+  app_logger->error(buf);
+  app_logger->flush();
 
   return 0;
 }
 
 X11App::X11App(Display* display, int screen): display(display), screen(screen) {
+  
   XSetErrorHandler(errorHandler);
 };
 
@@ -267,6 +278,10 @@ void X11App::resize(int width, int height) {
   if(textureId != -1) {
     appTexture();
   }
+}
+
+Window X11App::getWindow() {
+  return appWindow;
 }
 
 

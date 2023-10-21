@@ -2,6 +2,7 @@
 #define __APP_H__
 
 #include <atomic>
+#include <memory>
 #include <string>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
@@ -53,6 +54,9 @@ public:
   void unfocus(Window matrix);
   void resize(int width, int height);
   bool isFocused();
+  Window getWindow();
 };
+
+void initAppLogger();
 
 #endif

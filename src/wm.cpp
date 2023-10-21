@@ -31,6 +31,7 @@ void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
     }
   }
   app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
+  dynamicApps[app->getWindow()] = app;
 }
 
 void WM::createAndRegisterApps(char **envp) {
@@ -63,11 +64,19 @@ void WM::addAppsToWorld() {
 void WM::onCreateNotify(XCreateWindowEvent event) {
   char *name;
   XFetchName(display, event.window, &name);
-  /*
-  X11App *app = X11App::byWindow(event.window, display, screen, APP_WIDTH,
-  APP_HEIGHT); world->addApp(glm::vec3(4.0, 1.75, 10.0), app);
-  dynamicApps.at(event.window)=app;
-  */
+  bool alreadyRegistered =!dynamicApps.count(event.window);
+  if (!alreadyRegistered) {
+    try {
+      X11App *app = X11App::byWindow(event.window, display, screen, APP_WIDTH, APP_HEIGHT);
+      renderLoopMutex.lock();
+      appsToAdd.push_back(app);
+      renderLoopMutex.unlock();
+      dynamicApps[event.window]=app;
+    } catch(exception &e) {
+      logger->error(e.what());
+      logger->flush();
+    }
+  }
   stringstream ss;
   ss << "window created: " << event.window << " "<< name;
   logger->info(ss.str());
@@ -134,6 +143,20 @@ void WM::handleSubstructure() {
   }
 }
 
+void WM::mutateWorld() {
+  renderLoopMutex.lock();
+  for(auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
+    try {
+      world->addApp(glm::vec3(4.0, 1.75, 10.0), *it);
+    } catch(exception &e) {
+      logger->error(e.what());
+      logger->flush();
+    }
+  }
+  appsToAdd.clear();
+  renderLoopMutex.unlock();
+}
+
 void WM::focusApp(X11App* app) {
   currentlyFocusedApp = app;
   app->focus(matrix);
@@ -151,10 +174,11 @@ void WM::registerControls(Controls *controls) {
 }
 
 WM::WM(Window matrix): matrix(matrix) {
-  logger = make_shared<spdlog::logger>("wm_logger", fileSink);
+  logger = make_shared<spdlog::logger>("wm", fileSink);
   logger->set_level(spdlog::level::info);
   logger->flush_on(spdlog::level::info);
   logger->info("WM()");
+  initAppLogger();
   display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
   Window root = RootWindow(display, screen);

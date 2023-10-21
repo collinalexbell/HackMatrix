@@ -76,6 +76,7 @@ void enterGameLoop() {
 #ifdef API
     api->mutateWorld();
 #endif
+    wm->mutateWorld();
     controls->poll(window, camera, world);
     glfwSwapBuffers(window);
     glfwPollEvents();
