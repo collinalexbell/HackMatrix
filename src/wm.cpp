@@ -88,6 +88,16 @@ void WM::onMapRequest(XMapRequestEvent event) {
   logger->flush();
 }
 
+void WM::onDestroyNotify(XDestroyWindowEvent event) {
+  if(dynamicApps.contains(event.window)) {
+    X11App *app = dynamicApps.at(event.window);
+    dynamicApps.erase(event.window);
+    renderLoopMutex.lock();
+    appsToRemove.push_back(app);
+    renderLoopMutex.unlock();
+  }
+}
+
 void WM::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
@@ -124,7 +134,7 @@ void WM::handleSubstructure() {
     case DestroyNotify:
       logger->info("DestroyNotify event");
       logger->flush();
-      // OnDestroyNotify(e.xdestroywindow);
+      onDestroyNotify(e.xdestroywindow);
       break;
     case ReparentNotify:
       logger->info("ReparentNotify event");
@@ -179,6 +189,21 @@ void WM::mutateWorld() {
     }
   }
   appsToAdd.clear();
+
+  for (auto it = appsToRemove.begin(); it != appsToRemove.end(); it++) {
+    try {
+      if (currentlyFocusedApp == *it) {
+        unfocusApp();
+      }
+      world->removeApp(*it);
+      delete *it;
+    } catch (exception &e) {
+      logger->error(e.what());
+      logger->flush();
+    }
+  }
+  appsToRemove.clear();
+
   renderLoopMutex.unlock();
 }
 

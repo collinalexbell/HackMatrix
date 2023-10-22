@@ -388,6 +388,11 @@ void Renderer::registerApp(X11App* app, int index) {
                          0);
 }
 
+void Renderer::deregisterApp(int index) {
+  glDeleteFramebuffers(1, &frameBuffers[index]);
+  frameBuffers.erase(frameBuffers.begin() + index);
+}
+
 Renderer::~Renderer() {
   delete shader;
   for(auto& t: textures) {

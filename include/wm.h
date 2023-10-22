@@ -29,10 +29,12 @@ class WM {
   map<Window, X11App*> dynamicApps;
   mutex renderLoopMutex;
   vector<X11App*> appsToAdd;
+  vector<X11App*> appsToRemove;
   void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
                      char **envp);
   void allow_input_passthrough(Window window);
   std::thread substructureThread;
+  void onDestroyNotify(XDestroyWindowEvent);
   void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
   void onHotkeyPress(XKeyEvent event);

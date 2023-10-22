@@ -63,6 +63,7 @@ public:
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);
+  void deregisterApp(int index);
   void reloadChunk();
   void screenshot();
 
