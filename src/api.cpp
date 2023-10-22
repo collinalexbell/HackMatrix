@@ -191,7 +191,7 @@ void Api::mutateWorld() {
     batchedLines.pop();
   }
   if(hasDelete) {
-    world->refreshRenderer();
+    world->refreshRendererCubes();
   }
   releaseBatched();
 }

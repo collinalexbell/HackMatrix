@@ -78,7 +78,7 @@ public:
   int getIndexOfApp(X11App* app);
   int size();
 
-  void refreshRenderer();
+  void refreshRendererCubes();
   void action(Action);
   glm::vec3 getAppPosition(int appIndex);
   vector<Line> getLines();

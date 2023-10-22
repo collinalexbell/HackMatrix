@@ -20,7 +20,7 @@ enum IdentifierType {
 struct Identifier {
   IdentifierType type;
   string strId;
-  int intId;
+  Window win;
 };
 
 class X11App {
@@ -44,6 +44,8 @@ public:
 
   static X11App *byWindow(Window window, Display *display, int screen, int width, int height);
 
+  static bool initAppClass(Display * display, int screen);
+
   int width;
   int height;
   void appTexture();
@@ -56,7 +58,5 @@ public:
   bool isFocused();
   Window getWindow();
 };
-
-void initAppLogger();
 
 #endif

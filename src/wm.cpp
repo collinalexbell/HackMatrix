@@ -27,7 +27,7 @@ void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
     if (className == "obs") {
       sleep(30);
     } else {
-      sleep(1);
+      sleep(4);
     }
   }
   app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
@@ -35,12 +35,14 @@ void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
 }
 
 void WM::createAndRegisterApps(char **envp) {
+  logger->info("enter createAndRegisterApps()");
   forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
   forkOrFindApp("/usr/bin/microsoft-edge", "microsoft-edge", "Microsoft-edge",
                 microsoftEdge, envp);
   forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
                 envp);
   forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
+  logger->info("exit createAndRegisterApps()");
 }
 
 
@@ -61,12 +63,15 @@ void WM::addAppsToWorld() {
   world->addApp(glm::vec3(5.2, 1.0, z), obs);
 }
 
-void WM::onCreateNotify(XCreateWindowEvent event) {
+void WM::onMapRequest(XMapRequestEvent event) {
   char *name;
   XFetchName(display, event.window, &name);
-  bool alreadyRegistered =!dynamicApps.count(event.window);
-  if (!alreadyRegistered) {
+  string sName(name);
+  bool alreadyRegistered = dynamicApps.count(event.window);
+  if (!alreadyRegistered && !sName.ends_with("one")) {
     try {
+      logger->info("creating window: " + sName);
+      logger->flush();
       X11App *app = X11App::byWindow(event.window, display, screen, APP_WIDTH, APP_HEIGHT);
       renderLoopMutex.lock();
       appsToAdd.push_back(app);
@@ -80,6 +85,7 @@ void WM::onCreateNotify(XCreateWindowEvent event) {
   stringstream ss;
   ss << "window created: " << event.window << " "<< name;
   logger->info(ss.str());
+  logger->flush();
 }
 
 void WM::onHotkeyPress(XKeyEvent event) {
@@ -114,7 +120,6 @@ void WM::handleSubstructure() {
     case CreateNotify:
       logger->info("CreateNotify event");
       logger->flush();
-      onCreateNotify(e.xcreatewindow);
       break;
     case DestroyNotify:
       logger->info("DestroyNotify event");
@@ -136,6 +141,26 @@ void WM::handleSubstructure() {
       logger->info(eventInfo.str());
       logger->flush();
       break;
+    case ConfigureRequest: {
+      /*
+      XWindowChanges changes;
+      // Copy fields from e to changes.
+      XConfigureRequestEvent event = e.xconfigurerequest;
+      changes.x = event.x;
+      changes.y = event.y;
+      changes.width = event.width;
+      changes.height = event.height;
+      changes.border_width = event.border_width;
+      changes.sibling = event.above;
+      changes.stack_mode = event.detail;
+      // Grant request by calling XConfigureWindow().
+      XConfigureWindow(display, event.window, event.value_mask, &changes);
+      */
+      break;
+    }
+    case MapRequest:
+      onMapRequest(e.xmaprequest);
+      break;
     case KeyPress:
       onHotkeyPress(e.xkey);
       break;
@@ -147,7 +172,7 @@ void WM::mutateWorld() {
   renderLoopMutex.lock();
   for(auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
-      world->addApp(glm::vec3(4.0, 1.75, 10.0), *it);
+      world->addApp(glm::vec3(2.5, 1.75, 10.0), *it);
     } catch(exception &e) {
       logger->error(e.what());
       logger->flush();
@@ -178,9 +203,9 @@ WM::WM(Window matrix): matrix(matrix) {
   logger->set_level(spdlog::level::info);
   logger->flush_on(spdlog::level::info);
   logger->info("WM()");
-  initAppLogger();
   display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
+  X11App::initAppClass(display, screen);
   Window root = RootWindow(display, screen);
   XCompositeRedirectSubwindows(display, RootWindow(display, screen),
                                CompositeRedirectAutomatic);
