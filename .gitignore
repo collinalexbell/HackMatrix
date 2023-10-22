@@ -6,6 +6,7 @@ debian.qcow
 debian-testing-amd64-netinst.iso
 
 **/node_modules
+**/__pychache__
 
 # executables
 matrix
