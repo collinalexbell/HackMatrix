@@ -6,7 +6,8 @@ debian.qcow
 debian-testing-amd64-netinst.iso
 
 **/node_modules
-**/__pychache__
+**/__pycache__/
+
 
 # executables
 matrix
@@ -23,3 +24,5 @@ logs
 build
 
 py/scns
+
+screenshots/
