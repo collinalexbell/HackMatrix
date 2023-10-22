@@ -2,6 +2,7 @@
 #include "app.h"
 #include "glm/geometric.hpp"
 #include "renderer.h"
+#include <algorithm>
 #include <sstream>
 #include <vector>
 #include <glm/glm.hpp>
@@ -118,6 +119,11 @@ void World::refreshRendererCubes() {
     logger->critical(lineInfo.str());
     renderer->addLine(i, lines[i]);
   }
+
+  vector<glm::vec3> appCubesV = getAppCubes();
+  for(int i=0; i < appCubesV.size(); i++){
+    renderer->addAppCube(i, appCubesV[i]);
+  }
 }
 
 void World::removeCube(int x, int y, int z) {
@@ -152,6 +158,35 @@ void World::addApp(glm::vec3 pos, X11App* app) {
     logger->debug(debugInfo.str());
     logger->flush();
   }
+}
+
+void World::removeApp(X11App *app) {
+  int index = -1;
+  for(int i=0; i<apps.size();i++) {
+    if(apps[i] == app) {
+      index = i;
+    }
+  }
+
+  if(index < 0) {
+    return;
+  }
+
+  auto it =
+      std::find_if(appCubes.begin(), appCubes.end(),
+                   [index](const std::pair<glm::vec3, int> &element) {
+                     return element.second == index;
+                   });
+
+  appCubes.erase(it);
+  apps.erase(apps.begin() + index);
+  for(auto appKV = appCubes.begin(); appKV != appCubes.end(); appKV++) {
+    if(appKV->second > index){
+      appKV->second--;
+    }
+  }
+  renderer->deregisterApp(index);
+  refreshRendererCubes();
 }
 
 void World::attachRenderer(Renderer* renderer){

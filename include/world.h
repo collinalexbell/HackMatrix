@@ -75,6 +75,7 @@ public:
   void addLine(Line line);
   void removeLine(Line line);
   void addApp(glm::vec3, X11App* app);
+  void removeApp(X11App* app);
   int getIndexOfApp(X11App* app);
   int size();
 
