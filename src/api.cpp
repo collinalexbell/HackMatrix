@@ -18,9 +18,9 @@ using namespace std;
 Api::Api(std::string bindAddress, World* world): world(world) {
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
-  legacyCommandServer = new CommandServer(this, "tcp://*:5555", context);
-  commandServer = new CommandServer(this, bindAddress, context);
-  offRenderThread = thread(&Api::pollFor, this);
+  legacyCommandServer = new TextCommandServer(this, "tcp://*:5555", context);
+  commandServer = new ProtobufCommandServer(this, bindAddress, context);
+  offRenderThread = thread(&Api::poll, this);
 }
 
 
@@ -38,14 +38,16 @@ void Api::requestWorldData(World* world, string serverAddr) {
   try {
     clientSocket.connect(serverAddr);
     memcpy (request.data (), "init", 5);
-    clientSocket.send(request, zmq::send_flags::none);
-    zmq::recv_result_t result = clientSocket.recv(reply, zmq::recv_flags::dontwait);
+    auto err = clientSocket.send(request, zmq::send_flags::dontwait);
+    if(err != -1) {
+      zmq::recv_result_t result = clientSocket.recv(reply, zmq::recv_flags::dontwait);
+    }
   } catch(...) {
     logger->critical("couldn't connect to the init server");
   }
 }
 
-void CommandServer::pollForWorldCommands(World *world) {
+void Api::ProtobufCommandServer::poll(World *world) {
     zmq::message_t recv;
     zmq::recv_result_t result = socket.recv(recv, zmq::recv_flags::dontwait);
 
@@ -121,7 +123,7 @@ void CommandServer::pollForWorldCommands(World *world) {
     }
 }
 
-void CommandServer::legacyPollForWorldCommands(World *world) {
+void Api::TextCommandServer::poll(World *world) {
   zmq::message_t request;
 
   zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
@@ -155,13 +157,13 @@ void CommandServer::legacyPollForWorldCommands(World *world) {
   }
 }
 
-void Api::pollFor() {
+void Api::poll() {
   while (continuePolling) {
     if (legacyCommandServer != NULL) {
-      legacyCommandServer->legacyPollForWorldCommands(world);
+      legacyCommandServer->poll(world);
     }
     if (commandServer != NULL) {
-      commandServer->pollForWorldCommands(world);
+      commandServer->poll(world);
     }
   }
 }

@@ -13,38 +13,55 @@ using namespace std;
 
 class Api;
 class CommandServer {
-  zmq::socket_t socket;
+protected:
   Api *api;
   shared_ptr<spdlog::logger> logger;
+  zmq::socket_t socket;
 
 public:
-  void legacyPollForWorldCommands(World* world); void pollForWorldCommands(World *world);
-  CommandServer(Api* api, std::string bindAddress, zmq::context_t& context);
-  void poll(World* world);
+  CommandServer(Api *api, std::string bindAddress, zmq::context_t &context);
+  virtual void poll(World *world) = 0;
 };
 
 class Api {
+
+  class ProtobufCommandServer : public CommandServer {
+    using CommandServer::CommandServer;
+    void poll(World *world) override;
+  };
+
+  class TextCommandServer : public CommandServer {
+    using CommandServer::CommandServer;
+    void poll(World *world) override;
+  };
+
+  shared_ptr<spdlog::logger> logger;
+  World *world;
+
+  zmq::context_t context;
+  CommandServer *legacyCommandServer;
+  CommandServer *commandServer;
+
   queue<Cube> batchedCubes;
   queue<Line> batchedLines;
-  World* world;
+
   mutex renderMutex;
   thread offRenderThread;
+
   std::atomic_bool continuePolling = true;
-  zmq::context_t context;
-  CommandServer* legacyCommandServer;
-  CommandServer *commandServer;
-  shared_ptr<spdlog::logger> logger;
+
+protected:
+  void grabBatched();
+  queue<Cube> *getBatchedCubes();
+  queue<Line> *getBatchedLines();
+  void releaseBatched();
 
 public:
   Api(std::string bindAddress, World* world);
   ~Api();
-  void pollFor();
-  void requestWorldData(World*, string);
+  void poll();
   void mutateWorld();
-  void grabBatched();
-  void releaseBatched();
-  queue<Cube> *getBatchedCubes();
-  queue<Line> *getBatchedLines();
+  void requestWorldData(World*, string);
 };
 
 #endif
