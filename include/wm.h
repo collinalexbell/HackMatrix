@@ -33,7 +33,7 @@ class WM {
                      char **envp);
   void allow_input_passthrough(Window window);
   std::thread substructureThread;
-  void onCreateNotify(XCreateWindowEvent);
+  void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
   void onHotkeyPress(XKeyEvent event);
   void unfocusApp();

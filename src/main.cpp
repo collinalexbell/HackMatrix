@@ -39,7 +39,7 @@ Display *display;
 Window matriXWindow;
 Window overlay;
 
-shared_ptr<spdlog::logger> logger = make_shared<spdlog::logger>("api_logger", fileSink);
+shared_ptr<spdlog::logger> logger = make_shared<spdlog::logger>("main", fileSink);
 
 #define API
 
@@ -130,7 +130,10 @@ void initEngine(char** envp) {
 }
 
 int main(int argc, char** argv, char** envp) {
+  logger->set_level(spdlog::level::info);
   try {
+    //logger->info("init matrix()");
+    //logger->flush();
     window = initGraphics();
     if(window == NULL) return -1;
     initEngine(envp);

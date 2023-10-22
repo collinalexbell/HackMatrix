@@ -12,6 +12,7 @@
 #include <thread>
 #include "app.h"
 #include "logger.h"
+#include <sstream>
 
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/xfixeswire.h>
@@ -20,10 +21,16 @@ using namespace std;
 
 std::shared_ptr<spdlog::logger> app_logger;
 
-void initAppLogger() {
-  app_logger  = make_shared<spdlog::logger>("wm", fileSink);
-}
-;
+bool X11App::initAppClass(Display *display, int screen) {
+  app_logger = make_shared<spdlog::logger>("app", fileSink);
+  app_logger->set_level(spdlog::level::info);
+  if (!gladLoadGLXLoader((GLADloadproc)glfwGetProcAddress, display, screen)) {
+    std::cout << "Failed to initialize GLAD for GLX" << std::endl;
+    app_logger->error("Failed to initialize GLAD for GLX");
+    return false;
+  }
+  return true;
+};
 
 #define XA_ATOM 4
 
@@ -124,12 +131,7 @@ Window getWindowByClass(Display *display, string search) {
 
 void X11App::fetchInfo(Identifier identifier) {
 
-  if (!gladLoadGLXLoader((GLADloadproc)glfwGetProcAddress, display, screen)) {
-    std::cout << "Failed to initialize GLAD for GLX" << std::endl;
-    return;
-  }
 
-  Window win = XDefaultRootWindow(display);
 
   switch(identifier.type) {
   case NAME:
@@ -139,9 +141,16 @@ void X11App::fetchInfo(Identifier identifier) {
     appWindow = getWindowByClass(display, identifier.strId);
     break;
   case WINDOW:
-    appWindow = identifier.intId;
+    appWindow = identifier.win;
+    break;
   }
+  app_logger->info("XMapWindow()");
+  app_logger->flush();
   XMapWindow(display,appWindow);
+  XFlush(display);
+  XSync(display, False);
+  app_logger->info("XGetWindowAttributes()");
+  app_logger->flush();
   XGetWindowAttributes(display, appWindow, &attrs);
   fbConfigs = glXChooseFBConfig(display, 0, pixmap_config, &fbConfigCount);
 }
@@ -151,7 +160,9 @@ int errorHandler(Display *dpy, XErrorEvent *err)
   char buf[5000];
   XGetErrorText(dpy, err->error_code, buf, 5000);
   printf("error: %s\n", buf);
-  app_logger->error(buf);
+  std::stringstream ss;
+  ss << buf << " : requestcode:" << (unsigned int)err->request_code;
+  app_logger->error(ss.str());
   app_logger->flush();
 
   return 0;
@@ -187,7 +198,7 @@ X11App* X11App::byWindow(Window window, Display *display, int screen, int width,
   X11App *rv = new X11App(display, screen);
   Identifier id;
   id.type = WINDOW;
-  id.intId = window;
+  id.win = window;
   rv->fetchInfo(id);
   rv->resize(width, height);
   return rv;
@@ -252,6 +263,9 @@ void X11App::focus(Window matrix) {
 void X11App::appTexture() {
   glActiveTexture(textureUnit);
   glBindTexture(GL_TEXTURE_2D, textureId);
+
+  app_logger->info("XCompositeNameWindowPixmap()");
+  app_logger->flush();
   Pixmap pixmap = XCompositeNameWindowPixmap(display, appWindow);
 
   const int pixmap_attribs[] = {
@@ -260,8 +274,13 @@ void X11App::appTexture() {
     None
   };
 
+  app_logger->info("glXCreatePixmap()");
+  app_logger->flush();
   GLXPixmap glxPixmap = glXCreatePixmap(display, fbConfigs[0], pixmap, pixmap_attribs);
+  app_logger->info("glXBindTexImageEXT()");
+  app_logger->flush();
   glXBindTexImageEXT(display, glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
+  app_logger->info("appTexture() success");
 }
 
 float SCREEN_WIDTH = 1920;

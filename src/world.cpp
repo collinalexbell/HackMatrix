@@ -29,6 +29,7 @@ World::World(Camera *camera, bool debug) : camera(camera) {
     addCube(max, max, max, 0);
   }
   logger = make_shared<spdlog::logger>("World", fileSink);
+  logger->set_level(spdlog::level::debug);
 }
 World::~World() {}
 
@@ -98,7 +99,7 @@ void World::addLine(Line line) {
   }
 }
 
-void World::refreshRenderer() {
+void World::refreshRendererCubes() {
   vector<Cube> allCubes = getCubes();
   cubeCount = allCubes.size();
   for (int i = 0; i < allCubes.size(); i++) {
@@ -141,14 +142,21 @@ void World::addApp(glm::vec3 pos, X11App* app) {
   appCubes.insert(std::pair<glm::vec3, int>(pos, index));
   apps.push_back(app);
   if(renderer != NULL) {
+    logger->info("registerApp()");
     renderer->registerApp(app, index);
+    logger->info("addAppCube");
     renderer->addAppCube(index, pos);
+
+    stringstream debugInfo;
+    debugInfo << "index:" << index << ", pos:" << pos.x << "," << pos.y << "," << pos.z;
+    logger->debug(debugInfo.str());
+    logger->flush();
   }
 }
 
 void World::attachRenderer(Renderer* renderer){
   this->renderer = renderer;
-  refreshRenderer();
+  refreshRendererCubes();
 }
 
 Cube* World::getCube(float x, float y, float z) {
@@ -311,7 +319,7 @@ void World::action(Action toTake) {
     }
     if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
-      refreshRenderer();
+      refreshRendererCubes();
     }
   }
 }
