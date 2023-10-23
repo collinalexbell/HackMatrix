@@ -1,7 +1,6 @@
 #define GLFW_EXPOSE_NATIVE_X11
 #include "engine.h"
 #include <GLFW/glfw3native.h>
-
 #include <GLFW/glfw3.h>
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
