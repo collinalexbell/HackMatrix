@@ -20,6 +20,7 @@ class Controls {
   WM* wm;
   World *world;
   Camera *camera;
+  Renderer *renderer;
   bool grabbedCursor = true;
   bool appFocused = false;
   double lastToggleFocusTime = 0;
@@ -44,7 +45,7 @@ class Controls {
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
 public:
-  Controls(WM *wm, World *world, Camera *camera) : wm(wm), world(world), camera(camera) {}
+  Controls(WM *wm, World *world, Camera *camera, Renderer* renderer) : wm(wm), world(world), camera(camera), renderer(renderer) {}
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
   void goToApp(X11App * app);

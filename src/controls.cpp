@@ -24,7 +24,6 @@ void Controls::mouseCallback (GLFWwindow* window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    Renderer* renderer = (Renderer*) glfwGetWindowUserPointer(window);
     renderer->getCamera()->handleRotateForce(window, xoffset, yoffset);
   }
 }
@@ -55,7 +54,6 @@ bool debounce(double &lastTime) {
 void Controls::handleScreenshot(GLFWwindow *window) {
   bool shouldCapture = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
   if (shouldCapture && debounce(lastScreenshotTime)) {
-    Renderer *renderer = (Renderer *)glfwGetWindowUserPointer(window);
     renderer->screenshot();
   }
 }
