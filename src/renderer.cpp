@@ -169,7 +169,6 @@ Renderer::Renderer(Camera* camera, World* world) {
   fillBuffers();
   setupVertexAttributePointers();
 
-
   std::vector<std::string> images = {
     "images/bAndGrey.png",
     "images/purpleRoad.png",
@@ -181,9 +180,12 @@ Renderer::Renderer(Camera* camera, World* world) {
   textures.insert(std::pair<string,Texture*>("allBlocks", new Texture(images, GL_TEXTURE0)));
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
+
   shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
+
   initAppTextures();
+
   shader->setBool("selectedValid", false);
   shader->setInt("selectedX", 0);
   shader->setInt("selectedY", 0);
