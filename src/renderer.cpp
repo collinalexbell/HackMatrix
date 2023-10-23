@@ -178,14 +178,11 @@ Renderer::Renderer(Camera* camera, World* world) {
     "images/pillar.png",
     "images/reactor_texture.png"
   };
-  textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
-  textures.insert(std::pair<string, Texture*>("face",
-                                              new Texture("images/awesomeface.png", GL_TEXTURE1)));
+  textures.insert(std::pair<string,Texture*>("allBlocks", new Texture(images, GL_TEXTURE0)));
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
-  shader->setInt("texture1", 0);
+  shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
-  shader->setInt("texture2", 1);
   initAppTextures();
   shader->setBool("selectedValid", false);
   shader->setInt("selectedX", 0);
