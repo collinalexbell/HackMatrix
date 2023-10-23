@@ -115,16 +115,9 @@ void Controls::goToApp(X11App* app) {
 
 void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera) {
   X11App *app = world->getLookedAtApp();
-  int eKeyPressed = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
   int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
-  if((eKeyPressed || rKeyPressed) && debounce(lastToggleAppTime)) {
-    // seperate if statements to detect which key, because must call
-    // debounce only once
-    if (app != NULL && eKeyPressed) {
-      wm->focusApp(app);
-    } else if (app != NULL && rKeyPressed) {
-      goToApp(app);
-    }
+  if( rKeyPressed && debounce(lastToggleAppTime)) {
+    goToApp(app);
   }
 }
 
