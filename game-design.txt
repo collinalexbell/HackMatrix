@@ -1,4 +1,4 @@
-# Matrix Shell
+# hackMatrix
 
 ## Design Mindset
 I am building a Jewell
@@ -59,7 +59,7 @@ V probably not
 - HackMatrix book
 
 ## Kickstarter Launch Date
-Sun Oct 20th
+Sun Oct 27th
 
 
 ## process
