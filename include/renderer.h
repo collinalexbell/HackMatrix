@@ -34,6 +34,7 @@ class Renderer {
   Shader* shader;
   Shader* appShader;
   std::map<string, Texture*> textures;
+  void initAppTextures();
   glm::mat4 trans;
   glm::mat4 model;
   glm::mat4 appModel;
