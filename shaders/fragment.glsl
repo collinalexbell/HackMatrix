@@ -5,8 +5,7 @@ in vec3 lineColor;
 flat in int BlockType;
 flat in int isSelected;
 
-uniform sampler2DArray texture1;
-uniform sampler2D texture2;
+uniform sampler2DArray allBlocks;
 uniform sampler2D app0;
 uniform sampler2D app1;
 uniform sampler2D app2;
@@ -84,7 +83,7 @@ void main()
     if(BlockType == 6) {
       FragColor = vec4(255.0/255,222.0/255,100.0/255, 0.2);
     } else {
-      FragColor = texture(texture1, vec3(TexCoord.x, TexCoord.y, BlockType));
+      FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
     }
   }
   if(isSelected == 1) {
