@@ -181,27 +181,12 @@ Renderer::Renderer(Camera* camera, World* world) {
   textures.insert(std::pair<string,Texture*>("container", new Texture(images, GL_TEXTURE0)));
   textures.insert(std::pair<string, Texture*>("face",
                                               new Texture("images/awesomeface.png", GL_TEXTURE1)));
-  textures.insert(std::pair<string, Texture*>("app0", new Texture(GL_TEXTURE31)));
-  textures.insert(std::pair<string, Texture *>("app1", new Texture(GL_TEXTURE30)));
-  textures.insert(std::pair<string, Texture *>("app2", new Texture(GL_TEXTURE29)));
-  textures.insert(std::pair<string, Texture *>("app3", new Texture(GL_TEXTURE28)));
-  textures.insert(std::pair<string, Texture *>("app4", new Texture(GL_TEXTURE28)));
-  textures.insert(std::pair<string, Texture *>("app5", new Texture(GL_TEXTURE27)));
-  textures.insert(std::pair<string, Texture *>("app6", new Texture(GL_TEXTURE26)));
-
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setInt("texture1", 0);
   shader->setInt("totalBlockTypes", images.size());
   shader->setInt("texture2", 1);
-  shader->setInt("app0", 31);
-  shader->setInt("app1", 30);
-  shader->setInt("app2", 29);
-  shader->setInt("app3", 28);
-  shader->setInt("app4", 27);
-  shader->setInt("app5", 26);
-  shader->setInt("app6", 25);
-
+  initAppTextures();
   shader->setBool("selectedValid", false);
   shader->setInt("selectedX", 0);
   shader->setInt("selectedY", 0);
@@ -230,6 +215,17 @@ Renderer::Renderer(Camera* camera, World* world) {
   //model = glm::rotate(model, glm::radians(-55.0f),
   //                   glm::vec3(1.0f, 0.0f, 0.0f));
 
+}
+
+void Renderer::initAppTextures() {
+  for(int index=0; index<7; index++) {
+    int textureN = 31 - index;
+    int textureUnit = GL_TEXTURE0 + textureN;
+    string textureName = "app" + to_string(index);
+    textures.insert(
+      std::pair<string, Texture *>(textureName, new Texture(textureUnit)));
+      shader->setInt(textureName, textureN);
+  }
 }
 
 void Renderer::updateTransformMatrices() {
