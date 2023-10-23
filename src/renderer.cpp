@@ -195,25 +195,12 @@ Renderer::Renderer(Camera* camera, World* world) {
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
   glClearColor(178.0/256, 178.0/256, 178.0/256, 1.0f);
-
   glLineWidth(10.0);
 
-  //projection = glm::ortho(0.0f, 1920.0f, 0.0f, 1080.0f, 0.1f, 100.0f);
-
-
-  view = glm::mat4(1.0f);
-  // note that we’re translating the scene in the reverse direction
-  view = glm::translate(view, glm::vec3(0.0f, 0.0f, 3.0f));
-
+  view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
   projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
-
-  // this can be used to rotate an entire chunk (call to glDrawArraysInstanced)
-  model = glm::mat4(1.0f);
-  model = glm::scale(model, glm::vec3(world->CUBE_SIZE));
-
+  model = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
   appModel = glm::mat4(1.0f);
-  //model = glm::rotate(model, glm::radians(-55.0f),
-  //                   glm::vec3(1.0f, 0.0f, 0.0f));
 
 }
 
