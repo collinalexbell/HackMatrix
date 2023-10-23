@@ -5,8 +5,8 @@ PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
 INCLUDES        = -Iinclude -I/usr/local/include
 all: matrix trampoline
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o include/protos/api.pb.h src/api.pb.cc
-	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o include/protos/api.pb.h src/api.pb.cc
+	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -43,6 +43,9 @@ build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h
 
 build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 -g -o build/logger.o -c src/logger.cpp $(INCLUDES)
+
+build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h
+	g++ -std=c++20 -g -o build/engine.o -c src/engine.cpp $(INCLUDES)
 
 include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=./ protos/api.proto
