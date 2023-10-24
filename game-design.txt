@@ -59,7 +59,7 @@ V probably not
 - HackMatrix book
 
 ## Kickstarter Launch Date
-Sun Oct 27th
+Sat Oct 28th
 
 
 ## process
@@ -92,7 +92,6 @@ Create a server
 ## the questions
 - Will this software make me 150k?
 - Will this software make me 4k so I can go to Florida & Oregon with my dog and pay off storage fees?
-- Will this software allow me to get funding from YC?
 - Am I proud of this software?
 
 ## KeyResults
@@ -100,9 +99,6 @@ Create a server
   - 15,000 @ 10$ or 3,000 @ 50$
 - 4k
   - 400 @ 10$ or 80 @ 50$
-- YC funding
-  - Users
-  - Revenue
 
 
 ## The toy: How can the matrix be a toy?
@@ -131,11 +127,9 @@ V exploring an ancient world that contains cyberenetic artifacts
 
 ## aesthetic
 $ voxel
-$ shader over unfocused X11 app
 $ tron
 
 - put yourself in the view of other creatures
-
 ~ custom shaders for blocks!!!!
 
 ? what size voxels
