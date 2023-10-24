@@ -83,6 +83,9 @@ public:
   void action(Action);
   glm::vec3 getAppPosition(int appIndex);
   vector<Line> getLines();
+
+  void save(string filename);
+  void load(string filename);
 };
 
 #endif

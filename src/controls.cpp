@@ -5,6 +5,10 @@
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3native.h>
 
+#include <sstream>
+#include <iomanip>
+#include <ctime>
+
 #include "controls.h"
 #include "camera.h"
 #include "renderer.h"
@@ -41,6 +45,7 @@ void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleToggleFocus(window);
   handleToggleApp(window, world, camera);
   handleScreenshot(window);
+  handleSave(window);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -49,6 +54,17 @@ bool debounce(double &lastTime) {
   double interval = curTime - lastTime;
   lastTime = curTime;
   return interval > DEBOUNCE_TIME;
+}
+
+void Controls::handleSave(GLFWwindow *window){
+  bool shouldSave = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
+  if (shouldSave && debounce(lastSaveTime)) {
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    stringstream filenameSS;
+    filenameSS << "saves/" << std::put_time(&tm, "%d-%m-%Y %H-%M-%S.save");
+    world->save(filenameSS.str());
+  }
 }
 
 void Controls::handleScreenshot(GLFWwindow *window) {

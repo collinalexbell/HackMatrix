@@ -26,3 +26,5 @@ build
 py/scns
 
 screenshots/
+
+**/*.save

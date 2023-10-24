@@ -4,6 +4,7 @@
 #include "renderer.h"
 #include <algorithm>
 #include <sstream>
+#include <fstream>
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtx/intersect.hpp>
@@ -405,3 +406,14 @@ glm::vec3 World::getAppPosition(X11App* app) {
 vector<Line> World::getLines() {
   return lines;
 }
+
+void World::save(string filename) {
+  std::ofstream outputFile(filename);
+  auto cubes = getCubes();
+  for(auto it = cubes.begin(); it != cubes.end(); it++) {
+    outputFile << it->position.x << "," << it->position.y << "," << it->position.z << "," << it->blockType << endl;
+  }
+  outputFile.close();
+}
+
+void World::load(string filename){}
