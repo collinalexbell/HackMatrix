@@ -12,6 +12,7 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <filesystem>
 
 using namespace std;
 
@@ -416,4 +417,41 @@ void World::save(string filename) {
   outputFile.close();
 }
 
-void World::load(string filename){}
+void World::load(string filename) {
+  std::ifstream inputFile(filename);
+  cubeCount = 0;
+  char comma;
+  float x, y, z;
+  int blockType;
+  while (inputFile >> x >> comma >> y >> comma >> z >> comma >> blockType) {
+    addCube(Cube{glm::vec3(x, y, z), blockType});
+  }
+  inputFile.close();
+}
+
+void World::loadLatest() {
+  std::filesystem::path dirPath("saves");
+
+  if (!std::filesystem::exists(dirPath) ||
+      !std::filesystem::is_directory(dirPath)) {
+    throw "Directory saves/ doesn't exist or is not a directory";
+  }
+
+  std::string latestSave;
+
+  for (const auto &entry : std::filesystem::directory_iterator(dirPath)) {
+    if (entry.is_regular_file()) {
+      std::string filename = entry.path().filename().string();
+
+      // Check if the file has a ".save" extension
+      if (filename.size() >= 5 &&
+          filename.substr(filename.size() - 5) == ".save") {
+        if (filename > latestSave) {
+          latestSave = filename;
+        }
+      }
+    }
+  }
+
+  load("saves/" + latestSave);
+}
