@@ -1,4 +1,4 @@
-# hackMatrix
+# Atlanetica
 
 ## Design Mindset
 I am building a Jewell
@@ -12,7 +12,7 @@ $ implemented
 V probably not
 ```
 
-## Story
+## Pitch
 
 - "bring your own IDE"
   - Show character walking up to the editors and then hopping between them
@@ -59,7 +59,7 @@ V probably not
 - HackMatrix book
 
 ## Kickstarter Launch Date
-Sat Oct 28th
+Tues Oct 31st
 
 
 ## process
