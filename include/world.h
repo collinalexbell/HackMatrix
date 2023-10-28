@@ -86,6 +86,7 @@ public:
 
   void save(string filename);
   void load(string filename);
+  void loadLatest();
 };
 
 #endif

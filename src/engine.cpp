@@ -45,7 +45,7 @@ void Engine::wire() {
   world->attachRenderer(renderer);
   wm->attachWorld(world);
   wm->addAppsToWorld();
-  api->requestWorldData(world, "tcp://localhost:5556");
+  world->loadLatest();
 }
 
 void Engine::loop() {
