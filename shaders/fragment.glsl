@@ -88,5 +88,7 @@ void main()
   }
   if(isSelected == 1) {
     FragColor = FragColor * vec4(2.0,2.0,2.0,1.0);
+  } else if(isSelected == 2) {
+    FragColor = FragColor * vec4(2.0,1.0,1.0,1.0);
   }
 }

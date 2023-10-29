@@ -34,11 +34,14 @@ void main()
     gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
   }
 
-  isSelected = isSelectedVert;
+  isSelected = 0;
   if(selectedValid) {
     if(abs(distance(aOffset,selected)) < 0.01) {
       isSelected = 1;
     }
+  }
+  if (isSelectedVert == 1) {
+    isSelected = 2;
   }
 
   TexCoord = aTexCoord;
