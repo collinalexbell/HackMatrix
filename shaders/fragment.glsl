@@ -3,8 +3,8 @@ out vec4 FragColor;
 in vec2 TexCoord;
 in vec3 lineColor;
 flat in int BlockType;
-flat in int isLookedAt;
-flat in int selection;
+flat in int IsLookedAt;
+flat in int Selection;
 
 uniform sampler2DArray allBlocks;
 uniform sampler2D app0;
@@ -86,10 +86,10 @@ void main()
       FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
     }
   }
-  if(selection == 1) {
+  if(Selection == 1) {
     FragColor = FragColor * vec4(2.0,1.0,1.0,1.0);
   }
-  if(isLookedAt == 1) {
+  if(IsLookedAt == 1) {
     FragColor = FragColor * vec4(2.0,2.0,2.0,1.0);
   }
 }
