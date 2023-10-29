@@ -28,6 +28,7 @@ struct Line {
 struct Cube {
   glm::vec3 position;
   int blockType;
+  bool selected = false;
   bool operator==(const Cube& cmp);
 };
 
@@ -38,7 +39,8 @@ struct App {
 
 enum Action {
   PLACE_CUBE,
-  REMOVE_CUBE
+  REMOVE_CUBE,
+  SELECT_CUBE
 };
 
 class World {

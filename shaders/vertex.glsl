@@ -5,6 +5,7 @@ layout (location = 2) in vec3 aOffset;
 layout (location = 3) in int blockType;
 
 layout (location = 4) in vec3 lineInstanceColor;
+layout (location = 4) in int isSelectedVert;
 
 out vec2 TexCoord;
 out vec3 lineColor;
@@ -33,7 +34,7 @@ void main()
     gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
   }
 
-  isSelected = 0;
+  isSelected = isSelectedVert;
   if(selectedValid) {
     if(abs(distance(aOffset,selected)) < 0.01) {
       isSelected = 1;

@@ -60,7 +60,7 @@ public:
   void bindGlResourcesForInit();
   void setupVertexAttributePointers();
   void fillBuffers();
-  void addCube(int index, Cube cube);
+  void renderCube(int index, Cube cube);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);

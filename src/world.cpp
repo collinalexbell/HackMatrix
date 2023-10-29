@@ -81,7 +81,7 @@ void World::addCube(Cube cube) {
           (int)cube.position.y,
           (int)cube.position.z) = cube;
     if (renderer != NULL) {
-      renderer->addCube(orderIndex, cube);
+      renderer->renderCube(orderIndex, cube);
     }
   } else {
     removeCube((int)cube.position.x,
@@ -106,7 +106,7 @@ void World::refreshRendererCubes() {
   vector<Cube> allCubes = getCubes();
   cubeCount = allCubes.size();
   for (int i = 0; i < allCubes.size(); i++) {
-    renderer->addCube(i, allCubes[i]);
+    renderer->renderCube(i, allCubes[i]);
   }
   for(int i = 0; i < lines.size(); i++) {
     stringstream lineInfo;
@@ -356,6 +356,10 @@ void World::action(Action toTake) {
     }
     if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
+      refreshRendererCubes();
+    }
+    if(toTake == SELECT_CUBE) {
+      lookedAt->selected = true;
       refreshRendererCubes();
     }
   }
