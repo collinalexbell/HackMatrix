@@ -46,6 +46,7 @@ void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleToggleApp(window, world, camera);
   handleScreenshot(window);
   handleSave(window);
+  handleSelection(window);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -54,6 +55,13 @@ bool debounce(double &lastTime) {
   double interval = curTime - lastTime;
   lastTime = curTime;
   return interval > DEBOUNCE_TIME;
+}
+
+void Controls::handleSelection(GLFWwindow *window){
+  bool shouldSelect = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
+  if (shouldSelect && debounce(lastSelectedTime)) {
+    world->action(SELECT_CUBE);
+  }
 }
 
 void Controls::handleSave(GLFWwindow *window){

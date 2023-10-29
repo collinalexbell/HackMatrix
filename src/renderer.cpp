@@ -98,29 +98,48 @@ void Renderer::setupVertexAttributePointers() {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
+  const int CUBE_INSTANCE_ATTRIBS = 3;
+  size_t cubeVertexSizes[CUBE_INSTANCE_ATTRIBS] = {3*sizeof(float), sizeof(int), sizeof(int)};
+  size_t cubeInstanceStrides[CUBE_INSTANCE_ATTRIBS+1];
+  cubeInstanceStrides[0] = 0;
+  for(int i = 1; i<CUBE_INSTANCE_ATTRIBS+1; i++) {
+    cubeInstanceStrides[i] = cubeInstanceStrides[i-1] + cubeVertexSizes[i-1];
+  }
+  size_t totalStride = cubeInstanceStrides[CUBE_INSTANCE_ATTRIBS];
+
+  int cubeInstanceStride = (3 * sizeof(float)) + (1 * sizeof(int));
   // instance coord attribute
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)0);
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, totalStride, (void*)cubeInstanceStrides[0]);
   glEnableVertexAttribArray(2);
   glVertexAttribDivisor(2, 1);
 
   // instance texture attribute
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribIPointer(3, 1, GL_INT, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)(3 * sizeof(float)));
+  glVertexAttribIPointer(3, 1, GL_INT, totalStride, (void *)(cubeInstanceStrides[1]));
   glEnableVertexAttribArray(3);
   glVertexAttribDivisor(3, 1);
+
+  // instance selected attribute
+  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
+  glVertexAttribIPointer(4, 1, GL_INT, totalStride, (void *)(cubeInstanceStrides[2]));
+  glEnableVertexAttribArray(4);
+  glVertexAttribDivisor(4, 1);
 
   glBindVertexArray(APP_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
   // position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
   // texture coord attribute
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                        (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
   // instance coord attribute
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, (3 * sizeof(float)) + (1 * sizeof(int)), (void*)0);
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
+                        (3 * sizeof(float)) + (1 * sizeof(int)), (void *)0);
   glEnableVertexAttribArray(2);
   glVertexAttribDivisor(2, 1);
 
@@ -131,11 +150,10 @@ void Renderer::setupVertexAttributePointers() {
   glEnableVertexAttribArray(3);
   glVertexAttribDivisor(3, 1);
 
-
   // line
   glBindVertexArray(LINE_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
@@ -148,19 +166,23 @@ void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices,
+               GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 200000, (void*)0 , GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 200000,
+               (void *)0, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20, (void*)0 , GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20,
+               (void *)0, GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 200000), (void*)0, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 200000), (void *)0,
+               GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 100000), (void *)0, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 100000), (void *)0,
+               GL_STATIC_DRAW);
 }
 
-
-Renderer::Renderer(Camera* camera, World* world) {
+Renderer::Renderer(Camera *camera, World *world) {
   this->camera = camera;
   this->world = world;
   glEnable(GL_DEPTH_TEST);
@@ -170,14 +192,11 @@ Renderer::Renderer(Camera* camera, World* world) {
   setupVertexAttributePointers();
 
   std::vector<std::string> images = {
-    "images/bAndGrey.png",
-    "images/purpleRoad.png",
-    "images/bAndGreySpeckled.png",
-    "images/grass.png",
-    "images/pillar.png",
-    "images/reactor_texture.png"
-  };
-  textures.insert(std::pair<string,Texture*>("allBlocks", new Texture(images, GL_TEXTURE0)));
+      "images/bAndGrey.png",         "images/purpleRoad.png",
+      "images/bAndGreySpeckled.png", "images/grass.png",
+      "images/pillar.png",           "images/reactor_texture.png"};
+  textures.insert(std::pair<string, Texture *>(
+      "allBlocks", new Texture(images, GL_TEXTURE0)));
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
   shader->use(); // may need to move into loop to use changing uniforms
 
@@ -191,48 +210,52 @@ Renderer::Renderer(Camera* camera, World* world) {
   shader->setInt("selectedY", 0);
   shader->setInt("selectedZ", 0);
 
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
-  glClearColor(178.0/256, 178.0/256, 178.0/256, 1.0f);
+  glClearColor(178.0 / 256, 178.0 / 256, 178.0 / 256, 1.0f);
   glLineWidth(10.0);
 
   view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
-  projection = glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+  projection =
+      glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
   model = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
   appModel = glm::mat4(1.0f);
-
 }
 
 void Renderer::initAppTextures() {
-  for(int index=0; index<7; index++) {
+  for (int index = 0; index < 7; index++) {
     int textureN = 31 - index;
     int textureUnit = GL_TEXTURE0 + textureN;
     string textureName = "app" + to_string(index);
     textures.insert(
-      std::pair<string, Texture *>(textureName, new Texture(textureUnit)));
-      shader->setInt(textureName, textureN);
+        std::pair<string, Texture *>(textureName, new Texture(textureUnit)));
+    shader->setInt(textureName, textureN);
   }
 }
 
 void Renderer::updateTransformMatrices() {
-  unsigned int modelLoc = glGetUniformLocation(shader->ID,"model");
+  unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-
-  unsigned int appModelLoc = glGetUniformLocation(shader->ID,"appModel"); glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
-  unsigned int viewLoc = glGetUniformLocation(shader->ID,"view");
+  unsigned int appModelLoc = glGetUniformLocation(shader->ID, "appModel");
+  glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
+  unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
-  unsigned int projectionLoc = glGetUniformLocation(shader->ID,"projection");
+  unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void Renderer::addCube(int index, Cube cube) {
+void Renderer::renderCube(int index, Cube cube) {
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER,
-                  (sizeof(glm::vec3)+sizeof(int))*index, sizeof(glm::vec3), &cube.position);
-  glBufferSubData(GL_ARRAY_BUFFER,
-                  sizeof(glm::vec3)*(index+1)+sizeof(int)*index, sizeof(int), &cube.blockType);
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + (2 * sizeof(int))) * index,
+                  sizeof(glm::vec3), &cube.position);
+  glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * (index + 1) + (2 * sizeof(int))*index,
+                  sizeof(int), &cube.blockType);
+  const int selected = 1;
+  const int unselected = 0;
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * (index + 1) + sizeof(int) * index,
+                  sizeof(int), &(cube.selected ? selected : unselected));
 }
 
 void Renderer::addAppCube(int index, glm::vec3 pos) {
@@ -240,24 +263,24 @@ void Renderer::addAppCube(int index, glm::vec3 pos) {
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * index,
                   sizeof(glm::vec3), &pos);
   glBufferSubData(GL_ARRAY_BUFFER,
-                  sizeof(glm::vec3)*(index+1)+sizeof(int)*index, sizeof(int), &index);
+                  sizeof(glm::vec3) * (index + 1) + sizeof(int) * index,
+                  sizeof(int), &index);
 }
 
 void Renderer::addLine(int index, Line line) {
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
-  glBufferSubData(GL_ARRAY_BUFFER,
-                  (sizeof(glm::vec3) * 2)*index,
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 2) * index,
                   sizeof(glm::vec3), &line.points[0]);
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 2) * index + (sizeof(glm::vec3)),
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  (sizeof(glm::vec3) * 2) * index + (sizeof(glm::vec3)),
                   sizeof(glm::vec3), &line.points[1]);
 
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER,
-                  (sizeof(glm::vec3)*index),
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * index),
                   (sizeof(glm::vec3)), &line.color);
 }
 
-void Renderer::drawAppDirect(X11App* app) {
+void Renderer::drawAppDirect(X11App *app) {
   int index = world->getIndexOfApp(app);
   int screenWidth = 1920;
   int screenHeight = 1080;
@@ -286,20 +309,19 @@ void Renderer::screenshot() {
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   stringstream filenameSS;
-  filenameSS
-    << "screenshots/"
-    << std::put_time(&tm, "%d-%m-%Y %H-%M-%S.png");
+  filenameSS << "screenshots/" << std::put_time(&tm, "%d-%m-%Y %H-%M-%S.png");
 
   string filename = filenameSS.str();
 
   // Capture the screenshot and save it as a PNG file
-  int width = 1920;          // Width of your rendering area
-  int height = 1080;     // Height of your rendering area
-  int channels = 4; // 4 for RGBA
+  int width = 1920;  // Width of your rendering area
+  int height = 1080; // Height of your rendering area
+  int channels = 4;  // 4 for RGBA
   unsigned char *data = new unsigned char[width * height * channels];
   glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-  std::thread saver([filename, width, height, channels, data](){
-    stbi_write_png(filename.c_str(), width, height, channels, data, width * channels);
+  std::thread saver([filename, width, height, channels, data]() {
+    stbi_write_png(filename.c_str(), width, height, channels, data,
+                   width * channels);
     delete[] data;
   });
   saver.detach();
@@ -311,23 +333,23 @@ void Renderer::render() {
 
   // handleSelected
   Position selected = world->getLookedAtCube();
-  if(selected.valid) {
+  if (selected.valid) {
     shader->setBool("selectedValid", true);
     glm::vec3 selectedVec = glm::vec3(selected.x, selected.y, selected.z);
-    unsigned int selectedLoc = glGetUniformLocation(shader->ID,"selected");
+    unsigned int selectedLoc = glGetUniformLocation(shader->ID, "selected");
     glUniform3fv(selectedLoc, 1, glm::value_ptr(selectedVec));
   } else {
     shader->setBool("selectedValid", false);
   }
 
-  X11App* app = world->getLookedAtApp();
+  X11App *app = world->getLookedAtApp();
 
   updateTransformMatrices();
   shader->use(); // may need to move into loop to use changing uniforms
   shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
   shader->setBool("isLine", false);
-  if(app != NULL) {
+  if (app != NULL) {
     shader->setBool("appSelected", app->isFocused());
   } else {
     shader->setBool("appSelected", false);
@@ -338,7 +360,7 @@ void Renderer::render() {
   glBindVertexArray(APP_VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
 
-  if(app != NULL && app->isFocused()) {
+  if (app != NULL && app->isFocused()) {
     drawAppDirect(app);
   }
   shader->setBool("isApp", false);
@@ -347,14 +369,11 @@ void Renderer::render() {
   glBindVertexArray(LINE_VAO);
   glDrawArraysInstanced(GL_LINES, 0, 2, world->getLines().size());
   shader->setBool("isLine", false);
-
 }
 
-Camera* Renderer::getCamera() {
-  return camera;
-}
+Camera *Renderer::getCamera() { return camera; }
 
-void Renderer::registerApp(X11App* app, int index) {
+void Renderer::registerApp(X11App *app, int index) {
   int textureN = 31 - index;
   int textureUnit = GL_TEXTURE0 + textureN;
   int textureId = textures["app" + to_string(index)]->ID;
@@ -377,7 +396,7 @@ void Renderer::deregisterApp(int index) {
 
 Renderer::~Renderer() {
   delete shader;
-  for(auto& t: textures) {
+  for (auto &t : textures) {
     delete t.second;
   }
 }
