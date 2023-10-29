@@ -205,10 +205,7 @@ Renderer::Renderer(Camera *camera, World *world) {
 
   initAppTextures();
 
-  shader->setBool("selectedValid", false);
-  shader->setInt("selectedX", 0);
-  shader->setInt("selectedY", 0);
-  shader->setInt("selectedZ", 0);
+  shader->setBool("lookedAtValid", false);
 
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
@@ -331,15 +328,15 @@ void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->tick();
 
-  // handleSelected
-  Position selected = world->getLookedAtCube();
-  if (selected.valid) {
-    shader->setBool("selectedValid", true);
-    glm::vec3 selectedVec = glm::vec3(selected.x, selected.y, selected.z);
-    unsigned int selectedLoc = glGetUniformLocation(shader->ID, "selected");
-    glUniform3fv(selectedLoc, 1, glm::value_ptr(selectedVec));
+  // handleLookedAt
+  Position lookedAt = world->getLookedAtCube();
+  if (lookedAt.valid) {
+    shader->setBool("lookedAtValid", true);
+    glm::vec3 lookedAtVec = glm::vec3(lookedAt.x, lookedAt.y, lookedAt.z);
+    unsigned int lookedAtLoc = glGetUniformLocation(shader->ID, "lookedAt");
+    glUniform3fv(lookedAtLoc, 1, glm::value_ptr(lookedAtVec));
   } else {
-    shader->setBool("selectedValid", false);
+    shader->setBool("lookedAtValid", false);
   }
 
   X11App *app = world->getLookedAtApp();
