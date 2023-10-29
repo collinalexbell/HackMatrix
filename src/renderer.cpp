@@ -324,11 +324,7 @@ void Renderer::screenshot() {
   saver.detach();
 }
 
-void Renderer::render() {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  view = camera->tick();
-
-  // handleLookedAt
+void Renderer::handleLookedAtCube() {
   Position lookedAt = world->getLookedAtCube();
   if (lookedAt.valid) {
     shader->setBool("lookedAtValid", true);
@@ -338,21 +334,30 @@ void Renderer::render() {
   } else {
     shader->setBool("lookedAtValid", false);
   }
+}
 
-  X11App *app = world->getLookedAtApp();
-
-  updateTransformMatrices();
-  shader->use(); // may need to move into loop to use changing uniforms
+void Renderer::updateShaderUniforms() {
   shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
   shader->setBool("isLine", false);
+
+  updateTransformMatrices();
+  handleLookedAtCube();
+}
+
+void Renderer::renderCubes() {
+  glBindVertexArray(VAO);
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());
+}
+
+void Renderer::renderApps() {
+  X11App *app = world->getLookedAtApp();
   if (app != NULL) {
     shader->setBool("appSelected", app->isFocused());
   } else {
     shader->setBool("appSelected", false);
   }
-  glBindVertexArray(VAO);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());
+
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
@@ -361,11 +366,22 @@ void Renderer::render() {
     drawAppDirect(app);
   }
   shader->setBool("isApp", false);
+}
 
+void Renderer::renderLines() {
   shader->setBool("isLine", true);
   glBindVertexArray(LINE_VAO);
   glDrawArraysInstanced(GL_LINES, 0, 2, world->getLines().size());
   shader->setBool("isLine", false);
+}
+
+void Renderer::render() {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  view = camera->tick();
+  updateShaderUniforms();
+  renderCubes();
+  renderApps();
+  renderLines();
 }
 
 Camera *Renderer::getCamera() { return camera; }
