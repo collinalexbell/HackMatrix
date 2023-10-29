@@ -359,7 +359,7 @@ void World::action(Action toTake) {
       refreshRendererCubes();
     }
     if(toTake == SELECT_CUBE) {
-      lookedAt->selected = true;
+      lookedAt->selected = !lookedAt->selected;
       refreshRendererCubes();
     }
   }
