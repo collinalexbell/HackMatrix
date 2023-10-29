@@ -5,12 +5,13 @@ layout (location = 2) in vec3 aOffset;
 layout (location = 3) in int blockType;
 
 layout (location = 4) in vec3 lineInstanceColor;
-layout (location = 4) in int isSelectedVert;
+layout (location = 4) in int selectionVert;
 
 out vec2 TexCoord;
 out vec3 lineColor;
 flat out int BlockType;
-flat out int isSelected;
+flat out int isLookedAt;
+flat out int selection;
 
 uniform mat4 model;
 uniform mat4 appModel;
@@ -34,14 +35,14 @@ void main()
     gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
   }
 
-  isSelected = 0;
+  isLookedAt = 0;
   if(selectedValid) {
     if(abs(distance(aOffset,selected)) < 0.01) {
-      isSelected = 1;
+      isLookedAt = 1;
     }
   }
-  if (isSelectedVert == 1) {
-    isSelected = 2;
+  if (selectionVert > 0) {
+    selection = selectionVert;
   }
 
   TexCoord = aTexCoord;
