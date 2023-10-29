@@ -51,6 +51,11 @@ class Renderer {
 
   vector<unsigned int> frameBuffers;
   void drawAppDirect(X11App* app);
+  void handleLookedAtCube();
+  void updateShaderUniforms();
+  void renderCubes();
+  void renderApps();
+  void renderLines();
 public:
   Renderer(Camera*, World*);
   ~Renderer();
