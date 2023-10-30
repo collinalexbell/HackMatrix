@@ -58,6 +58,7 @@ class World {
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
   Cube *getCube(float x, float y, float z);
   const std::vector<Cube> getCubes();
+  const std::vector<Cube> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
 
 public:
   const float CUBE_SIZE = 0.1;
