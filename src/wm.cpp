@@ -16,7 +16,7 @@ int APP_HEIGHT = 1920 * .85 * .54;
 void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app, char **envp) {
   char *line;
   std::size_t len = 0;
-  FILE *pidPipe = popen(string("pidof " + pidOf).c_str(), "r");
+  FILE *pidPipe = popen(string("pidof -x " + pidOf).c_str(), "r");
   if (getline(&line, &len, pidPipe) == -1) {
     int pid = fork();
     if (pid == 0) {
@@ -32,16 +32,19 @@ void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
   }
   app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
   dynamicApps[app->getWindow()] = app;
+  logger->info("created " + className + " app");
 }
 
 void WM::createAndRegisterApps(char **envp) {
   logger->info("enter createAndRegisterApps()");
+
   forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
-  forkOrFindApp("/usr/bin/microsoft-edge", "microsoft-edge", "Microsoft-edge",
+  forkOrFindApp("/usr/bin/microsoft-edge", "msedge", "Microsoft-edge",
                 microsoftEdge, envp);
   forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
                 envp);
   forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
+
   logger->info("exit createAndRegisterApps()");
 }
 

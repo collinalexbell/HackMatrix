@@ -26,6 +26,7 @@ Api::Api(std::string bindAddress, World* world): world(world) {
 
 CommandServer::CommandServer(Api* api, std::string bindAddress, zmq::context_t& context): api(api) {
   logger = make_shared<spdlog::logger>("CommandServer", fileSink);
+  logger->set_level(spdlog::level::info);
   socket = zmq::socket_t(context, zmq::socket_type::rep);
   socket.bind (bindAddress);
 }
@@ -109,6 +110,19 @@ void Api::ProtobufCommandServer::poll(World *world) {
           glm::vec3 pos2(lineToAdd.x2(), lineToAdd.y2(), lineToAdd.z2());
           glm::vec3 color(0.5, 0.5, 0.5);
           batchedLines->push(Line{{pos1, pos2}, color});
+          api->releaseBatched();
+          break;
+        }
+        case ADD_CUBES: {
+          const AddCubes &cubesToAdd = apiRequest.addcubes();
+          auto cubes = cubesToAdd.cubes();
+          logger->debug("adding " + to_string(cubes.size()) + "cubes");
+          api->grabBatched();
+          auto batchedCubes = api->getBatchedCubes();
+          for(int i = 0; i < cubes.size(); i++) {
+            glm::vec3 pos(cubes[i].x(), cubes[i].y(), cubes[i].z());
+            batchedCubes->push(Cube{pos, cubes[i].blocktype()});
+          }
           api->releaseBatched();
           break;
         }

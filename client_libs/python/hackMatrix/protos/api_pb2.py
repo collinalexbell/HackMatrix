@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10protos/api.proto\"=\n\x07\x41\x64\x64\x43ube\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\x11\n\tblockType\x18\x04 \x01(\x05\"R\n\x08\x43learBox\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"Q\n\x07\x41\x64\x64Line\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"\x8c\x01\n\nApiRequest\x12\x1a\n\x04type\x18\x01 \x01(\x0e\x32\x0c.MessageType\x12\x1b\n\x07\x61\x64\x64\x43ube\x18\x02 \x01(\x0b\x32\x08.AddCubeH\x00\x12\x1d\n\x08\x63learBox\x18\x03 \x01(\x0b\x32\t.ClearBoxH\x00\x12\x1b\n\x07\x61\x64\x64Line\x18\x04 \x01(\x0b\x32\x08.AddLineH\x00\x42\t\n\x07payload*8\n\x0bMessageType\x12\x0c\n\x08\x41\x44\x44_CUBE\x10\x00\x12\r\n\tCLEAR_BOX\x10\x01\x12\x0c\n\x08\x41\x44\x44_LINE\x10\x02\x62\x06proto3'
+  serialized_pb=b'\n\x10protos/api.proto\"=\n\x07\x41\x64\x64\x43ube\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\x11\n\tblockType\x18\x04 \x01(\x05\"#\n\x08\x41\x64\x64\x43ubes\x12\x17\n\x05\x63ubes\x18\x01 \x03(\x0b\x32\x08.AddCube\"R\n\x08\x43learBox\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"Q\n\x07\x41\x64\x64Line\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"\xab\x01\n\nApiRequest\x12\x1a\n\x04type\x18\x01 \x01(\x0e\x32\x0c.MessageType\x12\x1b\n\x07\x61\x64\x64\x43ube\x18\x02 \x01(\x0b\x32\x08.AddCubeH\x00\x12\x1d\n\x08\x63learBox\x18\x03 \x01(\x0b\x32\t.ClearBoxH\x00\x12\x1b\n\x07\x61\x64\x64Line\x18\x04 \x01(\x0b\x32\x08.AddLineH\x00\x12\x1d\n\x08\x61\x64\x64\x43ubes\x18\x05 \x01(\x0b\x32\t.AddCubesH\x00\x42\t\n\x07payload*G\n\x0bMessageType\x12\x0c\n\x08\x41\x44\x44_CUBE\x10\x00\x12\r\n\tCLEAR_BOX\x10\x01\x12\x0c\n\x08\x41\x44\x44_LINE\x10\x02\x12\r\n\tADD_CUBES\x10\x03\x62\x06proto3'
 )
 
 _MESSAGETYPE = _descriptor.EnumDescriptor(
@@ -45,11 +45,16 @@ _MESSAGETYPE = _descriptor.EnumDescriptor(
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='ADD_CUBES', index=3, number=3,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=393,
-  serialized_end=449,
+  serialized_start=461,
+  serialized_end=532,
 )
 _sym_db.RegisterEnumDescriptor(_MESSAGETYPE)
 
@@ -57,6 +62,7 @@ MessageType = enum_type_wrapper.EnumTypeWrapper(_MESSAGETYPE)
 ADD_CUBE = 0
 CLEAR_BOX = 1
 ADD_LINE = 2
+ADD_CUBES = 3
 
 
 
@@ -110,6 +116,38 @@ _ADDCUBE = _descriptor.Descriptor(
   ],
   serialized_start=20,
   serialized_end=81,
+)
+
+
+_ADDCUBES = _descriptor.Descriptor(
+  name='AddCubes',
+  full_name='AddCubes',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='cubes', full_name='AddCubes.cubes', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=83,
+  serialized_end=118,
 )
 
 
@@ -175,8 +213,8 @@ _CLEARBOX = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=83,
-  serialized_end=165,
+  serialized_start=120,
+  serialized_end=202,
 )
 
 
@@ -242,8 +280,8 @@ _ADDLINE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=167,
-  serialized_end=248,
+  serialized_start=204,
+  serialized_end=285,
 )
 
 
@@ -283,6 +321,13 @@ _APIREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='addCubes', full_name='ApiRequest.addCubes', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -300,14 +345,16 @@ _APIREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=251,
-  serialized_end=391,
+  serialized_start=288,
+  serialized_end=459,
 )
 
+_ADDCUBES.fields_by_name['cubes'].message_type = _ADDCUBE
 _APIREQUEST.fields_by_name['type'].enum_type = _MESSAGETYPE
 _APIREQUEST.fields_by_name['addCube'].message_type = _ADDCUBE
 _APIREQUEST.fields_by_name['clearBox'].message_type = _CLEARBOX
 _APIREQUEST.fields_by_name['addLine'].message_type = _ADDLINE
+_APIREQUEST.fields_by_name['addCubes'].message_type = _ADDCUBES
 _APIREQUEST.oneofs_by_name['payload'].fields.append(
   _APIREQUEST.fields_by_name['addCube'])
 _APIREQUEST.fields_by_name['addCube'].containing_oneof = _APIREQUEST.oneofs_by_name['payload']
@@ -317,7 +364,11 @@ _APIREQUEST.fields_by_name['clearBox'].containing_oneof = _APIREQUEST.oneofs_by_
 _APIREQUEST.oneofs_by_name['payload'].fields.append(
   _APIREQUEST.fields_by_name['addLine'])
 _APIREQUEST.fields_by_name['addLine'].containing_oneof = _APIREQUEST.oneofs_by_name['payload']
+_APIREQUEST.oneofs_by_name['payload'].fields.append(
+  _APIREQUEST.fields_by_name['addCubes'])
+_APIREQUEST.fields_by_name['addCubes'].containing_oneof = _APIREQUEST.oneofs_by_name['payload']
 DESCRIPTOR.message_types_by_name['AddCube'] = _ADDCUBE
+DESCRIPTOR.message_types_by_name['AddCubes'] = _ADDCUBES
 DESCRIPTOR.message_types_by_name['ClearBox'] = _CLEARBOX
 DESCRIPTOR.message_types_by_name['AddLine'] = _ADDLINE
 DESCRIPTOR.message_types_by_name['ApiRequest'] = _APIREQUEST
@@ -330,6 +381,13 @@ AddCube = _reflection.GeneratedProtocolMessageType('AddCube', (_message.Message,
   # @@protoc_insertion_point(class_scope:AddCube)
   })
 _sym_db.RegisterMessage(AddCube)
+
+AddCubes = _reflection.GeneratedProtocolMessageType('AddCubes', (_message.Message,), {
+  'DESCRIPTOR' : _ADDCUBES,
+  '__module__' : 'protos.api_pb2'
+  # @@protoc_insertion_point(class_scope:AddCubes)
+  })
+_sym_db.RegisterMessage(AddCubes)
 
 ClearBox = _reflection.GeneratedProtocolMessageType('ClearBox', (_message.Message,), {
   'DESCRIPTOR' : _CLEARBOX,

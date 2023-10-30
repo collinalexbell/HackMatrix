@@ -4,6 +4,7 @@ enum MessageType {
   ADD_CUBE = 0;
   CLEAR_BOX = 1;
   ADD_LINE = 2;
+  ADD_CUBES = 3;
 }
 
 message AddCube {
@@ -11,6 +12,10 @@ message AddCube {
   float y = 2;
   float z = 3;
   int32 blockType = 4;
+}
+
+message AddCubes {
+  repeated AddCube cubes = 1;
 }
 
 message ClearBox {
@@ -39,5 +44,6 @@ message ApiRequest {
     AddCube addCube = 2;
     ClearBox clearBox = 3;
     AddLine addLine = 4;
+    AddCubes addCubes = 5;
   }
 }
