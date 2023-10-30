@@ -45,12 +45,24 @@ bool Cube::operator==(const Cube &cmp){
 }
 
 const std::vector<Cube> World::getCubes() {
-  std::vector<Cube> rv;
-  for(int x=0; x<CHUNK_SIZE; x++) {
-    for(int y=0; y<CHUNK_SIZE; y++) {
-      for(int z=0; z<CHUNK_SIZE; z++) {
-        Cube cube = cubes.at(x,y,z);
-        if(cube.blockType != -1) {
+  return getCubes(0,0,0,CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
+}
+
+const std::vector<Cube> World::getCubes(int _x1, int _y1, int _z1,
+                                        int _x2, int _y2, int _z2) {
+  int x1 = _x1 < _x2 ? _x1 : _x2;
+  int x2 = _x1 < _x2 ? _x2 : _x1;
+  int y1 = _y1 < _y2 ? _y1 : _y2;
+  int y2 = _y1 < _y2 ? _y2 : _y1;
+  int z1 = _z1 < _z2 ? _z1 : _z2;
+  int z2 = _z1 < _z2 ? _z2 : _z1;
+
+  vector<Cube> rv;
+  for (int x = x1; x < x2; x++) {
+    for (int y = y1; y < y2; y++) {
+      for (int z = z1; z < z2; z++) {
+        Cube cube = cubes.at(x, y, z);
+        if (cube.blockType != -1) {
           rv.push_back(cube);
         }
       }
