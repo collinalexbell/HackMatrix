@@ -50,7 +50,6 @@ class World {
 
   int gotItCount = 0;
   int CHUNK_SIZE = 128;
-  int cubeCount = 0;
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
