@@ -29,7 +29,7 @@ format = pyaudio.paInt16
 stream = audio.open(format=format, channels=1, rate=sample_rate, input=True, frames_per_buffer=chunk_size)
 
 last_time = time.time()
-time_interval = 1/2
+time_interval = 1/8
 while True:
     try:
         data = stream.read(chunk_size)
@@ -38,14 +38,14 @@ while True:
         freqs = fft(audio_data, n=40)
         # Send feature data to the graphics API using ZMQ
         #socket.send_string(str(feature))
-        height = 40
+        height = 10
         freqs = np.abs(freqs) / 32768.0 * height
         freqs = np.minimum(freqs, height)
         cubes = []
         for x, freq in enumerate(freqs[1:(int(len(freqs)/2))]):
             for y in range(int(freq)+1):
                 cubes.append(Cube(x,y+20,80,1))
-            for y in range(int(freq)+1, height):
+            for y in range(int(freq)+1, height+1):
                 cubes.append(Cube(x,y+20,80,-1))
         if time.time() - last_time > time_interval:
             add_cubes(cubes)

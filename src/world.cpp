@@ -151,9 +151,9 @@ void World::refreshRendererCubes() {
 }
 
 void World::updateDamage(int index) {
-  isDamaged = true;
   bool greaterDamage = !isDamaged || index < damageIndex;
   if (greaterDamage) {
+    isDamaged = true;
     damageIndex = index;
   }
 }
