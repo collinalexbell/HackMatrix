@@ -44,8 +44,8 @@ bool Cube::operator==(const Cube &cmp){
   return xEq && yEq && zEq && blockTypeEq;
 }
 
-const std::vector<Cube> World::getCubes() {
-  return getCubes(0,0,0,CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
+const std::vector<Cube*> World::getCubes() {
+  return vCubes;
 }
 
 const std::vector<Cube> World::getCubes(int _x1, int _y1, int _z1,
@@ -63,7 +63,7 @@ const std::vector<Cube> World::getCubes(int _x1, int _y1, int _z1,
       for (int z = z1; z < z2; z++) {
         Cube cube = cubes.at(x, y, z);
         if (cube.blockType != -1) {
-          rv.push_back(cube);
+          rv.push_back(cubes(x,y,z));
         }
       }
     }
@@ -86,19 +86,26 @@ void World::addCube(int x, int y, int z, int blockType) {
 }
 
 void World::addCube(Cube cube) {
+  int x = (int)cube.position.x;
+  int y = (int)cube.position.y;
+  int z = (int)cube.position.z;
+  int orderIndex;
+
+  Cube existing = cubes.at(x,y,z);
+  if(existing.blockType >= 0) {
+    removeCube(x,y,z);
+  }
+
+
   if(cube.blockType >= 0) {
     int orderIndex = cubeCount++;
-    // I may want to think about replacing glm::vec3 with int position in cube
-    cubes((int)cube.position.x,
-          (int)cube.position.y,
-          (int)cube.position.z) = cube;
+    updateDamage(orderIndex);
+    cubes(x,y,z) = cube;
+    vCubes.push_back(&cubes(x,y,z));
+
     if (renderer != NULL) {
       renderer->renderCube(orderIndex, cube);
     }
-  } else {
-    removeCube((int)cube.position.x,
-               (int)cube.position.y,
-               (int)cube.position.z);
   }
 }
 
@@ -115,10 +122,13 @@ void World::addLine(Line line) {
 }
 
 void World::refreshRendererCubes() {
-  vector<Cube> allCubes = getCubes();
+  vector<Cube*> allCubes = getCubes();
   cubeCount = allCubes.size();
-  for (int i = 0; i < allCubes.size(); i++) {
-    renderer->renderCube(i, allCubes[i]);
+  if(isDamaged) {
+    isDamaged = false;
+    for (int i = damageIndex; i < allCubes.size(); i++) {
+      renderer->renderCube(i, *allCubes[i]);
+    }
   }
   for(int i = 0; i < lines.size(); i++) {
     stringstream lineInfo;
@@ -140,8 +150,20 @@ void World::refreshRendererCubes() {
   }
 }
 
+void World::updateDamage(int index) {
+  isDamaged = true;
+  bool greaterDamage = !isDamaged || index < damageIndex;
+  if (greaterDamage) {
+    damageIndex = index;
+  }
+}
+
 void World::removeCube(int x, int y, int z) {
-  cubes.erase(x,y,z);
+  auto it = find(vCubes.begin(), vCubes.end(), &cubes(x,y,z));
+  int index = it - vCubes.begin();
+  updateDamage(index);
+  vCubes.erase(it);
+  cubes.erase(x, y, z);
 }
 
 void World::removeLine(Line l) {
@@ -371,7 +393,7 @@ void World::action(Action toTake) {
       refreshRendererCubes();
     }
     if(toTake == SELECT_CUBE) {
-      lookedAt->selected = !lookedAt->selected;
+      lookedAt->selected = lookedAt->selected ? 0 : 1;
       refreshRendererCubes();
     }
   }
@@ -428,7 +450,7 @@ void World::save(string filename) {
   std::ofstream outputFile(filename);
   auto cubes = getCubes();
   for(auto it = cubes.begin(); it != cubes.end(); it++) {
-    outputFile << it->position.x << "," << it->position.y << "," << it->position.z << "," << it->blockType << endl;
+    outputFile << (*it)->position.x << "," << (*it)->position.y << "," << (*it)->position.z << "," << (*it)->blockType << endl;
   }
   outputFile.close();
 }
