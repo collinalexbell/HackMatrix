@@ -1,6 +1,6 @@
 import numpy as np
 from net import Net
-from hackMatrix.api import add_cube,clear_box
+from hackMatrix.api import add_cube,clear_box,add_line
 import time
 
 model = Net()
@@ -42,9 +42,13 @@ out_x = out_x * 3
 
 # Connections between layers
 fc1 = model.fc1.weight.detach().numpy().T
+print(fc1.shape)
 fc2 = model.fc2.weight.detach().numpy().T
+print(fc2.shape)
 fc3 = model.fc3.weight.detach().numpy().T
+print(fc3.shape)
 out = model.fc4.weight.detach().numpy().T
+print(out.shape)
 fr_in, to_fc1 = (np.abs(fc1) > 0.1).nonzero()
 fr_fc1, to_fc2 = (np.abs(fc2) > 0.05).nonzero()
 fr_fc2, to_fc3 = (np.abs(fc3) > 0.05).nonzero()
@@ -62,10 +66,13 @@ x = np.hstack((in_x, fc1_x, fc2_x, fc3_x, out_x))
 y = np.hstack((in_y, fc1_y, fc2_y, fc3_y, out_y))
 z = np.hstack((in_z, fc1_z, fc2_z, fc3_z, out_z))
 
+xOffset = 40
+yOffset = 5
+zOffset = 110
 
-x = np.round(x).astype(int) + 50
-y = np.round(y).astype(int) + 40
-z = np.round(z).astype(int) + 50
+x = np.round(x).astype(int) + xOffset
+y = np.round(y).astype(int) + yOffset
+z = np.round(z).astype(int) + zOffset
 
 while(True):
     for i in range(100):
@@ -96,9 +103,12 @@ while(True):
             np.hstack((to_fc1, to_fc2, to_fc3, to_out)),
         )).T
 
+        print(x.shape)
         for _,connection in enumerate(connections):
-            print(connection)
-        print(connections.shape)
+            a = connection[0]
+            b = connection[1]
+            add_line(x[a]/10.0, y[a]/10.0, z[a]/10.0, x[b]/10.0, y[b]/10.0, z[b]/10.0)
+            time.sleep(0.1)
 
         time.sleep(5)
 
