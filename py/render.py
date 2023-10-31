@@ -1,6 +1,6 @@
 import numpy as np
 from net import Net
-from hackMatrix.api import add_cube,clear_box,add_line
+from hackMatrix.api import add_cube,clear_box, add_line
 import time
 
 model = Net()
@@ -49,10 +49,10 @@ fc3 = model.fc3.weight.detach().numpy().T
 print(fc3.shape)
 out = model.fc4.weight.detach().numpy().T
 print(out.shape)
-fr_in, to_fc1 = (np.abs(fc1) > 0.1).nonzero()
-fr_fc1, to_fc2 = (np.abs(fc2) > 0.05).nonzero()
-fr_fc2, to_fc3 = (np.abs(fc3) > 0.05).nonzero()
-fr_fc3, to_out = (np.abs(out) > 0.1).nonzero()
+fr_in, to_fc1 = (np.abs(fc1) > 0.05).nonzero()
+fr_fc1, to_fc2 = (np.abs(fc2) > 0.04).nonzero()
+fr_fc2, to_fc3 = (np.abs(fc3) > 0.04).nonzero()
+fr_fc3, to_out = (np.abs(out) > 0.02).nonzero()
 fr_fc1 += len(in_x)
 to_fc1 += len(in_x)
 fr_fc2 += len(in_x) + len(fc1_x)
@@ -66,49 +66,55 @@ x = np.hstack((in_x, fc1_x, fc2_x, fc3_x, out_x))
 y = np.hstack((in_y, fc1_y, fc2_y, fc3_y, out_y))
 z = np.hstack((in_z, fc1_z, fc2_z, fc3_z, out_z))
 
-xOffset = 40
+xOffset = 16
 yOffset = 5
-zOffset = 110
+zOffset = 20
 
 x = np.round(x).astype(int) + xOffset
 y = np.round(y).astype(int) + yOffset
 z = np.round(z).astype(int) + zOffset
 
-while(True):
-    for i in range(100):
-        clear_box(min(x), min(y), min(z), max(x), max(y)+6, max(z))
-        act_input = activity['input'][i]
-        act_fc1 = activity['fc1'][i]
-        act_fc2 = activity['fc2'][i]
-        act_fc3 = activity['fc3'][i]
-        act_out = activity['fc4'][i]
-        out = activity['output'][i]
-        s = np.hstack((
-            act_input.ravel() / act_input.max(),
-            act_fc1 / act_fc1.max(),
-            act_fc2 / act_fc2.max(),
-            act_fc3 / act_fc3.max(),
-            act_out / act_out.max(),
-        ))
+
+count = 0
+i = -1
+search = 0
+while(count < 2):
+    if activity['fc4'][search][9] == activity['fc4'][search].max():
+        i = search
+        count += 1
+    search = search + 1
 
 
-        for xi, yi, zi,si in zip(x,y,z,s):
-            if(si > 0.85):
-                add_cube(xi, yi, zi, 4)
-            else:
-                add_cube(xi, yi, zi, 0)
+clear_box(min(x), min(y), min(z), max(x), max(y)+6, max(z))
+act_input = activity['input'][i]
+act_fc1 = activity['fc1'][i]
+act_fc2 = activity['fc2'][i]
+act_fc3 = activity['fc3'][i]
+act_out = activity['fc4'][i]
+out = activity['output'][i]
+s = np.hstack((
+    act_input.ravel() / act_input.max(),
+    act_fc1 / act_fc1.max(),
+    act_fc2 / act_fc2.max(),
+    act_fc3 / act_fc3.max(),
+    act_out / act_out.max(),
+))
 
-        connections = np.vstack((
-            np.hstack((fr_in, fr_fc1, fr_fc2, fr_fc3)),
-            np.hstack((to_fc1, to_fc2, to_fc3, to_out)),
-        )).T
+for xi, yi, zi,si in zip(x,y,z,s):
+    if(si > 0.65):
+        add_cube(xi, yi, zi, 4)
+    else:
+        add_cube(xi, yi, zi, 0)
 
-        print(x.shape)
-        for _,connection in enumerate(connections):
-            a = connection[0]
-            b = connection[1]
-            add_line(x[a]/10.0, y[a]/10.0, z[a]/10.0, x[b]/10.0, y[b]/10.0, z[b]/10.0)
-            time.sleep(0.1)
+connections = np.vstack((
+    np.hstack((fr_in, fr_fc1, fr_fc2, fr_fc3)),
+    np.hstack((to_fc1, to_fc2, to_fc3, to_out)),
+)).T
 
-        time.sleep(5)
+print(x.shape)
+for _,connection in enumerate(connections):
+    a = connection[0]
+    b = connection[1]
+    add_line(x[a]/10.0, y[a]/10.0, z[a]/10.0, x[b]/10.0, y[b]/10.0, z[b]/10.0, s[a])
+
 

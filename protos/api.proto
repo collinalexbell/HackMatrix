@@ -36,6 +36,8 @@ message AddLine {
   float x2 = 4;
   float y2 = 5;
   float z2 = 6;
+
+  float intensity = 7;
 }
 
 message ApiRequest {

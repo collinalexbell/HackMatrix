@@ -63,8 +63,8 @@ def clear_box(x1, y1, z1, x2, y2, z2):
     # Receive the response
     socket.recv()
 
-def add_line(x1, y1, z1, x2, y2, z2):
-    add_line_msg = api_pb2.AddLine(x1=x1, y1=y1, z1=z1, x2=x2, y2=y2, z2=z2)
+def add_line(x1, y1, z1, x2, y2, z2, intensity):
+    add_line_msg = api_pb2.AddLine(x1=x1, y1=y1, z1=z1, x2=x2, y2=y2, z2=z2, intensity=intensity)
 
     # Create an API request
     api_request = api_pb2.ApiRequest(type="ADD_LINE", addLine=add_line_msg)

@@ -155,12 +155,9 @@ void Renderer::setupVertexAttributePointers() {
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
-  glVertexAttribDivisor(1, 1);
-
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void *)0);
   glEnableVertexAttribArray(1);
-  glVertexAttribDivisor(1, 2);
 }
 
 void Renderer::fillBuffers() {
@@ -179,7 +176,7 @@ void Renderer::fillBuffers() {
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 200000), (void *)0,
                GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 100000), (void *)0,
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 200000), (void *)0,
                GL_STATIC_DRAW);
 }
 
@@ -187,6 +184,8 @@ Renderer::Renderer(Camera *camera, World *world) {
   this->camera = camera;
   this->world = world;
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   genGlResources();
   bindGlResourcesForInit();
   fillBuffers();
@@ -273,7 +272,9 @@ void Renderer::addLine(int index, Line line) {
                   sizeof(glm::vec3), &line.points[1]);
 
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * index),
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 2 * index),
+                  (sizeof(glm::vec3)), &line.color);
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 2 * index + sizeof(glm::vec3)),
                   (sizeof(glm::vec3)), &line.color);
 }
 

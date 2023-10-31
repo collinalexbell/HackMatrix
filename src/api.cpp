@@ -108,7 +108,8 @@ void Api::ProtobufCommandServer::poll(World *world) {
           auto batchedLines = api->getBatchedLines();
           glm::vec3 pos1(lineToAdd.x1(), lineToAdd.y1(), lineToAdd.z1());
           glm::vec3 pos2(lineToAdd.x2(), lineToAdd.y2(), lineToAdd.z2());
-          glm::vec3 color(0.5, 0.5, 0.5);
+          float intensity = lineToAdd.intensity();
+          glm::vec3 color(intensity, intensity, intensity);
           batchedLines->push(Line{{pos1, pos2}, color});
           api->releaseBatched();
           break;
