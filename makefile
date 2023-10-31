@@ -33,13 +33,13 @@ build/camera.o: src/camera.cpp include/camera.h
 build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h
 	g++  -std=c++20 $(FLAGS) -o build/api.o -c src/api.cpp $(INCLUDES)
 
-build/controls.o: src/controls.cpp include/controls.h include/camera.h include/wm.h
+build/controls.o: src/controls.cpp include/controls.h include/camera.h include/wm.h include/world.h
 	g++  -std=c++20 $(FLAGS) -o build/controls.o -c src/controls.cpp $(INCLUDES)
 
 build/app.o: src/app.cpp include/app.h
 	g++  -std=c++20 $(FLAGS) -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
 
-build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h
+build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h include/world.h
 	g++ -std=c++20 $(FLAGS) -o build/wm.o -c src/wm.cpp $(INCLUDES)
 
 build/logger.o: src/logger.cpp include/logger.h
