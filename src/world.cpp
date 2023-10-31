@@ -44,7 +44,7 @@ bool Cube::operator==(const Cube &cmp){
   return xEq && yEq && zEq && blockTypeEq;
 }
 
-const std::vector<Cube> World::getCubes() {
+const std::vector<Cube*> World::getCubes() {
   return vCubes;
 }
 
@@ -101,7 +101,7 @@ void World::addCube(Cube cube) {
     int orderIndex = vCubes.size();
     updateDamage(orderIndex);
     cubes(x,y,z) = cube;
-    vCubes.push_back(cube);
+    vCubes.push_back(&cubes(x,y,z));
 
     if (renderer != NULL) {
       renderer->renderCube(orderIndex, cube);
@@ -122,11 +122,11 @@ void World::addLine(Line line) {
 }
 
 void World::refreshRendererCubes() {
-  vector<Cube> allCubes = getCubes();
+  vector<Cube*> allCubes = getCubes();
   if(isDamaged) {
     isDamaged = false;
     for (int i = damageIndex; i < allCubes.size(); i++) {
-      renderer->renderCube(i, allCubes[i]);
+      renderer->renderCube(i, *allCubes[i]);
     }
   }
   for(int i = 0; i < lines.size(); i++) {
@@ -158,15 +158,11 @@ void World::updateDamage(int index) {
 }
 
 void World::removeCube(int x, int y, int z) {
-  auto it = find_if(vCubes.begin(), vCubes.end(), [x,y,z](Cube c){
-    return int(c.position.x) == x && int(c.position.y) == y && int(c.position.z) == z;
-  });
-  if(it != vCubes.end()) {
-    int index = it - vCubes.begin();
-    updateDamage(index);
-    vCubes.erase(it);
-    cubes.erase(x, y, z);
-  }
+  auto it = find(vCubes.begin(), vCubes.end(), &cubes(x,y,z));
+  int index = it - vCubes.begin();
+  updateDamage(index);
+  vCubes.erase(it);
+  cubes.erase(x, y, z);
 }
 
 void World::removeLine(Line l) {
@@ -415,7 +411,12 @@ float World::getViewDistanceForWindowSize(X11App *app) {
   // view = projection^-1 * gl_vertex * vertex^-1
   float glVertexX = float(app->width)/1920;
   glm::vec4 gl_pos = glm::vec4(10000,0,0,0);
-  float zBest; float target = glVertexX; for (float z = 0.0; z <= 10.5; z = z + 0.001) {glm::vec4 candidate; candidate = renderer->projection * glm::vec4(0.5, 0, -z, 1); candidate = candidate/candidate.w;
+  float zBest;
+  float target = glVertexX;
+    for (float z = 0.0; z <= 10.5; z = z + 0.001) {
+      glm::vec4 candidate;
+      candidate = renderer->projection * glm::vec4(0.5, 0, -z, 1);
+      candidate = candidate/candidate.w;
       if(abs(candidate.x - target) < abs(gl_pos.x - target)) {
         gl_pos = candidate;
         zBest = z;
@@ -448,7 +449,7 @@ void World::save(string filename) {
   std::ofstream outputFile(filename);
   auto cubes = getCubes();
   for(auto it = cubes.begin(); it != cubes.end(); it++) {
-    outputFile << it->position.x << "," << it->position.y << "," << it->position.z << "," << it->blockType << endl;
+    outputFile << (*it)->position.x << "," << (*it)->position.y << "," << (*it)->position.z << "," << (*it)->blockType << endl;
   }
   outputFile.close();
 }
