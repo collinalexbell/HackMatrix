@@ -28,7 +28,7 @@ struct Line {
 struct Cube {
   glm::vec3 position;
   int blockType;
-  bool selected = false;
+  int selected = 0;
   bool operator==(const Cube& cmp);
 };
 
@@ -55,10 +55,14 @@ class World {
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
   Octree<Cube> cubes = Octree<Cube>(128, Cube{glm::vec3(0, 0, 0), -1});
+  vector<Cube*> vCubes;
+  int damageIndex = -1;
+  bool isDamaged = false;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
   Cube *getCube(float x, float y, float z);
-  const std::vector<Cube> getCubes();
+  const std::vector<Cube*> getCubes();
   const std::vector<Cube> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
+  void updateDamage(int index);
 
 public:
   const float CUBE_SIZE = 0.1;

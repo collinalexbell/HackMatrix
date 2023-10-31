@@ -249,10 +249,8 @@ void Renderer::renderCube(int index, Cube cube) {
                   sizeof(glm::vec3), &cube.position);
   glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * (index + 1) + (2 * sizeof(int))*index,
                   sizeof(int), &cube.blockType);
-  const int selected = 1;
-  const int unselected = 0;
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * (index + 1) + sizeof(int) * index,
-                  sizeof(int), &(cube.selected ? selected : unselected));
+                  sizeof(int), &cube.selected);
 }
 
 void Renderer::addAppCube(int index, glm::vec3 pos) {
