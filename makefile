@@ -3,7 +3,7 @@ PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
 PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
 INCLUDES        = -Iinclude -I/usr/local/include
-FLAGS = -pg
+FLAGS = 
 all: matrix trampoline
 
 matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o include/protos/api.pb.h src/api.pb.cc
@@ -25,7 +25,7 @@ build/texture.o: src/texture.cpp include/texture.h
 	g++  -std=c++20 $(FLAGS) -o build/texture.o -c src/texture.cpp $(INCLUDES)
 
 build/world.o: src/world.cpp include/world.h include/app.h include/camera.h
-	g++ -std=c++20  $(FLAGS) -o build/world.o -c src/world.cpp $(INCLUDES)
+	g++ -std=c++20  -O3 -o build/world.o -c src/world.cpp $(INCLUDES)
 
 build/camera.o: src/camera.cpp include/camera.h
 	g++  -std=c++20 $(FLAGS) -o build/camera.o -c src/camera.cpp $(INCLUDES)

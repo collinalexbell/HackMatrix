@@ -77,7 +77,7 @@ public:
 
   void addCube(int x, int y, int z, int blockType);
   void addCube(Cube cube);
-  void removeCube(int x, int y, int z);
+  void removeCube(int x, int y, int z, const Cube* c);
   void addLine(Line line);
   void removeLine(Line line);
   void addApp(glm::vec3, X11App* app);
