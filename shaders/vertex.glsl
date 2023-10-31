@@ -1,10 +1,10 @@
 #version 330 core
 layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 lineInstanceColor;
 layout (location = 1) in vec2 aTexCoord;
 layout (location = 2) in vec3 aOffset;
 layout (location = 3) in int blockType;
 
-layout (location = 4) in vec3 lineInstanceColor;
 layout (location = 4) in int selection;
 
 out vec2 TexCoord;

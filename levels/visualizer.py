@@ -30,6 +30,8 @@ stream = audio.open(format=format, channels=1, rate=sample_rate, input=True, fra
 
 last_time = time.time()
 time_interval = 1/8
+xOffset = 80
+yOffset = 30
 while True:
     try:
         data = stream.read(chunk_size)
@@ -44,9 +46,9 @@ while True:
         cubes = []
         for x, freq in enumerate(freqs[1:(int(len(freqs)/2))]):
             for y in range(int(freq)+1):
-                cubes.append(Cube(x,y+20,80,1))
+                cubes.append(Cube(x+xOffset,y+yOffset,30,1))
             for y in range(int(freq)+1, height+1):
-                cubes.append(Cube(x,y+20,80,-1))
+                cubes.append(Cube(x+xOffset,y+yOffset,30,-1))
         if time.time() - last_time > time_interval:
             add_cubes(cubes)
             last_time = time.time()

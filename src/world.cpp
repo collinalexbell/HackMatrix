@@ -113,8 +113,19 @@ void World::addLine(Line line) {
   if(line.color.r >= 0) {
     int i = lines.size();
     lines.push_back(line);
+    stringstream ss;
+    ss << "adding line (" << i << ")"
+       << line.points[0].x << ","
+       << line.points[0].y << ","
+       << line.points[0].z << ","
+       << line.points[1].x << ","
+       << line.points[1].y << ","
+       << line.points[1].z << ","
+       << line.color.r;
+    logger->critical(ss.str());
+    logger->flush();
     if(renderer != NULL) {
-      renderer->addLine(i, lines[i]);
+      renderer->addLine(i, line);
     }
   } else {
     removeLine(line);
@@ -388,8 +399,7 @@ void World::action(Action toTake) {
       addCube(x,y,z, lookedAt->blockType);
     }
     if(toTake == REMOVE_CUBE) {
-      Cube* c = &cubes(lookingAt.x,lookingAt.y,lookingAt.z);
-      removeCube(lookingAt.x,lookingAt.y,lookingAt.z, c);
+      removeCube(lookingAt.x,lookingAt.y,lookingAt.z, lookedAt);
       refreshRendererCubes();
     }
     if(toTake == SELECT_CUBE) {

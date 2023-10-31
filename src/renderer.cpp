@@ -153,13 +153,14 @@ void Renderer::setupVertexAttributePointers() {
   // line
   glBindVertexArray(LINE_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
+  glVertexAttribDivisor(1, 1);
 
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
-  glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(4);
-  glVertexAttribDivisor(1, 1);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void *)0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribDivisor(1, 2);
 }
 
 void Renderer::fillBuffers() {
@@ -264,7 +265,8 @@ void Renderer::addAppCube(int index, glm::vec3 pos) {
 
 void Renderer::addLine(int index, Line line) {
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 2) * index,
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  (sizeof(glm::vec3) * 2) * index,
                   sizeof(glm::vec3), &line.points[0]);
   glBufferSubData(GL_ARRAY_BUFFER,
                   (sizeof(glm::vec3) * 2) * index + (sizeof(glm::vec3)),
@@ -369,7 +371,7 @@ void Renderer::renderApps() {
 void Renderer::renderLines() {
   shader->setBool("isLine", true);
   glBindVertexArray(LINE_VAO);
-  glDrawArraysInstanced(GL_LINES, 0, 2, world->getLines().size());
+  glDrawArrays(GL_LINES, 0, world->getLines().size()*2);
   shader->setBool("isLine", false);
 }
 
