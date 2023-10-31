@@ -98,7 +98,7 @@ void World::addCube(Cube cube) {
 
 
   if(cube.blockType >= 0) {
-    int orderIndex = cubeCount++;
+    int orderIndex = vCubes.size();
     updateDamage(orderIndex);
     cubes(x,y,z) = cube;
     vCubes.push_back(&cubes(x,y,z));
@@ -123,7 +123,6 @@ void World::addLine(Line line) {
 
 void World::refreshRendererCubes() {
   vector<Cube*> allCubes = getCubes();
-  cubeCount = allCubes.size();
   if(isDamaged) {
     isDamaged = false;
     for (int i = damageIndex; i < allCubes.size(); i++) {
@@ -239,7 +238,7 @@ Cube* World::getCube(float x, float y, float z) {
 }
 
 int World::size() {
-  return cubeCount;
+  return vCubes.size();
 }
 
 
@@ -457,7 +456,6 @@ void World::save(string filename) {
 
 void World::load(string filename) {
   std::ifstream inputFile(filename);
-  cubeCount = 0;
   char comma;
   float x, y, z;
   int blockType;
