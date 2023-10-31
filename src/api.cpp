@@ -184,7 +184,7 @@ void Api::poll() {
 
 void Api::mutateWorld() {
   long time = glfwGetTime();
-  long target = time + 0.10;
+  long target = time + 0.005;
   bool hasDelete = false;
   grabBatched();
   stringstream logStream;

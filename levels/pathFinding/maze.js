@@ -70,11 +70,19 @@ async function render(maze, width, height) {
     }
 }
 
+function tick() {
+    return new Promise(resolve => setTimeout(resolve, 5));
+}
 async function clear(width,height){
-    await api.clearBox(xOffset,yOffset,zOffset,
-                       xOffset+(width*passageW),
-                       yOffset+(width*passageW),
-                       zOffset+wallH+1);
+    for(x=xOffset; x<xOffset+(width*passageW); x++) {
+        for(y=yOffset; y<yOffset+(width*passageW); y=y+1) {
+            await api.clearBox(x,y,zOffset,
+                               x+1,
+                               y+1,
+                               zOffset+wallH+1);
+        }
+        await tick();
+    }
 }
 
 async function drawVisit(pos) {

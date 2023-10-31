@@ -91,9 +91,9 @@ void World::addCube(Cube cube) {
   int z = (int)cube.position.z;
   int orderIndex;
 
-  Cube existing = cubes.at(x,y,z);
-  if(existing.blockType >= 0) {
-    removeCube(x,y,z);
+  const Cube *existing = &cubes.at(x,y,z);
+  if(existing->blockType >= 0) {
+    removeCube(x,y,z, existing);
   }
 
 
@@ -157,8 +157,8 @@ void World::updateDamage(int index) {
   }
 }
 
-void World::removeCube(int x, int y, int z) {
-  auto it = find(vCubes.begin(), vCubes.end(), &cubes(x,y,z));
+void World::removeCube(int x, int y, int z, const Cube* c) {
+  auto it = find(vCubes.begin(), vCubes.end(), c);
   int index = it - vCubes.begin();
   updateDamage(index);
   vCubes.erase(it);
@@ -388,7 +388,8 @@ void World::action(Action toTake) {
       addCube(x,y,z, lookedAt->blockType);
     }
     if(toTake == REMOVE_CUBE) {
-      removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
+      Cube* c = &cubes(lookingAt.x,lookingAt.y,lookingAt.z);
+      removeCube(lookingAt.x,lookingAt.y,lookingAt.z, c);
       refreshRendererCubes();
     }
     if(toTake == SELECT_CUBE) {
