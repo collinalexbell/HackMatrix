@@ -66,9 +66,9 @@ x = np.hstack((in_x, fc1_x, fc2_x, fc3_x, out_x))
 y = np.hstack((in_y, fc1_y, fc2_y, fc3_y, out_y))
 z = np.hstack((in_z, fc1_z, fc2_z, fc3_z, out_z))
 
-xOffset = 16
-yOffset = 5
-zOffset = 20
+xOffset = 100
+yOffset = 6
+zOffset = 40
 
 x = np.round(x).astype(int) + xOffset
 y = np.round(y).astype(int) + yOffset
