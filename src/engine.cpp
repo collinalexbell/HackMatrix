@@ -26,7 +26,7 @@ Engine::~Engine() {
   delete renderer;
   delete world;
   delete camera;
-  delete wm;
+  //delete wm;
   delete api;
 }
 

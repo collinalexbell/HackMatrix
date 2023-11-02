@@ -23,6 +23,13 @@ public:
   virtual void poll(World *world) = 0;
 };
 
+struct ApiCube {
+  float x;
+  float y;
+  float z;
+  int blockType;
+};
+
 class Api {
 
   class ProtobufCommandServer : public CommandServer {
@@ -42,7 +49,7 @@ class Api {
   CommandServer *legacyCommandServer;
   CommandServer *commandServer;
 
-  queue<Cube> batchedCubes;
+  queue<ApiCube> batchedCubes;
   queue<Line> batchedLines;
 
   mutex renderMutex;
@@ -52,7 +59,7 @@ class Api {
 
 protected:
   void grabBatched();
-  queue<Cube> *getBatchedCubes();
+  queue<ApiCube> *getBatchedCubes();
   queue<Line> *getBatchedLines();
   void releaseBatched();
 
