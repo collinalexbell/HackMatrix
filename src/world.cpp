@@ -20,6 +20,8 @@ using namespace std;
 
 World::World(Camera *camera, bool debug) : camera(camera) {
   int max = CHUNK_SIZE - 1;
+  logger = make_shared<spdlog::logger>("World", fileSink);
+  logger->set_level(spdlog::level::debug);
   if(debug) {
     addCube(0, 0, 0, 0);
     addCube(max, 0, 0, 0);
@@ -31,18 +33,9 @@ World::World(Camera *camera, bool debug) : camera(camera) {
     addCube(max, 0, max, 0);
     addCube(max, max, max, 0);
   }
-  logger = make_shared<spdlog::logger>("World", fileSink);
-  logger->set_level(spdlog::level::debug);
 }
 World::~World() {}
 
-bool Cube::operator==(const Cube &cmp){
-  bool xEq = this->position.x == cmp.position.x;
-  bool yEq = this->position.x == cmp.position.y;
-  bool zEq = this->position.z == cmp.position.z;
-  bool blockTypeEq = this->blockType == cmp.blockType;
-  return xEq && yEq && zEq && blockTypeEq;
-}
 
 const std::vector<Cube*> World::getCubes() {
   return vCubes;
@@ -62,7 +55,7 @@ const std::vector<Cube> World::getCubes(int _x1, int _y1, int _z1,
     for (int y = y1; y < y2; y++) {
       for (int z = z1; z < z2; z++) {
         Cube cube = cubes.at(x, y, z);
-        if (cube.blockType != -1) {
+        if (cube.blockType() != -1) {
           rv.push_back(cubes(x,y,z));
         }
       }
@@ -80,24 +73,26 @@ const std::vector<glm::vec3> World::getAppCubes() {
 }
 
 void World::addCube(int x, int y, int z, int blockType) {
+  stringstream ss;
+  ss << "adding cube:" << x << "," << y << "," << z;
+  logger->critical(ss.str());
   glm::vec3 pos(x, y, z);
-  Cube cube{pos, blockType};
+  Cube cube(pos, blockType);
   addCube(cube);
 }
 
 void World::addCube(Cube cube) {
-  int x = (int)cube.position.x;
-  int y = (int)cube.position.y;
-  int z = (int)cube.position.z;
+  int x = (int)cube.position().x;
+  int y = (int)cube.position().y;
+  int z = (int)cube.position().z;
   int orderIndex;
-
   const Cube *existing = &cubes.at(x,y,z);
-  if(existing->blockType >= 0) {
+  if(existing->blockType() >= 0) {
     removeCube(x,y,z, existing);
   }
 
 
-  if(cube.blockType >= 0) {
+  if(cube.blockType() >= 0) {
     int orderIndex = vCubes.size();
     updateDamage(orderIndex);
     cubes(x,y,z) = cube;
@@ -170,10 +165,10 @@ void World::updateDamage(int index) {
 
 void World::removeCube(int x, int y, int z, const Cube* c) {
   auto it = find(vCubes.begin(), vCubes.end(), c);
-  int index = it - vCubes.begin();
-  updateDamage(index);
-  vCubes.erase(it);
-  cubes.erase(x, y, z);
+    int index = it - vCubes.begin();
+    updateDamage(index);
+    vCubes.erase(it);
+    cubes.erase(x, y, z);
 }
 
 void World::removeLine(Line l) {
@@ -242,7 +237,7 @@ void World::attachRenderer(Renderer* renderer){
 
 Cube* World::getCube(float x, float y, float z) {
   Cube* rv = &cubes(x,y,z);
-  if(rv->blockType != -1) {
+  if(rv->blockType() != -1) {
     return rv;
   }
   return NULL;
@@ -396,14 +391,14 @@ void World::action(Action toTake) {
       int x = lookingAt.x + (int)lookingAt.normal.x;
       int y = lookingAt.y + (int)lookingAt.normal.y;
       int z = lookingAt.z + (int)lookingAt.normal.z;
-      addCube(x,y,z, lookedAt->blockType);
+      addCube(x,y,z, lookedAt->blockType());
     }
     if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z, lookedAt);
       refreshRendererCubes();
     }
     if(toTake == SELECT_CUBE) {
-      lookedAt->selected = lookedAt->selected ? 0 : 1;
+      lookedAt->selected() = lookedAt->selected() ? 0 : 1;
       refreshRendererCubes();
     }
   }
@@ -460,7 +455,7 @@ void World::save(string filename) {
   std::ofstream outputFile(filename);
   auto cubes = getCubes();
   for(auto it = cubes.begin(); it != cubes.end(); it++) {
-    outputFile << (*it)->position.x << "," << (*it)->position.y << "," << (*it)->position.z << "," << (*it)->blockType << endl;
+    outputFile << (*it)->position().x << "," << (*it)->position().y << "," << (*it)->position().z << "," << (*it)->blockType() << endl;
   }
   outputFile.close();
 }
@@ -471,7 +466,14 @@ void World::load(string filename) {
   float x, y, z;
   int blockType;
   while (inputFile >> x >> comma >> y >> comma >> z >> comma >> blockType) {
-    addCube(Cube{glm::vec3(x, y, z), blockType});
+    stringstream ss;
+    ss << "adding cube:" << x << "," << y << "," << z;
+    logger->critical(ss.str());
+    Cube c(glm::vec3(x, y, z), blockType);
+    ss.clear();
+    ss << "adding cube:" << c.position().x << "," << c.position().y << "," << c.position().z;
+    logger->critical(ss.str());
+    addCube(c);
   }
   inputFile.close();
 }

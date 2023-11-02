@@ -246,11 +246,11 @@ void Renderer::updateTransformMatrices() {
 void Renderer::renderCube(int index, Cube cube) {
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + (2 * sizeof(int))) * index,
-                  sizeof(glm::vec3), &cube.position);
+                  sizeof(glm::vec3), &cube.position());
   glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * (index + 1) + (2 * sizeof(int))*index,
-                  sizeof(int), &cube.blockType);
+                  sizeof(int), &cube.blockType());
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * (index + 1) + sizeof(int) * index,
-                  sizeof(int), &cube.selected);
+                  sizeof(int), &cube.selected());
 }
 
 void Renderer::addAppCube(int index, glm::vec3 pos) {

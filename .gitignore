@@ -28,3 +28,4 @@ py/scns
 screenshots/
 
 **/*.save
+perf.data*
