@@ -12,7 +12,7 @@ matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
 
-build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h
+build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
 
 build/main.o: src/main.cpp include/renderer.h include/camera.h include/controls.h include/world.h include/api.h include/wm.h
