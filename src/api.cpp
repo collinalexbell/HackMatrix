@@ -61,8 +61,7 @@ void Api::ProtobufCommandServer::poll(World *world) {
             const AddCube &cubeToAdd = apiRequest.addcube();
             api->grabBatched();
             auto batchedCubes = api->getBatchedCubes();
-            glm::vec3 pos(cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z());
-            batchedCubes->push(Cube{pos, cubeToAdd.blocktype()});
+            batchedCubes->push(ApiCube{cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z(), cubeToAdd.blocktype()});
             api->releaseBatched();
             break;
         }
@@ -95,7 +94,7 @@ void Api::ProtobufCommandServer::poll(World *world) {
             for(int y = y1; y <= y2; y++) {
               for(int z = z1; z <= z2; z++) {
                 glm::vec3 pos(x,y,z);
-                batchedCubes->push(Cube{pos, -1});
+                batchedCubes->push(ApiCube{(float)x,(float)y,(float)z, -1});
               }
             }
           }
@@ -122,7 +121,10 @@ void Api::ProtobufCommandServer::poll(World *world) {
           auto batchedCubes = api->getBatchedCubes();
           for(int i = 0; i < cubes.size(); i++) {
             glm::vec3 pos(cubes[i].x(), cubes[i].y(), cubes[i].z());
-            batchedCubes->push(Cube{pos, cubes[i].blocktype()});
+            batchedCubes->push(ApiCube{cubes[i].x(),
+                                       cubes[i].y(),
+                                       cubes[i].z(),
+                                       cubes[i].blocktype()});
           }
           api->releaseBatched();
           break;
@@ -160,7 +162,7 @@ void Api::TextCommandServer::poll(World *world) {
 
       if (command == "c") {
         glm::vec3 pos(x, y, z);
-        cubesToAdd->push(Cube{pos, type});
+        cubesToAdd->push(ApiCube{(float)x,(float)y,(float)z,type});
       }
       api->releaseBatched();
     }
@@ -190,11 +192,11 @@ void Api::mutateWorld() {
   grabBatched();
   stringstream logStream;
   for (; time <= target && batchedCubes.size() != 0; time = glfwGetTime()) {
-    Cube c = batchedCubes.front();
-    if(c.blockType() == -1) {
+    ApiCube c = batchedCubes.front();
+    if(c.blockType == -1) {
       hasDelete = true;
     }
-    world->addCube(c);
+    world->addCube(c.x, c.y, c.z, c.blockType);
     batchedCubes.pop();
   }
   time = glfwGetTime();
@@ -219,7 +221,7 @@ void Api::grabBatched() {
 
 void Api::releaseBatched() { renderMutex.unlock(); }
 
-queue<Cube> *Api::getBatchedCubes(){
+queue<ApiCube> *Api::getBatchedCubes(){
   return &batchedCubes;
 }
 

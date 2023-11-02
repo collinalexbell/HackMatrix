@@ -1,5 +1,8 @@
 #pragma once
 
+#include "logger.h"
+
+#include <memory>
 #include <vector>
 #include <map>
 #include <glm/glm.hpp>
@@ -10,17 +13,28 @@ struct CubeBuffer {
   int *ints;
   int damageIndex;
   int damageSize;
+  int totalSize;
 };
 
 class Cube {
+  static glm::vec3 zeroVec;
+  static int zeroBlock;
+  static int zeroSelected;
+  static int createDamageIndex;
   static vector<glm::vec3> vecs;
   static vector<int> ints;
-  static vector<int*> indices;
+  static vector<shared_ptr<int>> indices;
+  static bool isInit;
 
   static vector<int> toErase;
   static vector<int> referenceCount;
+  static shared_ptr<spdlog::logger> logger;
 
-  int index;
+  static void initClass();
+
+  shared_ptr<int> index;
+
+  void init(glm::vec3, int blockType, int selected);
 
 public:
   Cube();
@@ -36,6 +50,7 @@ public:
   int &blockType();
   int selected() const;
   int &selected();
+  void remove();
 
   static CubeBuffer render();
 };

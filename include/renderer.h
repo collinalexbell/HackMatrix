@@ -1,5 +1,6 @@
 #ifndef __RENDERER_H__
 #define __RENDERER_H__
+#include "cube.h"
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
@@ -66,6 +67,7 @@ public:
   void setupVertexAttributePointers();
   void fillBuffers();
   void renderCube(int index, Cube cube);
+  void updateCubeBuffer(CubeBuffer cubeBuffer);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);

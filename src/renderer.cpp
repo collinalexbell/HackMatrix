@@ -254,6 +254,23 @@ void Renderer::renderCube(int index, Cube cube) {
                   sizeof(int), &cube.selected());
 }
 
+void Renderer::updateCubeBuffer(CubeBuffer cubeBuffer) {
+  for(int index = 0; index < cubeBuffer.damageSize; index++) {
+    int offsetIndex = cubeBuffer.damageIndex + index;
+    glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    (sizeof(glm::vec3) + (2 * sizeof(int))) * offsetIndex,
+                    sizeof(glm::vec3), &cubeBuffer.vecs[index]);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    sizeof(glm::vec3) * (offsetIndex + 1) + (2 * sizeof(int)) * offsetIndex,
+                    sizeof(int), &cubeBuffer.ints[index*2]);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    (sizeof(glm::vec3) + sizeof(int)) * (offsetIndex + 1) +
+                        sizeof(int) * offsetIndex,
+                    sizeof(int), &cubeBuffer.ints[index*2 + 1]);
+  }
+}
+
 void Renderer::addAppCube(int index, glm::vec3 pos) {
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * index,
@@ -348,9 +365,10 @@ void Renderer::updateShaderUniforms() {
 }
 
 void Renderer::renderCubes() {
-  Cube::render();
+  CubeBuffer updatedCubes = Cube::render();
+  updateCubeBuffer(updatedCubes);
   glBindVertexArray(VAO);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, updatedCubes.totalSize);
 }
 
 void Renderer::renderApps() {
