@@ -99,6 +99,10 @@ void World::addCube(Cube cube) {
     vCubes.push_back(&cubes(x,y,z));
 
     if (renderer != NULL) {
+      stringstream ss;
+      //ss << "adding cube:" << cube.position().x << "," << cube.position().y << ","
+      //<< cube.position().z;
+      //logger->critical(ss.str());
       renderer->renderCube(orderIndex, cube);
     }
   }
