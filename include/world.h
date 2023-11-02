@@ -2,6 +2,7 @@
 #define __WORLD_H__
 
 #include "app.h"
+#include "cube.h"
 #include "camera.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
@@ -25,13 +26,6 @@ struct Line {
   glm::vec3 color;
 };
 
-struct Cube {
-  glm::vec3 position;
-  int blockType;
-  int selected = 0;
-  bool operator==(const Cube& cmp);
-};
-
 struct App {
   X11App* app;
   glm::vec3 position;
@@ -53,7 +47,7 @@ class World {
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
-  Octree<Cube> cubes = Octree<Cube>(128, Cube{glm::vec3(0, 0, 0), -1});
+  Octree<Cube> cubes = Octree<Cube>(128, Cube(glm::vec3(0, 0, 0), -1));
   vector<Cube*> vCubes;
   int damageIndex = -1;
   bool isDamaged = false;
