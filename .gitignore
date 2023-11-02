@@ -29,3 +29,5 @@ screenshots/
 
 **/*.save
 perf.data*
+
+_matrix
