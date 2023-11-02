@@ -3,6 +3,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "app.h"
+#include "cube.h"
 #include <vector>
 #include <iostream>
 #include <glad/glad.h>
@@ -347,6 +348,7 @@ void Renderer::updateShaderUniforms() {
 }
 
 void Renderer::renderCubes() {
+  Cube::render();
   glBindVertexArray(VAO);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, world->size());
 }
