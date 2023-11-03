@@ -72,6 +72,7 @@ void Renderer::genGlResources() {
   glGenBuffers(1, &VBO);
   glGenBuffers(1, &APP_VBO);
   glGenBuffers(1, &INSTANCE);
+  glGenBuffers(1, &BLOCK_INTS);
   glGenBuffers(1, &APP_INSTANCE);
 
   glGenBuffers(1, &LINE_VBO);
@@ -99,31 +100,19 @@ void Renderer::setupVertexAttributePointers() {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
-  const int CUBE_INSTANCE_ATTRIBS = 3;
-  size_t cubeVertexSizes[CUBE_INSTANCE_ATTRIBS] = {3*sizeof(float), sizeof(int), sizeof(int)};
-  size_t cubeInstanceStrides[CUBE_INSTANCE_ATTRIBS+1];
-  cubeInstanceStrides[0] = 0;
-  for(int i = 1; i<CUBE_INSTANCE_ATTRIBS+1; i++) {
-    cubeInstanceStrides[i] = cubeInstanceStrides[i-1] + cubeVertexSizes[i-1];
-  }
-  size_t totalStride = cubeInstanceStrides[CUBE_INSTANCE_ATTRIBS];
-
-  int cubeInstanceStride = (3 * sizeof(float)) + (1 * sizeof(int));
-  // instance coord attribute
+   // instance coord attribute
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, totalStride, (void*)cubeInstanceStrides[0]);
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
   glEnableVertexAttribArray(2);
   glVertexAttribDivisor(2, 1);
 
   // instance texture attribute
-  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribIPointer(3, 1, GL_INT, totalStride, (void *)(cubeInstanceStrides[1]));
+  glBindBuffer(GL_ARRAY_BUFFER, BLOCK_INTS);
+  glVertexAttribIPointer(3, 1, GL_INT, 2*sizeof(int), (void *)0);
   glEnableVertexAttribArray(3);
   glVertexAttribDivisor(3, 1);
 
-  // instance selected attribute
-  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribIPointer(4, 1, GL_INT, totalStride, (void *)(cubeInstanceStrides[2]));
+  glVertexAttribIPointer(4, 1, GL_INT, 2*sizeof(int), (void *)sizeof(int));
   glEnableVertexAttribArray(4);
   glVertexAttribDivisor(4, 1);
 
@@ -168,8 +157,12 @@ void Renderer::fillBuffers() {
   glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices,
                GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 200000,
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3)) * 200000,
                (void *)0, GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, BLOCK_INTS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(int)*2) * 200000, (void *)0,
+               GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20,
                (void *)0, GL_STATIC_DRAW);
@@ -244,30 +237,18 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void Renderer::renderCube(int index, Cube cube) {
-  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + (2 * sizeof(int))) * index,
-                  sizeof(glm::vec3), &cube.position());
-  glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * (index + 1) + (2 * sizeof(int))*index,
-                  sizeof(int), &cube.blockType());
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * (index + 1) + sizeof(int) * index,
-                  sizeof(int), &cube.selected());
-}
-
 void Renderer::updateCubeBuffer(CubeBuffer cubeBuffer) {
-  for(int index = 0; index < cubeBuffer.damageSize; index++) {
-    int offsetIndex = cubeBuffer.damageIndex + index;
+  if(cubeBuffer.damageSize > 0) {
     glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
     glBufferSubData(GL_ARRAY_BUFFER,
-                    (sizeof(glm::vec3) + (2 * sizeof(int))) * offsetIndex,
-                    sizeof(glm::vec3), &cubeBuffer.vecs[index]);
+                    sizeof(glm::vec3) * cubeBuffer.damageIndex,
+                    sizeof(glm::vec3) * cubeBuffer.damageSize,
+                    cubeBuffer.vecs);
+    glBindBuffer(GL_ARRAY_BUFFER, BLOCK_INTS);
     glBufferSubData(GL_ARRAY_BUFFER,
-                    sizeof(glm::vec3) * (offsetIndex + 1) + (2 * sizeof(int)) * offsetIndex,
-                    sizeof(int), &cubeBuffer.ints[index*2]);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    (sizeof(glm::vec3) + sizeof(int)) * (offsetIndex + 1) +
-                        sizeof(int) * offsetIndex,
-                    sizeof(int), &cubeBuffer.ints[index*2 + 1]);
+                    (2 * sizeof(int)) * cubeBuffer.damageIndex,
+                    sizeof(int)*2*cubeBuffer.damageSize,
+                    cubeBuffer.ints);
   }
 }
 

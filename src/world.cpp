@@ -21,7 +21,7 @@ using namespace std;
 World::World(Camera *camera, bool debug) : camera(camera) {
   int max = CHUNK_SIZE - 1;
   logger = make_shared<spdlog::logger>("World", fileSink);
-  logger->set_level(spdlog::level::debug);
+  logger->set_level(spdlog::level::critical);
   if(debug) {
     /*
     addCube(0, 0, 0, 0);
@@ -76,10 +76,7 @@ const std::vector<glm::vec3> World::getAppCubes() {
 
 void World::addCube(int x, int y, int z, int blockType) {
   int orderIndex;
-  Cube c = cubes.at(x,y,z);
-  if(c.blockType() >= 0) {
-    removeCube(x,y,z);
-  }
+  removeCube(x,y,z);
 
   if(blockType >= 0) {
     glm::vec3 pos(x,y,z);
@@ -91,7 +88,6 @@ void World::addCube(int x, int y, int z, int blockType) {
 
     if (renderer != NULL) {
       stringstream ss;
-      //renderer->renderCube(orderIndex, cube);
     }
   }
 }
@@ -120,15 +116,6 @@ void World::addLine(Line line) {
 }
 
 void World::refreshRendererCubes() {
-  /*
-  vector<Cube*> allCubes = getCubes();
-  if(isDamaged) {
-    isDamaged = false;
-    for (int i = damageIndex; i < allCubes.size(); i++) {
-      renderer->renderCube(i, *allCubes[i]);
-    }
-  }
-  */
   for(int i = 0; i < lines.size(); i++) {
     stringstream lineInfo;
     Line l = lines[i];
@@ -159,8 +146,10 @@ void World::updateDamage(int index) {
 
 void World::removeCube(int x, int y, int z) {
     Cube c = cubes(x,y,z);
-    c.remove();
-    cubes.erase(x, y, z);
+    if(c.blockType() >= 0) {
+      c.remove();
+      cubes.erase(x, y, z);
+    }
 }
 
 void World::removeLine(Line l) {

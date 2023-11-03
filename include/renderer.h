@@ -23,6 +23,7 @@ class Renderer {
   unsigned int VBO;
   unsigned int APP_VBO;
   unsigned int INSTANCE;
+  unsigned int BLOCK_INTS;
   unsigned int APP_INSTANCE;
   unsigned int VAO;
   unsigned int APP_VAO;
@@ -66,7 +67,6 @@ public:
   void bindGlResourcesForInit();
   void setupVertexAttributePointers();
   void fillBuffers();
-  void renderCube(int index, Cube cube);
   void updateCubeBuffer(CubeBuffer cubeBuffer);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
