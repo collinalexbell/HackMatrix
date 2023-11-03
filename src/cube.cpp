@@ -15,7 +15,7 @@ bool Cube::isInit = false;
 void Cube::initClass() {
   isInit = true;
   logger = make_shared<spdlog::logger>("Cube", fileSink);
-  logger->set_level(spdlog::level::debug);
+  logger->set_level(spdlog::level::critical);
 }
 
 glm::vec3 Cube::zeroVec(0, 0, 0);
@@ -126,51 +126,54 @@ int &Cube::selected() {
   return ints[*index*2+1];
 }
 
+
 CubeBuffer Cube::render() {
   int deleteDamageIndex = vecs.size();
+  int damageIndex = createDamageIndex;
   if(toErase.size()>0) {
     sort(toErase.begin(), toErase.end());
     deleteDamageIndex = toErase[0];
-  }
+    damageIndex = min(deleteDamageIndex, damageIndex);
 
-  int decrement = 0;
-  for(int index = deleteDamageIndex; index < indices.size(); index++) {
-    if(decrement < toErase.size() && toErase[decrement] == index) {
-      decrement++;
-    } else {
-      logger->info("was:" + to_string(*(indices[index])));
-      *(indices[index]) = *(indices[index]) - decrement;
-      logger->info("is:" + to_string(*indices[index]));
+    int decrement = 0;
+    for(int index = deleteDamageIndex; index < indices.size(); index++) {
+      if(decrement < toErase.size() && toErase[decrement] == index) {
+        decrement++;
+      } else {
+        logger->info("was:" + to_string(*(indices[index])));
+        *(indices[index]) = *(indices[index]) - decrement;
+        logger->info("is:" + to_string(*indices[index]));
+      }
     }
+
+    sort(toErase.begin(), toErase.end(), std::greater<>());
+    for(auto index = toErase.begin(); index != toErase.end(); index++) {
+      logger->debug("erasing:" + to_string(*index));
+      logger->flush();
+      vecs.erase(vecs.begin() + *index);
+
+      ints.erase(ints.begin() + (2 * (*index)) + 1);
+      ints.erase(ints.begin() + (2 * (*index)));
+
+      indices.erase(indices.begin() + *index);
+    }
+
+    toErase.clear();
+
   }
 
-  int damageIndex = min(deleteDamageIndex, createDamageIndex);
+  // reset createDamageIndex
+  int nCubes = vecs.size();
+  createDamageIndex = nCubes;
 
-  sort(toErase.begin(), toErase.end(), std::greater<>());
-  for(auto index = toErase.begin(); index != toErase.end(); index++) {
-    logger->debug("erasing:" + to_string(*index));
-    logger->flush();
-    vecs.erase(vecs.begin() + *index);
-
-    ints.erase(ints.begin() + (2 * (*index)) + 1);
-    ints.erase(ints.begin() + (2 * (*index)));
-
-    indices.erase(indices.begin() + *index);
-  }
-
-  toErase.clear();
-
-  // reset it to end()
-  createDamageIndex = vecs.size();
-
-  int size = vecs.size() - damageIndex;
+  int size = nCubes - damageIndex;
   if(size > 0) {
     return CubeBuffer{
       &vecs[damageIndex],
       &ints[damageIndex*2],
       damageIndex,
       size,
-      (int)vecs.size()
+      nCubes
     };
   } else {
     return CubeBuffer{
@@ -178,7 +181,7 @@ CubeBuffer Cube::render() {
       NULL,
       0,
       0,
-      (int)vecs.size()
+      nCubes
     };
   }
 }

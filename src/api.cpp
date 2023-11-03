@@ -193,9 +193,6 @@ void Api::mutateWorld() {
   stringstream logStream;
   for (; time <= target && batchedCubes.size() != 0; time = glfwGetTime()) {
     ApiCube c = batchedCubes.front();
-    if(c.blockType == -1) {
-      hasDelete = true;
-    }
     world->addCube(c.x, c.y, c.z, c.blockType);
     batchedCubes.pop();
   }
