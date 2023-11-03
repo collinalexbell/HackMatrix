@@ -1,4 +1,4 @@
-# Atlanetica
+# HackMatrix
 
 ## Design Mindset
 I am building a Jewell
@@ -33,6 +33,8 @@ V probably not
 
 - "Hack with friends"
 
+- "Pratice core CS concepts"
+
 
 
 ## Development Milestones
@@ -59,7 +61,7 @@ V probably not
 - HackMatrix book
 
 ## Kickstarter Launch Date
-Tues Oct 31st
+?????
 
 
 ## process
