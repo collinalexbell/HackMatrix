@@ -46,7 +46,6 @@ class Api {
   World *world;
 
   zmq::context_t context;
-  CommandServer *legacyCommandServer;
   CommandServer *commandServer;
 
   queue<ApiCube> batchedCubes;
