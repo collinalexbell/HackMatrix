@@ -18,7 +18,6 @@ using namespace std;
 Api::Api(std::string bindAddress, World* world): world(world) {
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
-  legacyCommandServer = new TextCommandServer(this, "tcp://*:5555", context);
   commandServer = new ProtobufCommandServer(this, bindAddress, context);
   offRenderThread = thread(&Api::poll, this);
 }
@@ -49,136 +48,133 @@ void Api::requestWorldData(World* world, string serverAddr) {
 }
 
 void Api::ProtobufCommandServer::poll(World *world) {
+  try {
     zmq::message_t recv;
-    zmq::recv_result_t result = socket.recv(recv, zmq::recv_flags::dontwait);
+    zmq::recv_result_t result = socket.recv(recv);
 
     if (result >= 0) {
-        ApiRequest apiRequest;
-        apiRequest.ParseFromArray(recv.data(), recv.size());
+      ApiRequest apiRequest;
+      apiRequest.ParseFromArray(recv.data(), recv.size());
 
-        switch(apiRequest.type()) {
-        case ADD_CUBE: {
-            const AddCube &cubeToAdd = apiRequest.addcube();
-            api->grabBatched();
-            auto batchedCubes = api->getBatchedCubes();
-            batchedCubes->push(ApiCube{cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z(), cubeToAdd.blocktype()});
-            api->releaseBatched();
-            break;
-        }
-        case CLEAR_BOX: {
-          const ClearBox &boxToClear = apiRequest.clearbox();
-          api->grabBatched();
-          auto batchedCubes = api->getBatchedCubes();
+      switch (apiRequest.type()) {
+      case ADD_CUBE: {
+        const AddCube &cubeToAdd = apiRequest.addcube();
+        api->grabBatched();
+        auto batchedCubes = api->getBatchedCubes();
+        batchedCubes->push(ApiCube{cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z(),
+                                   cubeToAdd.blocktype()});
+        api->releaseBatched();
+        break;
+      }
+      case CLEAR_BOX: {
+        const ClearBox &boxToClear = apiRequest.clearbox();
+        api->grabBatched();
+        auto batchedCubes = api->getBatchedCubes();
 
-          bool x1Smaller = boxToClear.x1() < boxToClear.x2();
-          float x1 = x1Smaller ? boxToClear.x1() : boxToClear.x2();
-          float x2 = x1Smaller ? boxToClear.x2() : boxToClear.x1();
+        bool x1Smaller = boxToClear.x1() < boxToClear.x2();
+        float x1 = x1Smaller ? boxToClear.x1() : boxToClear.x2();
+        float x2 = x1Smaller ? boxToClear.x2() : boxToClear.x1();
 
-          bool y1Smaller = boxToClear.y1() < boxToClear.y2();
-          float y1 = y1Smaller ? boxToClear.y1() : boxToClear.y2();
-          float y2 = y1Smaller ? boxToClear.y2() : boxToClear.y1();
+        bool y1Smaller = boxToClear.y1() < boxToClear.y2();
+        float y1 = y1Smaller ? boxToClear.y1() : boxToClear.y2();
+        float y2 = y1Smaller ? boxToClear.y2() : boxToClear.y1();
 
-          bool z1Smaller = boxToClear.z1() < boxToClear.z2();
-          float z1 = z1Smaller ? boxToClear.z1() : boxToClear.z2();
-          float z2 = z1Smaller ? boxToClear.z2() : boxToClear.z1();
+        bool z1Smaller = boxToClear.z1() < boxToClear.z2();
+        float z1 = z1Smaller ? boxToClear.z1() : boxToClear.z2();
+        float z2 = z1Smaller ? boxToClear.z2() : boxToClear.z1();
 
-          stringstream boxString;
-          boxString << "clearBox: "
-                    << x1 << ", " << y1 << ", " << z1 << ", "
-                    << x2 << ", " << y2 << ", " << z2 << endl;
+        stringstream boxString;
+        boxString << "clearBox: " << x1 << ", " << y1 << ", " << z1 << ", "
+                  << x2 << ", " << y2 << ", " << z2 << endl;
 
-
-          logger->critical(boxString.str());
-          logger->flush();
-          for(int x = x1; x <= x2; x++) {
-            for(int y = y1; y <= y2; y++) {
-              for(int z = z1; z <= z2; z++) {
-                glm::vec3 pos(x,y,z);
-                batchedCubes->push(ApiCube{(float)x,(float)y,(float)z, -1});
-              }
+        logger->critical(boxString.str());
+        logger->flush();
+        for (int x = x1; x <= x2; x++) {
+          for (int y = y1; y <= y2; y++) {
+            for (int z = z1; z <= z2; z++) {
+              glm::vec3 pos(x, y, z);
+              batchedCubes->push(ApiCube{(float)x, (float)y, (float)z, -1});
             }
           }
-          api->releaseBatched();
-          break;
         }
-        case ADD_LINE: {
-          const AddLine &lineToAdd = apiRequest.addline();
-          api->grabBatched();
-          auto batchedLines = api->getBatchedLines();
-          glm::vec3 pos1(lineToAdd.x1(), lineToAdd.y1(), lineToAdd.z1());
-          glm::vec3 pos2(lineToAdd.x2(), lineToAdd.y2(), lineToAdd.z2());
-          float intensity = lineToAdd.intensity();
-          glm::vec3 color(intensity, intensity, intensity);
-          batchedLines->push(Line{{pos1, pos2}, color});
-          api->releaseBatched();
-          break;
+        api->releaseBatched();
+        break;
+      }
+      case ADD_LINE: {
+        const AddLine &lineToAdd = apiRequest.addline();
+        api->grabBatched();
+        auto batchedLines = api->getBatchedLines();
+        glm::vec3 pos1(lineToAdd.x1(), lineToAdd.y1(), lineToAdd.z1());
+        glm::vec3 pos2(lineToAdd.x2(), lineToAdd.y2(), lineToAdd.z2());
+        float intensity = lineToAdd.intensity();
+        glm::vec3 color(intensity, intensity, intensity);
+        batchedLines->push(Line{{pos1, pos2}, color});
+        api->releaseBatched();
+        break;
+      }
+      case ADD_CUBES: {
+        const AddCubes &cubesToAdd = apiRequest.addcubes();
+        auto cubes = cubesToAdd.cubes();
+        logger->debug("adding " + to_string(cubes.size()) + "cubes");
+        api->grabBatched();
+        auto batchedCubes = api->getBatchedCubes();
+        for (int i = 0; i < cubes.size(); i++) {
+          glm::vec3 pos(cubes[i].x(), cubes[i].y(), cubes[i].z());
+          batchedCubes->push(ApiCube{cubes[i].x(), cubes[i].y(), cubes[i].z(),
+                                     cubes[i].blocktype()});
         }
-        case ADD_CUBES: {
-          const AddCubes &cubesToAdd = apiRequest.addcubes();
-          auto cubes = cubesToAdd.cubes();
-          logger->debug("adding " + to_string(cubes.size()) + "cubes");
-          api->grabBatched();
-          auto batchedCubes = api->getBatchedCubes();
-          for(int i = 0; i < cubes.size(); i++) {
-            glm::vec3 pos(cubes[i].x(), cubes[i].y(), cubes[i].z());
-            batchedCubes->push(ApiCube{cubes[i].x(),
-                                       cubes[i].y(),
-                                       cubes[i].z(),
-                                       cubes[i].blocktype()});
-          }
-          api->releaseBatched();
-          break;
-        }
-        default:
-          break;
-        }
+        api->releaseBatched();
+        break;
+      }
+      default:
+        break;
+      }
 
-        // Send a reply back to the client
-        zmq::message_t reply(5);
-        memcpy(reply.data(), "recv", 5);
-        socket.send(reply, zmq::send_flags::none);
+      // Send a reply back to the client
+      zmq::message_t reply(5);
+      memcpy(reply.data(), "recv", 5);
+      socket.send(reply, zmq::send_flags::none);
     }
+  } catch (zmq::error_t &e) {}
 }
 
 void Api::TextCommandServer::poll(World *world) {
-  zmq::message_t request;
+  try {
+    zmq::message_t request;
+    zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
+    if (result >= 0) {
+      std::string data(static_cast<char *>(request.data()), request.size());
 
-  zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
-  if (result >= 0) {
-    std::string data(static_cast<char *>(request.data()), request.size());
+      std::istringstream iss(data);
 
-    std::istringstream iss(data);
+      while (!iss.eof()) {
+        api->grabBatched();
+        auto cubesToAdd = api->getBatchedCubes();
+        std::string command;
+        int type;
+        int x, y, z;
+        iss >> command >> x >> y >> z >> type;
 
-    while (!iss.eof()) {
-      api->grabBatched();
-      auto cubesToAdd = api->getBatchedCubes();
-      std::string command;
-      int type;
-      int x, y, z;
-      iss >> command >> x >> y >> z >> type;
+        stringstream ss;
+        ss << command << "," << x << "," << y << "," << z << endl;
 
-      stringstream ss;
-      ss << command << "," << x << "," << y << "," << z << endl;
-
-      if (command == "c") {
-        glm::vec3 pos(x, y, z);
-        cubesToAdd->push(ApiCube{(float)x,(float)y,(float)z,type});
+        if (command == "c") {
+          glm::vec3 pos(x, y, z);
+          cubesToAdd->push(ApiCube{(float)x,(float)y,(float)z,type});
+        }
+        api->releaseBatched();
       }
-      api->releaseBatched();
-    }
 
-    //  Send reply back to client
-    zmq::message_t reply(5);
-    memcpy(reply.data(), "recv", 5);
-    socket.send(reply, zmq::send_flags::none);
-  }
+      //  Send reply back to client
+      zmq::message_t reply(5);
+      memcpy(reply.data(), "recv", 5);
+      socket.send(reply, zmq::send_flags::none);
+    }
+  } catch(zmq::error_t& e) {}
 }
 
 void Api::poll() {
   while (continuePolling) {
-    if (legacyCommandServer != NULL) {
-      legacyCommandServer->poll(world);
-    }
     if (commandServer != NULL) {
       commandServer->poll(world);
     }
@@ -228,7 +224,7 @@ queue<Line> *Api::getBatchedLines() {
 
 Api::~Api() {
   continuePolling = false;
+  context.shutdown();
   offRenderThread.join();
-  delete legacyCommandServer;
   delete commandServer;
 }
