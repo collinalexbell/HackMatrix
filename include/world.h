@@ -3,6 +3,7 @@
 
 #include "app.h"
 #include "cube.h"
+#include "chunk.h"
 #include "camera.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
@@ -47,14 +48,13 @@ class World {
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
-  Octree<Cube> cubes = Octree<Cube>(128, Cube(glm::vec3(0, 0, 0), -1));
-  vector<Cube*> vCubes;
+  Chunk cubes;
   int damageIndex = -1;
   bool isDamaged = false;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
   Cube *getCube(float x, float y, float z);
   const std::vector<Cube*> getCubes();
-  const std::vector<Cube> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
+  const std::vector<Cube*> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
   void updateDamage(int index);
 
 public:
@@ -76,7 +76,6 @@ public:
   void addApp(glm::vec3, X11App* app);
   void removeApp(X11App* app);
   int getIndexOfApp(X11App* app);
-  int size();
 
   void refreshRendererCubes();
   void action(Action);

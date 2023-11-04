@@ -40,10 +40,10 @@ World::~World() {}
 
 
 const std::vector<Cube*> World::getCubes() {
-  return vCubes;
+  return getCubes(0,0,0,CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
 }
 
-const std::vector<Cube> World::getCubes(int _x1, int _y1, int _z1,
+const std::vector<Cube*> World::getCubes(int _x1, int _y1, int _z1,
                                         int _x2, int _y2, int _z2) {
   int x1 = _x1 < _x2 ? _x1 : _x2;
   int x2 = _x1 < _x2 ? _x2 : _x1;
@@ -52,13 +52,13 @@ const std::vector<Cube> World::getCubes(int _x1, int _y1, int _z1,
   int z1 = _z1 < _z2 ? _z1 : _z2;
   int z2 = _z1 < _z2 ? _z2 : _z1;
 
-  vector<Cube> rv;
+  vector<Cube*> rv;
   for (int x = x1; x < x2; x++) {
     for (int y = y1; y < y2; y++) {
       for (int z = z1; z < z2; z++) {
-        Cube cube = cubes.at(x, y, z);
-        if (cube.blockType() != -1) {
-          rv.push_back(cubes(x,y,z));
+        Cube *cube = cubes.getCube(x, y, z);
+        if (cube->blockType() != -1) {
+          rv.push_back(cube);
         }
       }
     }
@@ -81,11 +81,7 @@ void World::addCube(int x, int y, int z, int blockType) {
   if(blockType >= 0) {
     glm::vec3 pos(x,y,z);
     Cube cube(pos, blockType);
-    int orderIndex = vCubes.size();
-    updateDamage(orderIndex);
-    cubes(x,y,z) = cube;
-    vCubes.push_back(&cubes(x,y,z));
-
+    cubes.addCube(cube, x,y,z);
     if (renderer != NULL) {
       stringstream ss;
     }
@@ -145,10 +141,10 @@ void World::updateDamage(int index) {
 }
 
 void World::removeCube(int x, int y, int z) {
-    Cube c = cubes(x,y,z);
-    if(c.blockType() >= 0) {
-      c.remove();
-      cubes.erase(x, y, z);
+    Cube *c = cubes.getCube(x,y,z);
+    if(c->blockType() >= 0) {
+      c->remove();
+      cubes.removeCube(x, y, z);
     }
 }
 
@@ -217,17 +213,12 @@ void World::attachRenderer(Renderer* renderer){
 }
 
 Cube* World::getCube(float x, float y, float z) {
-  Cube* rv = &cubes(x,y,z);
+  Cube* rv = cubes.getCube(x,y,z);
   if(rv->blockType() != -1) {
     return rv;
   }
   return NULL;
 }
-
-int World::size() {
-  return vCubes.size();
-}
-
 
 glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
   glm::vec3 halfAVoxel(0.5);
