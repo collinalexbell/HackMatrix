@@ -6,8 +6,8 @@ INCLUDES        = -Iinclude -I/usr/local/include
 FLAGS = 
 all: matrix trampoline
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o include/protos/api.pb.h src/api.pb.cc
-	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o include/protos/api.pb.h src/api.pb.cc
+	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -24,7 +24,7 @@ build/shader.o: src/shader.cpp include/shader.h
 build/texture.o: src/texture.cpp include/texture.h
 	g++  -std=c++20 $(FLAGS) -o build/texture.o -c src/texture.cpp $(INCLUDES)
 
-build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h
+build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h
 	g++ -std=c++20  -O3 -o build/world.o -c src/world.cpp $(INCLUDES)
 
 build/camera.o: src/camera.cpp include/camera.h
@@ -51,6 +51,8 @@ build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h incl
 build/cube.o: src/cube.cpp include/cube.h
 	g++ -std=c++20 $(FLAGS) -o build/cube.o -c src/cube.cpp $(INCLUDES)
 
+build/chunk.o: src/chunk.cpp include/chunk.h
+	g++ -std=c++20 $(FLAGS) -o build/chunk.o -c src/chunk.cpp $(INCLUDES)
 
 include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=./ protos/api.proto

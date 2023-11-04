@@ -70,17 +70,8 @@ async function render(maze, width, height) {
     }
 }
 
-function tick() {
-    return new Promise(resolve => setTimeout(resolve, 1));
-}
 async function clear(width,height){
-    for(x=xOffset; x<xOffset+(width*passageW); x++) {
-        for(y=yOffset; y<yOffset+(width*passageW); y=y+1) {
-            await api.addCube(x,y,zOffset, -1);
-            await api.addCube(x,y,zOffset+1, -1);
-            await tick();
-        }
-    }
+    await api.clearBox(xOffset,yOffset,zOffset,xOffset+(width*passageW),yOffset+(width*passageW), zOffset+1);
 }
 
 async function drawVisit(pos) {

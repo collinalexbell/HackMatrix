@@ -67,9 +67,11 @@ async function solve(mazeGrid) {
 
 async function main() {
     await api.init();
-    mazeGrid = maze.generate(width, height);
-    await maze.render(mazeGrid, width, height);
-    await solve(mazeGrid);
+    while(true) {
+        mazeGrid = maze.generate(width, height);
+        await maze.render(mazeGrid, width, height);
+        await solve(mazeGrid);
+    }
 }
 
 main();
