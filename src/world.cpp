@@ -22,19 +22,6 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   int max = CHUNK_SIZE - 1;
   logger = make_shared<spdlog::logger>("World", fileSink);
   logger->set_level(spdlog::level::critical);
-  if(debug) {
-    /*
-    addCube(0, 0, 0, 0);
-    addCube(max, 0, 0, 0);
-    addCube(0,max,0,0);
-    addCube(0,0,max, 0);
-    addCube(max, max, 0, 0);
-    addCube(0, max, max,0);
-    addCube(max,0, max, 0);
-    addCube(max, 0, max, 0);
-    addCube(max, max, max, 0);
-    */
-  }
 }
 World::~World() {}
 
@@ -370,8 +357,7 @@ void World::action(Action toTake) {
       refreshRendererCubes();
     }
     if(toTake == SELECT_CUBE) {
-      lookedAt->selected() = lookedAt->selected() ? 0 : 1;
-      refreshRendererCubes();
+      lookedAt->toggleSelect();
     }
   }
 }

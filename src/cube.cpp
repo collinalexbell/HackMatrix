@@ -3,7 +3,7 @@
 #include <memory>
 #include <sstream>
 
-int Cube::createDamageIndex = 0;
+int Cube::damageIndex = 0;
 vector<glm::vec3> Cube::vecs;
 vector<int> Cube::ints;
 vector<int> Cube::referenceCount;
@@ -52,8 +52,8 @@ void Cube::init(glm::vec3 position, int blockType, int selected) {
     index = make_shared<int>(vecs.size());
     logger->debug("add cube" + to_string(*index));
     logger->flush();
-    if(*index < createDamageIndex) {
-      createDamageIndex = *index;
+    if(*index < damageIndex) {
+      damageIndex = *index;
     }
     referenceCount.push_back(1);
     indices.push_back(index);
@@ -126,10 +126,14 @@ int &Cube::selected() {
   return ints[*index*2+1];
 }
 
+void Cube::toggleSelect() {
+  selected() = selected() ? 0 : 1;
+  if(*index < damageIndex) damageIndex = *index;
+}
+
 
 CubeBuffer Cube::render() {
   int deleteDamageIndex = vecs.size();
-  int damageIndex = createDamageIndex;
   if(toErase.size()>0) {
     sort(toErase.begin(), toErase.end());
     deleteDamageIndex = toErase[0];
@@ -164,11 +168,10 @@ CubeBuffer Cube::render() {
 
   // reset createDamageIndex
   int nCubes = vecs.size();
-  createDamageIndex = nCubes;
-
   int size = nCubes - damageIndex;
+  CubeBuffer rv;
   if(size > 0) {
-    return CubeBuffer{
+    rv = CubeBuffer{
       &vecs[damageIndex],
       &ints[damageIndex*2],
       damageIndex,
@@ -176,7 +179,7 @@ CubeBuffer Cube::render() {
       nCubes
     };
   } else {
-    return CubeBuffer{
+    rv = CubeBuffer{
       NULL,
       NULL,
       0,
@@ -184,4 +187,6 @@ CubeBuffer Cube::render() {
       nCubes
     };
   }
+  damageIndex = nCubes;
+  return rv;
 }

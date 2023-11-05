@@ -20,7 +20,7 @@ class Cube {
   static glm::vec3 zeroVec;
   static int zeroBlock;
   static int zeroSelected;
-  static int createDamageIndex;
+  static int damageIndex;
   static vector<glm::vec3> vecs;
   static vector<int> ints;
   static vector<shared_ptr<int>> indices;
@@ -50,6 +50,7 @@ public:
   int &blockType();
   int selected() const;
   int &selected();
+  void toggleSelect();
   void remove();
 
   static CubeBuffer render();
