@@ -11,6 +11,7 @@
 #include "logger.h"
 #include <unordered_map>
 #include <vector>
+#include <queue>
 
 class Renderer;
 
@@ -56,6 +57,7 @@ class World {
   const std::vector<Cube*> getCubes();
   const std::vector<Cube*> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
   void updateDamage(int index);
+  queue<glm::vec3> availableAppPositions;
 
 public:
   const float CUBE_SIZE = 0.1;
@@ -74,6 +76,7 @@ public:
   void addLine(Line line);
   void removeLine(Line line);
   void addApp(glm::vec3, X11App* app);
+  void addApp(X11App* app);
   void removeApp(X11App* app);
   int getIndexOfApp(X11App* app);
 
