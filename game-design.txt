@@ -44,6 +44,9 @@ V probably not
   - neural network with visualization: https://github.com/wmvanvliet/scns/tree/main/visualizations/multilayer_perceptron & https://www.youtube.com/watch?v=Tsvxx-GGlTg
   - cellular automata: https://www.youtube.com/watch?v=dQJ5aEsP6Fs
 
+- Fully functioning windows (right clicks)
+- Ability to open and close arbitrary programs (fully functioning WM)
+
 - 3 enchant objects in your environment
   - Open a video when you click on a fictional character
   - Make a voxel follow you.
