@@ -59,11 +59,10 @@ void WM::allow_input_passthrough(Window window) {
 }
 
 void WM::addAppsToWorld() {
-  float z = 10.0;
-  world->addApp(glm::vec3(2.8, 1.0, z), terminator);
-  world->addApp(glm::vec3(4.0, 1.0, z), emacs);
-  world->addApp(glm::vec3(4.0, 1.75, z), microsoftEdge);
-  world->addApp(glm::vec3(5.2, 1.0, z), obs);
+  world->addApp(terminator);
+  world->addApp(emacs);
+  world->addApp(microsoftEdge);
+  world->addApp(obs);
 }
 
 void WM::onMapRequest(XMapRequestEvent event) {
@@ -185,7 +184,7 @@ void WM::mutateWorld() {
   renderLoopMutex.lock();
   for(auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
-      world->addApp(glm::vec3(2.5, 1.75, 10.0), *it);
+      world->addApp(*it);
     } catch(exception &e) {
       logger->error(e.what());
       logger->flush();

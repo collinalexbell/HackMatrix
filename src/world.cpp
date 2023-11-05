@@ -22,6 +22,12 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   int max = CHUNK_SIZE - 1;
   logger = make_shared<spdlog::logger>("World", fileSink);
   logger->set_level(spdlog::level::critical);
+  float z = 10.0;
+  availableAppPositions.push(glm::vec3(2.8, 1.0, z));
+  availableAppPositions.push(glm::vec3(4.0, 1.0, z));
+  availableAppPositions.push(glm::vec3(4.0, 1.75, z));
+  availableAppPositions.push(glm::vec3(5.2, 1.0, z));
+  availableAppPositions.push(glm::vec3(2.5, 1.75, 10.0));
 }
 World::~World() {}
 
@@ -145,6 +151,14 @@ void World::removeLine(Line l) {
     if(glm::distance(a0,a1)<EPSILON && glm::distance(b0,b1)<EPSILON) {
       lines.erase(it);
     }
+  }
+}
+
+void World::addApp(X11App* app) {
+  glm::vec3 pos = availableAppPositions.front();
+  addApp(pos, app);
+  if(availableAppPositions.size() > 1) {
+    availableAppPositions.pop();
   }
 }
 
