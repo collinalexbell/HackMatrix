@@ -330,3 +330,8 @@ $ OpenGL
 ## Funding milestones
 - Multiplayer
 -
+
+
+## Freedom vs Controlled experience
+- Lessons should be relatively controlled
+- The world should be free
