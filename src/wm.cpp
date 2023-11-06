@@ -127,10 +127,17 @@ void WM::handleSubstructure() {
     XEvent e;
     XNextEvent(display, &e);
     stringstream eventInfo;
+    Window root = XRootWindow(display, 0);
+
+    XWindowAttributes attrs;
 
     switch (e.type) {
     case CreateNotify:
       logger->info("CreateNotify event");
+      XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
+      if(e.xcreatewindow.override_redirect == True) {
+        logger->info("e.xcreatewindow.override_redirect is true. Will need to create window now. MapRequest will not come");
+      }
       logger->flush();
       break;
     case DestroyNotify:
@@ -154,23 +161,11 @@ void WM::handleSubstructure() {
       logger->flush();
       break;
     case ConfigureRequest: {
-      /*
-      XWindowChanges changes;
-      // Copy fields from e to changes.
-      XConfigureRequestEvent event = e.xconfigurerequest;
-      changes.x = event.x;
-      changes.y = event.y;
-      changes.width = event.width;
-      changes.height = event.height;
-      changes.border_width = event.border_width;
-      changes.sibling = event.above;
-      changes.stack_mode = event.detail;
-      // Grant request by calling XConfigureWindow().
-      XConfigureWindow(display, event.window, event.value_mask, &changes);
-      */
+      logger->info("ConfigureRequest event");
       break;
     }
     case MapRequest:
+      logger->info("MapRequest event");
       onMapRequest(e.xmaprequest);
       break;
     case KeyPress:
