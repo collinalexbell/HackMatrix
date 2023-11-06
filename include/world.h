@@ -45,7 +45,6 @@ class World {
   Camera *camera = NULL;
 
   int gotItCount = 0;
-  int CHUNK_SIZE = 128;
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;

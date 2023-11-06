@@ -1,8 +1,8 @@
 #include "chunk.h"
 
 Chunk::Chunk() {
-  data = make_unique<Cube* []>(xSize * ySize * zSize);
-  for(int i=0; i < xSize*ySize*zSize; i++) {
+  data = make_unique<Cube* []>(size[0] * size[1] * size[2]);
+  for(int i=0; i < size[0]*size[1]*size[2]; i++) {
     data[i] = NULL;
   }
 }
@@ -21,4 +21,8 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
   data[index(x, y, z)] = new Cube(c);
 }
 
-int Chunk::index(int x, int y, int z) { return x * ySize * zSize + y * zSize + z; }
+int Chunk::index(int x, int y, int z) { return x * size[1] * size[2] + y * size[2] + z; }
+
+const vector<int> Chunk::getSize() {
+  return size;
+}

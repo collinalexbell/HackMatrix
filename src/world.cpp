@@ -19,7 +19,6 @@ using namespace std;
 
 
 World::World(Camera *camera, bool debug) : camera(camera) {
-  int max = CHUNK_SIZE - 1;
   logger = make_shared<spdlog::logger>("World", fileSink);
   logger->set_level(spdlog::level::critical);
   float z = 10.0;
@@ -33,7 +32,8 @@ World::~World() {}
 
 
 const std::vector<Cube*> World::getCubes() {
-  return getCubes(0,0,0,CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE);
+  auto chunkSize = cubes.getSize();
+  return getCubes(0,0,0,chunkSize[0], chunkSize[1], chunkSize[2]);
 }
 
 const std::vector<Cube*> World::getCubes(int _x1, int _y1, int _z1,
@@ -340,7 +340,8 @@ Position World::getLookedAtCube() {
       }
     }
     // positive guard until chunking is done
-    if(x >= 0 && y >= 0 && z >= 0 && x < CHUNK_SIZE && y < CHUNK_SIZE && z < CHUNK_SIZE) {
+    auto chunkSize = cubes.getSize();
+    if(x >= 0 && y >= 0 && z >= 0 && x < chunkSize[0] && y < chunkSize[1] && z < chunkSize[2]) {
       Cube* closest = getCube(x,y,z);
       if(closest!=NULL) {
         rv.x = x;
