@@ -74,42 +74,10 @@ V probably not
 - Modulate the time I spend doing various tasks in the short-wave
        - do important tasks (matrix/phoenix infode improvements longer)
 
-## MVP
-- functioning 3d window manager
-- breakdown manager into x components
-  - x levels
-
-## Levels
-
-Create a server
-
-## path to MVP
-- (defun ready? (game)
-         (answers-all-the-questions-appropriately game))
-
-- make a list of KeyResults that would allow this software to earn 4k
-- make a list of KeyResults that would allow this software to earn 150k
-- make a list of KeyResults that would allow this software to get funding from YC
-- implement the features 1 by 1
-- iterate on game design on each short wave
-- post the game every so often to determine how popular it will be (and to gain a following)
-
-## the questions
-- Will this software make me 150k?
-- Will this software make me 4k so I can go to Florida & Oregon with my dog and pay off storage fees?
-- Am I proud of this software?
-
-## KeyResults
-- 150k
-  - 15,000 @ 10$ or 3,000 @ 50$
-- 4k
-  - 400 @ 10$ or 80 @ 50$
-
-
 ## The toy: How can the matrix be a toy?
-- place blocks
+$ place blocks
 - code blocks
-- watch blocks do stuff
+$ watch blocks do stuff
 
 ## essential experience
 - concious hackers of their own world and become fully enlightened technokings
