@@ -39,6 +39,7 @@ class WM {
   std::shared_ptr<spdlog::logger> logger;
   void onHotkeyPress(XKeyEvent event);
   void unfocusApp();
+  void createApp(Window window);
 
 public:
   void createAndRegisterApps(char **envp);

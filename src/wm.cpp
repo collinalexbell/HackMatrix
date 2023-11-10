@@ -65,24 +65,22 @@ void WM::addAppsToWorld() {
   world->addApp(obs);
 }
 
+void WM::createApp(Window window) {
+    X11App *app =
+        X11App::byWindow(window, display, screen, APP_WIDTH, APP_HEIGHT);
+    renderLoopMutex.lock();
+    appsToAdd.push_back(app);
+    renderLoopMutex.unlock();
+    dynamicApps[window] = app;
+}
+
 void WM::onMapRequest(XMapRequestEvent event) {
   char *name;
   XFetchName(display, event.window, &name);
   string sName(name);
   bool alreadyRegistered = dynamicApps.count(event.window);
   if (!alreadyRegistered && !sName.ends_with("one")) {
-    try {
-      logger->info("creating window: " + sName);
-      logger->flush();
-      X11App *app = X11App::byWindow(event.window, display, screen, APP_WIDTH, APP_HEIGHT);
-      renderLoopMutex.lock();
-      appsToAdd.push_back(app);
-      renderLoopMutex.unlock();
-      dynamicApps[event.window]=app;
-    } catch(exception &e) {
-      logger->error(e.what());
-      logger->flush();
-    }
+    createApp(event.window);
   }
   stringstream ss;
   ss << "window created: " << event.window << " "<< name;
@@ -136,7 +134,7 @@ void WM::handleSubstructure() {
       logger->info("CreateNotify event");
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
       if(e.xcreatewindow.override_redirect == True) {
-        logger->info("e.xcreatewindow.override_redirect is true. Will need to create window now. MapRequest will not come");
+        createApp(e.xcreatewindow.window);
       }
       logger->flush();
       break;
