@@ -56,6 +56,7 @@ public:
   void unfocus(Window matrix);
   void resize(int width, int height);
   bool isFocused();
+  bool isAccessory();
   Window getWindow();
 };
 

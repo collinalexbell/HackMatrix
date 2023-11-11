@@ -308,3 +308,12 @@ void X11App::attachTexture(int textureUnit, int textureId) {
   this->textureUnit = textureUnit;
   this->textureId = textureId;
 }
+
+bool X11App::isAccessory() {
+  XWindowAttributes attrs;
+  XGetWindowAttributes(display, appWindow, &attrs);
+  if(attrs.override_redirect) {
+    return true;
+  }
+  return false;
+}
