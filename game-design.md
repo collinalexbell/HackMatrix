@@ -66,6 +66,9 @@ V probably not
 ## Kickstarter Launch Date
 11-12-23
 
+## Marketing
+- Hackathons: I can host hackathons where users hang out in virtual dorm rooms
+
 ## process
 - Simply make the best game I can
 - Keep polishing and compressing it like a diamond
