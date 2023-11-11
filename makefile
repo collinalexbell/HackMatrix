@@ -3,7 +3,7 @@ PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
 PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
 INCLUDES        = -Iinclude -I/usr/local/include
-FLAGS = 
+FLAGS = -g
 all: matrix trampoline
 
 matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o include/protos/api.pb.h src/api.pb.cc
@@ -63,6 +63,10 @@ include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 
 build/x-raise: src/x-raise.c
 	gcc -o build/x-raise src/x-raise.c -lX11
+
+docs: game-design.md
+	pandoc -s game-design.md -o index.html
+	python -m http.server
 
 #######################
 ######## Utils ########
