@@ -155,10 +155,18 @@ void World::removeLine(Line l) {
 }
 
 void World::addApp(X11App* app) {
-  glm::vec3 pos = availableAppPositions.front();
-  addApp(pos, app);
-  if(availableAppPositions.size() > 1) {
-    availableAppPositions.pop();
+  if(!app->isAccessory()) {
+    glm::vec3 pos = availableAppPositions.front();
+    addApp(pos, app);
+    if(availableAppPositions.size() > 1) {
+      availableAppPositions.pop();
+    }
+  } else {
+    /*
+    int index = appCubes.size();
+    apps.push_back(app);
+    renderer->registerApp(app, index);
+    */
   }
 }
 
