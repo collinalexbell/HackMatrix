@@ -1,6 +1,7 @@
 #include "engine.h"
 
 #include <iostream>
+#include <signal.h>
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -31,12 +32,21 @@ GLFWwindow* initGraphics() {
   return window;
 }
 
+void waitForTTYSwitch() {
+  sleep(5);
+}
+
 void cleanup(Engine* engine) {
   glfwTerminate();
   delete engine;
 }
 
 int main(int argc, char** argv, char** envp) {
+  if(argc > 1) {
+    if(argv[1] == "--debug") {
+      waitForTTYSwitch();
+    }
+  }
   try {
     GLFWwindow *window = initGraphics();
     if(window == NULL) return -1;
