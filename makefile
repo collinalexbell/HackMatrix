@@ -4,7 +4,7 @@ PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
 PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
 INCLUDES        = -Iinclude -I/usr/local/include
 FLAGS = -g
-all: matrix trampoline
+all: matrix trampoline build/diagnosis
 
 matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o include/protos/api.pb.h src/api.pb.cc
 	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
@@ -63,6 +63,9 @@ include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 
 build/x-raise: src/x-raise.c
 	gcc -o build/x-raise src/x-raise.c -lX11
+
+build/diagnosis: src/diagnosis.cpp
+	g++ -o build/diagnosis src/diagnosis.cpp
 
 docs: game-design.md
 	pandoc -s game-design.md -o index.html
