@@ -4,8 +4,8 @@
 - Immerse hackers in their projects
 
 ## Design Mindset
-### I am building a Jewell
-- funadmentally this means that bugs and stability come before features
+### I am building a Jewel
+- fundamentally this means that bugs and stability come before features
 
 ```
 $ implemented
