@@ -114,7 +114,9 @@ Window getWindowByClass(Display *display, string search) {
             string(className).find(search) != string::npos) {
           XWindowAttributes attrs;
           XGetWindowAttributes(display, window, &attrs);
-          if(attrs.width > largestWidth) {
+	  bool larger = attrs.width > largestWidth;
+	  bool equalAndNotAccessory = attrs.width == largestWidth && !attrs.override_redirect;
+          if(larger || equalAndNotAccessory) {
             largestWidth = attrs.width;
             rv = window;
             found = true;
