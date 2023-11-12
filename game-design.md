@@ -2,6 +2,7 @@
 
 ## Design Mindset
 I am building a Jewell
+    - funadmentally this means that bugs and stability come before features
 
 ```
 $ implemented
