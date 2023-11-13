@@ -50,7 +50,6 @@ public:
   int height;
   void appTexture();
   void attachTexture(int textureUnit, int textureId);
-  void click(int x, int y);
   void focus(Window matrix);
   void takeInputFocus();
   void unfocus(Window matrix);

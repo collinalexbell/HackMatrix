@@ -37,22 +37,13 @@ bool X11App::initAppClass(Display *display, int screen) {
 const int pixmap_config[] = {
     GLX_BIND_TO_TEXTURE_RGB_EXT, 1,
     GLX_BIND_TO_TEXTURE_TARGETS_EXT, GLX_TEXTURE_2D_BIT_EXT,
-    //GLX_RENDER_TYPE, GLX_RGBA_BIT,
     GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT | GLX_WINDOW_BIT,
-    //GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
-    //GLX_X_RENDERABLE, 1,
-    // GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT, (GLint) GLX_DONT_CARE,
-
-    //		GLX_SAMPLE_BUFFERS, 1,
-    //		GLX_SAMPLES, 4,
     GLX_DOUBLEBUFFER, 1,
     GLX_BUFFER_SIZE, 24,
     GLX_RED_SIZE, 8,
     GLX_GREEN_SIZE, 8,
     GLX_BLUE_SIZE, 8,
     GLX_ALPHA_SIZE, 0,
-    //GLX_STENCIL_SIZE, 0,
-    //GLX_DEPTH_SIZE, 16,
     0};
 
 void traverseWindowTree(Display* display, Window win, std::function<void(Display*, Window)> func) {
@@ -94,7 +85,6 @@ Window getWindowByName(Display* display, string search) {
   return rv;
 }
 
-
 Window getWindowByClass(Display *display, string search) {
   Window root = XDefaultRootWindow(display);
   Window rv;
@@ -102,27 +92,29 @@ Window getWindowByClass(Display *display, string search) {
   bool found = false;
 
   traverseWindowTree(
-                     display, root, [&rv, &found, search, &largestWidth](Display *display, Window window) {
+      display, root,
+      [&rv, &found, search, &largestWidth](Display *display, Window window) {
         char nameMem[100];
         XClassHint classHint;
         classHint.res_class = NULL;
         classHint.res_name = NULL;
-        char* className = NULL;
+        char *className = NULL;
         XGetClassHint(display, window, &classHint);
         className = classHint.res_class;
         if (className != NULL &&
             string(className).find(search) != string::npos) {
           XWindowAttributes attrs;
           XGetWindowAttributes(display, window, &attrs);
-	  bool larger = attrs.width > largestWidth;
-	  bool equalAndNotAccessory = attrs.width == largestWidth && !attrs.override_redirect;
-          if(larger || equalAndNotAccessory) {
+          bool larger = attrs.width > largestWidth;
+          bool equalAndNotAccessory =
+              attrs.width == largestWidth && !attrs.override_redirect;
+          if (larger || equalAndNotAccessory) {
             largestWidth = attrs.width;
             rv = window;
             found = true;
           }
         }
-                     });
+      });
 
   if (!found) {
     cout << "unable to find window: \"" << search << "\"" << endl;
@@ -132,9 +124,6 @@ Window getWindowByClass(Display *display, string search) {
 }
 
 void X11App::fetchInfo(Identifier identifier) {
-
-
-
   switch(identifier.type) {
   case NAME:
     appWindow = getWindowByName(display, identifier.strId);
@@ -171,10 +160,8 @@ int errorHandler(Display *dpy, XErrorEvent *err)
 }
 
 X11App::X11App(Display* display, int screen): display(display), screen(screen) {
-  
   XSetErrorHandler(errorHandler);
 };
-
 
 X11App* X11App::byName(string windowName, Display *display, int screen,
                       int width, int height) {
@@ -186,6 +173,7 @@ X11App* X11App::byName(string windowName, Display *display, int screen,
   rv->resize(width, height);
   return rv;
 }
+
 X11App* X11App::byClass(string windowClass, Display *display, int screen,
                        int width, int height) {
   X11App *rv = new X11App(display, screen);
@@ -196,6 +184,7 @@ X11App* X11App::byClass(string windowClass, Display *display, int screen,
   rv->resize(width, height);
   return rv;
 }
+
 X11App* X11App::byWindow(Window window, Display *display, int screen, int width, int height) {
   X11App *rv = new X11App(display, screen);
   Identifier id;
@@ -204,26 +193,6 @@ X11App* X11App::byWindow(Window window, Display *display, int screen, int width,
   rv->fetchInfo(id);
   rv->resize(width, height);
   return rv;
-}
-
-void X11App::click(int x, int y) {
-  cout << "click" << x << ", " << y << endl;
-  XEvent event;
-  event.xbutton.type = ButtonPress;
-  event.xbutton.display = display;
-  event.xbutton.window = appWindow;
-  event.xbutton.root = DefaultRootWindow(display);
-  event.xbutton.subwindow = None;
-  event.xbutton.time = CurrentTime;
-  event.xbutton.x = x;
-  event.xbutton.y = y;
-  event.xbutton.x_root = x;
-  event.xbutton.y_root = y;
-  event.xbutton.button = Button1;
-  event.xbutton.same_screen = True;
-  XSendEvent(display, appWindow, True, ButtonPressMask, &event);
-  XSync(display, False);
-  XFlush(display);
 }
 
 void X11App::unfocus(Window matrix) {
@@ -259,8 +228,6 @@ void X11App::focus(Window matrix) {
   XSync(display, False);
   XFlush(display);
 }
-
-
 
 void X11App::appTexture() {
   glActiveTexture(textureUnit);
@@ -304,7 +271,6 @@ void X11App::resize(int width, int height) {
 Window X11App::getWindow() {
   return appWindow;
 }
-
 
 void X11App::attachTexture(int textureUnit, int textureId) {
   this->textureUnit = textureUnit;
