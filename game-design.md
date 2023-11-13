@@ -176,6 +176,9 @@ code tools, like spells
 ### Code block
 Press spacebar to enter code into a block
 
+### Selection Code
+Select blocks, press e to open an editor for the selection. write code
+
 ### Judgements
 ? $$
 ? API calls
