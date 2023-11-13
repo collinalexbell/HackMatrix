@@ -36,7 +36,8 @@ struct App {
 enum Action {
   PLACE_CUBE,
   REMOVE_CUBE,
-  SELECT_CUBE
+  SELECT_CUBE,
+  OPEN_SELECTION_CODE
 };
 
 class World {
