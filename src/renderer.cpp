@@ -150,6 +150,8 @@ void Renderer::setupVertexAttributePointers() {
   glEnableVertexAttribArray(1);
 }
 
+int MAX_CUBES = 1000000;
+
 void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -157,11 +159,11 @@ void Renderer::fillBuffers() {
   glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices,
                GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3)) * 200000,
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3)) * MAX_CUBES,
                (void *)0, GL_STATIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, BLOCK_INTS);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(int)*2) * 200000, (void *)0,
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(int)*2) * MAX_CUBES, (void *)0,
                GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20,

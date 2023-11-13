@@ -4,7 +4,7 @@
 #include <vector>
 
 class Chunk {
-  const vector<int> size = {256, 128, 256};
+  const vector<int> size = {250, 128, 250};
   unique_ptr<Cube* []> data;
   Cube null = Cube(glm::vec3(0, 0, 0), -1);
   int index(int x, int y, int z);

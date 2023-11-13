@@ -7,6 +7,7 @@
 #include "world.h"
 
 #include <GLFW/glfw3.h>
+#include <memory>
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
@@ -19,6 +20,7 @@ class Engine {
   Camera *camera;
   WM *wm;
   GLFWwindow *window;
+  std::shared_ptr<spdlog::logger> logger;
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
