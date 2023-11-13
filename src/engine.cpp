@@ -15,6 +15,7 @@ void Engine::registerCursorCallback() {
 
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   initialize();
+  logger = make_shared<spdlog::logger>("engine", fileSink);
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();
@@ -49,13 +50,18 @@ void Engine::wire() {
 }
 
 void Engine::loop() {
-  while (!glfwWindowShouldClose(window)) {
-    renderer->render();
-    api->mutateWorld();
-    wm->mutateWorld();
-    controls->poll(window, camera, world);
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+  try {
+    while (!glfwWindowShouldClose(window)) {
+      renderer->render();
+      api->mutateWorld();
+      wm->mutateWorld();
+      controls->poll(window, camera, world);
+      glfwSwapBuffers(window);
+      glfwPollEvents();
+    }
+  } catch (const std::exception &e) {
+    logger->error(e.what());
+    throw;
   }
 }
 
