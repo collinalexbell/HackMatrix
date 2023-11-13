@@ -29,6 +29,7 @@ class Controls {
   double lastScreenshotTime = 0;
   double lastSaveTime = 0;
   double lastSelectedTime = 0;
+  double lastKeyPress = 0;
   bool resetMouse = true;
   float lastX;
   float lastY;
@@ -43,6 +44,7 @@ class Controls {
   void handleScreenshot(GLFWwindow *window);
   void handleSave(GLFWwindow *window);
   void handleSelection(GLFWwindow *window);
+  void handleCodeBlock(GLFWwindow *window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleClicks(GLFWwindow* window, World* world);

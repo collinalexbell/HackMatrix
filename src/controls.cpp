@@ -47,6 +47,7 @@ void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleScreenshot(window);
   handleSave(window);
   handleSelection(window);
+  handleCodeBlock(window);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -61,6 +62,13 @@ void Controls::handleSelection(GLFWwindow *window){
   bool shouldSelect = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
   if (shouldSelect && debounce(lastSelectedTime)) {
     world->action(SELECT_CUBE);
+  }
+}
+
+void Controls::handleCodeBlock(GLFWwindow *window) {
+  bool shouldOpenCodeBlock = glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS;
+  if(shouldOpenCodeBlock && debounce(lastKeyPress)) {
+    world->action(OPEN_SELECTION_CODE);
   }
 }
 

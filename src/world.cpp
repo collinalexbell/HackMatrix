@@ -382,6 +382,9 @@ void World::action(Action toTake) {
     if(toTake == SELECT_CUBE) {
       lookedAt->toggleSelect();
     }
+    if(toTake == OPEN_SELECTION_CODE) {
+      logger->info("open_selection_code");
+    }
   }
 }
 
