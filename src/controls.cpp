@@ -60,21 +60,21 @@ bool debounce(double &lastTime) {
 
 void Controls::handleSelection(GLFWwindow *window){
   bool shouldSelect = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
-  if (shouldSelect && debounce(lastSelectedTime)) {
+  if (shouldSelect && debounce(lastKeyPressTime)) {
     world->action(SELECT_CUBE);
   }
 }
 
 void Controls::handleCodeBlock(GLFWwindow *window) {
   bool shouldOpenCodeBlock = glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS;
-  if(shouldOpenCodeBlock && debounce(lastKeyPress)) {
+  if(shouldOpenCodeBlock && debounce(lastKeyPressTime)) {
     world->action(OPEN_SELECTION_CODE);
   }
 }
 
 void Controls::handleSave(GLFWwindow *window){
   bool shouldSave = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
-  if (shouldSave && debounce(lastSaveTime)) {
+  if (shouldSave && debounce(lastKeyPressTime)) {
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
     stringstream filenameSS;
@@ -85,7 +85,7 @@ void Controls::handleSave(GLFWwindow *window){
 
 void Controls::handleScreenshot(GLFWwindow *window) {
   bool shouldCapture = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
-  if (shouldCapture && debounce(lastScreenshotTime)) {
+  if (shouldCapture && debounce(lastKeyPressTime)) {
     renderer->screenshot();
   }
 }
@@ -147,7 +147,7 @@ void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
   X11App *app = world->getLookedAtApp();
   if(app != NULL) {
     int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
-    if( rKeyPressed && debounce(lastToggleAppTime)) {
+    if( rKeyPressed && debounce(lastKeyPressTime)) {
       goToApp(app);
     }
   }
@@ -175,7 +175,7 @@ void Controls::doDeferedActions() {
 
 void Controls::handleToggleFocus(GLFWwindow* window) {
   if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-    if(debounce(lastToggleFocusTime)) {
+    if(debounce(lastKeyPressTime)) {
       if(grabbedCursor) {
         grabbedCursor = false;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

@@ -23,13 +23,8 @@ class Controls {
   Renderer *renderer;
   bool grabbedCursor = true;
   bool appFocused = false;
-  double lastToggleFocusTime = 0;
-  double lastToggleAppTime = 0;
   double lastClickTime = 0;
-  double lastScreenshotTime = 0;
-  double lastSaveTime = 0;
-  double lastSelectedTime = 0;
-  double lastKeyPress = 0;
+  double lastKeyPressTime = 0;
   bool resetMouse = true;
   float lastX;
   float lastY;
