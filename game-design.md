@@ -68,7 +68,7 @@ V probably not
 - HackMatrix book
 
 ## Kickstarter Launch Date
-11-12-23
+11-22-23
 
 ## Marketing
 - Hackathons: I can host hackathons where users hang out in virtual dorm rooms
