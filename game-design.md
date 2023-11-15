@@ -240,10 +240,7 @@ V Blow stuff up with placed charges that have customizable size!
 - Create a trajectory to shoot a ball through the hoop
 
 
-## Hall of fame
-- Show off all the window managers!
-
-## story
+## Story
 
 - Why would user need to make a window manager? Not like as in real life,
   but like why would they need to make it in the game...
