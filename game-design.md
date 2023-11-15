@@ -93,17 +93,12 @@ $ watch blocks do stuff
 
 
 ## Game Theme
-- living in a city filled with cybernetic organisms
-
-? Divine/magical power beyond one's comprehension
+- Living in a crystal city filled with cybernetic organisms
+- Divine/magical power beyond one's comprehension
   is available to those who seek it
   and learn to harmonize themselves
   with the spirit of the universe
 
-? diy ethic
-V solar cyborgs
-V automated homestead life
-V exploring an ancient world that contains cyberenetic artifacts
 
 
 ## aesthetic
