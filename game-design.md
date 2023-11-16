@@ -258,15 +258,7 @@ V Blow stuff up with placed charges that have customizable size!
 ### missions
 
 - Perhaps, I could structure the game by class, where each class is itself a game!
-
-- Build an OS... but look an OS might be a little to complex... but maybe its not
-  - Perhaps they should build a cyberlogos or an IDE (although, I don't know why they would).
-  - I'm asking people to commit a lot of time to the game.
-
 - Users must write a computer program that solves problems in the environment.
-
-- Over time it becomes clear that they are building an Operating System
-
 - Students learn by doing side quests that teach them the concepts required for OS work
 
 Example:
@@ -279,11 +271,10 @@ $ X Window to allow IDE
   - Direct pixel rendering to keep crisp image
   - snap to flat, draw with pixels
   - hotkeys for fast window switching
-- micro voxel
-- Maybe use gaussian splatting
 $ C++
-- Python API
+$ Python API
 $ Lisp API
+$ Javascript API
 $ ZeroMQ
 $ OpenGL
 
