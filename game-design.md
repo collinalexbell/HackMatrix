@@ -241,27 +241,7 @@ V Blow stuff up with placed charges that have customizable size!
 
 
 ## Story
-
-- Why would user need to make a window manager? Not like as in real life,
-  but like why would they need to make it in the game...
-  - There is a hacker club that requires users to have made their own VM, too keep
-    the script kiddies out.
-  - The hacker lounge is where all the devs hang out to work on their WM
-    and share their WM with
-  - Add the window manager to the hall of fame!
-
-- VR Hogwartz for hackers. By the end of the game, the user must build an OS
-
-- Start them with a single bit switch or something (haha)
-
-- Key by using 3d position and orientation to unlock a space (like hogwartz picture)
-
-- The Gibson should feature into the game (haha)
-
-- You build an operating system while in the game. It just like teaches you everything to build an operating system in game. WTF ahahahah!!
-
-- Or it would be fun to use the game as a teaching tool or virtual digital classroom to teach various computer programming topics (one of which in the end game can be a full fucking operating system).
-
+- VR Hogwartz for hackers
 - While exploring a lost city, a <x>th century player discovers a strange glowing apple growing on a tree.
   When the apple is picked up, it expands into a pair of goggles that the player puts on.
   Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
