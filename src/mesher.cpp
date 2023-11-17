@@ -1,12 +1,19 @@
 #include "mesher.h"
 
 Mesh Mesher::mesh(Chunk* chunk) {
+  int i, j, k, l, w, h, u, v;
+  int x[3];
+  int q[3];
   for (int dimension = 0; dimension < 3; ++dimension) {
-    int i, j, k, l, w, h;
-    int u = (dimension + 1) % 3;
-    int v = (dimension + 2) % 3;
-    int *x = new int[3];
-    int *q = new int[3];
+    u = (dimension + 1) % 3;
+    v = (dimension + 2) % 3;
+    x[0] = 0;
+    x[1] = 0;
+    x[2] = 0;
+    q[0] = 0;
+    q[1] = 0;
+    q[2] = 0;
+    q[dimension] = 1;
 
     vector<int> chunkSizes = chunk->getSize();
 
