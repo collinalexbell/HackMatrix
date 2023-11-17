@@ -72,6 +72,14 @@ V probably not
 ## Kickstarter Launch Date
 11-22-23
 
+### Path
+   - Fri: Meshing
+   - Sat: World Building
+   - Sun: Mechanics
+   - Mon: Whatever is Left
+   - Tues: Marketing Materials
+   - Wed: Launch
+
 ## Marketing
 - Hackathons: I can host hackathons where users hang out in virtual dorm rooms
 
