@@ -73,7 +73,7 @@ V probably not
 11-22-23
 
 ### Path
-   - Fri: Meshing
+   - Fri: Meshing & Levels (3d cellular automata & select your IDE)
    - Sat: World Building
    - Sun: Mechanics
    - Mon: Whatever is Left
