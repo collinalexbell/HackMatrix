@@ -3,6 +3,18 @@
 ## Purpose
 - Immerse hackers in their projects
 
+## Kickstarter
+### Goal
+150k
+### Why
+- Get me to Berkley
+- Work on the project full time
+- Offer launch pad for other projects
+### Launch Date
+11-22-23
+
+
+
 ## Design Mindset
 ### I am building a Jewel
 - fundamentally this means that bugs and stability come before features
@@ -68,9 +80,6 @@ V probably not
 - Meme of your choice (subject to approval)
   on the wall in the central part of the game
 - HackMatrix book
-
-## Kickstarter Launch Date
-11-22-23
 
 ### Path
    - Sat: Meshing & World Building
