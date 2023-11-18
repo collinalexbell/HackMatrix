@@ -1,6 +1,7 @@
 #include "mesher.h"
 
 Mesh Mesher::mesh(Chunk* chunk) {
+  vector<glm::vec3> quads;
   int i, j, k, l, w, h, u, v;
   int x[3];
   int q[3];
@@ -89,17 +90,12 @@ Mesh Mesher::mesh(Chunk* chunk) {
             // Create a quad for this face. Colour, normal or textures are not
             // stored in this block vertex format.
 
-            /*
-            BlockVertex.AppendQuad(
-                new Int3(x[0], x[1], x[2]), // Top-left vertice position
-                new Int3(x[0] + du[0], x[1] + du[1],
-                         x[2] + du[2]), // Top right vertice position
-                new Int3(x[0] + dv[0], x[1] + dv[1],
-                         x[2] + dv[2]), // Bottom left vertice position
-                new Int3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1],
-                         x[2] + du[2] + dv[2]) // Bottom right vertice position
-            );
-            */
+            quads.push_back(glm::vec3(x[0], x[1], x[2]));
+            quads.push_back(glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+            quads.push_back(glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+            quads.push_back(glm::vec3(x[0] + du[0] + dv[0],
+                                      x[1] + du[1] + dv[1],
+                                      x[2] + du[2] + dv[2]));
 
             // Clear this part of the mask, so we don't add duplicate faces
             for (l = 0; l < h; ++l)
