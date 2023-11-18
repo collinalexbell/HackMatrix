@@ -73,9 +73,8 @@ V probably not
 11-22-23
 
 ### Path
-   - Fri: Meshing & Levels (3d cellular automata & select your IDE)
-   - Sat: World Building
-   - Sun: Mechanics
+   - Sat: Meshing & World Building
+   - Sun: Mechanics & Levels
    - Mon: Whatever is Left
    - Tues: Marketing Materials
    - Wed: Launch
