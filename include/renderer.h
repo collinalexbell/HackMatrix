@@ -6,7 +6,9 @@
 #include "world.h"
 #include "camera.h"
 #include "app.h"
+#include "logger.h"
 #include <map>
+#include <memory>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -58,6 +60,8 @@ class Renderer {
   void renderCubes();
   void renderApps();
   void renderLines();
+  std::shared_ptr<spdlog::logger> logger;
+
 public:
   Renderer(Camera*, World*);
   ~Renderer();
@@ -74,6 +78,7 @@ public:
   void deregisterApp(int index);
   void reloadChunk();
   void screenshot();
+  void toggleMeshing();
 
   glm::mat4 projection;
 };
