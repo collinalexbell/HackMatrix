@@ -179,6 +179,10 @@ void Renderer::fillBuffers() {
 Renderer::Renderer(Camera *camera, World *world) {
   this->camera = camera;
   this->world = world;
+
+  logger = make_shared<spdlog::logger>("Renderer", fileSink);
+  logger->set_level(spdlog::level::debug);
+
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -409,6 +413,9 @@ void Renderer::registerApp(X11App *app, int index) {
 void Renderer::deregisterApp(int index) {
   glDeleteFramebuffers(1, &frameBuffers[index]);
   frameBuffers.erase(frameBuffers.begin() + index);
+}
+
+void Renderer::toggleMeshing() {
 }
 
 Renderer::~Renderer() {
