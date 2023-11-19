@@ -54,4 +54,5 @@ public:
   void remove();
 
   static CubeBuffer render();
+  static int size() { return vecs.size();}
 };

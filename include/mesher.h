@@ -1,8 +1,10 @@
 #pragma once
 #include "chunk.h"
 
-struct Mesh {};
+typedef vector<glm::vec3> Mesh;
 
 class Mesher {
+ public:
+  Mesher() {}
   Mesh mesh(Chunk* chunk);
 };

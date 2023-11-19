@@ -1,7 +1,7 @@
 #include "mesher.h"
 
 Mesh Mesher::mesh(Chunk* chunk) {
-  vector<glm::vec3> quads;
+  Mesh quads;
   int i, j, k, l, w, h, u, v;
   int x[3];
   int q[3];
@@ -18,7 +18,7 @@ Mesh Mesher::mesh(Chunk* chunk) {
 
     vector<int> chunkSizes = chunk->getSize();
 
-    bool *mask = new bool[chunkSizes[0]*chunkSizes[1]*chunkSizes[2]];
+    bool mask[chunkSizes[0]*chunkSizes[1]*chunkSizes[2]];
 
     q[dimension] = 1;
 
@@ -114,5 +114,5 @@ Mesh Mesher::mesh(Chunk* chunk) {
     }
   }
 
-  return Mesh{};
+  return quads;
 }

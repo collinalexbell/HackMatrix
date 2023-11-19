@@ -2,6 +2,7 @@
 #define __WORLD_H__
 
 #include "app.h"
+#include "mesher.h"
 #include "cube.h"
 #include "chunk.h"
 #include "camera.h"
@@ -41,6 +42,7 @@ enum Action {
 };
 
 class World {
+  Mesher *mesher;
   std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
@@ -88,6 +90,8 @@ public:
   void save(string filename);
   void load(string filename);
   void loadLatest();
+
+  void mesh();
 };
 
 #endif
