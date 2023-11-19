@@ -82,11 +82,13 @@ V probably not
 - HackMatrix book
 
 ### Path
-   - Sat: Meshing & World Building
-   - Sun: Mechanics & Levels
-   - Mon: Whatever is Left
-   - Tues: Marketing Materials
-   - Wed: Launch
+   - Meshing
+   - World Building
+   - Mechanics
+   - Levels
+   - Finishing Touches
+   - Marketing Materials
+   - Launch
 
 ## Marketing
 - Hackathons: I can host hackathons where users hang out in virtual dorm rooms
