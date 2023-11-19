@@ -7,7 +7,7 @@
 ### Goal
 150k
 ### Why
-- Get me to Berkley
+- Get me to the West
 - Work on the project full time
 - Offer launch pad for other projects
 ### Launch Date
