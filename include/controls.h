@@ -40,6 +40,7 @@ class Controls {
   void handleSave(GLFWwindow *window);
   void handleSelection(GLFWwindow *window);
   void handleCodeBlock(GLFWwindow *window);
+  void handleDebug(GLFWwindow *window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleClicks(GLFWwindow* window, World* world);

@@ -48,6 +48,7 @@ void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleSave(window);
   handleSelection(window);
   handleCodeBlock(window);
+  handleDebug(window);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -56,6 +57,13 @@ bool debounce(double &lastTime) {
   double interval = curTime - lastTime;
   lastTime = curTime;
   return interval > DEBOUNCE_TIME;
+}
+
+void Controls::handleDebug(GLFWwindow *window) {
+  bool shouldDebug = glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS;
+  if(shouldDebug && debounce(lastKeyPressTime)) {
+    world->mesh();
+  }
 }
 
 void Controls::handleSelection(GLFWwindow *window){

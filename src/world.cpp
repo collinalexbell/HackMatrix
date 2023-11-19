@@ -19,8 +19,9 @@ using namespace std;
 
 
 World::World(Camera *camera, bool debug) : camera(camera) {
+  mesher = new Mesher();
   logger = make_shared<spdlog::logger>("World", fileSink);
-  logger->set_level(spdlog::level::critical);
+  logger->set_level(spdlog::level::debug);
   float z = 10.0;
   availableAppPositions.push(glm::vec3(2.8, 1.0, z));
   availableAppPositions.push(glm::vec3(4.0, 1.0, z));
@@ -30,6 +31,14 @@ World::World(Camera *camera, bool debug) : camera(camera) {
 }
 World::~World() {}
 
+void World::mesh() {
+  Mesh m = mesher->mesh(&cubes);
+  stringstream ss;
+  ss << "mesh size: " << m.size() << ", ";
+  ss << "chunk size" << Cube::size();
+  logger->debug(ss.str());
+  logger->flush();
+}
 
 const std::vector<Cube*> World::getCubes() {
   auto chunkSize = cubes.getSize();
