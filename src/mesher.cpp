@@ -1,10 +1,20 @@
+#include <GLFW/glfw3.h>
 #include "mesher.h"
 
+Mesher::Mesher() {
+  logger = make_shared<spdlog::logger>("Mesher", fileSink);
+  logger->set_level(spdlog::level::debug);
+}
+
 Mesh Mesher::mesh(Chunk* chunk) {
+  double currentTime = glfwGetTime();
   Mesh quads;
   int i, j, k, l, w, h, u, v;
   int x[3];
   int q[3];
+  int du[3];
+  int dv[3];
+  bool blockCurrent, blockCompare, done;
   for (int dimension = 0; dimension < 3; ++dimension) {
     u = (dimension + 1) % 3;
     v = (dimension + 2) % 3;
@@ -28,14 +38,13 @@ Mesh Mesher::mesh(Chunk* chunk) {
       int n = 0;
       for (x[v] = 0; x[v] < chunkSizes[v]; ++x[v]) {
         for (x[u] = 0; x[u] < chunkSizes[u]; ++x[u]) {
-          bool blockCurrent =
-            0 <= x[dimension] ? chunk->getCube(x[0], x[1], x[2]) != NULL
+          blockCurrent =
+            0 <= x[dimension] ? chunk->getCube(x[0], x[1], x[2])->blockType() != -1
                         : true;
-          bool blockCompare =
+          blockCompare =
               x[dimension] < chunkSizes[dimension] - 1
-                  ? chunk->getCube(x[0] + q[0], x[1] + q[1], x[2] + q[2]) != NULL
+                  ? chunk->getCube(x[0] + q[0], x[1] + q[1], x[2] + q[2])->blockType() != -1
                   : true;
-
           mask[n++] = blockCurrent != blockCompare;
         }
       }
@@ -62,7 +71,7 @@ Mesh Mesher::mesh(Chunk* chunk) {
             //   count, greedy meshing will attempt to expand this quad out to
             //   CHUNK_SIZE x 5, but will stop if it reaches a hole in the mask
 
-            bool done = false;
+            done = false;
             for (h = 1; j + h < chunkSizes[v]; h++) {
               // Check each block next to this quad
               for (k = 0; k < w; ++k) {
@@ -81,10 +90,14 @@ Mesh Mesher::mesh(Chunk* chunk) {
             x[v] = j;
 
             // du and dv determine the size and orientation of this face
-            int du[3] = {0,0,0};
+            du[0] = 0;
+            du[1] = 0;
+            du[2] = 0;
             du[u] = w;
 
-            int dv[3] = {0,0,0};
+            dv[0] = 0;
+            dv[1] = 0;
+            dv[2] = 0;
             dv[v] = h;
 
             // Create a quad for this face. Colour, normal or textures are not
@@ -113,6 +126,9 @@ Mesh Mesher::mesh(Chunk* chunk) {
       }
     }
   }
+
+  logger->debug("time:" + to_string(glfwGetTime()-currentTime));
+  logger->flush();
 
   return quads;
 }
