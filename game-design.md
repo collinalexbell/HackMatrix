@@ -157,7 +157,6 @@ Overall, I'm liking the spacemacs colors... however, it will be nice to see what
 - New York City! End of Story!
   - Players could occupy my apartment studio virtually
 - Voxel NYC! (Seems like a challenge, but eh, w.e)
-? Textures from the city?
 
 ? trees, lots of trees
 ? clasical buildings with futurist twist
