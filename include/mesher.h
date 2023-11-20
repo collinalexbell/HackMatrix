@@ -9,5 +9,5 @@ class Mesher {
   std::shared_ptr<spdlog::logger> logger;
 public:
   Mesher();
-  Mesh mesh(Chunk *chunk);
+  Mesh meshGreedy(Chunk *chunk);
 };

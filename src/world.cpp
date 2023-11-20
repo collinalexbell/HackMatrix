@@ -32,7 +32,7 @@ World::World(Camera *camera, bool debug) : camera(camera) {
 World::~World() {}
 
 void World::mesh() {
-  Mesh m = mesher->mesh(&cubes);
+  Mesh m = mesher->meshGreedy(&cubes);
   stringstream ss;
   ss << "mesh size: " << m.size() << ", ";
   ss << "chunk size" << Cube::size();
