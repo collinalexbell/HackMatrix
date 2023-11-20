@@ -6,7 +6,7 @@ Mesher::Mesher() {
   logger->set_level(spdlog::level::debug);
 }
 
-Mesh Mesher::mesh(Chunk* chunk) {
+Mesh Mesher::meshGreedy(Chunk* chunk) {
   double currentTime = glfwGetTime();
   Mesh quads;
   int i, j, k, l, w, h, u, v;
