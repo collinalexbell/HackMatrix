@@ -6,6 +6,7 @@ Chunk::Chunk() {
     data[i] = NULL;
   }
 }
+
 Cube *Chunk::getCube(int x, int y, int z) {
   Cube *rv = data[index(x, y, z)];
   if(rv == NULL) {
@@ -13,6 +14,11 @@ Cube *Chunk::getCube(int x, int y, int z) {
   }
   return rv;
 }
+
+Cube *Chunk::getCube_(int x, int y, int z) {
+  return data[index(x, y, z)];
+}
+
 void Chunk::removeCube(int x, int y, int z) {
   delete data[index(x, y, z)];
   data[index(x, y, z)] = NULL;

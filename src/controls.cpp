@@ -50,6 +50,7 @@ void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleCodeBlock(window);
   handleDebug(window);
   handleToggleMeshing(window);
+  handleToggleWireframe(window);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -71,6 +72,13 @@ void Controls::handleToggleMeshing(GLFWwindow *window) {
   bool shouldToggleMeshing = glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS;
   if (shouldToggleMeshing && debounce(lastKeyPressTime)) {
     renderer->toggleMeshing();
+  }
+}
+
+void Controls::handleToggleWireframe(GLFWwindow *window) {
+  bool shouldToggleWireframe = glfwGetKey(window, GLFW_KEY_SLASH) == GLFW_PRESS;
+  if (shouldToggleWireframe && debounce(lastKeyPressTime)) {
+    renderer->toggleWireframe();
   }
 }
 

@@ -35,6 +35,8 @@ class Renderer {
   unsigned int LINE_INSTANCE;
   unsigned int LINE_VAO;
 
+  bool isWireframe = false;
+
   Shader* shader;
   Shader* appShader;
   std::map<string, Texture*> textures;
@@ -79,6 +81,7 @@ public:
   void reloadChunk();
   void screenshot();
   void toggleMeshing();
+  void toggleWireframe();
 
   glm::mat4 projection;
 };

@@ -30,42 +30,51 @@ float appVertices[] = {
 };
 
 float vertices[] = {
+
   -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-  0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
   -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
   -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
   -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
   0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
   0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
   0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
   -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
   -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+
   -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
   -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
   -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
   -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
   -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
   -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
+
   0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
   0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
   0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+
   -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
   0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
   0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
   0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
   -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
   -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+
+  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
   0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+
   0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+  -0.5f, 0.5f, 0.5f, 0.0f, 0.0f
+
 };
 
 void Renderer::genGlResources() {
@@ -176,6 +185,16 @@ void Renderer::fillBuffers() {
                GL_STATIC_DRAW);
 }
 
+void Renderer::toggleWireframe() {
+  if (isWireframe) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
+    isWireframe = false;
+  } else {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+    isWireframe = true;
+  }
+}
+
 Renderer::Renderer(Camera *camera, World *world) {
   this->camera = camera;
   this->world = world;
@@ -207,8 +226,11 @@ Renderer::Renderer(Camera *camera, World *world) {
 
   shader->setBool("lookedAtValid", false);
 
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
+  if(isWireframe) {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+  } else {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
+  }
   glClearColor(178.0 / 256, 178.0 / 256, 178.0 / 256, 1.0f);
   glLineWidth(10.0);
 
@@ -355,6 +377,7 @@ void Renderer::renderCubes() {
   CubeBuffer updatedCubes = Cube::render();
   updateCubeBuffer(updatedCubes);
   glBindVertexArray(VAO);
+  glEnable(GL_CULL_FACE);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 36, updatedCubes.totalSize);
 }
 
@@ -368,6 +391,7 @@ void Renderer::renderApps() {
 
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
+  glDisable(GL_CULL_FACE);
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
 
   if (app != NULL && app->isFocused()) {
