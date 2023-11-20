@@ -2,6 +2,12 @@
 
 ## Purpose
 - Immerse hackers in their projects
+or
+- Make noobs into hackers
+or
+- Make an entertaining game for first year programmers
+or
+- There are many of these that could be selected...
 
 ## Kickstarter
 ### Goal
