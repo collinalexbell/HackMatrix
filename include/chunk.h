@@ -12,6 +12,7 @@ class Chunk {
 public:
   Chunk();
   Cube *getCube(int x, int y, int z);
+  Cube *getCube_(int x, int y, int z);
   void removeCube(int x, int y, int z);
   void addCube(Cube c, int x, int y, int z);
   const vector<int> getSize();
