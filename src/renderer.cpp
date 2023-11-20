@@ -416,6 +416,8 @@ void Renderer::deregisterApp(int index) {
 }
 
 void Renderer::toggleMeshing() {
+  logger->debug("toggleMeshing");
+  logger->flush();
 }
 
 Renderer::~Renderer() {
