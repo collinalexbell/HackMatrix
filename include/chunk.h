@@ -3,10 +3,7 @@
 #include <memory>
 #include <vector>
 
-struct ChunkMesh {
-  vector<glm::vec3> vertices;
-  vector<int> ints;
-};
+
 
 struct ChunkCoords {
   int x;
@@ -14,7 +11,16 @@ struct ChunkCoords {
   int z;
 };
 
+enum Face { LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK };
+struct ChunkMesh {
+  vector<glm::vec3> positions;
+  vector<int> blockTypes;
+  vector<int> selects;
+  vector<Face> faces;
+};
+
 class Chunk {
+  static Face neighborFaces[6];
   const vector<int> size = {250, 128, 250};
   unique_ptr<Cube* []> data;
   Cube null = Cube(glm::vec3(0, 0, 0), -1);
