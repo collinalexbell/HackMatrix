@@ -17,7 +17,7 @@ or
 - Work on the project full time
 - Offer launch pad for other projects
 ### Launch Date
-11-22-23
+11-23-23
 
 
 
