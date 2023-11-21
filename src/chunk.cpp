@@ -27,6 +27,12 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
   data[index(x, y, z)] = new Cube(c);
 }
 
+enum Face {
+  LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK
+};
+
+Face faces[6] = {LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK};
+
 ChunkMesh Chunk::mesh() {
   ChunkMesh rv;
   int x,y,z;
@@ -46,6 +52,7 @@ ChunkMesh Chunk::mesh() {
 
       for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
         neighborCoords = neighbors[neighborIndex];
+        Face face = faces[neighborIndex];
         neighbor = getCube(neighborCoords.x, neighborCoords.y, neighborCoords.z);
       }
     }
