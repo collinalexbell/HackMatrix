@@ -154,6 +154,9 @@ Overall, I'm liking the spacemacs colors... however, it will be nice to see what
 
 
 ### architecture
+
+- I kind of want to design a city here... like a futuristic Earth city
+
 MarkovJunior buildings
 
 - New York City! End of Story!
