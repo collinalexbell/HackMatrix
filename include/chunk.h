@@ -8,6 +8,12 @@ struct ChunkMesh {
   vector<int> ints;
 };
 
+struct ChunkCoords {
+  int x;
+  int y;
+  int z;
+};
+
 class Chunk {
   const vector<int> size = {250, 128, 250};
   unique_ptr<Cube* []> data;
@@ -20,6 +26,7 @@ public:
   Cube *getCube_(int x, int y, int z);
   void removeCube(int x, int y, int z);
   void addCube(Cube c, int x, int y, int z);
+  ChunkCoords getCoords(int i);
   ChunkMesh mesh();
   const vector<int> getSize();
 };
