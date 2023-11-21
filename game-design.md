@@ -13,13 +13,15 @@ or
 ### Goal
 150k
 ### Why
-- Get me to the West
-- Work on the project full time
-- Offer launch pad for other projects
+I need 150k to live a full free year in Portland Oregon
 ### Launch Date
 11-23-23
 ### Delivery Date
 12-23-23
+
+Every person who buys this gets:
+0) HackMatrix beta with full source code, released 12-23-23
+1) HackMatrix alpha,                      released 12-23-24
 
 
 
