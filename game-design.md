@@ -351,3 +351,11 @@ $ OpenGL
 ## Freedom vs Controlled experience
 - Lessons should be relatively controlled
 - The world should be free
+
+
+## Brainstormed value multipliers
+I meditated on various ideas that could achieve a 100x multiplier in Kickstarter backers
+- NYC - 10x
+- How to build a minecraft - 10x
+- Build your own 3d desktop - 10x
+- Aliens - 5x
