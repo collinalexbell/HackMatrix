@@ -27,6 +27,16 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
   data[index(x, y, z)] = new Cube(c);
 }
 
+ChunkMesh Chunk::mesh() {
+  ChunkMesh rv;
+  int totalSize = size[0] * size[1] * size[2];
+  for(int i = 0; i<totalSize; i++) {
+    if(data[i] != NULL) {
+    }
+  }
+  return rv;
+}
+
 int Chunk::index(int x, int y, int z) { return x * size[1] * size[2] + y * size[2] + z; }
 
 const vector<int> Chunk::getSize() {
