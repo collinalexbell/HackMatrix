@@ -3,6 +3,11 @@
 #include <memory>
 #include <vector>
 
+struct ChunkMesh {
+  vector<glm::vec3> vertices;
+  vector<int> ints;
+};
+
 class Chunk {
   const vector<int> size = {250, 128, 250};
   unique_ptr<Cube* []> data;
@@ -15,5 +20,6 @@ public:
   Cube *getCube_(int x, int y, int z);
   void removeCube(int x, int y, int z);
   void addCube(Cube c, int x, int y, int z);
+  ChunkMesh mesh();
   const vector<int> getSize();
 };
