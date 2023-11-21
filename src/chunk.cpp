@@ -1,5 +1,6 @@
 #include "chunk.h"
 
+Face Chunk::neighborFaces[] = {LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK};
 Chunk::Chunk() {
   data = make_unique<Cube* []>(size[0] * size[1] * size[2]);
   for(int i=0; i < size[0]*size[1]*size[2]; i++) {
@@ -27,11 +28,6 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
   data[index(x, y, z)] = new Cube(c);
 }
 
-enum Face {
-  LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK
-};
-
-Face faces[6] = {LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK};
 
 ChunkMesh Chunk::mesh() {
   ChunkMesh rv;
@@ -52,7 +48,7 @@ ChunkMesh Chunk::mesh() {
 
       for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
         neighborCoords = neighbors[neighborIndex];
-        Face face = faces[neighborIndex];
+        Face face = neighborFaces[neighborIndex];
         neighbor = getCube(neighborCoords.x, neighborCoords.y, neighborCoords.z);
       }
     }
