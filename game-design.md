@@ -18,6 +18,8 @@ or
 - Offer launch pad for other projects
 ### Launch Date
 11-23-23
+### Delivery Date
+12-23-23
 
 
 
