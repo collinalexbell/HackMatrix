@@ -12,8 +12,16 @@ or
 ## Kickstarter
 ### Goal
 150k
+
+...so 5,000 - 10,000 backers!
+
 ### Why
 I need 150k to live a full free year in Portland Oregon
+    So I can:
+    - read
+    - meditate
+    - expiriment
+    - love
 ### Launch Date
 11-23-23
 ### Delivery Date
