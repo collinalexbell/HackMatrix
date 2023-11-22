@@ -373,6 +373,8 @@ void Renderer::updateShaderUniforms() {
   handleLookedAtCube();
 }
 
+void Renderer::renderChunkMesh(ChunkMesh mesh) {}
+
 void Renderer::renderCubes() {
   CubeBuffer updatedCubes = Cube::render();
   updateCubeBuffer(updatedCubes);
