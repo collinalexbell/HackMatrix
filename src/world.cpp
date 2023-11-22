@@ -32,10 +32,12 @@ World::World(Camera *camera, bool debug) : camera(camera) {
 World::~World() {}
 
 void World::mesh() {
-  Mesh m = mesher->meshGreedy(&cubes);
+  double currentTime = glfwGetTime();
+  ChunkMesh m = cubes.mesh();
   stringstream ss;
-  ss << "mesh size: " << m.size() << ", ";
-  ss << "chunk size" << Cube::size();
+  ss << "mesh size: " << m.positions.size() << ", ";
+  ss << "chunk size" << Cube::size() << ", ";
+  ss << "time: " << glfwGetTime() - currentTime;
   logger->debug(ss.str());
   logger->flush();
 }

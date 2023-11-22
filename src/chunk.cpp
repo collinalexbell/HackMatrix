@@ -29,6 +29,59 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
 }
 
 
+glm::vec3 faceModels[6][6] = {
+
+  {
+    glm::vec3(-0.5f, -0.5f, -0.5f),
+   glm::vec3(-0.5f, 0.5f, -0.5f),
+   glm::vec3(0.5f, 0.5f, -0.5f),
+   glm::vec3(0.5f, 0.5f, -0.5f),
+   glm::vec3(0.5f, -0.5f, -0.5f),
+   glm::vec3(-0.5f, -0.5f, -0.5f)
+  },
+  {
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+  },
+  {
+    glm::vec3(-0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, -0.5f),
+    glm::vec3(-0.5f, -0.5f, -0.5f),
+    glm::vec3(-0.5f, -0.5f, -0.5f),
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, 0.5f)
+  },
+  {
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f)
+  },
+  {
+    glm::vec3(-0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+    glm::vec3(-0.5f, -0.5f, -0.5f)
+  },
+  {
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, -0.5f),
+    glm::vec3(-0.5f, 0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, -0.5f),
+    glm::vec3(-0.5f, 0.5f, 0.5f)
+  }};
+
+
+
 ChunkMesh Chunk::mesh() {
   ChunkMesh rv;
   int x,y,z;
@@ -49,7 +102,14 @@ ChunkMesh Chunk::mesh() {
       for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
         neighborCoords = neighbors[neighborIndex];
         Face face = neighborFaces[neighborIndex];
-        neighbor = getCube(neighborCoords.x, neighborCoords.y, neighborCoords.z);
+        neighbor = getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
+        if(neighbor == NULL) {
+          for(int vertex = 0; vertex < 6; vertex++) {
+            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex]);
+            rv.blockTypes.push_back(data[i]->blockType());
+            rv.selects.push_back(data[i]->selected());
+          }
+        }
       }
     }
   }

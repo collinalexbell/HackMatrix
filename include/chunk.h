@@ -16,7 +16,6 @@ struct ChunkMesh {
   vector<glm::vec3> positions;
   vector<int> blockTypes;
   vector<int> selects;
-  vector<Face> faces;
 };
 
 class Chunk {
