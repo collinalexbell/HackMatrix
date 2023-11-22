@@ -1,13 +1,13 @@
 # HackMatrix
 
 ## Purpose
-- Immerse hackers in their projects
-or
-- Make noobs into hackers
-or
-- Make an entertaining game for first year programmers
-or
-- There are many of these that could be selected...
+Immerse hackers in their projects
+
+### How does it go about doing this?
+Embeds the hacker in a 3d hacker environment
+
+### What is the hacker environment like?
+Now thats a great question
 
 ## Kickstarter
 ### Goal
