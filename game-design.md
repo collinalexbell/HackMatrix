@@ -34,7 +34,8 @@ Every person who buys this gets:
 
 
 ## Versions
-- HackMatrix: First Year
+- HackMatrix: SICP
+- HackMatrix: Algorithms and Data Structures
 - HackMatrix: Agent
 - HackMatrix: Inception
 
