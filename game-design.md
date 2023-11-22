@@ -9,6 +9,7 @@ Embeds the hacker in a 3d hacker environment
 ### What is the hacker environment like?
 Now thats a great question
 
+
 ## Kickstarter
 ### Goal
 150k
@@ -31,6 +32,11 @@ Every person who buys this gets:
 0) HackMatrix beta with full source code, released 12-23-23
 1) HackMatrix alpha,                      released 12-23-24
 
+
+## Versions
+- HackMatrix: First Year
+- HackMatrix: Agent
+- HackMatrix: Inception
 
 
 ## Design Mindset
