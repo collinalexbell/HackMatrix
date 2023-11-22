@@ -1,5 +1,6 @@
 #ifndef __RENDERER_H__
 #define __RENDERER_H__
+#include "chunk.h"
 #include "cube.h"
 #include "shader.h"
 #include "texture.h"
@@ -59,6 +60,7 @@ class Renderer {
   void drawAppDirect(X11App* app);
   void handleLookedAtCube();
   void updateShaderUniforms();
+  void renderChunkMesh(ChunkMesh mesh);
   void renderCubes();
   void renderApps();
   void renderLines();

@@ -9,6 +9,13 @@ Embeds the hacker in a 3d hacker environment
 ### What is the hacker environment like?
 Now thats a great question
 
+## Possible Versions
+- HackMatrix: OpenGL
+- HackMatrix: SICP
+- HackMatrix: Algorithms and Data Structures
+- HackMatrix: Agent
+- HackMatrix: Inception
+
 
 ## Kickstarter
 ### Goal
@@ -32,12 +39,9 @@ Every person who buys this gets:
 0) HackMatrix beta with full source code, released 12-23-23
 1) HackMatrix alpha,                      released 12-23-24
 
-
-## Versions
-- HackMatrix: SICP
-- HackMatrix: Algorithms and Data Structures
-- HackMatrix: Agent
-- HackMatrix: Inception
+### What version will I launch
+- SICP: has viral popularity, but too esoteric and involved for v0
+- OpenGL: everyone wants to build a video game, but game engines are tough
 
 
 ## Design Mindset
