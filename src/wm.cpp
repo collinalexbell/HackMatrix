@@ -58,6 +58,37 @@ void WM::allow_input_passthrough(Window window) {
   XFixesDestroyRegion(display, region);
 }
 
+void WM::passthroughInput() {
+  allow_input_passthrough(overlay);
+  allow_input_passthrough(matrix);
+  XFlush(display);
+}
+
+void WM::capture_input(Window window, bool shapeBounding, bool shapeInput) {
+  // Create a region covering the entire window
+  XserverRegion region = XFixesCreateRegion(display, NULL, 0);
+  XRectangle rect;
+  rect.x = 0;
+  rect.y = 0;
+  rect.width = 1920;   // Replace with your window's width
+  rect.height = 1080; // Replace with your window's height
+  XFixesSetRegion(display, region, &rect, 1);
+
+  if(shapeBounding) {
+    XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0, 0, region);
+  }
+  if(shapeInput) {
+    XFixesSetWindowShapeRegion(display, window, ShapeInput, 0, 0, region);
+  }
+    XFixesDestroyRegion(display, region);
+  }
+
+void WM::captureInput() {
+  capture_input(overlay, true, true);
+  capture_input(matrix, true, true);
+  XFlush(display);
+}
+
 void WM::addAppsToWorld() {
   world->addApp(terminator);
   world->addApp(emacs);
@@ -230,7 +261,7 @@ WM::WM(Window matrix): matrix(matrix) {
   XCompositeRedirectSubwindows(display, RootWindow(display, screen),
                                CompositeRedirectAutomatic);
 
-  Window overlay = XCompositeGetOverlayWindow(display, root);
+  overlay = XCompositeGetOverlayWindow(display, root);
   XReparentWindow(display, matrix, overlay, 0, 0);
 
   XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
@@ -246,8 +277,8 @@ WM::WM(Window matrix): matrix(matrix) {
   XSync(display, false);
   XFlush(display);
 
+  passthroughInput();
   allow_input_passthrough(overlay);
-  allow_input_passthrough(matrix);
   substructureThread = thread(&WM::handleSubstructure, this);
   substructureThread.detach();
 }

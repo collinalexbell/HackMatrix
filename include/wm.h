@@ -25,6 +25,7 @@ class WM {
   X11App *currentlyFocusedApp = NULL;
   World *world = NULL;
   Window matrix;
+  Window overlay;
   atomic_bool firstRenderComplete = false;
   map<Window, X11App*> dynamicApps;
   mutex renderLoopMutex;
@@ -32,7 +33,6 @@ class WM {
   vector<X11App*> appsToRemove;
   void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
                      char **envp);
-  void allow_input_passthrough(Window window);
   std::thread substructureThread;
   void onDestroyNotify(XDestroyWindowEvent);
   void onMapRequest(XMapRequestEvent);
@@ -40,8 +40,12 @@ class WM {
   void onHotkeyPress(XKeyEvent event);
   void unfocusApp();
   void createApp(Window window);
+  void allow_input_passthrough(Window window);
+  void capture_input(Window window, bool shapeBounding, bool shapeInput);
 
 public:
+  void passthroughInput();
+  void captureInput();
   void createAndRegisterApps(char **envp);
   WM(Window);
   ~WM();

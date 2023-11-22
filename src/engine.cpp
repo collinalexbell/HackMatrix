@@ -3,6 +3,10 @@
 #include <GLFW/glfw3native.h>
 #include <GLFW/glfw3.h>
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   Engine *engine = (Engine *)glfwGetWindowUserPointer(window);
   engine->controls->mouseCallback(window, xpos, ypos);
@@ -20,6 +24,19 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   glfwFocusWindow(window);
   wire();
   registerCursorCallback();
+
+  // Setup Dear ImGui context
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+  io.ConfigFlags |=
+      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+
+  // Setup Platform/Renderer backends
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init();
 }
 
 Engine::~Engine() {
@@ -52,12 +69,22 @@ void Engine::wire() {
 void Engine::loop() {
   try {
     while (!glfwWindowShouldClose(window)) {
+      glfwPollEvents();
+
+      ImGui_ImplOpenGL3_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
+      ImGui::NewFrame();
+      ImGui::ShowDemoWindow();
+
       renderer->render();
       api->mutateWorld();
       wm->mutateWorld();
       controls->poll(window, camera, world);
+
+      ImGui::Render();
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
       glfwSwapBuffers(window);
-      glfwPollEvents();
     }
   } catch (const std::exception &e) {
     logger->error(e.what());
