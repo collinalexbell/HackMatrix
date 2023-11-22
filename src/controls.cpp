@@ -152,6 +152,7 @@ void Controls::moveTo(glm::vec3 pos, float secs) {
 }
 
 void Controls::goToApp(X11App* app) {
+  wm->passthroughInput();
   float deltaZ = world->getViewDistanceForWindowSize(app);
   glm::vec3 targetPosition = world->getAppPosition(app);
   targetPosition.z = targetPosition.z + deltaZ;
@@ -203,10 +204,12 @@ void Controls::handleToggleFocus(GLFWwindow* window) {
       if(grabbedCursor) {
         grabbedCursor = false;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        wm->captureInput();
       } else {
         grabbedCursor = true;
         resetMouse = true;
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        wm->passthroughInput();
       }
     }
   }

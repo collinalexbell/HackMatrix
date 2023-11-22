@@ -2,12 +2,12 @@ PROTO_DIR = protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
 PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
-INCLUDES        = -Iinclude -I/usr/local/include
+INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 FLAGS = -g
 all: matrix trampoline build/diagnosis
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o include/protos/api.pb.h src/api.pb.cc
-	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o imgui_objects include/protos/api.pb.h src/api.pb.cc
+	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -73,6 +73,25 @@ build/diagnosis: src/diagnosis.cpp
 docs: game-design.md
 	pandoc -s game-design.md -o index.html
 	python -m http.server
+
+#######################
+######## Imgui ########
+#######################
+
+# Source files
+IMGUI_SRC = src/imgui/imgui.cpp src/imgui/imgui_draw.cpp src/imgui/imgui_tables.cpp src/imgui/imgui_widgets.cpp src/imgui/imgui_impl_opengl3.cpp src/imgui/imgui_impl_glfw.cpp src/imgui/imgui_demo.cpp
+
+# Object files directory
+IMGUI_OBJ_DIR = build/imgui
+
+# Object files list based on source files
+IMGUI_OBJ = $(patsubst src/imgui/%.cpp,$(IMGUI_OBJ_DIR)/%.o,$(IMGUI_SRC))
+
+$(IMGUI_OBJ_DIR)/%.o: src/imgui/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -I include/imgui
+
+# Rule to compile all ImGui object files
+imgui_objects: $(IMGUI_OBJ)
 
 #######################
 ######## Utils ########
