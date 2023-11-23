@@ -6,10 +6,7 @@ Immerse hackers in their projects
 ### How does it go about doing this?
 Embeds the hacker in a 3d hacker environment
 
-### What is the hacker environment like?
-Now thats a great question
-
-## Possible Versions
+## Content
 - HackMatrix: OpenGL
 - HackMatrix: SICP
 - HackMatrix: Algorithms and Data Structures
@@ -23,6 +20,9 @@ Now thats a great question
 
 ...so 5,000 - 10,000 backers!
 
+### Path
+Mon, Nov 27: Submit Kickstarter for Review
+
 ### Why
 I need 150k to live a full free year in Portland Oregon
     So I can:
@@ -30,10 +30,6 @@ I need 150k to live a full free year in Portland Oregon
     - meditate
     - expiriment
     - love
-### Launch Date
-11-23-23
-### Delivery Date
-12-23-23
 
 Every person who buys this gets:
 0) HackMatrix beta with full source code, released 12-23-23
