@@ -77,6 +77,13 @@ float vertices[] = {
 
 };
 
+void Renderer::genMeshResources() {
+  glGenVertexArrays(1, &MESH_VERTEX);
+  glGenBuffers(1, &MESH_VERTEX_POSITIONS);
+  glGenBuffers(1, &MESH_VERTEX_BLOCK_TYPES);
+  glGenBuffers(1, &MESH_VERTEX_SELECTS);
+}
+
 void Renderer::genGlResources() {
   glGenBuffers(1, &VBO);
   glGenBuffers(1, &APP_VBO);
@@ -91,6 +98,8 @@ void Renderer::genGlResources() {
   glGenVertexArrays(1, &VAO);
   glGenVertexArrays(1, &APP_VAO);
   glGenVertexArrays(1, &LINE_VAO);
+
+  genMeshResources();
 }
 
 void Renderer::bindGlResourcesForInit() {
