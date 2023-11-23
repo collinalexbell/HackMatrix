@@ -3,6 +3,23 @@
 ## Purpose
 Immerse hackers in their projects
 
+### What are the problems with current methods of immersion?
+
+#### Lack of social connection
+I grew up in a semi-rural suburban area with few hackers.
+
+I didn't have many hacker friends or many friends with similar interests.
+
+Most of my work has been done alone.
+
+The best and most productive times of my life
+have been when I have worked with others
+in fully immersive hackathon like experiences.
+
+The current desktop experience is largely isolating and a solitary endevour.
+
+If I make the experience into a multi-player game, then it would be more fun!
+
 ### How does it go about doing this?
 Embeds the hacker in a 3d hacker environment
 
