@@ -361,3 +361,4 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
 - How to build a minecraft - 10x
 - Build your own 3d desktop - 10x
 - Aliens - 5x
+- 3d Reddit - 100x
