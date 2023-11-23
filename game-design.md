@@ -14,6 +14,12 @@ Embeds the hacker in a 3d hacker environment
 - HackMatrix: Inception
 
 
+## Distribution
+
+Freesian license:
+    - Core is freed after 1 year
+    - Content is freed after 4 years
+
 ## Kickstarter
 ### Goal
 150k
