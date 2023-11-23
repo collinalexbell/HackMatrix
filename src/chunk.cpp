@@ -17,7 +17,10 @@ Cube *Chunk::getCube(int x, int y, int z) {
 }
 
 Cube *Chunk::getCube_(int x, int y, int z) {
-  return data[index(x, y, z)];
+  if(x>=0 && x < size[0] && y >=0 && y < size[1] &&  z >= 0 && z < size[2]) {
+    return data[index(x, y, z)];
+  }
+  return NULL;
 }
 
 void Chunk::removeCube(int x, int y, int z) {
@@ -31,14 +34,18 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
 
 glm::vec3 faceModels[6][6] = {
 
+
+  // front
   {
-    glm::vec3(-0.5f, -0.5f, -0.5f),
+   glm::vec3(-0.5f, -0.5f, -0.5f),
    glm::vec3(-0.5f, 0.5f, -0.5f),
    glm::vec3(0.5f, 0.5f, -0.5f),
    glm::vec3(0.5f, 0.5f, -0.5f),
    glm::vec3(0.5f, -0.5f, -0.5f),
    glm::vec3(-0.5f, -0.5f, -0.5f)
   },
+
+  // back
   {
     glm::vec3(-0.5f, -0.5f, 0.5f),
     glm::vec3(0.5f, -0.5f, 0.5f),
@@ -47,6 +54,8 @@ glm::vec3 faceModels[6][6] = {
     glm::vec3(-0.5f, 0.5f, 0.5f),
     glm::vec3(-0.5f, -0.5f, 0.5f),
   },
+
+  // left
   {
     glm::vec3(-0.5f, 0.5f, 0.5f),
     glm::vec3(-0.5f, 0.5f, -0.5f),
@@ -55,6 +64,8 @@ glm::vec3 faceModels[6][6] = {
     glm::vec3(-0.5f, -0.5f, 0.5f),
     glm::vec3(-0.5f, 0.5f, 0.5f)
   },
+
+  // right
   {
     glm::vec3(0.5f, 0.5f, 0.5f),
     glm::vec3(0.5f, -0.5f, 0.5f),
@@ -63,6 +74,8 @@ glm::vec3 faceModels[6][6] = {
     glm::vec3(0.5f, 0.5f, -0.5f),
     glm::vec3(0.5f, 0.5f, 0.5f)
   },
+
+  // down
   {
     glm::vec3(-0.5f, -0.5f, -0.5f),
     glm::vec3(0.5f, -0.5f, -0.5f),
@@ -71,6 +84,8 @@ glm::vec3 faceModels[6][6] = {
     glm::vec3(-0.5f, -0.5f, 0.5f),
     glm::vec3(-0.5f, -0.5f, -0.5f)
   },
+
+  // up
   {
     glm::vec3(0.5f, 0.5f, 0.5f),
     glm::vec3(0.5f, 0.5f, -0.5f),
@@ -92,12 +107,13 @@ ChunkMesh Chunk::mesh() {
     if(data[i] != NULL) {
       ChunkCoords ci = getCoords(i);
       ChunkCoords neighbors[6] = {
-        ChunkCoords{ci.x - 1, ci.y, ci.z},
-        ChunkCoords{ci.x + 1, ci.y, ci.z},
-        ChunkCoords{ci.x, ci.y - 1, ci.z},
-        ChunkCoords{ci.x, ci.y + 1, ci.z},
-        ChunkCoords{ci.x, ci.y, ci.z - 1},
-        ChunkCoords{ci.x, ci.y, ci.z + 1}};
+          ChunkCoords{ci.x, ci.y, ci.z - 1},
+          ChunkCoords{ci.x, ci.y, ci.z + 1},
+          ChunkCoords{ci.x - 1, ci.y, ci.z},
+          ChunkCoords{ci.x + 1, ci.y, ci.z},
+          ChunkCoords{ci.x, ci.y - 1, ci.z},
+          ChunkCoords{ci.x, ci.y + 1, ci.z},
+      };
 
       for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
         neighborCoords = neighbors[neighborIndex];

@@ -16,6 +16,7 @@ uniform sampler2D app5; uniform sampler2D app6;
 uniform bool isApp;
 uniform bool isLine;
 uniform bool appSelected;
+uniform bool isMesh;
 uniform int totalBlockTypes;
 uniform float time;
 
@@ -82,7 +83,11 @@ void main()
 	} else if(BlockType == 6) {
 		FragColor = vec4(255.0/255,222.0/255,100.0/255, 1);
 	} else {
-		FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
+    if(isMesh) {
+      FragColor = vec4(255.0/255,222.0/255,100.0/255, 1);
+    } else {
+      FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
+    }
 	}
 	if(Selection == 1) {
 		FragColor = FragColor * vec4(2.0,1.0,1.0,1.0);

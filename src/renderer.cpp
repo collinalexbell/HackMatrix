@@ -108,6 +108,18 @@ void Renderer::bindGlResourcesForInit() {
 }
 
 void Renderer::setupVertexAttributePointers() {
+
+  glBindVertexArray(MESH_VERTEX);
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
+  glVertexAttribIPointer(1, 1, GL_INT, sizeof(int), (void*)0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
+  glVertexAttribIPointer(1, 1, GL_INT, sizeof(int), (void *)0);
+
   glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   // position attribute
@@ -246,6 +258,7 @@ Renderer::Renderer(Camera *camera, World *world) {
   initAppTextures();
 
   shader->setBool("lookedAtValid", false);
+  shader->setBool("isMesh", false);
 
   if(isWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
@@ -284,6 +297,24 @@ void Renderer::updateTransformMatrices() {
 
   unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+}
+
+void Renderer::updateChunkMeshBuffers(ChunkMesh mesh) {
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
+  glBufferSubData(GL_ARRAY_BUFFER, 0,
+                  sizeof(glm::vec3) * mesh.positions.size(),
+                  mesh.positions.data());
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
+  glBufferSubData(GL_ARRAY_BUFFER, 0,
+                  sizeof(int) * mesh.blockTypes.size(),
+                  mesh.blockTypes.data());
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
+  glBufferSubData(GL_ARRAY_BUFFER, 0,
+                  sizeof(int) * mesh.selects.size(),
+                  mesh.selects.data());
+  verticesInMesh = mesh.positions.size();
 }
 
 void Renderer::updateCubeBuffer(CubeBuffer cubeBuffer) {
@@ -394,7 +425,14 @@ void Renderer::updateShaderUniforms() {
   handleLookedAtCube();
 }
 
-void Renderer::renderChunkMesh(ChunkMesh mesh) {}
+
+void Renderer::renderChunkMesh() {
+  shader->setBool("isMesh", true);
+  glBindVertexArray(MESH_VERTEX);
+  glEnable(GL_CULL_FACE);
+  glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
+  shader->setBool("isMesh", false);
+}
 
 void Renderer::renderCubes() {
   CubeBuffer updatedCubes = Cube::render();
@@ -434,9 +472,10 @@ void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->tick();
   updateShaderUniforms();
-  renderCubes();
-  renderApps();
   renderLines();
+  renderChunkMesh();
+  // renderCubes();
+  renderApps();
 }
 
 Camera *Renderer::getCamera() { return camera; }
