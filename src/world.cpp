@@ -40,6 +40,7 @@ void World::mesh() {
   ss << "time: " << glfwGetTime() - currentTime;
   logger->debug(ss.str());
   logger->flush();
+  renderer->updateChunkMeshBuffers(m);
 }
 
 const std::vector<Cube*> World::getCubes() {

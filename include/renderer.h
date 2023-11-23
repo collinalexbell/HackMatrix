@@ -65,12 +65,14 @@ class Renderer {
   void drawAppDirect(X11App* app);
   void handleLookedAtCube();
   void updateShaderUniforms();
-  void renderChunkMesh(ChunkMesh mesh);
+  void renderChunkMesh();
   void renderCubes();
   void renderApps();
   void renderLines();
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
+
+  int verticesInMesh = 0;
 
 public:
   Renderer(Camera*, World*);
@@ -82,6 +84,7 @@ public:
   void setupVertexAttributePointers();
   void fillBuffers();
   void updateCubeBuffer(CubeBuffer cubeBuffer);
+  void updateChunkMeshBuffers(ChunkMesh mesh);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);
