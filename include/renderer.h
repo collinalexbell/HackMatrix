@@ -36,6 +36,11 @@ class Renderer {
   unsigned int LINE_INSTANCE;
   unsigned int LINE_VAO;
 
+  unsigned int MESH_VERTEX;
+  unsigned int MESH_VERTEX_POSITIONS;
+  unsigned int MESH_VERTEX_BLOCK_TYPES;
+  unsigned int MESH_VERTEX_SELECTS;
+
   bool isWireframe = false;
 
   Shader* shader;
