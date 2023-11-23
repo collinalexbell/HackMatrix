@@ -70,6 +70,7 @@ class Renderer {
   void renderApps();
   void renderLines();
   std::shared_ptr<spdlog::logger> logger;
+  void genMeshResources();
 
 public:
   Renderer(Camera*, World*);
