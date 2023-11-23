@@ -20,6 +20,9 @@ The current desktop experience is largely isolating and a solitary endevour.
 
 If I make the experience into a multi-player game, then it would be more fun!
 
+#### Having the code editor so decoupled from the application is lame.
+I want to be able to edit my game in my game. HackMatrix allows me to do that.
+
 ### How does it go about doing this?
 Embeds the hacker in a 3d hacker environment
 
