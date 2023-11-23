@@ -42,6 +42,7 @@ Every person who buys this gets:
 ### What version will I launch
 - SICP: has viral popularity, but too esoteric and involved for v0
 - OpenGL: everyone wants to build a video game, but game engines are tough
+- Introduction to \<xLang\>: Could be useful, especially if I can find a good xLang book to model fun games after
 
 
 ## Design Mindset
@@ -103,12 +104,6 @@ V probably not
   - art gallery
 - 3 coding utlities
 - Fake multiplayer (or some shit)
-
-## Perks
-- Sponser name on the VoxelWM github repo
-- Meme of your choice (subject to approval)
-  on the wall in the central part of the game
-- HackMatrix book
 
 ### Path
    - Meshing
