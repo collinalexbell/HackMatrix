@@ -14,6 +14,7 @@ struct ChunkCoords {
 enum Face { LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK };
 struct ChunkMesh {
   vector<glm::vec3> positions;
+  vector<glm::vec2> texCoords;
   vector<int> blockTypes;
   vector<int> selects;
 };
