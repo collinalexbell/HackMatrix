@@ -192,6 +192,18 @@ void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 200000), (void *)0,
                GL_STATIC_DRAW);
+
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 36 * MAX_CUBES), (void *) 0, GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
+               GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
+               GL_STATIC_DRAW);
 }
 
 void Renderer::toggleWireframe() {
