@@ -473,8 +473,8 @@ void Renderer::render() {
   view = camera->tick();
   updateShaderUniforms();
   renderLines();
-  renderChunkMesh();
-  // renderCubes();
+  //renderChunkMesh();
+  renderCubes();
   renderApps();
 }
 
