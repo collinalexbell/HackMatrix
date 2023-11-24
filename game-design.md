@@ -27,11 +27,12 @@ I want to be able to edit my game in my game. HackMatrix allows me to do that.
 Embeds the hacker in a 3d hacker environment
 
 ## Content
-- HackMatrix: OpenGL
 - HackMatrix: SICP
 - HackMatrix: Algorithms and Data Structures
 - HackMatrix: Agent
 - HackMatrix: Inception
+
+
 
 
 ## Distribution
@@ -197,22 +198,12 @@ Overall, I'm liking the spacemacs colors... however, it will be nice to see what
 
 - I kind of want to design a city here... like a futuristic Earth city
 
-MarkovJunior buildings
+- MarkovJunior buildings
 
-- New York City! End of Story!
-  - Players could occupy my apartment studio virtually
-- Voxel NYC! (Seems like a challenge, but eh, w.e)
-
-? trees, lots of trees
+? New York City
+- Procedurally generated vegitation
 ? clasical buildings with futurist twist
-? well designed city blocks (like savanah, good for trees)
 
-? greek
-? cyber-greek
-? nyc style
-? colonial
-? steam punk
-? savanah georgia
 
 ### shaders
 crt: https://www.shadertoy.com/view/Ms23DR
@@ -371,20 +362,25 @@ $ OpenGL
     ?places where players can have private experiences
 
 
-## Funding milestones
-- Multiplayer
--
-
-
 ## Freedom vs Controlled experience
 - Lessons should be relatively controlled
 - The world should be free
 
 
-## Brainstormed value multipliers
+## BrainStorms
+
+### Value multipliers
 I meditated on various ideas that could achieve a 100x multiplier in Kickstarter backers
 - NYC - 10x
 - How to build a minecraft - 10x
 - Build your own 3d desktop - 10x
 - Aliens - 5x
 - 3d Reddit - 100x
+
+### 3d reddit - 100x
+    - Users can post their projects in their niche
+    - Users can hang out in the space, talk, work
+    - Every niche has "work" that can be experienced by others, immersively, live.
+      - Meme makers use Photoshop.
+      - Fashionistas browse clothing in online stores.
+      - Hackers share and discuss code
