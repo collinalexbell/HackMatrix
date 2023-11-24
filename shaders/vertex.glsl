@@ -6,6 +6,7 @@ layout (location = 1) in int meshBlockType;
 layout (location = 2) in vec3 aOffset;
 layout (location = 2) in int meshSelection;
 layout (location = 3) in int blockType;
+layout (location = 3) in vec2 meshTexCoord;
 
 layout (location = 4) in int selection;
 
@@ -35,6 +36,7 @@ void main()
     if (selection > 0) {
       Selection = selection;
     }
+    TexCoord = aTexCoord;
   } else if(isLine) {
     gl_Position = projection * view *  vec4(aPos, 1.0);
     lineColor = lineInstanceColor;
@@ -44,6 +46,7 @@ void main()
     if (meshSelection > 0) {
       Selection = meshSelection;
     }
+    TexCoord = meshTexCoord;
   } else {
     gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
     TexCoord = aTexCoord;
@@ -55,7 +58,7 @@ void main()
 
   IsLookedAt = 0;
   if(lookedAtValid) {
-    if(abs(distance(aOffset,lookedAt)) < 0.01) {
+    if(abs(distance(aPos,lookedAt)) <= 0.9) {
       IsLookedAt = 1;
     }
   }

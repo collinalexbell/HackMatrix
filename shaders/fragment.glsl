@@ -83,11 +83,7 @@ void main()
 	} else if(BlockType == 6) {
 		FragColor = vec4(255.0/255,222.0/255,100.0/255, 1);
 	} else {
-    if(isMesh) {
-      FragColor = vec4(255.0/255,222.0/255,100.0/255, 1);
-    } else {
-      FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
-    }
+    FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
 	}
 	if(Selection == 1) {
 		FragColor = FragColor * vec4(2.0,1.0,1.0,1.0);

@@ -38,6 +38,7 @@ class Renderer {
 
   unsigned int MESH_VERTEX;
   unsigned int MESH_VERTEX_POSITIONS;
+  unsigned int MESH_VERTEX_TEX_COORDS;
   unsigned int MESH_VERTEX_BLOCK_TYPES;
   unsigned int MESH_VERTEX_SELECTS;
 
