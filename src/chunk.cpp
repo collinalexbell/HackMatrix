@@ -31,6 +31,25 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
   data[index(x, y, z)] = new Cube(c);
 }
 
+glm::vec2 texModels[6][6] = {
+    {glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f),
+     glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+
+    {glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f),
+     glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f)},
+
+    {glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
+     glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+
+    {glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f),
+     glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
+
+    {glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f),
+     glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+
+    {glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
+     glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f)}
+};
 
 glm::vec3 faceModels[6][6] = {
 
@@ -97,6 +116,7 @@ glm::vec3 faceModels[6][6] = {
 
 
 
+
 ChunkMesh Chunk::mesh() {
   ChunkMesh rv;
   int x,y,z;
@@ -122,6 +142,7 @@ ChunkMesh Chunk::mesh() {
         if(neighbor == NULL) {
           for(int vertex = 0; vertex < 6; vertex++) {
             rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex]);
+            rv.texCoords.push_back(texModels[neighborIndex][vertex]);
             rv.blockTypes.push_back(data[i]->blockType());
             rv.selects.push_back(data[i]->selected());
           }
