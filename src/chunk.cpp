@@ -114,8 +114,10 @@ glm::vec3 faceModels[6][6] = {
     glm::vec3(-0.5f, 0.5f, 0.5f)
   }};
 
-
-
+ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
+  ChunkMesh rv;
+  return rv;
+}
 
 ChunkMesh Chunk::mesh() {
   ChunkMesh rv;
