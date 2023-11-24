@@ -25,6 +25,8 @@ class Engine {
   std::shared_ptr<spdlog::logger> logger;
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
+  void initImGui();
+  void renderImGui(double &fps, int frameIndex, const vector<double> &frameTimes);
 
 public:
   Engine(GLFWwindow* window, char** envp);
