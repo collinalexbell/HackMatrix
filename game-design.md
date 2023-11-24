@@ -76,7 +76,8 @@ Every person who buys this gets:
 
 ## Design Mindset
 ### I am building a Jewel
-- fundamentally this means that bugs and stability come before features
+I have something here. I just need to add more material to the kernel
+and compress it hard enough.
 
 ```
 $ implemented
