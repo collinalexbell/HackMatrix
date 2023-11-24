@@ -1,14 +1,11 @@
 #version 330 core
-layout (location = 0) in vec3 aPos;
+layout (location = 0) in vec3 position;
+layout (location = 0) in vec3 vertexPositionInModel;
 layout (location = 1) in vec3 lineInstanceColor;
-layout (location = 1) in vec2 aTexCoord;
-layout (location = 1) in int meshBlockType;
-layout (location = 2) in vec3 aOffset;
-layout (location = 2) in int meshSelection;
+layout (location = 1) in vec2 texCoord;
+layout (location = 2) in vec3 modelOffset;
+layout (location = 2) in int selection;
 layout (location = 3) in int blockType;
-layout (location = 3) in vec2 meshTexCoord;
-
-layout (location = 4) in int selection;
 
 out vec2 TexCoord;
 out vec3 lineColor;
@@ -31,34 +28,24 @@ void main()
 {
   // model in this case is used per call to glDrawArraysInstanced
   if(isApp) {
-    gl_Position = projection * view * appModel * vec4(aPos + aOffset, 1.0);
+    gl_Position = projection * view * appModel * vec4(vertexPositionInModel + modelOffset, 1.0);
     BlockType = blockType;
-    if (selection > 0) {
-      Selection = selection;
-    }
-    TexCoord = aTexCoord;
+    TexCoord = texCoord;
   } else if(isLine) {
-    gl_Position = projection * view *  vec4(aPos, 1.0);
+    gl_Position = projection * view *  vec4(position, 1.0);
     lineColor = lineInstanceColor;
   } else if(isMesh) {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-    BlockType = meshBlockType;
-    if (meshSelection > 0) {
-      Selection = meshSelection;
-    }
-    TexCoord = meshTexCoord;
-  } else {
-    gl_Position = projection * view * model * vec4(aPos + aOffset, 1.0);
-    TexCoord = aTexCoord;
+    gl_Position = projection * view * model * vec4(position, 1.0);
     BlockType = blockType;
     if (selection > 0) {
       Selection = selection;
     }
+    TexCoord = texCoord;
   }
 
   IsLookedAt = 0;
   if(lookedAtValid) {
-    if(abs(distance(aPos,lookedAt)) <= 0.9) {
+    if(abs(distance(position,lookedAt)) <= 0.9) {
       IsLookedAt = 1;
     }
   }

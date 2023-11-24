@@ -108,25 +108,29 @@ void Renderer::bindGlResourcesForInit() {
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
 }
 
-void Renderer::setupVertexAttributePointers() {
-
+void Renderer::setupMeshVertexAttributePoiners() {
   glBindVertexArray(MESH_VERTEX);
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(0);
 
-  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
-  glVertexAttribIPointer(1, 1, GL_INT, sizeof(int), (void*)0);
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(1);
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
   glVertexAttribIPointer(2, 1, GL_INT, sizeof(int), (void *)0);
   glEnableVertexAttribArray(2);
 
-  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
-  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
+  glVertexAttribIPointer(3, 1, GL_INT, sizeof(int), (void *)0);
   glEnableVertexAttribArray(3);
 
+
+}
+
+void Renderer::setupVertexAttributePointers() {
+  setupMeshVertexAttributePoiners();
   glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   // position attribute

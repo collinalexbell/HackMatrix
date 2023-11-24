@@ -72,6 +72,7 @@ class Renderer {
   void renderLines();
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
+  void setupMeshVertexAttributePoiners();
 
   int verticesInMesh = 0;
 
