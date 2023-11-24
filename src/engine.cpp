@@ -67,24 +67,43 @@ void Engine::wire() {
 }
 
 void Engine::loop() {
+  vector<double> frameTimes(20, 0);
+  double frameStart;
+  int frameIndex = 0;
+  double fps;
   try {
     while (!glfwWindowShouldClose(window)) {
+      frameStart = glfwGetTime();
       glfwPollEvents();
 
       ImGui_ImplOpenGL3_NewFrame();
       ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
-      ImGui::ShowDemoWindow();
+      //ImGui::ShowDemoWindow();
+      //ImGui::SetNextWindowSize(ImVec2(120, 5));
+      if(frameIndex == 0) {
+        fps = 0;
+        for(int i=0; i<20; i++) {
+          fps = fps + frameTimes[i];
+        }
+        fps /= 20.0;
+        if(fps > 0) fps = 1.0/fps;
+      }
+      ImGui::Begin("HackMatrix");
+      ImGui::Text("%f fps", fps);
+      ImGui::End();
+      ImGui::Render();
 
       renderer->render();
       api->mutateWorld();
       wm->mutateWorld();
       controls->poll(window, camera, world);
 
-      ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       glfwSwapBuffers(window);
+      frameTimes[frameIndex] = glfwGetTime() - frameStart;
+      frameIndex = (frameIndex + 1)%20;
     }
   } catch (const std::exception &e) {
     logger->error(e.what());
