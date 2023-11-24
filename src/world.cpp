@@ -28,8 +28,8 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   availableAppPositions.push(glm::vec3(4.0, 1.75, z));
   availableAppPositions.push(glm::vec3(5.2, 1.0, z));
   availableAppPositions.push(glm::vec3(2.5, 1.75, 10.0));
-  for(int x = 0; x < 1024; x++) {
-    for(int z = 0; z < 1024; z++) {
+  for(int x = 0; x < cubes.getSize()[0]; x++) {
+    for(int z = 0; z < cubes.getSize()[2]; z++) {
       addCube(x,5,z,0);
     }
   }
