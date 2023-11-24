@@ -80,6 +80,7 @@ float vertices[] = {
 void Renderer::genMeshResources() {
   glGenVertexArrays(1, &MESH_VERTEX);
   glGenBuffers(1, &MESH_VERTEX_POSITIONS);
+  glGenBuffers(1, &MESH_VERTEX_TEX_COORDS);
   glGenBuffers(1, &MESH_VERTEX_BLOCK_TYPES);
   glGenBuffers(1, &MESH_VERTEX_SELECTS);
 }
@@ -116,9 +117,15 @@ void Renderer::setupVertexAttributePointers() {
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
   glVertexAttribIPointer(1, 1, GL_INT, sizeof(int), (void*)0);
+  glEnableVertexAttribArray(1);
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
-  glVertexAttribIPointer(1, 1, GL_INT, sizeof(int), (void *)0);
+  glVertexAttribIPointer(2, 1, GL_INT, sizeof(int), (void *)0);
+  glEnableVertexAttribArray(2);
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
+  glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(3);
 
   glBindVertexArray(VAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -208,6 +215,10 @@ void Renderer::fillBuffers() {
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 36 * MAX_CUBES), (void *) 0, GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec2) * 36 * MAX_CUBES), (void *)0,
+               GL_STATIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
@@ -304,6 +315,10 @@ void Renderer::updateChunkMeshBuffers(ChunkMesh mesh) {
   glBufferSubData(GL_ARRAY_BUFFER, 0,
                   sizeof(glm::vec3) * mesh.positions.size(),
                   mesh.positions.data());
+
+  glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec2) * mesh.texCoords.size(),
+                  mesh.texCoords.data());
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
   glBufferSubData(GL_ARRAY_BUFFER, 0,
@@ -473,8 +488,8 @@ void Renderer::render() {
   view = camera->tick();
   updateShaderUniforms();
   renderLines();
-  //renderChunkMesh();
-  renderCubes();
+  renderChunkMesh();
+  //renderCubes();
   renderApps();
 }
 
