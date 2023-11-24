@@ -2,6 +2,7 @@
 #define __WORLD_H__
 
 #include "app.h"
+#include "coreStructs.h"
 #include "mesher.h"
 #include "cube.h"
 #include "chunk.h"
@@ -15,14 +16,6 @@
 #include <queue>
 
 class Renderer;
-
-struct Position {
-  int x;
-  int y;
-  int z;
-  bool valid;
-  glm::vec3 normal;
-};
 
 struct Line {
   glm::vec3 points[2];

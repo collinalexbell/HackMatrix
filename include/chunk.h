@@ -1,8 +1,8 @@
 #pragma once
 #include "cube.h"
+#include "coreStructs.h"
 #include <memory>
 #include <vector>
-
 
 
 struct ChunkCoords {
@@ -34,5 +34,6 @@ public:
   void addCube(Cube c, int x, int y, int z);
   ChunkCoords getCoords(int i);
   ChunkMesh mesh();
+  ChunkMesh meshedFaceFromPosition(Position position);
   const vector<int> getSize();
 };
