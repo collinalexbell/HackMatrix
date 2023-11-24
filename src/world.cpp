@@ -28,12 +28,8 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   availableAppPositions.push(glm::vec3(4.0, 1.75, z));
   availableAppPositions.push(glm::vec3(5.2, 1.0, z));
   availableAppPositions.push(glm::vec3(2.5, 1.75, 10.0));
-  for(int x = 0; x < cubes.getSize()[0]; x++) {
-    for(int z = 0; z < cubes.getSize()[2]; z++) {
-      addCube(x,5,z,0);
-    }
-  }
 }
+
 World::~World() {}
 
 void World::mesh() {
@@ -391,10 +387,11 @@ void World::action(Action toTake) {
       int y = lookingAt.y + (int)lookingAt.normal.y;
       int z = lookingAt.z + (int)lookingAt.normal.z;
       addCube(x,y,z, lookedAt->blockType());
+      mesh();
     }
     if(toTake == REMOVE_CUBE) {
       removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
-      refreshRendererCubes();
+      mesh();
     }
     if(toTake == SELECT_CUBE) {
       lookedAt->toggleSelect();
@@ -470,6 +467,7 @@ void World::load(string filename) {
     addCube(x,y,z,blockType);
   }
   inputFile.close();
+  mesh();
 }
 
 void World::loadLatest() {
