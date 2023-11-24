@@ -1,7 +1,7 @@
-# HackMatrix
+# Holon: a multiverse client
 
 ## Purpose
-Immerse hackers in their projects
+Immerse people in their project environments
 
 ### What are the problems with current methods of immersion?
 
@@ -33,6 +33,10 @@ Embeds the hacker in a 3d hacker environment
 - HackMatrix: Inception
 
 
+## Packaging
+- User purchased shell
+- User ran server
+- Hosted servers
 
 
 ## Distribution
