@@ -2,6 +2,7 @@
 
 ## Purpose
 Immerse people in their project environments
+Make work and study more captivating
 
 ### What are the problems with current methods of immersion?
 
@@ -26,26 +27,20 @@ I want to be able to edit my game in my game. HackMatrix allows me to do that.
 ### How does it go about doing this?
 Embeds the hacker in a 3d hacker environment
 
-## Content
-- HackMatrix: SICP
-- HackMatrix: Algorithms and Data Structures
-- HackMatrix: Agent
-- HackMatrix: Inception
 
-- Reddit... 3d room form?
+## Design Mindset
+### I am building a Jewel
+I have something here. I just need to add more material to the kernel
+and compress it hard enough.
 
-
-## Packaging
-- User purchased shell
-- User ran server
-- Hosted servers
-
-
-## Distribution
-
-Freesian license:
-    - Core is freed after 1 year
-    - Content is freed after 4 years
+```
+$ implemented
+~ kindof have it
+* working on
+- committed
+? maybe
+V probably not
+```
 
 ## Kickstarter
 ### Goal
@@ -78,19 +73,76 @@ Every person who buys this gets:
 - Introduction to \<xLang\>: Could be useful, especially if I can find a good xLang book to model fun games after
 
 
-## Design Mindset
-### I am building a Jewel
-I have something here. I just need to add more material to the kernel
-and compress it hard enough.
 
-```
-$ implemented
-~ kindof have it
-* working on
-- committed
-? maybe
-V probably not
-```
+## Content
+- HackMatrix: SICP
+- HackMatrix: Algorithms and Data Structures
+- HackMatrix: Agent
+- HackMatrix: Inception
+
+- Reddit... 3d room form?
+
+
+## Aesthetic
+$ voxel
+$ tron
+
+- put yourself in the view of other creatures
+~ custom shaders for blocks!!!!
+
+? what size voxels
+? how will I generate the textures
+
+V 3rd person
+
+### colors
+What if I blended man-made colors and natural colors with a sharp distinction between the two
+This would capture the essense of being in a park in the midst of NYC.
+
+Overall, I'm liking the spacemacs colors... however, it will be nice to see what the contrast between these colors and fall nature colors looks like when I get around to implementing textures like that
+
+#### man made
+* [spacemacs colors](https://github.com/nashamri/spacemacs-theme/blob/master/spacemacs-theme.el)
+* all the rainbow parens in lisp
+
+#### nature
+- look at fall over the smokies
+
+
+### architecture
+
+- I kind of want to design a city here... like a futuristic Earth city
+
+- MarkovJunior buildings
+
+? New York City
+- Procedurally generated vegitation
+? clasical buildings with futurist twist
+
+
+### shaders
+crt: https://www.shadertoy.com/view/Ms23DR
+outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
+
+
+
+## Game Theme
+- Living in a crystal city filled with cybernetic organisms
+- Divine/magical power beyond one's comprehension
+  is available to those who seek it
+  and learn to harmonize themselves
+  with the spirit of the universe
+## Packaging
+- User purchased shell
+- User ran server
+- Hosted servers
+
+
+## Distribution
+
+Freesian license:
+    - Core is freed after 1 year
+    - Content is freed after 4 years
 
 ## Pitch
 
@@ -167,58 +219,6 @@ $ watch blocks do stuff
 ## essential experience
 - concious hackers of their own world and become fully enlightened technokings
 - gamify software learning
-
-
-## Game Theme
-- Living in a crystal city filled with cybernetic organisms
-- Divine/magical power beyond one's comprehension
-  is available to those who seek it
-  and learn to harmonize themselves
-  with the spirit of the universe
-
-
-
-## aesthetic
-$ voxel
-$ tron
-
-- put yourself in the view of other creatures
-~ custom shaders for blocks!!!!
-
-? what size voxels
-? how will I generate the textures
-
-V 3rd person
-
-### colors
-What if I blended man-made colors and natural colors with a sharp distinction between the two
-This would capture the essense of being in a park in the midst of NYC.
-
-Overall, I'm liking the spacemacs colors... however, it will be nice to see what the contrast between these colors and fall nature colors looks like when I get around to implementing textures like that
-
-#### man made
-* [spacemacs colors](https://github.com/nashamri/spacemacs-theme/blob/master/spacemacs-theme.el)
-* all the rainbow parens in lisp
-
-#### nature
-- look at fall over the smokies
-
-
-### architecture
-
-- I kind of want to design a city here... like a futuristic Earth city
-
-- MarkovJunior buildings
-
-? New York City
-- Procedurally generated vegitation
-? clasical buildings with futurist twist
-
-
-### shaders
-crt: https://www.shadertoy.com/view/Ms23DR
-outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
-
 
 
 ## mechanics
