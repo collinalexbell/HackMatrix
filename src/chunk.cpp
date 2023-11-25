@@ -117,7 +117,16 @@ glm::vec3 faceModels[6][6] = {
 
 Face Chunk::getFaceFromNormal(glm::vec3 normal) {
   // TBI
-  return LEFT;
+  if(normal.x < 0) return LEFT;
+  if(normal.x > 0) return RIGHT;
+  if(normal.y < 0) return BOTTOM;
+  if(normal.y > 0) return TOP;
+  if(normal.z < 0) return FRONT;
+  if(normal.z > 0) return BACK;
+
+  // null vector
+  assert(false);
+  return FRONT;
 }
 
 vector<glm::vec3> Chunk::getOffsetsFromFace(Face face) {
