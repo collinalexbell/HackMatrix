@@ -105,6 +105,8 @@ Every person who buys this gets:
 
 
 
+### Pitch
+p.276: interest curves: 2134 (higher, more exciting)
 ## Interface
 Minimal currently. Probably needs a bit more of something.
 ## Content
