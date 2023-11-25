@@ -70,6 +70,7 @@ class Renderer {
   void renderCubes();
   void renderApps();
   void renderLines();
+  void renderLookedAtFace(ChunkMesh lookedAtFace);
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
   void setupMeshVertexAttributePoiners();

@@ -85,6 +85,7 @@ public:
   void loadLatest();
 
   void mesh();
+  ChunkMesh meshSelectedCube(Position position);
 };
 
 #endif

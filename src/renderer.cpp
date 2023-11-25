@@ -423,9 +423,12 @@ void Renderer::screenshot() {
   saver.detach();
 }
 
+void Renderer::renderLookedAtFace(ChunkMesh lookedAtFace) {}
+
 void Renderer::handleLookedAtCube() {
   Position lookedAt = world->getLookedAtCube();
   if (lookedAt.valid) {
+    ChunkMesh lookedAtFace = world->meshSelectedCube(lookedAt);
     shader->setBool("lookedAtValid", true);
     glm::vec3 lookedAtVec = glm::vec3(lookedAt.x, lookedAt.y, lookedAt.z);
     unsigned int lookedAtLoc = glGetUniformLocation(shader->ID, "lookedAt");
