@@ -201,6 +201,8 @@ Freesian license:
    - Marketing Materials
    - Launch
 
+## App interface
+- Add a frame to the app, so users can close windows
 ## Marketing
 - Hackathons: I can host hackathons where users hang out in virtual dorm rooms
 
