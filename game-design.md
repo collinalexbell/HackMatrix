@@ -53,6 +53,10 @@ Freesian license:
 
 ...so 5,000 - 10,000 backers!
 
+### Target Market
+? Hackers only
+? Gamers
+? All computer users
 ### Path
 Mon, Nov 27: Submit Kickstarter for Review
 
