@@ -42,6 +42,9 @@ class Renderer {
   unsigned int MESH_VERTEX_BLOCK_TYPES;
   unsigned int MESH_VERTEX_SELECTS;
 
+  unsigned int VOXEL_SELECTIONS;
+  unsigned int VOXEL_SELECTION_POSITIONS;
+
   bool isWireframe = false;
 
   Shader* shader;
