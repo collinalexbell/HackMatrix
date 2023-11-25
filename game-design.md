@@ -1,4 +1,35 @@
-# HackMatrix
+# City of Cybernetics
+
+## Story
+You are a cybernetician. We all are.
+Thats why we chose to live here, in the City of Cybernetics.
+
+Nestled in the Pacific Northwest,
+at the confluence of the Willamete and Columbia river,
+lies our beautiful city, once called Portland, now called the City of Cybernetics.
+
+We collectively transformed it with our digital imaginings.
+They called it a video game, but we called it our future and then made it so.
+How else was a complex city supposed to be planned?... in meatspace?
+No, first we created it in our collective digital mind, then in reality
+We simulated the city of our wildest dreams:
+  With alternate economies,
+    improved poltical systems,
+      and harmonious relationships
+
+  Now we live there:
+    Welcome to the City of Cybernetics!
+
+### missions
+
+- Perhaps, I could structure the game by class, where each class is itself a game!
+- Users must write a computer program that solves problems in the environment.
+- Students learn by doing side quests that teach them the concepts required for OS work
+
+Example:
+- Users must draw an image to their screen and take a picture of it. Neural networks will analyze that the image is accurate
+
+? Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
 
 ## Purpose
 Immerse people in their project environments
@@ -314,32 +345,6 @@ V Blow stuff up with placed charges that have customizable size!
 - [Turret Avoidance](https://www.youtube.com/watch?v=dY6jR52fFWo)
 - Create a trajectory to shoot a ball through the hoop
 
-
-## Story
-- VR Hogwartz for hackers
-- While exploring a lost city, a <x>th century player discovers a strange glowing apple growing on a tree.
-  When the apple is picked up, it expands into a pair of goggles that the player puts on.
-  Instantly, screens can be placed anywhere in the world and the source code of the world is visible, thus enabling the player
-  to manipulate matter, if only he can find the right Names of Power.
-
-  The player comes across a magician:
-
-  (rewrite for the sake of the game " We are about to study the idea of a computational process. Computational processes are abstract beings that inhabit computers. As they evolve, processes manipulate other abstract things called data. The evolution of a process is directed by a pattern of rules called a program. People create programs to direct processes. In effect, we conjure the spirits of the computer[matrix] with our spells.
-
-  A computational process is indeed much like a sorcerer's idea of a spirit. It cannot be seen or touched. It is not composed of matter at all. However, it is very real. It can perform intellectual work. It can answer questions. It can affect the world by disbursing money at a bank or by controlling a robot arm in a factory. The programs we use to conjure processes are like a sorcerer's spells. They are carefully composed from symbolic expressions in arcane and esoteric programming languages that prescribe the tasks we want our processes to perform.
-
-  A computational process, in a correctly working computer, executes programs precisely and accurately. Thus, like the sorcerer's apprentice, novice programmers must learn to understand and to anticipate the consequences of their conjuring. Even small errors (usually called bugs or glitches) in programs can have complex and unanticipated consequences.")
-
-### missions
-
-- Perhaps, I could structure the game by class, where each class is itself a game!
-- Users must write a computer program that solves problems in the environment.
-- Students learn by doing side quests that teach them the concepts required for OS work
-
-Example:
-- Users must draw an image to their screen and take a picture of it. Neural networks will analyze that the image is accurate
-
-? Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
 
 ## technology
 $ X Window to allow IDE
