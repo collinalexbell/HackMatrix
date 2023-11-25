@@ -17,7 +17,7 @@ We simulated the city of our wildest dreams:
     improved poltical systems,
       and harmonious relationships
 
-  Now we live there:
+  Now we live there and this is our history:
     Welcome to the City of Cybernetics!
 
 ### missions
@@ -32,8 +32,7 @@ Example:
 ? Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
 
 ## Purpose
-Immerse people in their project environments
-Make work and study more captivating
+Immerse people in the project of living their best (in their city)
 
 ### What are the problems with current methods of immersion?
 
@@ -99,12 +98,7 @@ Every person who buys this gets:
 1) HackMatrix alpha,                      released 12-23-24
 
 ### What version will I launch
-- SICP: has viral popularity, but too esoteric and involved for v0
-- OpenGL: everyone wants to build a video game, but game engines are tough
-- Introduction to \<xLang\>: Could be useful, especially if I can find a good xLang book to model fun games after
-
-
-
+- Portland
 ### Pitch
 p.276: interest curves: 2134 (higher, more exciting)
 ## Interface
@@ -120,16 +114,7 @@ Minimal currently. Probably needs a bit more of something.
 
 ## Aesthetic
 $ voxel
-$ tron
-
-- put yourself in the view of other creatures
-~ custom shaders for blocks!!!!
-
-? what size voxels
-? how will I generate the textures
-
-V 3rd person
-
+- portland
 ### colors
 What if I blended man-made colors and natural colors with a sharp distinction between the two
 This would capture the essense of being in a park in the midst of NYC.
@@ -145,21 +130,11 @@ Overall, I'm liking the spacemacs colors... however, it will be nice to see what
 
 
 ### architecture
-
 - I kind of want to design a city here... like a futuristic Earth city
-
 - MarkovJunior buildings
-
-? New York City
-- Procedurally generated vegitation
-? clasical buildings with futurist twist
-
-
 ### shaders
 crt: https://www.shadertoy.com/view/Ms23DR
 outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
-
-
 
 ## Game Theme
 - Living in a crystal city filled with cybernetic organisms
@@ -167,44 +142,10 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
   is available to those who seek it
   and learn to harmonize themselves
   with the spirit of the universe
-## Packaging
-- User purchased shell
-- User ran server
-- Hosted servers
-
-
-## Distribution
-
-Freesian license:
-    - Core is freed after 1 year
-    - Content is freed after 4 years
-
-## Pitch
-
-- "bring your own IDE"
-  - Show character walking up to the editors and then hopping between them
-  - Make it look like they are selecting between pokemon in a lab or something
-
-- "Solve 3d challenges in your favorite language"
-
-- "Enchant objects"
-
-- "Build your environment" # This seems too minecrafty
-  Manually:
-    - Click click click
-  Or with code:
-    - Open editor, run
-
-- "Imerse yourself in your projects"
-  - Show off cool 3d coding utilities
-
-- "Hack with friends"
-
-- "Pratice core CS concepts"
-
-
-
 ## Development Milestones
+- Portland in voxels
+- Robots
+
 - Choose IDE level
 - 3 challenges
   $ path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
@@ -224,6 +165,7 @@ Freesian license:
   - art gallery
 - 3 coding utlities
 - Fake multiplayer (or some shit)
+
 
 ### Path
    - Meshing
