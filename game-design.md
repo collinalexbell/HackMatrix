@@ -1,4 +1,5 @@
 # Holon: a multiverse client
+# HackMatrix: an immersive desktop for programmers
 
 ## Purpose
 Immerse people in their project environments
