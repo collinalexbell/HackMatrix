@@ -1,4 +1,4 @@
-# HackMatrix: an immersive desktop for programmers
+# HackMatrix
 
 ## Purpose
 Immerse people in their project environments
