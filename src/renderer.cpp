@@ -100,6 +100,10 @@ void Renderer::genGlResources() {
   glGenVertexArrays(1, &APP_VAO);
   glGenVertexArrays(1, &LINE_VAO);
 
+  glGenVertexArrays(1, &VOXEL_SELECTIONS);
+  glGenBuffers(1, &VOXEL_SELECTION_POSITIONS);
+
+
   genMeshResources();
 }
 
@@ -423,7 +427,8 @@ void Renderer::screenshot() {
   saver.detach();
 }
 
-void Renderer::renderLookedAtFace(ChunkMesh lookedAtFace) {}
+void Renderer::renderLookedAtFace(ChunkMesh lookedAtFace) {
+}
 
 void Renderer::handleLookedAtCube() {
   Position lookedAt = world->getLookedAtCube();
