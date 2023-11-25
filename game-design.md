@@ -74,6 +74,8 @@ Every person who buys this gets:
 
 
 
+## Interface
+Minimal currently. Probably needs a bit more of something.
 ## Content
 - HackMatrix: SICP
 - HackMatrix: Algorithms and Data Structures
