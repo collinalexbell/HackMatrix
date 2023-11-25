@@ -1,4 +1,5 @@
 #include "chunk.h"
+#include <cassert>
 
 Face Chunk::neighborFaces[] = {LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK};
 Chunk::Chunk() {
@@ -114,8 +115,48 @@ glm::vec3 faceModels[6][6] = {
     glm::vec3(-0.5f, 0.5f, 0.5f)
   }};
 
+Face Chunk::getFaceFromNormal(glm::vec3 normal) {
+  // TBI
+  return LEFT;
+}
+
+vector<glm::vec3> Chunk::getOffsetsFromFace(Face face) {
+  // TBI
+  int index = 0; // change this
+  glm::vec3 *offsets = faceModels[index];
+  vector<glm::vec3> rv;
+  for(int i = 0; i < 6; i++) {
+    rv.push_back(offsets[i]);
+  }
+  return rv;
+}
+
+vector<glm::vec2> Chunk::getTexCoordsFromFace(Face face) {
+  // TBI
+  int index = 0; // change this
+  glm::vec2 *coords = texModels[index];
+  vector<glm::vec2> rv;
+  for (int i = 0; i < 6; i++) {
+    rv.push_back(coords[i]);
+  }
+  return rv;
+}
+
 ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
   ChunkMesh rv;
+  Cube *c = getCube_(position.x, position.y, position.z);
+  if(c != NULL) {
+    Face face = getFaceFromNormal(position.normal);
+    vector<glm::vec3> offsets = getOffsetsFromFace(face);
+    vector<glm::vec2> texCoords = getTexCoordsFromFace(face);
+    assert(offsets.size() == texCoords.size());
+    for(int i = 0; i < offsets.size(); i++) {
+      rv.positions.push_back(offsets[i] + glm::vec3(position.x, position.y, position.z));
+      rv.blockTypes.push_back(c->blockType());
+      rv.selects.push_back(c->selected());
+      rv.texCoords.push_back(texCoords[i]);
+    }
+  }
   return rv;
 }
 

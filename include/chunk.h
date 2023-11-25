@@ -25,6 +25,9 @@ class Chunk {
   unique_ptr<Cube* []> data;
   Cube null = Cube(glm::vec3(0, 0, 0), -1);
   int index(int x, int y, int z);
+  vector<glm::vec3> getOffsetsFromFace(Face face);
+  vector<glm::vec2> getTexCoordsFromFace(Face face);
+  Face getFaceFromNormal(glm::vec3 normal);
 
 public:
   Chunk();
