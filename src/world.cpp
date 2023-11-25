@@ -371,13 +371,16 @@ Position World::getLookedAtCube() {
         rv.normal = normal;
         rv.valid = true;
 
-        ChunkMesh selectedMesh = cubes.meshedFaceFromPosition(rv);
         return rv;
       }
     }
   } while(tMaxX < limit || tMaxY < limit || tMaxZ < limit);
 
   return rv;
+}
+
+ChunkMesh World::meshSelectedCube(Position position) {
+  return cubes.meshedFaceFromPosition(position);
 }
 
 void World::action(Action toTake) {
