@@ -136,6 +136,21 @@ Overall, I'm liking the spacemacs colors... however, it will be nice to see what
 crt: https://www.shadertoy.com/view/Ms23DR
 outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
+## Limits
+The game will need limits of some kind:
+
+- Financial
+- Time
+- Speed
+- Resources
+
+All of these limits could be contex bound to various challenges
+
+### Zones of Limitation
+I can implement zones or bounds of limitation on physical spaces or time space or some other dimension, where upon entering the zone, the player has to play within the limits.
+
+This is similar to entering into a human body from the limitless realm of light/love
+
 ## Game Theme
 - Living in a crystal city filled with cybernetic organisms
 - Divine/magical power beyond one's comprehension
@@ -183,8 +198,9 @@ outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 ## Marketing
 - Hackathons: I can host hackathons where users hang out in virtual dorm rooms
 
-## process
+## Development Process
 - Simply make the best game I can
+- Use short-wave intervals (per commit basis)
 - Keep polishing and compressing it like a diamond
        - like how Mickey Singer viewed his medical manager code
 - Modulate the time I spend doing various tasks in the short-wave
