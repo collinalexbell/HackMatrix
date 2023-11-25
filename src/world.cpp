@@ -372,10 +372,6 @@ Position World::getLookedAtCube() {
         rv.valid = true;
 
         ChunkMesh selectedMesh = cubes.meshedFaceFromPosition(rv);
-        stringstream ss;
-        ss << selectedMesh.positions[0].x << ","
-           << selectedMesh.positions[0].y << ","
-           << selectedMesh.positions[0].z;
         return rv;
       }
     }
