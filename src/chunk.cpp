@@ -1,7 +1,6 @@
 #include "chunk.h"
 #include <cassert>
 
-Face Chunk::neighborFaces[] = {LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK};
 Chunk::Chunk() {
   data = make_unique<Cube* []>(size[0] * size[1] * size[2]);
   for(int i=0; i < size[0]*size[1]*size[2]; i++) {
@@ -51,6 +50,8 @@ glm::vec2 texModels[6][6] = {
     {glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
      glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f)}
 };
+
+Face Chunk::neighborFaces[] = {FRONT, BACK, LEFT, RIGHT, BOTTOM, TOP};
 
 glm::vec3 faceModels[6][6] = {
 
@@ -129,9 +130,22 @@ Face Chunk::getFaceFromNormal(glm::vec3 normal) {
   return FRONT;
 }
 
+int Chunk::findNeighborFaceIndex(Face face) {
+  int index = 0;
+  for (index = 0; index < 6; index++) {
+    if (neighborFaces[index] == face) {
+      break;
+    }
+  }
+
+  // neighborFaces should have all Face enums
+  assert(index != 6);
+
+  return index;
+}
+
 vector<glm::vec3> Chunk::getOffsetsFromFace(Face face) {
-  // TBI
-  int index = 0; // change this
+  int index = findNeighborFaceIndex(face);
   glm::vec3 *offsets = faceModels[index];
   vector<glm::vec3> rv;
   for(int i = 0; i < 6; i++) {
@@ -141,8 +155,7 @@ vector<glm::vec3> Chunk::getOffsetsFromFace(Face face) {
 }
 
 vector<glm::vec2> Chunk::getTexCoordsFromFace(Face face) {
-  // TBI
-  int index = 0; // change this
+  int index = findNeighborFaceIndex(face);
   glm::vec2 *coords = texModels[index];
   vector<glm::vec2> rv;
   for (int i = 0; i < 6; i++) {
@@ -189,7 +202,6 @@ ChunkMesh Chunk::mesh() {
 
       for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
         neighborCoords = neighbors[neighborIndex];
-        Face face = neighborFaces[neighborIndex];
         neighbor = getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
         if(neighbor == NULL) {
           for(int vertex = 0; vertex < 6; vertex++) {
