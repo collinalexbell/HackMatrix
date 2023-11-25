@@ -1,4 +1,3 @@
-# Holon: a multiverse client
 # HackMatrix: an immersive desktop for programmers
 
 ## Purpose
@@ -119,8 +118,6 @@ V probably not
 
 
 ## Development Milestones
-(I'm partially hoping that YC saves the day, I'm way behind on deadlines)
-
 - Choose IDE level
 - 3 challenges
   $ path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
@@ -129,6 +126,7 @@ V probably not
 
 - Fully functioning windows (right clicks)
 - Ability to open and close arbitrary programs (fully functioning WM)
+- Window highlight
 
 - 3 enchant objects in your environment
   - Open a video when you click on a fictional character
