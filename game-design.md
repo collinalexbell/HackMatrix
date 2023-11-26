@@ -90,6 +90,11 @@ V probably not
 
 ...so 5,000 - 10,000 backers!
 
+### Video
+    - Story
+    - Show Mechanics
+    - Show World
+    - Follow interest curves (I don't know how I'll do this).
 ### Target Market
 ? Hackers only
 ? Gamers
