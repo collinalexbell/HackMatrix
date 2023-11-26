@@ -1,5 +1,17 @@
 # City of Cybernetics
 
+## Essential Experience
+- Concious hackers
+- transform their own city
+- and become fully enlightened cyber soveriegns
+## Game Theme
+- Living in a crystal city filled with cybernetic organisms
+- Divine/magical power and hormony
+     beyond one's comprehension
+   is available to those who seek it
+       and learn to harmonize themselves
+           with the spirit of Wralda
+              and the love of other free people
 ## Story
 You are a cybernetician. We all are.
 Thats why we chose to live here, in the City of Cybernetics.
@@ -151,12 +163,6 @@ I can implement zones or bounds of limitation on physical spaces or time space o
 
 This is similar to entering into a human body from the limitless realm of light/love
 
-## Game Theme
-- Living in a crystal city filled with cybernetic organisms
-- Divine/magical power beyond one's comprehension
-  is available to those who seek it
-  and learn to harmonize themselves
-  with the spirit of the universe
 ## Development Milestones
 - Portland in voxels
 - Robots
@@ -210,11 +216,6 @@ This is similar to entering into a human body from the limitless realm of light/
 $ place blocks
 - code blocks
 $ watch blocks do stuff
-
-## essential experience
-- concious hackers of their own world and become fully enlightened technokings
-- gamify software learning
-
 
 ## mechanics
 
