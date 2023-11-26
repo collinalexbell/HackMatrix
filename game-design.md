@@ -102,7 +102,6 @@ V probably not
 ## Kickstarter
 ### Goal
 150k
-
 ...so 5,000 - 10,000 backers!
 
 ### Video
@@ -111,9 +110,7 @@ V probably not
     - Show World
     - Follow interest curves (I don't know how I'll do this).
 ### Target Market
-? Hackers only
-? Gamers
-? All computer users
+Cyber people
 ### Path
 - replicate Portland
 - make avitar
@@ -142,7 +139,14 @@ p.276: interest curves: 2134 (higher, more exciting)
 ## Interface
 Minimal currently. Probably needs a bit more of something.
 ## Content
-- HackMatrix: SICP
+
+Houses can house the content!!!!
+
+Houses are the apps (lololol)
+- HackMatrix: SICP house
+  - Everyone dressed up as mages
+  - SICP anime girl on the front of the house
+  - Lisp code strewn about the house
 - HackMatrix: Algorithms and Data Structures
 - HackMatrix: Agent
 - HackMatrix: Inception
