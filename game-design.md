@@ -115,6 +115,9 @@ V probably not
 ? Gamers
 ? All computer users
 ### Path
+- replicate Portland
+- make avitar
+- script bots to demo multiplayer
 Mon, Nov 27: Submit Kickstarter for Review
 
 ### Why
@@ -132,6 +135,9 @@ Every person who buys this gets:
 ### What version will I launch
 - Portland
 ### Pitch
+- HackMatrix engine
+- City of Cybernetics replica of Portland
+- Multiplayer
 p.276: interest curves: 2134 (higher, more exciting)
 ## Interface
 Minimal currently. Probably needs a bit more of something.
