@@ -26,8 +26,10 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   availableAppPositions.push(glm::vec3(2.8, 1.0, z));
   availableAppPositions.push(glm::vec3(4.0, 1.0, z));
   availableAppPositions.push(glm::vec3(4.0, 1.75, z));
+  availableAppPositions.push(glm::vec3(4.0, 2.50, z));
   availableAppPositions.push(glm::vec3(5.2, 1.0, z));
-  availableAppPositions.push(glm::vec3(2.5, 1.75, 10.0));
+  availableAppPositions.push(glm::vec3(2.5, 1.75, z));
+  availableAppPositions.push(glm::vec3(5.2, 1.75, z));
 }
 
 World::~World() {}
