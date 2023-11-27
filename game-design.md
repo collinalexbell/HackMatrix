@@ -45,6 +45,11 @@ Example:
 ### questions
 - what choices must the player make?
 - how will those choices effect the experience?
+### game story types and their potential for City of Cybernetics
+#### strings and pearls
+##### what
+cut scene -> level -> cutscene -> level
+##### potential in City of Cybernetics
 ## Mechanics
 ### Economics:
     By the year 2030,
