@@ -28,10 +28,7 @@ def getImagesBySequence(seq):
 
 def getImages(lat, lon, radius):
     data = mly.get_image_close_to(latitude=lat, longitude=lon, radius=radius).to_dict()
-    print(len(data))
-    print(len(data["features"]))
-    with open("get_image_close_to_1.json", mode="w") as f:
-        json.dump(data, f, indent=4)
+    return data
 
 def getForestImage():
     latitude = 45.529736388889
@@ -58,9 +55,29 @@ def downloadJpeg(name, url):
             print("GET request successful. File saved.")
 
 
-images = getImagesBySequence("COGDwQJ4QMSctKFV9Ryugw")
-print(len(images))
-for image in images:
-    url = getJpegUrl(image)
-    downloadJpeg(f"forestStreet/{image}.jpg", url)
+def downloadForest():
+    images = getImagesBySequence("COGDwQJ4QMSctKFV9Ryugw")
+    print(len(images))
+    for image in images:
+        url = getJpegUrl(image)
+        downloadJpeg(f"forestStreet/{image}.jpg", url)
+
+def fourImageScan():
+    coords = [(45.509903055556,-122.64038),
+              (45.509976388889,-122.64037805556),
+              (45.510048055556,-122.64038),
+              (45.510118055556,-122.64038138889),
+              (45.510185,-122.64038805556)]
+
+    for coord in coords:
+        print(getImages(coord[0], coord[1], 0.5))
+
+def downloadFourImageScan():
+    ids = [301321988275915, 289836162803955, 755226718506030, 2973824699519337]
+    for i, id in enumerate(ids):
+        url = getJpegUrl(id)
+        downloadJpeg(f"fourImageScan/{i}.jpg", url)
+
+#fourImageScan()
+downloadFourImageScan()
 
