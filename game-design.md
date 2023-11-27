@@ -50,6 +50,9 @@ Example:
 ##### what
 cut scene -> level -> cutscene -> level
 ##### potential in City of Cybernetics
+#### story generator
+sims or roller coaster tycoon, "no author"
+I might want to add sims elements to my game
 ## Mechanics
 ### Economics:
     By the year 2030,
@@ -65,6 +68,7 @@ cut scene -> level -> cutscene -> level
     which they use internally to run the city, as well as export to other
     municipalities.
 
+### Object builder (and seller)
 ## Purpose
 Immerse people in the project of living their best (in their city)
 
