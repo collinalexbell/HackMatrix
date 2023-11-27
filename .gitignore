@@ -35,11 +35,13 @@ _matrix
 index.html
 
 **/creds.*
-streetview/forestStreet
-streetview/*.db
-streetview/*.db*
-streetview/*.json
-streetview/**/*.bin
-streetview/**/*.ini
-streetview/**/*.ply
-streetview/**/*.jpg
+**/streetview/forestStreet
+**/streetview/*.db
+**/streetview/*.db*
+**/streetview/*.json
+**/streetview/**/*.bin
+**/streetview/**/*.ini
+**/streetview/**/*.ply
+**/streetview/**/*.jpg
+
+**/*.osm
