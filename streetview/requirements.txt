@@ -1,4 +1,0 @@
-requests
-mapbox_vector_tile
-pyproj
-mapillary
