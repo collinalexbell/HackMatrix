@@ -100,6 +100,7 @@ V probably not
 ```
 
 ## Kickstarter
+launch by Dec 4th
 ### Goal
 150k
 ...so 5,000 - 10,000 backers!
@@ -349,7 +350,15 @@ $ Javascript API
 $ ZeroMQ
 $ OpenGL
 
-? City recreation based on google streetview (or some similar) - This is starting to seem like a better idea...
+- City recreation based on google streetview (or some similar)
+  - Portland
+  - Using:
+    - COLMAP
+    - Mapillary
+    - Probably some custom reconstruction code
+
+
+
 ? Multiple X windows to allow a browser as well
 - recompilable while playing
 
