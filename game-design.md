@@ -112,6 +112,10 @@ V probably not
 ### Target Market
 Cyber people
 ### Path
+#### Approval
+Just get a decent demo out
+
+#### Success
 - replicate Portland
 - make avitar
 - script bots to demo multiplayer
