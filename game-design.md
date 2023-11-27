@@ -31,7 +31,6 @@ We simulated the city of our wildest dreams:
 
   Now we live there and this is our history:
     Welcome to the City of Cybernetics!
-
 ### missions
 
 - Perhaps, I could structure the game by class, where each class is itself a game!
@@ -43,6 +42,9 @@ Example:
 
 ? Get a food delivery to a person on time: Upload a map to a robot and have it use the map to navigate to the correct location. Or just have it sort things out without a map entirely, just using cardinal directions or something... or street numbers.
 
+### questions
+- what choices must the player make?
+- how will those choices effect the experience?
 ## Mechanics
 ### Economics:
     By the year 2030,
