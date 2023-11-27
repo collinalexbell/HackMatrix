@@ -6,6 +6,9 @@ int main() {
   cout << "world generator" << endl;
   osmium::io::File input_file{"testMap.osm"};
   osmium::io::Reader reader{input_file};
+  auto buffer = reader.read();
   osmium::io::Header header = reader.header();
-  cout << header.size() << endl;
+  for (auto it = buffer.begin(); it != buffer.end(); it++) {
+    cout << it->data() << endl;
+  }
 }
