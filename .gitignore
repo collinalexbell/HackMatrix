@@ -35,3 +35,7 @@ _matrix
 index.html
 
 **/creds.*
+streetview/forestStreet
+streetview/*.db
+streetview/*.db*
+streetview/*.json
