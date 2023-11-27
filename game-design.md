@@ -100,7 +100,9 @@ V probably not
 ```
 
 ## Kickstarter
-launch by Dec 4th
+submit by Thurs 3:21am
+launch by Dec 2nd
+money by Dec 25th
 ### Goal
 150k
 ...so 5,000 - 10,000 backers!
