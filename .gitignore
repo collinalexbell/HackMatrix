@@ -39,3 +39,7 @@ streetview/forestStreet
 streetview/*.db
 streetview/*.db*
 streetview/*.json
+streetview/**/*.bin
+streetview/**/*.ini
+streetview/**/*.ply
+streetview/**/*.jpg
