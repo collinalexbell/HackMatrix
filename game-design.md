@@ -70,6 +70,10 @@ Houses are the apps (lololol)
 
 
 ## Mechanics
+### Cybernetics
+- The game objects (not the environment) occupy a voxel space that is 100x smaller
+  than the environment.
+- Or, maybe I can use pre-existing cad software and seamlessly yeet the models into the game
 ### Economics:
     By the year 2030,
     The City of Cybernetics produces
