@@ -119,7 +119,6 @@ Select blocks, press e to open an editor for the selection. write code
 
 ### Building
    - Players can construct with voxel placement (ugh, another minecraft clone...)
-
 ### Factions
     - Assist the city through various factions
       - NYPD
@@ -416,3 +415,9 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
       - Meme makers use Photoshop.
       - Fashionistas browse clothing in online stores.
       - Hackers share and discuss code
+
+## Inspiration
+- Mechanica
+- Starcel
+- Robocraft
+- Plasma game
