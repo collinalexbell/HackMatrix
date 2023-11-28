@@ -99,6 +99,9 @@ Houses are the apps (lololol)
 ### Code block
 Press spacebar to enter code into a block
 
+### Virtual Projection
+(AR) Visit friends virtually.
+They are in their house and you just come to visit.
 ### Selection Code
 Select blocks, press e to open an editor for the selection. write code
 
