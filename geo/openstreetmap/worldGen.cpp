@@ -1,11 +1,15 @@
 #include <iostream>
+#include <map>
 #include <osmium/handler.hpp>
 #include <osmium/io/any_input.hpp>
+#include <osmium/osm/types.hpp>
 #include <osmium/visitor.hpp>
+#include <utility>
 
 using namespace std;
 
-class MyHandler : public osmium::handler::Handler {
+class Voxelizer : public osmium::handler::Handler {
+  // Handlers need to handle data in a stream, not just marshal them into memory
 public:
   void way(const osmium::Way &way) {
     std::cout << "way " << way.id() << ": {\n";
@@ -27,7 +31,7 @@ int main() {
   cout << "world generator" << endl;
   osmium::io::File input_file{"testMap.osm"};
   osmium::io::Reader reader{input_file};
-  MyHandler handler;
-  osmium::apply(reader, handler);
+  Voxelizer voxelizer;
+  osmium::apply(reader, voxelizer);
   reader.close();
 }
