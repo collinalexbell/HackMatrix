@@ -8,14 +8,18 @@ using namespace std;
 class MyHandler : public osmium::handler::Handler {
 public:
   void way(const osmium::Way &way) {
-    std::cout << "way " << way.id() << '\n';
+    std::cout << "way " << way.id() << ": {\n";
     for (const osmium::Tag &t : way.tags()) {
       std::cout << t.key() << "=" << t.value() << '\n';
     }
+    for (const osmium::NodeRef &nr : way.nodes()) {
+      std::cout << "ref=" << nr.ref() << '\n';
+    }
+    std::cout << "}\n";
   }
 
   void node(const osmium::Node &node) {
-    std::cout << "node " << node.id() << '\n';
+    std::cout << "node " << node.id() << "," <<  node.location() << '\n';
   }
 };
 
