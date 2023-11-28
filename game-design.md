@@ -161,6 +161,8 @@ V Blow stuff up with placed charges that have customizable size!
 
 ## Purpose
 Immerse people in the project of living their best (in their city)
+- Read x books challenge (show awards)
+- Meet up with x friends challenge (show relationship bar)
 
 ### What are the problems with current methods of immersion?
 
