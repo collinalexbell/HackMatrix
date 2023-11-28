@@ -53,6 +53,22 @@ cut scene -> level -> cutscene -> level
 #### story generator
 sims or roller coaster tycoon, "no author"
 I might want to add sims elements to my game
+## Content
+
+Houses can house the content!!!!
+
+Houses are the apps (lololol)
+- HackMatrix: SICP house
+  - Everyone dressed up as mages
+  - SICP anime girl on the front of the house
+  - Lisp code strewn about the house
+- HackMatrix: Algorithms and Data Structures
+- HackMatrix: Agent
+- HackMatrix: Inception
+
+- Reddit... 3d room form?
+
+
 ## Mechanics
 ### Economics:
     By the year 2030,
@@ -69,6 +85,74 @@ I might want to add sims elements to my game
     municipalities.
 
 ### Object builder (and seller)
+### physical
+- physics
+- collisions
+- multiscale voxels
+### Block callback
+- click callback, to do something in the game on click
+
+### Code block
+Press spacebar to enter code into a block
+
+### Selection Code
+Select blocks, press e to open an editor for the selection. write code
+
+### Judgements
+? $$
+? API calls
+? Cycles
+? Distance Traveled
+? Lines of code written
+? Lessons learned
+
+### Actons
+- Write code (all the actions)
+- Move blocks
+- Click on blocks
+
+### Space
+
+- physical 3d space of NYC
+- state space of various blocks in the physical 3d space
+- portals
+
+### Building
+   - Players can construct with voxel placement (ugh, another minecraft clone...)
+
+### Factions
+    - Assist the city through various factions
+      - NYPD
+      - NYC Community Garden Association
+      - Tree Cybernetics
+      - GNU
+
+### Other
+
+$ Players use an in game IDE to write code that influences the game world
+  - Objects in the world are scriptable
+  - Objects can be spawned
+$ Click in and click out of windows (maybe with a button frame or hotkey)
+
+- Subtle synchronicities that if players follow - will drastically improve their playing experience
+
+
+? Enchant items with software routines
+? the voxels could start out large and get progressively smaller as the player advances
+? Spawn boxes/rooms for things to be drawn in
+? players make agents that manipulate the environment while sleeping (or doing other things)
+? Meditation to discover API endpoints for the universe
+? Players can write code for items that can be equiped that can then perform actions based on the code they write
+? Item enchantment with code
+? Players unlock API
+? Some objects are immune to API calls
+? Players have API spend/rate/etc
+? the source code for an object is the path the player took (placing blocks) to make it
+? piece components together to build cyborgs
+
+V Blow stuff up with placed charges that have customizable size!
+
+
 ## Purpose
 Immerse people in the project of living their best (in their city)
 
@@ -156,22 +240,6 @@ Every person who buys this gets:
 p.276: interest curves: 2134 (higher, more exciting)
 ## Interface
 Minimal currently. Probably needs a bit more of something.
-## Content
-
-Houses can house the content!!!!
-
-Houses are the apps (lololol)
-- HackMatrix: SICP house
-  - Everyone dressed up as mages
-  - SICP anime girl on the front of the house
-  - Lisp code strewn about the house
-- HackMatrix: Algorithms and Data Structures
-- HackMatrix: Agent
-- HackMatrix: Inception
-
-- Reddit... 3d room form?
-
-
 ## Aesthetic
 $ voxel
 - portland
@@ -272,74 +340,6 @@ $ watch blocks do stuff
 - interact with screens that others own
   - if permissions of course
 
-
-## physical
-- physics
-- collisions
-- multiscale voxels
-
-### Block callback
-- click callback, to do something in the game on click
-
-### Code block
-Press spacebar to enter code into a block
-
-### Selection Code
-Select blocks, press e to open an editor for the selection. write code
-
-### Judgements
-? $$
-? API calls
-? Cycles
-? Distance Traveled
-? Lines of code written
-? Lessons learned
-
-### Actons
-- Write code (all the actions)
-- Move blocks
-- Click on blocks
-
-### Space
-
-- physical 3d space of NYC
-- state space of various blocks in the physical 3d space
-- portals
-
-### Building
-   - Players can construct with voxel placement (ugh, another minecraft clone...)
-
-### Factions
-    - Assist the city through various factions
-      - NYPD
-      - NYC Community Garden Association
-      - Tree Cybernetics
-      - GNU
-
-### Other
-
-$ Players use an in game IDE to write code that influences the game world
-  - Objects in the world are scriptable
-  - Objects can be spawned
-$ Click in and click out of windows (maybe with a button frame or hotkey)
-
-- Subtle synchronicities that if players follow - will drastically improve their playing experience
-
-
-? Enchant items with software routines
-? the voxels could start out large and get progressively smaller as the player advances
-? Spawn boxes/rooms for things to be drawn in
-? players make agents that manipulate the environment while sleeping (or doing other things)
-? Meditation to discover API endpoints for the universe
-? Players can write code for items that can be equiped that can then perform actions based on the code they write
-? Item enchantment with code
-? Players unlock API
-? Some objects are immune to API calls
-? Players have API spend/rate/etc
-? the source code for an object is the path the player took (placing blocks) to make it
-? piece components together to build cyborgs
-
-V Blow stuff up with placed charges that have customizable size!
 
 ## tokens
 
