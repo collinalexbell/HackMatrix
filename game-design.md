@@ -99,7 +99,7 @@ Houses are the apps (lololol)
 
 
 ### Object builder (and seller)
-### physical
+### Physical
 - physics
 - collisions
 - multiscale voxels
@@ -143,6 +143,13 @@ Select blocks, press e to open an editor for the selection. write code
       - Tree Cybernetics
       - GNU
 
+### Governance
+#### Elections
+##### Buildings
+##### Neighborhood
+##### City
+#### Laws
+##### Written in code
 ### Other
 
 $ Players use an in game IDE to write code that influences the game world
