@@ -235,6 +235,10 @@ void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
                GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTIONS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(float) * 3 * 1000), (void *)0,
+               GL_STATIC_DRAW);
 }
 
 void Renderer::toggleWireframe() {
@@ -428,6 +432,10 @@ void Renderer::screenshot() {
 }
 
 void Renderer::renderLookedAtFace(ChunkMesh lookedAtFace) {
+  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_POSITIONS);
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  0, lookedAtFace.positions.size()*(3 * sizeof(float)),
+                  lookedAtFace.positions.data());
 }
 
 void Renderer::handleLookedAtCube() {
