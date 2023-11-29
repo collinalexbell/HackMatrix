@@ -1,14 +1,4 @@
-# Cities of Cybernetics
-or
-# City of Cybernetics
-or
-# HackMatrix
-or
-# Atlantis Cybernetica
-or
-# Pacific Cybernetica
-or
-# Pacifica
+# UrbaNetica
 
 ## Essential Experience
 - Concious hackers
@@ -64,6 +54,32 @@ cut scene -> level -> cutscene -> level
 sims or roller coaster tycoon, "no author"
 I might want to add sims elements to my game
 ## Content
+### 10 Cities
+- Portland
+- Seattle
+- San Fran
+- Berkley
+- New York
+- St Louis
+- Denver
+- Boston
+- Austin
+-
+### 10 Lesson Subjects
+#### Intro to Programming
+#### Data Structures and Algorithms
+#### Robotics
+#### Neural Networks
+#### Computer Graphics
+#### Entrepreneurship
+#### Web Development
+#### Functional Programming
+####  Destop Environment Development
+#### Biologically Inspired Computation
+- Game of Life
+- Sand Cellular Automota
+
+### A platform for hosting your own lessons in a virtual space
 ### Puzzles
 
 - [Turret Avoidance](https://www.youtube.com/watch?v=dY6jR52fFWo)
@@ -277,6 +293,10 @@ Every person who buys this gets:
 - City of Cybernetics replica of Portland
 - Multiplayer
 p.276: interest curves: 2134 (higher, more exciting)
+### Perks
+200$: Choose one of the 3 user selected playable cities
+300$: Choose one of the 3 user selected playable cities
+500$: Choose one of the 3 user selected playable cities
 ## Interface
 Minimal currently. Probably needs a bit more of something.
 ## Aesthetic
@@ -385,6 +405,7 @@ $ X Window to allow IDE
   - Direct pixel rendering to keep crisp image
   - snap to flat, draw with pixels
   - hotkeys for fast window switching
+$ Windows: Desktop Duplication API
 $ C++
 $ Python API
 $ Lisp API
