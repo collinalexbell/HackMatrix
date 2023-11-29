@@ -102,7 +102,7 @@ void Renderer::genGlResources() {
 
   glGenVertexArrays(1, &VOXEL_SELECTIONS);
   glGenBuffers(1, &VOXEL_SELECTION_POSITIONS);
-
+  glGenBuffers(1, &VOXEL_SELECTION_TEX_COORDS);
 
   genMeshResources();
 }
@@ -193,6 +193,15 @@ void Renderer::setupVertexAttributePointers() {
   glBindBuffer(GL_ARRAY_BUFFER, LINE_INSTANCE);
   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void *)0);
   glEnableVertexAttribArray(1);
+
+  glBindVertexArray(VOXEL_SELECTIONS);
+  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_POSITIONS);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_TEX_COORDS);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(1);
 }
 
 int MAX_CUBES = 1000000;
@@ -236,9 +245,12 @@ void Renderer::fillBuffers() {
   glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
                GL_STATIC_DRAW);
 
-  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTIONS);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(float) * 3 * 1000), (void *)0,
-               GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_POSITIONS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 6), (void *)0,
+               GL_DYNAMIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_TEX_COORDS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec2) * 6), (void *)0,
+               GL_DYNAMIC_DRAW);
 }
 
 void Renderer::toggleWireframe() {
@@ -259,6 +271,7 @@ Renderer::Renderer(Camera *camera, World *world) {
   logger->set_level(spdlog::level::debug);
 
   glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   genGlResources();
@@ -281,6 +294,7 @@ Renderer::Renderer(Camera *camera, World *world) {
   initAppTextures();
 
   shader->setBool("lookedAtValid", false);
+  shader->setBool("isLookedAt", false);
   shader->setBool("isMesh", false);
 
   if(isWireframe) {
@@ -431,11 +445,27 @@ void Renderer::screenshot() {
   saver.detach();
 }
 
-void Renderer::renderLookedAtFace(ChunkMesh lookedAtFace) {
-  glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_POSITIONS);
-  glBufferSubData(GL_ARRAY_BUFFER,
-                  0, lookedAtFace.positions.size()*(3 * sizeof(float)),
-                  lookedAtFace.positions.data());
+void Renderer::renderLookedAtFace() {
+  Position lookedAt = world->getLookedAtCube();
+  if (lookedAt.valid) {
+    ChunkMesh lookedAtFace = world->meshSelectedCube(lookedAt);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_POSITIONS);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * (sizeof(glm::vec3)),
+                    lookedAtFace.positions.data());
+
+    glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_TEX_COORDS);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * (sizeof(glm::vec2)),
+                    lookedAtFace.texCoords.data());
+
+    glBindVertexArray(VOXEL_SELECTIONS);
+    shader->setBool("isLookedAt", true);
+    shader->setInt("lookedAtBlockType", lookedAtFace.blockTypes[0]);
+    shader->setBool("isMesh", true);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+  }
+  shader->setBool("isLookedAt", false);
+  shader->setBool("isMesh", false);
 }
 
 void Renderer::handleLookedAtCube() {
@@ -457,7 +487,6 @@ void Renderer::updateShaderUniforms() {
   shader->setBool("isLine", false);
 
   updateTransformMatrices();
-  handleLookedAtCube();
 }
 
 
@@ -508,8 +537,8 @@ void Renderer::render() {
   view = camera->tick();
   updateShaderUniforms();
   renderLines();
+  renderLookedAtFace();
   renderChunkMesh();
-  //renderCubes();
   renderApps();
 }
 

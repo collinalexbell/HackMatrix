@@ -44,6 +44,7 @@ class Renderer {
 
   unsigned int VOXEL_SELECTIONS;
   unsigned int VOXEL_SELECTION_POSITIONS;
+  unsigned int VOXEL_SELECTION_TEX_COORDS;
 
   bool isWireframe = false;
 
@@ -73,7 +74,7 @@ class Renderer {
   void renderCubes();
   void renderApps();
   void renderLines();
-  void renderLookedAtFace(ChunkMesh lookedAtFace);
+  void renderLookedAtFace();
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
   void setupMeshVertexAttributePoiners();
