@@ -68,7 +68,6 @@ class Renderer {
 
   vector<unsigned int> frameBuffers;
   void drawAppDirect(X11App* app);
-  void handleLookedAtCube();
   void updateShaderUniforms();
   void renderChunkMesh();
   void renderCubes();
@@ -79,6 +78,11 @@ class Renderer {
   void genMeshResources();
   void setupMeshVertexAttributePoiners();
 
+  void genGlResources();
+  void bindGlResourcesForInit();
+  void fillBuffers();
+  void setupVertexAttributePointers();
+
   int verticesInMesh = 0;
 
 public:
@@ -86,10 +90,6 @@ public:
   ~Renderer();
   Camera* getCamera();
   void render();
-  void genGlResources();
-  void bindGlResourcesForInit();
-  void setupVertexAttributePointers();
-  void fillBuffers();
   void updateCubeBuffer(CubeBuffer cubeBuffer);
   void updateChunkMeshBuffers(ChunkMesh mesh);
   void addLine(int index, Line line);
