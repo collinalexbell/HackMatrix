@@ -54,7 +54,13 @@ cut scene -> level -> cutscene -> level
 sims or roller coaster tycoon, "no author"
 I might want to add sims elements to my game
 ## Content
+### Puzzles
 
+- [Turret Avoidance](https://www.youtube.com/watch?v=dY6jR52fFWo)
+- Create a trajectory to shoot a ball through the hoop
+
+
+### Houses
 Houses can house the content!!!!
 
 Houses are the apps (lololol)
@@ -66,6 +72,7 @@ Houses are the apps (lololol)
 - HackMatrix: Agent
 - HackMatrix: Inception
 
+### Social Media
 - Reddit... 3d room form?
 
 
@@ -87,6 +94,9 @@ Houses are the apps (lololol)
     a utility corporation to help citizens produce cybernetics
     which they use internally to run the city, as well as export to other
     municipalities.
+#### Tokens
+- earn tokens to make API calls, these tokens can be specific types of manna or something else.
+
 
 ### Object builder (and seller)
 ### physical
@@ -157,6 +167,10 @@ $ Click in and click out of windows (maybe with a button frame or hotkey)
 ? piece components together to build cyborgs
 
 V Blow stuff up with placed charges that have customizable size!
+#### Freedom vs Controlled experience
+- Lessons should be relatively controlled
+- The world should be free
+
 
 
 ## Purpose
@@ -341,7 +355,7 @@ $ place blocks
 - code blocks
 $ watch blocks do stuff
 
-## multiplayer
+## Multiplayer
 - occupy the same space as others
 - view screens that others can view
   - if permissions
@@ -349,17 +363,7 @@ $ watch blocks do stuff
   - if permissions of course
 
 
-## tokens
-
-- earn tokens to make API calls, these tokens can be specific types of manna or something else.
-
-## puzzles
-
-- [Turret Avoidance](https://www.youtube.com/watch?v=dY6jR52fFWo)
-- Create a trajectory to shoot a ball through the hoop
-
-
-## technology
+## Technology
 $ X Window to allow IDE
   - Direct pixel rendering to keep crisp image
   - snap to flat, draw with pixels
@@ -374,7 +378,7 @@ $ OpenGL
 - City recreation based on google streetview (or some similar)
   - Portland
   - Using:
-    - COLMAP
+    - COLMAP (didn't work)
     - Mapillary
     - Probably some custom reconstruction code
 
@@ -385,7 +389,7 @@ $ OpenGL
 
 - run like multiple linux VMs, one that you are building in, the other that is playing the engine
 
-## target audience
+## Target Audience
 - people wanting to get really good at software engineering and cybernetics
 - e/acc
 - Elon Musk; I want Elon Musk to play this game!
@@ -393,22 +397,7 @@ $ OpenGL
 - professional SWEs or noobs?
 
 
-## Maslows needs
-- physiological
-    ?housing mechanic
-    ?eating/drinking mechanic
-    ?cold temps (of NYC!)
-- saftey
-    ?places where players can have private experiences
-
-
-## Freedom vs Controlled experience
-- Lessons should be relatively controlled
-- The world should be free
-
-
 ## BrainStorms
-
 ### Value multipliers
 I meditated on various ideas that could achieve a 100x multiplier in Kickstarter backers
 - NYC - 10x
@@ -417,13 +406,23 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
 - Aliens - 5x
 - 3d Reddit - 100x
 
-### 3d reddit - 100x
+#### 3d reddit - 100x
     - Users can post their projects in their niche
     - Users can hang out in the space, talk, work
     - Every niche has "work" that can be experienced by others, immersively, live.
       - Meme makers use Photoshop.
       - Fashionistas browse clothing in online stores.
       - Hackers share and discuss code
+
+
+### Maslows Needs
+- physiological
+    ?housing mechanic
+    ?eating/drinking mechanic
+    ?cold temps (of NYC!)
+- saftey
+    ?places where players can have private experiences
+
 
 ## Inspiration
 - Mechanica
