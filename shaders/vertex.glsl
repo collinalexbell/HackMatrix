@@ -20,9 +20,8 @@ uniform mat4 projection;
 uniform bool isApp;
 uniform bool isLine;
 uniform bool isMesh;
-
-uniform vec3 lookedAt;
-uniform bool lookedAtValid;
+uniform bool isLookedAt;
+uniform int lookedAtBlockType;
 
 void main()
 {
@@ -44,9 +43,8 @@ void main()
   }
 
   IsLookedAt = 0;
-  if(lookedAtValid) {
-    if(abs(distance(position,lookedAt)) <= 0.9) {
-      IsLookedAt = 1;
-    }
+  if(isLookedAt) {
+    IsLookedAt = 1;
+    BlockType = lookedAtBlockType;
   }
 }
