@@ -52,7 +52,5 @@ public:
   int &selected();
   void toggleSelect();
   void remove();
-
-  static CubeBuffer render();
   static int size() { return vecs.size();}
 };
