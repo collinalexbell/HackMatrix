@@ -20,19 +20,14 @@ class Cube {
   static glm::vec3 zeroVec;
   static int zeroBlock;
   static int zeroSelected;
-  static int damageIndex;
-  static vector<glm::vec3> vecs;
-  static vector<int> ints;
-  static vector<shared_ptr<int>> indices;
+  glm::vec3 _position;
+  int _blockType;
+  int _selected;
   static bool isInit;
 
-  static vector<int> toErase;
-  static vector<int> referenceCount;
   static shared_ptr<spdlog::logger> logger;
 
   static void initClass();
-
-  shared_ptr<int> index;
 
   void init(glm::vec3, int blockType, int selected);
 
@@ -51,6 +46,4 @@ public:
   int selected() const;
   int &selected();
   void toggleSelect();
-  void remove();
-  static int size() { return vecs.size();}
 };

@@ -39,7 +39,6 @@ void World::mesh() {
   ChunkMesh m = cubes.mesh();
   stringstream ss;
   ss << "mesh size: " << m.positions.size() << ", ";
-  ss << "chunk size" << Cube::size() << ", ";
   ss << "time: " << glfwGetTime() - currentTime;
   logger->debug(ss.str());
   logger->flush();
@@ -151,7 +150,6 @@ void World::updateDamage(int index) {
 void World::removeCube(int x, int y, int z) {
     Cube *c = cubes.getCube(x,y,z);
     if(c->blockType() >= 0) {
-      c->remove();
       cubes.removeCube(x, y, z);
     }
 }
