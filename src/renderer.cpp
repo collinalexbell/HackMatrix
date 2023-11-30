@@ -29,54 +29,6 @@ float appVertices[] = {
   -0.5f, -HEIGHT, 0, 0.0f, 0.0f,
 };
 
-float vertices[] = {
-
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-  -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-
-  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-
-
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-  0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-
-  0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-  -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-  -0.5f, 0.5f, 0.5f, 0.0f, 0.0f
-
-};
-
 void Renderer::genMeshResources() {
   glGenVertexArrays(1, &MESH_VERTEX);
   glGenBuffers(1, &MESH_VERTEX_POSITIONS);
@@ -86,30 +38,19 @@ void Renderer::genMeshResources() {
 }
 
 void Renderer::genGlResources() {
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &APP_VBO);
-  glGenBuffers(1, &INSTANCE);
-  glGenBuffers(1, &BLOCK_INTS);
+  glGenVertexArrays(1, &APP_VAO);
   glGenBuffers(1, &APP_INSTANCE);
+  glGenBuffers(1, &APP_VBO);
 
+  glGenVertexArrays(1, &LINE_VAO);
   glGenBuffers(1, &LINE_VBO);
   glGenBuffers(1, &LINE_INSTANCE);
-
-
-  glGenVertexArrays(1, &VAO);
-  glGenVertexArrays(1, &APP_VAO);
-  glGenVertexArrays(1, &LINE_VAO);
 
   glGenVertexArrays(1, &VOXEL_SELECTIONS);
   glGenBuffers(1, &VOXEL_SELECTION_POSITIONS);
   glGenBuffers(1, &VOXEL_SELECTION_TEX_COORDS);
 
   genMeshResources();
-}
-
-void Renderer::bindGlResourcesForInit() {
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
 }
 
 void Renderer::setupMeshVertexAttributePoiners() {
@@ -135,31 +76,6 @@ void Renderer::setupMeshVertexAttributePoiners() {
 
 void Renderer::setupVertexAttributePointers() {
   setupMeshVertexAttributePoiners();
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  // position attribute
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-
-  // texture coord attribute
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-
-   // instance coord attribute
-  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
-  glEnableVertexAttribArray(2);
-  glVertexAttribDivisor(2, 1);
-
-  // instance texture attribute
-  glBindBuffer(GL_ARRAY_BUFFER, BLOCK_INTS);
-  glVertexAttribIPointer(3, 1, GL_INT, 2*sizeof(int), (void *)0);
-  glEnableVertexAttribArray(3);
-  glVertexAttribDivisor(3, 1);
-
-  glVertexAttribIPointer(4, 1, GL_INT, 2*sizeof(int), (void *)sizeof(int));
-  glEnableVertexAttribArray(4);
-  glVertexAttribDivisor(4, 1);
 
   glBindVertexArray(APP_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
@@ -207,21 +123,13 @@ void Renderer::setupVertexAttributePointers() {
 int MAX_CUBES = 1000000;
 
 void Renderer::fillBuffers() {
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices,
-               GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3)) * MAX_CUBES,
-               (void *)0, GL_STATIC_DRAW);
-
-  glBindBuffer(GL_ARRAY_BUFFER, BLOCK_INTS);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(int)*2) * MAX_CUBES, (void *)0,
-               GL_STATIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20,
                (void *)0, GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
+
+
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 200000), (void *)0,
                GL_STATIC_DRAW);
@@ -232,18 +140,16 @@ void Renderer::fillBuffers() {
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 36 * MAX_CUBES), (void *) 0, GL_STATIC_DRAW);
-
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec2) * 36 * MAX_CUBES), (void *)0,
                GL_STATIC_DRAW);
-
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
                GL_STATIC_DRAW);
-
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
                GL_STATIC_DRAW);
+
 
   glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_POSITIONS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 6), (void *)0,
@@ -275,7 +181,6 @@ Renderer::Renderer(Camera *camera, World *world) {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   genGlResources();
-  bindGlResourcesForInit();
   fillBuffers();
   setupVertexAttributePointers();
 
@@ -356,21 +261,6 @@ void Renderer::updateChunkMeshBuffers(ChunkMesh mesh) {
                   sizeof(int) * mesh.selects.size(),
                   mesh.selects.data());
   verticesInMesh = mesh.positions.size();
-}
-
-void Renderer::updateCubeBuffer(CubeBuffer cubeBuffer) {
-  if(cubeBuffer.damageSize > 0) {
-    glBindBuffer(GL_ARRAY_BUFFER, INSTANCE);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    sizeof(glm::vec3) * cubeBuffer.damageIndex,
-                    sizeof(glm::vec3) * cubeBuffer.damageSize,
-                    cubeBuffer.vecs);
-    glBindBuffer(GL_ARRAY_BUFFER, BLOCK_INTS);
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    (2 * sizeof(int)) * cubeBuffer.damageIndex,
-                    sizeof(int)*2*cubeBuffer.damageSize,
-                    cubeBuffer.ints);
-  }
 }
 
 void Renderer::addAppCube(int index, glm::vec3 pos) {
@@ -483,14 +373,6 @@ void Renderer::renderChunkMesh() {
   glEnable(GL_CULL_FACE);
   glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
   shader->setBool("isMesh", false);
-}
-
-void Renderer::renderCubes() {
-  CubeBuffer updatedCubes = Cube::render();
-  updateCubeBuffer(updatedCubes);
-  glBindVertexArray(VAO);
-  glEnable(GL_CULL_FACE);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 36, updatedCubes.totalSize);
 }
 
 void Renderer::renderApps() {

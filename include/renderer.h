@@ -23,14 +23,9 @@
 class Cube;
 class World;
 class Renderer {
-  unsigned int VBO;
   unsigned int APP_VBO;
-  unsigned int INSTANCE;
-  unsigned int BLOCK_INTS;
   unsigned int APP_INSTANCE;
-  unsigned int VAO;
   unsigned int APP_VAO;
-  unsigned int EBO;
 
   unsigned int LINE_VBO;
   unsigned int LINE_INSTANCE;
@@ -70,7 +65,6 @@ class Renderer {
   void drawAppDirect(X11App* app);
   void updateShaderUniforms();
   void renderChunkMesh();
-  void renderCubes();
   void renderApps();
   void renderLines();
   void renderLookedAtFace();
@@ -79,7 +73,6 @@ class Renderer {
   void setupMeshVertexAttributePoiners();
 
   void genGlResources();
-  void bindGlResourcesForInit();
   void fillBuffers();
   void setupVertexAttributePointers();
 
@@ -90,7 +83,6 @@ public:
   ~Renderer();
   Camera* getCamera();
   void render();
-  void updateCubeBuffer(CubeBuffer cubeBuffer);
   void updateChunkMeshBuffers(ChunkMesh mesh);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
