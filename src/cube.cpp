@@ -3,17 +3,10 @@
 #include <memory>
 #include <sstream>
 
-int Cube::damageIndex = 0;
-vector<glm::vec3> Cube::vecs;
-vector<int> Cube::ints;
-vector<int> Cube::referenceCount;
-vector<int> Cube::toErase;
-vector<shared_ptr<int>> Cube::indices;
 shared_ptr<spdlog::logger> Cube::logger;
 bool Cube::isInit = false;
 
 void Cube::initClass() {
-  isInit = true;
   logger = make_shared<spdlog::logger>("Cube", fileSink);
   logger->set_level(spdlog::level::critical);
 }
@@ -34,13 +27,15 @@ Cube::Cube(const Cube &cpy) {
   if(!isInit) {
     initClass();
   }
-  index = cpy.index;
+  _blockType = cpy.blockType();
+  _position = cpy.position();
+  _selected = cpy.selected();
 }
 
 Cube &Cube::operator=(const Cube &other) {
-  if (this != &other) {
-    this->index = other.index;
-  }
+  this->blockType() = other.blockType();
+  this->selected() = other.selected();
+  this->position() = other.position();
   return *this;
 }
 
@@ -48,25 +43,13 @@ void Cube::init(glm::vec3 position, int blockType, int selected) {
   if (!isInit) {
     initClass();
   }
-  if(blockType >= 0) {
-    index = make_shared<int>(vecs.size());
-    logger->debug("add cube" + to_string(*index));
-    logger->flush();
-    if(*index < damageIndex) {
-      damageIndex = *index;
-    }
-    referenceCount.push_back(1);
-    indices.push_back(index);
-    vecs.push_back(position);
-    ints.push_back(blockType);
-    ints.push_back(selected);
-  } else {
-    index = make_shared<int>(-1);
-  }
+  _position = position;
+  _blockType = blockType;
+  _selected = selected;
 }
 
-Cube::Cube(){
-  index = make_shared<int>(-1);
+Cube::Cube() {
+  init(zeroVec, zeroBlock, zeroSelected);
 }
 
 Cube::Cube(glm::vec3 position, int blockType) {
@@ -78,57 +61,32 @@ Cube::Cube(glm::vec3 position, int blockType, int selected) {
 }
 Cube::~Cube() {}
 
-void Cube::remove() {
-  logger->debug("remove cube" + to_string(*index));
-  logger->flush();
-  toErase.push_back(*index);
-}
-
 glm::vec3 Cube::position() const {
-  if(*index == -1) {
-    return zeroVec;
-  }
-  return vecs[*index];
+  return _position;
 }
 
 glm::vec3 &Cube::position() {
-  if(*index == -1) {
-    return zeroVec;
-  }
-  return vecs[*index];
+  return _position;
 }
 
 int Cube::blockType() const {
-  if(*index == -1) {
-    return zeroBlock;
-  }
-  return ints[*index*2];
+  return _blockType;
 }
 
 int &Cube::blockType() {
-  if(*index == -1) {
-    return zeroBlock;
-  }
-  return ints[*index*2];
+  return _blockType;
 }
 
 int Cube::selected() const {
-  if(*index == -1) {
-    return zeroSelected;
-  }
-  return ints[*index*2+1];
+  return _selected;
 }
 
 int &Cube::selected() {
-  if(*index == -1) {
-    return zeroSelected;
-  }
-  return ints[*index*2+1];
+  return _selected;
 }
 
 void Cube::toggleSelect() {
   selected() = selected() ? 0 : 1;
-  if(*index < damageIndex) damageIndex = *index;
 }
 
 
