@@ -1,5 +1,8 @@
 # UrbaNetica
 
+## Momentum
+- Working on this game is draining, even with faith
+- I will keep short-wave momentum up until plans for achieving better momentum are transfered from infinite intelligence
 ## Essential Experience
 - Concious hackers
 - transform their own city
