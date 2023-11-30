@@ -419,6 +419,7 @@ $ OpenGL
     - COLMAP (didn't work)
     - Mapillary
     - Probably some custom reconstruction code
+    - OpenStreetMap
 
 
 
