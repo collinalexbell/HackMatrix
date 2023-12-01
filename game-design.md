@@ -329,6 +329,14 @@ crt: https://www.shadertoy.com/view/Ms23DR
 outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
 
 ## Limits
+- Zones of Limitation
+  - Building
+  - Dimensions (inside buildings)
+  - Use of code
+  - API resources
+  - Speed allowed to travel
+  - ETC
+
 The game will need limits of some kind:
 
 - Financial
