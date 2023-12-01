@@ -2,6 +2,7 @@
 #include <map>
 #include <osmium/handler.hpp>
 #include <osmium/io/any_input.hpp>
+#include <osmium/osm/location.hpp>
 #include <osmium/osm/types.hpp>
 #include <osmium/visitor.hpp>
 #include <utility>
@@ -10,6 +11,8 @@ using namespace std;
 
 namespace WorldGen {
   struct Node {
+    int id;
+    osmium::Location location;
   };
 
   struct Way {
@@ -25,6 +28,7 @@ namespace WorldGen {
   class Voxelizer : public osmium::handler::Handler {
     // Handlers need to handle data in a stream, not just marshal them into memory
     vector<Way> ways;
+    map<int, Node> nodes;
   public:
     void way(const osmium::Way &way) {
       Way w;
@@ -42,7 +46,11 @@ namespace WorldGen {
     }
 
     void node(const osmium::Node &node) {
+      Node n;
+      n.id = node.id();
+      n.location = node.location();
       std::cout << "node " << node.id() << "," <<  node.location() << '\n';
+      nodes[n.id] = n;
     }
 
     vector<Way> getWays() {
