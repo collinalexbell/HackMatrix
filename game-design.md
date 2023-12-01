@@ -253,8 +253,7 @@ V probably not
 ```
 
 ## Kickstarter
-submit by Thurs 3:21am
-launch by Dec 2nd
+launch by Dec 4th
 money by Dec 25th
 ### Goal
 150k
