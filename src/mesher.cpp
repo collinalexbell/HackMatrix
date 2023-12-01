@@ -1,5 +1,6 @@
 #include <GLFW/glfw3.h>
 #include "chunk.h"
+#include "glm/geometric.hpp"
 #include "mesher.h"
 
 Mesher::Mesher() {
@@ -107,16 +108,31 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
             mesh.positions.push_back(glm::vec3(x[0], x[1], x[2]));
             mesh.positions.push_back(glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
             mesh.positions.push_back(glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
-            mesh.positions.push_back(glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
 
-            for(int i = 0; i < 4; i++) {
+            mesh.positions.push_back(glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+            mesh.positions.push_back(glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
+            mesh.positions.push_back(
+                glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+
+            for(int i = 0; i < 6; i++) {
               mesh.blockTypes.push_back(0);
               mesh.selects.push_back(0);
             }
+            float yTexDist = glm::distance(
+                glm::vec3(x[0],x[1],x[2]),
+                glm::vec3(x[0]+du[0], x[1]+du[1], x[2]+du[2]));
+
+            float xTexDist = glm::distance(
+                glm::vec3(x[0], x[1], x[2]),
+                glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+
             mesh.texCoords.push_back(glm::vec2(0.0f, 0.0f));
-            mesh.texCoords.push_back(glm::vec2(0.0f, 1.0f));
-            mesh.texCoords.push_back(glm::vec2(1.0f, 1.0f));
-            mesh.texCoords.push_back(glm::vec2(1.0f, 0.0f));
+            mesh.texCoords.push_back(glm::vec2(0.0f, yTexDist));
+            mesh.texCoords.push_back(glm::vec2(xTexDist, 0.0f));
+
+            mesh.texCoords.push_back(glm::vec2(0.0f, yTexDist));
+            mesh.texCoords.push_back(glm::vec2(xTexDist, yTexDist));
+            mesh.texCoords.push_back(glm::vec2(xTexDist, 0.0f));
 
             // Clear this part of the mask, so we don't add duplicate faces
             for (l = 0; l < h; ++l)

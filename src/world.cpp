@@ -54,7 +54,7 @@ void World::mesh(bool greedy) {
   ss << "time: " << glfwGetTime() - currentTime;
   logger->debug(ss.str());
   logger->flush();
-  renderer->updateChunkMeshBuffers(m, greedy);
+  renderer->updateChunkMeshBuffers(m, false);
 }
 
 const std::vector<Cube*> World::getCubes() {
