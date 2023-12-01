@@ -55,7 +55,7 @@ build/chunk.o: src/chunk.cpp include/chunk.h
 	g++ -std=c++20 $(FLAGS) -o build/chunk.o -c src/chunk.cpp $(INCLUDES)
 
 build/mesher.o: src/mesher.cpp include/mesher.h
-	g++ -std=c++20 -O3 -o build/mesher.o -c src/mesher.cpp $(INCLUDES)
+	g++ -std=c++20 $(FLAGS) -o build/mesher.o -c src/mesher.cpp $(INCLUDES)
 
 include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=./ protos/api.proto

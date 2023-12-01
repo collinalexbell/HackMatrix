@@ -3,11 +3,9 @@
 #include <memory>
 #include "logger.h"
 
-typedef vector<glm::vec3> Mesh;
-
 class Mesher {
   std::shared_ptr<spdlog::logger> logger;
 public:
   Mesher();
-  Mesh meshGreedy(Chunk *chunk);
+  ChunkMesh meshGreedy(Chunk *chunk);
 };

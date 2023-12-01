@@ -31,7 +31,7 @@ void Chunk::addCube(Cube c, int x, int y, int z) {
   data[index(x, y, z)] = new Cube(c);
 }
 
-glm::vec2 texModels[6][6] = {
+glm::vec2 Chunk::texModels[6][6] = {
     {glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f),
      glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
 

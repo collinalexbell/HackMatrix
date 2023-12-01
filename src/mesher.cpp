@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include "chunk.h"
 #include "mesher.h"
 
 Mesher::Mesher() {
@@ -6,9 +7,9 @@ Mesher::Mesher() {
   logger->set_level(spdlog::level::debug);
 }
 
-Mesh Mesher::meshGreedy(Chunk* chunk) {
+ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
   double currentTime = glfwGetTime();
-  Mesh quads;
+  ChunkMesh mesh;
   int i, j, k, l, w, h, u, v;
   int x[3];
   int q[3];
@@ -103,12 +104,19 @@ Mesh Mesher::meshGreedy(Chunk* chunk) {
             // Create a quad for this face. Colour, normal or textures are not
             // stored in this block vertex format.
 
-            quads.push_back(glm::vec3(x[0], x[1], x[2]));
-            quads.push_back(glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
-            quads.push_back(glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
-            quads.push_back(glm::vec3(x[0] + du[0] + dv[0],
-                                      x[1] + du[1] + dv[1],
-                                      x[2] + du[2] + dv[2]));
+            mesh.positions.push_back(glm::vec3(x[0], x[1], x[2]));
+            mesh.positions.push_back(glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+            mesh.positions.push_back(glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+            mesh.positions.push_back(glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
+
+            for(int i = 0; i < 4; i++) {
+              mesh.blockTypes.push_back(0);
+              mesh.selects.push_back(0);
+            }
+            mesh.texCoords.push_back(glm::vec2(0.0f, 0.0f));
+            mesh.texCoords.push_back(glm::vec2(0.0f, 1.0f));
+            mesh.texCoords.push_back(glm::vec2(1.0f, 1.0f));
+            mesh.texCoords.push_back(glm::vec2(1.0f, 0.0f));
 
             // Clear this part of the mask, so we don't add duplicate faces
             for (l = 0; l < h; ++l)
@@ -129,6 +137,5 @@ Mesh Mesher::meshGreedy(Chunk* chunk) {
 
   logger->debug("time:" + to_string(glfwGetTime()-currentTime));
   logger->flush();
-
-  return quads;
+  return mesh;
 }

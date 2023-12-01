@@ -69,9 +69,10 @@ void Controls::handleDebug(GLFWwindow *window) {
 }
 
 void Controls::handleToggleMeshing(GLFWwindow *window) {
-  bool shouldToggleMeshing = glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS;
+  bool shouldToggleMeshing = glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS;
   if (shouldToggleMeshing && debounce(lastKeyPressTime)) {
-    renderer->toggleMeshing();
+
+    world->mesh(true);
   }
 }
 

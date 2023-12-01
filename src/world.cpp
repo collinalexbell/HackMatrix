@@ -41,15 +41,20 @@ World::World(Camera *camera, bool debug) : camera(camera) {
 
 World::~World() {}
 
-void World::mesh() {
+void World::mesh(bool greedy) {
   double currentTime = glfwGetTime();
-  ChunkMesh m = cubes.mesh();
+  ChunkMesh m;
+  if(!greedy) {
+    m = cubes.mesh();
+  } else {
+    m = mesher->meshGreedy(&cubes);
+  }
   stringstream ss;
   ss << "mesh size: " << m.positions.size() << ", ";
   ss << "time: " << glfwGetTime() - currentTime;
   logger->debug(ss.str());
   logger->flush();
-  renderer->updateChunkMeshBuffers(m);
+  renderer->updateChunkMeshBuffers(m, greedy);
 }
 
 const std::vector<Cube*> World::getCubes() {
