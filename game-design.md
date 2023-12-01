@@ -342,7 +342,16 @@ I can implement zones or bounds of limitation on physical spaces or time space o
 This is similar to entering into a human body from the limitless realm of light/love
 
 ## Development Milestones
-- Portland in voxels
+### Pre kickstarter
+- 10 cities in voxels
+  - Chunking
+  - Elevations
+  - Map to street
+  - Smooth elevation changes (for streets)
+- 1 demo in each of the lesson categories
+
+### Maybes
+
 - Robots
 
 - Choose IDE level
