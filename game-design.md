@@ -259,6 +259,7 @@ Launch immediately after approval
 150k
 ...so 5,000 - 10,000 backers!
 
+20k minumum to get me through to march.
 ### Video
     - Story
     - Show Mechanics
@@ -352,7 +353,6 @@ This is similar to entering into a human body from the limitless realm of light/
 ### Maybes
 
 - Robots
-
 - Choose IDE level
 - 3 challenges
   $ path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
