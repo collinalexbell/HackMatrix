@@ -342,7 +342,7 @@ This is similar to entering into a human body from the limitless realm of light/
 
 ## Development Milestones
 ### Pre kickstarter
-- 10 cities in voxels
+- 10 cities in voxels (maybe it is better just to use one city?) (maybe not)
   - Chunking
   - Elevations
   - Map to street
