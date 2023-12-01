@@ -102,7 +102,7 @@ void Controls::handleSave(GLFWwindow *window){
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
     stringstream filenameSS;
-    filenameSS << "saves/" << std::put_time(&tm, "%d-%m-%Y %H-%M-%S.save");
+    filenameSS << "saves/" << std::put_time(&tm, "%Y-%m-%d:%H-%M-%S.save");
     world->save(filenameSS.str());
   }
 }
