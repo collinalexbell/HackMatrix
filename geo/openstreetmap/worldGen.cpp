@@ -9,9 +9,17 @@
 using namespace std;
 
 namespace WorldGen {
+  struct Node {
+  };
 
   struct Way {
     int id;
+    vector<Node*> nodes;
+    void addNodeRef(int nodeRef) {
+      nodeRefs.push_back(nodeRef);
+    }
+  private:
+    vector<int> nodeRefs;
   };
 
   class Voxelizer : public osmium::handler::Handler {
@@ -27,6 +35,7 @@ namespace WorldGen {
       }
       for (const osmium::NodeRef &nr : way.nodes()) {
         std::cout << "ref=" << nr.ref() << '\n';
+        w.addNodeRef(nr.ref());
       }
       std::cout << "}\n";
       ways.push_back(w);
