@@ -241,7 +241,11 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void Renderer::updateChunkMeshBuffers(ChunkMesh mesh) {
+void Renderer::updateChunkMeshBuffers(ChunkMesh mesh, bool greedy) {
+  if(greedy) {
+    logger->critical(mesh.positions.size());
+  }
+  isGreedyMesh = greedy;
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
   glBufferSubData(GL_ARRAY_BUFFER, 0,
                   sizeof(glm::vec3) * mesh.positions.size(),
@@ -371,7 +375,12 @@ void Renderer::renderChunkMesh() {
   shader->setBool("isMesh", true);
   glBindVertexArray(MESH_VERTEX);
   glEnable(GL_CULL_FACE);
-  glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
+  if(isGreedyMesh) {
+    glDisable(GL_CULL_FACE);
+    glDrawArrays(GL_QUADS, 0, verticesInMesh);
+  } else {
+    glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
+  }
   shader->setBool("isMesh", false);
 }
 
