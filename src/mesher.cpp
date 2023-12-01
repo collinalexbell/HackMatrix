@@ -60,6 +60,9 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
       for (j = 0; j < chunkSizes[v]; ++j) {
         for (i = 0; i < chunkSizes[u];) {
           if (mask[n]) {
+
+
+
             // Compute the width of this quad and store it in w
             //   This is done by searching along the current axis until mask[n +
             //   w] is false
@@ -114,8 +117,15 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
             mesh.positions.push_back(
                 glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
+            Cube* c = chunk->getCube_(x[0], x[1], x[2]);
+
             for(int i = 0; i < 6; i++) {
-              mesh.blockTypes.push_back(0);
+              if(c != NULL) {
+                // until I fix the bounding box, I need to test for presense of cube
+                mesh.blockTypes.push_back(c->blockType());
+              } else {
+                mesh.blockTypes.push_back(0);
+              }
               mesh.selects.push_back(0);
             }
             float yTexDist = glm::distance(

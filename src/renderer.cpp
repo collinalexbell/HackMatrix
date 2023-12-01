@@ -377,10 +377,8 @@ void Renderer::renderChunkMesh() {
   glEnable(GL_CULL_FACE);
   if(isGreedyMesh) {
     glDisable(GL_CULL_FACE);
-    glDrawArrays(GL_QUADS, 0, verticesInMesh);
-  } else {
-    glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
   }
+  glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
   shader->setBool("isMesh", false);
 }
 
