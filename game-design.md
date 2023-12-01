@@ -291,9 +291,10 @@ Every person who buys this gets:
 
 ### What version will I launch
 - Portland
+- Maybe other cities
 ### Pitch
 - HackMatrix engine
-- City of Cybernetics replica of Portland
+- UrbaNetica replica of Portland
 - Multiplayer
 p.276: interest curves: 2134 (higher, more exciting)
 ### Perks
@@ -302,6 +303,7 @@ p.276: interest curves: 2134 (higher, more exciting)
 500$: Choose one of the 3 user selected playable cities
 ## Interface
 Minimal currently. Probably needs a bit more of something.
+At least a build mode with block selection or something.
 ## Aesthetic
 $ voxel
 - portland
