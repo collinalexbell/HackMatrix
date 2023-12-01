@@ -8,30 +8,47 @@
 
 using namespace std;
 
-class Voxelizer : public osmium::handler::Handler {
-  // Handlers need to handle data in a stream, not just marshal them into memory
-public:
-  void way(const osmium::Way &way) {
-    std::cout << "way " << way.id() << ": {\n";
-    for (const osmium::Tag &t : way.tags()) {
-      std::cout << t.key() << "=" << t.value() << '\n';
-    }
-    for (const osmium::NodeRef &nr : way.nodes()) {
-      std::cout << "ref=" << nr.ref() << '\n';
-    }
-    std::cout << "}\n";
-  }
+namespace WorldGen {
 
-  void node(const osmium::Node &node) {
-    std::cout << "node " << node.id() << "," <<  node.location() << '\n';
-  }
-};
+  struct Way {
+    int id;
+  };
+
+  class Voxelizer : public osmium::handler::Handler {
+    // Handlers need to handle data in a stream, not just marshal them into memory
+    vector<Way> ways;
+  public:
+    void way(const osmium::Way &way) {
+      Way w;
+      std::cout << "way " << way.id() << ": {\n";
+      w.id = way.id();
+      for (const osmium::Tag &t : way.tags()) {
+        std::cout << t.key() << "=" << t.value() << '\n';
+      }
+      for (const osmium::NodeRef &nr : way.nodes()) {
+        std::cout << "ref=" << nr.ref() << '\n';
+      }
+      std::cout << "}\n";
+      ways.push_back(w);
+    }
+
+    void node(const osmium::Node &node) {
+      std::cout << "node " << node.id() << "," <<  node.location() << '\n';
+    }
+
+    vector<Way> getWays() {
+      return ways;
+    }
+  };
+}
 
 int main() {
   cout << "world generator" << endl;
   osmium::io::File input_file{"testMap.osm"};
   osmium::io::Reader reader{input_file};
-  Voxelizer voxelizer;
+  WorldGen::Voxelizer voxelizer;
   osmium::apply(reader, voxelizer);
+  cout << "# ways:" << voxelizer.getWays().size() << endl;
   reader.close();
+  return 0;
 }
