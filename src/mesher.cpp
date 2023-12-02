@@ -40,14 +40,19 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
       int n = 0;
       for (x[v] = 0; x[v] < chunkSizes[v]; ++x[v]) {
         for (x[u] = 0; x[u] < chunkSizes[u]; ++x[u]) {
+          Cube *a = chunk->getCube_(x[0], x[1], x[2]);
+          Cube *b = chunk->getCube_(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
           blockCurrent =
-            0 <= x[dimension] ? chunk->getCube_(x[0], x[1], x[2]) != NULL
-                        : true;
+            0 <= x[dimension] ? a != NULL
+            : true;
+
           blockCompare =
               x[dimension] < chunkSizes[dimension] - 1
-                  ? chunk->getCube_(x[0] + q[0], x[1] + q[1], x[2] + q[2]) != NULL
+                  ? b != NULL
                   : true;
-          mask[n++] = blockCurrent != blockCompare;
+
+          bool sameType = a != NULL && b != NULL ? a->blockType() == b->blockType() : true;
+          mask[n++] = blockCurrent != blockCompare || !sameType;
         }
       }
 
@@ -108,13 +113,15 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
             // Create a quad for this face. Colour, normal or textures are not
             // stored in this block vertex format.
 
-            mesh.positions.push_back(glm::vec3(x[0], x[1], x[2]));
-            mesh.positions.push_back(glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
-            mesh.positions.push_back(glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+            glm::vec3 offset(-0.5,-0.5,-0.5);
 
-            mesh.positions.push_back(glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
-            mesh.positions.push_back(glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
-            mesh.positions.push_back(
+            mesh.positions.push_back(offset+glm::vec3(x[0], x[1], x[2]));
+            mesh.positions.push_back(offset+glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+            mesh.positions.push_back(offset+glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+
+            mesh.positions.push_back(offset+glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+            mesh.positions.push_back(offset+glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
+            mesh.positions.push_back(offset+
                 glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
             Cube* c = chunk->getCube_(x[0], x[1], x[2]);
