@@ -241,7 +241,7 @@ Embeds the hacker in a 3d hacker environment
 ## Design Mindset
 ### I am building a Jewel
 I have something here. I just need to add more material to the kernel
-and compress it hard enough.
+and compress it hard enough. Slow, methodical, consitent compression.
 
 ```
 $ implemented
