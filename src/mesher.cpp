@@ -31,6 +31,8 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
     vector<int> chunkSizes = chunk->getSize();
 
     bool mask[chunkSizes[0]*chunkSizes[1]*chunkSizes[2]];
+    // mask needs to become a 2d array of bools
+    // mask[pos][blockType]
 
     q[dimension] = 1;
 
