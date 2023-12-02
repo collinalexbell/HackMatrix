@@ -124,7 +124,7 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
             mesh.positions.push_back(offset+
                 glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
-            Cube* c = chunk->getCube_(x[0], x[1], x[2]);
+            Cube* c = chunk->getCube_(x[0]-q[0], x[1]-q[1], x[2]-q[2]);
 
             for(int i = 0; i < 6; i++) {
               if(c != NULL) {
