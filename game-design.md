@@ -112,6 +112,7 @@ Houses are the apps (lololol)
   than the environment.
 - Or, maybe I can use pre-existing cad software and seamlessly yeet the models into the game
 ### Economics:
+- Logos Coin
     By the year 2030,
     The City of Cybernetics produces
     a municipal  revenue
