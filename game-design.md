@@ -129,6 +129,8 @@ Houses are the apps (lololol)
 
 
 ### Object builder (and seller)
+- Make interesting objects (cad like or mesh like)
+- Sell interesting objects in cryptocurrency
 ### Physical
 - physics
 - collisions
