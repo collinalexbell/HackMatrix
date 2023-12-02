@@ -53,8 +53,7 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
                   ? b != NULL
                   : true;
 
-          bool sameType = a != NULL && b != NULL ? a->blockType() == b->blockType() : true;
-          mask[n++] = blockCurrent != blockCompare || !sameType;
+          mask[n++] = blockCurrent != blockCompare;
         }
       }
 
@@ -68,12 +67,28 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
         for (i = 0; i < chunkSizes[u];) {
           if (mask[n]) {
 
+            x[u] = i;
+            x[v] = j;
 
+            Cube *c = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+            if(c == NULL) {
+              c = chunk->getCube_(x[0] , x[1] , x[2]);
+            }
 
             // Compute the width of this quad and store it in w
             //   This is done by searching along the current axis until mask[n +
             //   w] is false
-            for (w = 1; i + w < chunkSizes[u] && mask[n + w]; w++) {
+            for (w = 1; i + w < chunkSizes[u]; w++) {
+              int tmp = x[u];
+              x[u] = x[u] + w;
+              Cube *next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+              if (next == NULL) {
+                next = chunk->getCube_(x[0], x[1], x[2]);
+              }
+              x[u] = tmp;
+              if(!mask[n + w] || (next!=NULL && c!=NULL && next->blockType() != c->blockType())) {
+                break;
+              }
             }
 
             // Compute the height of this quad and store it in h
@@ -88,7 +103,19 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
               // Check each block next to this quad
               for (k = 0; k < w; ++k) {
                 // If there's a hole in the mask, exit
-                if (!mask[n + k + h * chunkSizes[u]]) {
+
+                int tmp = x[v];
+                x[v] = x[v] + h;
+                Cube *next =
+                    chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+                if (next == NULL) {
+                  next = chunk->getCube_(x[0], x[1], x[2]);
+                }
+                x[v] = tmp;
+
+                if (!mask[n + k + h * chunkSizes[u]] ||
+                    (next != NULL && c != NULL &&
+                     next->blockType() != c->blockType())) {
                   done = true;
                   break;
                 }
@@ -97,10 +124,6 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
               if (done)
                 break;
             }
-
-            x[u] = i;
-            x[v] = j;
-
             // du and dv determine the size and orientation of this face
             du[0] = 0;
             du[1] = 0;
@@ -126,7 +149,6 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
             mesh.positions.push_back(offset+
                 glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
-            Cube* c = chunk->getCube_(x[0]-q[0], x[1]-q[1], x[2]-q[2]);
 
             for(int i = 0; i < 6; i++) {
               if(c != NULL) {
