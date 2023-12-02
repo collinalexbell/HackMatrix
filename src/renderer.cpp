@@ -376,6 +376,7 @@ void Renderer::renderChunkMesh() {
   glBindVertexArray(MESH_VERTEX);
   glEnable(GL_CULL_FACE);
   if(isGreedyMesh) {
+    // fix the winding order on the mesh and then I can remove this
     glDisable(GL_CULL_FACE);
   }
   glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
