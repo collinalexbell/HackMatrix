@@ -1,10 +1,63 @@
 # UrbaNetica
 
-## Momentum
+
+## Development
+### Milestones
+#### Pre kickstarter
+- 10 cities in voxels (maybe it is better just to use one city?) (maybe not)
+  - Chunking
+  - Elevations
+  - Map to street
+  - Smooth elevation changes (for streets)
+- 1 demo in each of the lesson categories
+
+#### Maybes
+
+- Robots
+- Choose IDE level
+- 3 challenges
+  $ path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
+  - neural network with visualization: https://github.com/wmvanvliet/scns/tree/main/visualizations/multilayer_perceptron & https://www.youtube.com/watch?v=Tsvxx-GGlTg
+  - cellular automata: https://www.youtube.com/watch?v=dQJ5aEsP6Fs
+
+- Fully functioning windows (right clicks)
+- Ability to open and close arbitrary programs (fully functioning WM)
+- Window highlight
+
+- 3 enchant objects in your environment
+  - Open a video when you click on a fictional character
+  - Make a voxel follow you.
+  - Make voxel shoot you when you try to go on twitter.
+
+- Cyberpunk castle
+  - art gallery
+- 3 coding utlities
+- Fake multiplayer (or some shit)
+
+
+#### Path
+   - Meshing
+   - World Building
+     - Buildings
+     - Plants/Parks
+   - Mechanics
+   - Levels
+   - Finishing Touches
+   - Marketing Materials
+   - Launch
+
+### Process
+- Simply make the best game I can
+- Use short-wave intervals (per commit basis)
+- Keep polishing and compressing it like a diamond
+       - like how Mickey Singer viewed his medical manager code
+- Modulate the time I spend doing various tasks in the short-wave
+       - do important tasks (matrix/phoenix infode improvements longer)
+
+### Momentum
 - Working on this game is draining, even with faith
 - I will keep short-wave momentum up until plans for achieving better momentum are transfered from infinite intelligence
 - Every day, no exception
-- No matter how small the progress
 ## Essential Experience
 - Concious hackers
 - transform their own city
@@ -130,8 +183,6 @@ Houses are the apps (lololol)
 
 
 ### Object builder (and seller)
-- Make interesting objects (cad like or mesh like)
-- Sell interesting objects in cryptocurrency
 ### Physical
 - physics
 - collisions
@@ -356,62 +407,10 @@ I can implement zones or bounds of limitation on physical spaces or time space o
 
 This is similar to entering into a human body from the limitless realm of light/love
 
-## Development Milestones
-### Pre kickstarter
-- 10 cities in voxels (maybe it is better just to use one city?) (maybe not)
-  - Chunking
-  - Elevations
-  - Map to street
-  - Smooth elevation changes (for streets)
-- 1 demo in each of the lesson categories
-
-### Maybes
-
-- Robots
-- Choose IDE level
-- 3 challenges
-  $ path finding algo, with sound: https://www.youtube.com/watch?v=9W8hNdEUFbc
-  - neural network with visualization: https://github.com/wmvanvliet/scns/tree/main/visualizations/multilayer_perceptron & https://www.youtube.com/watch?v=Tsvxx-GGlTg
-  - cellular automata: https://www.youtube.com/watch?v=dQJ5aEsP6Fs
-
-- Fully functioning windows (right clicks)
-- Ability to open and close arbitrary programs (fully functioning WM)
-- Window highlight
-
-- 3 enchant objects in your environment
-  - Open a video when you click on a fictional character
-  - Make a voxel follow you.
-  - Make voxel shoot you when you try to go on twitter.
-
-- Cyberpunk castle
-  - art gallery
-- 3 coding utlities
-- Fake multiplayer (or some shit)
-
-
-### Path
-   - Meshing
-   - World Building
-     - Buildings
-     - Plants/Parks
-   - Mechanics
-   - Levels
-   - Finishing Touches
-   - Marketing Materials
-   - Launch
-
 ## App interface
 - Add a frame to the app, so users can close windows
 ## Marketing
 - Hackathons: I can host hackathons where users hang out in virtual dorm rooms
-
-## Development Process
-- Simply make the best game I can
-- Use short-wave intervals (per commit basis)
-- Keep polishing and compressing it like a diamond
-       - like how Mickey Singer viewed his medical manager code
-- Modulate the time I spend doing various tasks in the short-wave
-       - do important tasks (matrix/phoenix infode improvements longer)
 
 ## The toy: How can the matrix be a toy?
 $ place blocks
