@@ -30,6 +30,12 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   availableAppPositions.push(glm::vec3(5.2, 1.0, z));
   availableAppPositions.push(glm::vec3(2.5, 1.75, z));
   availableAppPositions.push(glm::vec3(5.2, 1.75, z));
+  for(int x = 0; x< 3; x++) {
+    chunks.push_back(vector<Chunk*>());
+    for(int z=0; z<3; z++) {
+      chunks.back().push_back(new Chunk());
+    }
+  }
   /*
   for(int x=0;x<cubes.getSize()[0]; x++) {
     for (int z = 0; z < cubes.getSize()[2]; z++) {
