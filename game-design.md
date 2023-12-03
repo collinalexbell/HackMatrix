@@ -4,6 +4,7 @@
 - Working on this game is draining, even with faith
 - I will keep short-wave momentum up until plans for achieving better momentum are transfered from infinite intelligence
 - Every day, no exception
+- No matter how small the progress
 ## Essential Experience
 - Concious hackers
 - transform their own city
@@ -112,7 +113,6 @@ Houses are the apps (lololol)
   than the environment.
 - Or, maybe I can use pre-existing cad software and seamlessly yeet the models into the game
 ### Economics:
-- Logos Coin
     By the year 2030,
     The City of Cybernetics produces
     a municipal  revenue
