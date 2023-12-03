@@ -45,7 +45,7 @@ class World {
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
   Chunk cubes;
-  vector<Chunk*> chunks;
+  vector<vector<Chunk*>> chunks;
   int damageIndex = -1;
   bool isDamaged = false;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
