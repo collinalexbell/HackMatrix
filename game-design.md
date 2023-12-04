@@ -1,6 +1,36 @@
 # UrbaNetica
+## Purpose
+Immerse people in their projects
+
+## Questions that arise from the purpose
+### What are the problems with current methods of immersion?
+
+#### Lack of social connection
+I grew up in a semi-rural suburban area with few hackers.
+
+I didn't have many hacker friends or many friends with similar interests.
+
+Most of my work has been done alone.
+
+The best and most productive times of my life
+have been when I have worked with others
+in fully immersive hackathon like experiences.
+
+The current desktop experience is largely isolating and a solitary endevour.
+
+If I make the experience into a multi-player game, then it would be more fun!
+
+#### Having the code editor so decoupled from the application is lame.
+I want to be able to edit my game in my game. HackMatrix allows me to do that.
+
+### How does it go about doing this?
+Embeds the hacker in a 3d hacker environment
 
 
+## Essential Experience
+- Concious hackers
+- transform their own city
+- and become fully enlightened cyber soveriegns
 ## Development
 ### Milestones
 #### Pre kickstarter
@@ -58,10 +88,6 @@
 - Working on this game is draining, even with faith
 - I will keep short-wave momentum up until plans for achieving better momentum are transfered from infinite intelligence
 - Every day, no exception
-## Essential Experience
-- Concious hackers
-- transform their own city
-- and become fully enlightened cyber soveriegns
 ## Game Theme
 - Living in a crystal city filled with cybernetic organisms
 - Divine/magical power and hormony
@@ -138,12 +164,13 @@ I might want to add sims elements to my game
 - Sand Cellular Automota
 
 ### A platform for hosting your own lessons in a virtual space
-### Puzzles
-
+### Challenges
 - [Turret Avoidance](https://www.youtube.com/watch?v=dY6jR52fFWo)
 - Create a trajectory to shoot a ball through the hoop
 
-
+- Read x books challenge (show awards)
+- Meet up with x friends challenge (show relationship bar)
+- Educational project pathways
 ### Houses
 Houses can house the content!!!!
 
@@ -262,36 +289,6 @@ V Blow stuff up with placed charges that have customizable size!
 - Lessons should be relatively controlled
 - The world should be free
 
-
-
-## Purpose
-Immerse people in the project of living their best (in their city)
-- Read x books challenge (show awards)
-- Meet up with x friends challenge (show relationship bar)
-- Educational project pathways
-
-### What are the problems with current methods of immersion?
-
-#### Lack of social connection
-I grew up in a semi-rural suburban area with few hackers.
-
-I didn't have many hacker friends or many friends with similar interests.
-
-Most of my work has been done alone.
-
-The best and most productive times of my life
-have been when I have worked with others
-in fully immersive hackathon like experiences.
-
-The current desktop experience is largely isolating and a solitary endevour.
-
-If I make the experience into a multi-player game, then it would be more fun!
-
-#### Having the code editor so decoupled from the application is lame.
-I want to be able to edit my game in my game. HackMatrix allows me to do that.
-
-### How does it go about doing this?
-Embeds the hacker in a 3d hacker environment
 
 
 ## Design Mindset
