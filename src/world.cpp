@@ -33,7 +33,7 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   for(int x = 0; x<10; x++) {
     chunks.push_back(vector<Chunk*>());
     for(int z=0; z<10; z++) {
-      chunks.back().push_back(new Chunk());
+      chunks.back().push_back(new Chunk(x,0,z));
     }
   }
   for(int x = 0; x < (10 * chunks[0][0]->getSize()[0]); x++) {

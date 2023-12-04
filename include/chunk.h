@@ -20,6 +20,7 @@ struct ChunkMesh {
 };
 
 class Chunk {
+  int posX,posY,posZ;
   static Face neighborFaces[6];
   static int findNeighborFaceIndex(Face face);
   const vector<int> size = {56, 128, 56};
@@ -33,6 +34,7 @@ class Chunk {
 public:
   static glm::vec2 texModels[6][6];
   Chunk();
+  Chunk(int x, int y, int z);
   Cube *getCube(int x, int y, int z);
   Cube *getCube_(int x, int y, int z);
   void removeCube(int x, int y, int z);
