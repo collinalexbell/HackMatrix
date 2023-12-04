@@ -84,7 +84,7 @@ public:
   ~Renderer();
   Camera* getCamera();
   void render();
-  void updateChunkMeshBuffers(ChunkMesh mesh, bool greedy);
+  void updateChunkMeshBuffers(vector<ChunkMesh> meshes, bool greedy);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);

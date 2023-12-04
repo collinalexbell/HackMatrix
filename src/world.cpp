@@ -49,14 +49,17 @@ World::~World() {}
 
 void World::mesh(bool greedy) {
   double currentTime = glfwGetTime();
-  ChunkMesh m;
-  if(!greedy) {
-    m = cubes.mesh();
-  } else {
-    m = mesher->meshGreedy(&cubes);
+  vector<ChunkMesh> m;
+  for(int x = 0; x < chunks.size(); x++) {
+    for(int z = 0; z < chunks[x].size(); z++) {
+      if(!greedy) {
+        m.push_back(chunks[x][z]->mesh());
+      } else {
+        m.push_back(mesher->meshGreedy(chunks[x][z]));
+      }
+    }
   }
   stringstream ss;
-  ss << "mesh size: " << m.positions.size() << ", ";
   ss << "time: " << glfwGetTime() - currentTime;
   logger->debug(ss.str());
   logger->flush();
