@@ -1,9 +1,17 @@
 #include "chunk.h"
 #include <cassert>
 
-Chunk::Chunk() {
+Chunk::Chunk(int x, int y, int z): posX(x), posY(y), posZ(z) {
   data = make_unique<Cube* []>(size[0] * size[1] * size[2]);
   for(int i=0; i < size[0]*size[1]*size[2]; i++) {
+    data[i] = NULL;
+  }
+}
+
+Chunk::Chunk() {
+  posX = 0; posY=0; posZ=0;
+  data = make_unique<Cube *[]>(size[0] * size[1] * size[2]);
+  for (int i = 0; i < size[0] * size[1] * size[2]; i++) {
     data[i] = NULL;
   }
 }
@@ -184,8 +192,8 @@ ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
 
 ChunkMesh Chunk::mesh() {
   ChunkMesh rv;
-  int x,y,z;
   int totalSize = size[0] * size[1] * size[2];
+  glm::vec3 offset(posX*size[0], posY*size[1], posZ*size[2]);
   ChunkCoords neighborCoords;
   Cube* neighbor;
   for(int i = 0; i<totalSize; i++) {
@@ -205,7 +213,7 @@ ChunkMesh Chunk::mesh() {
         neighbor = getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
         if(neighbor == NULL) {
           for(int vertex = 0; vertex < 6; vertex++) {
-            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex]);
+            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex] + offset);
             rv.texCoords.push_back(texModels[neighborIndex][vertex]);
             rv.blockTypes.push_back(data[i]->blockType());
             rv.selects.push_back(data[i]->selected());
