@@ -283,6 +283,7 @@ $ Click in and click out of windows (maybe with a button frame or hotkey)
 ? Players have API spend/rate/etc
 ? the source code for an object is the path the player took (placing blocks) to make it
 ? piece components together to build cyborgs
+? AI? Maybe for the cyborgs... definitely not for the kickstarter though
 
 V Blow stuff up with placed charges that have customizable size!
 #### Freedom vs Controlled experience
