@@ -2,6 +2,18 @@
 ## Purpose
 Immerse people in their projects
 
+## Game Theme
+- Living in a crystal city filled with cybernetic organisms
+- Divine/magical power and hormony
+     beyond one's comprehension
+   is available to those who seek it
+       and learn to harmonize themselves
+           with the spirit of Wralda
+              and the love of other free people
+## Essential Experience
+- Concious hackers
+- transform their own city
+- and become fully enlightened cyber soveriegns
 ## Questions that arise from the purpose
 ### What are the problems with current methods of immersion?
 
@@ -27,10 +39,6 @@ I want to be able to edit my game in my game. HackMatrix allows me to do that.
 Embeds the hacker in a 3d hacker environment
 
 
-## Essential Experience
-- Concious hackers
-- transform their own city
-- and become fully enlightened cyber soveriegns
 ## Development
 ### Milestones
 #### Pre kickstarter
@@ -88,14 +96,6 @@ Embeds the hacker in a 3d hacker environment
 - Working on this game is draining, even with faith
 - I will keep short-wave momentum up until plans for achieving better momentum are transfered from infinite intelligence
 - Every day, no exception
-## Game Theme
-- Living in a crystal city filled with cybernetic organisms
-- Divine/magical power and hormony
-     beyond one's comprehension
-   is available to those who seek it
-       and learn to harmonize themselves
-           with the spirit of Wralda
-              and the love of other free people
 ## Story
 You are a cybernetician. We all are.
 Thats why we chose to live here, in the City of Cybernetics.
