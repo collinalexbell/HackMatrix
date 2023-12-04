@@ -47,12 +47,12 @@ ChunkMesh Mesher::meshGreedy(int chunkX, int chunkZ, Chunk* chunk) {
           Cube *b = chunk->getCube_(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
           blockCurrent =
             0 <= x[dimension] ? a != NULL
-            : true;
+            : false;
 
           blockCompare =
               x[dimension] < chunkSizes[dimension] - 1
                   ? b != NULL
-                  : true;
+                  : false;
 
           mask[n++] = blockCurrent != blockCompare;
         }
