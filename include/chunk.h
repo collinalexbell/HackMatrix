@@ -22,7 +22,7 @@ struct ChunkMesh {
 class Chunk {
   static Face neighborFaces[6];
   static int findNeighborFaceIndex(Face face);
-  const vector<int> size = {128, 128, 128};
+  const vector<int> size = {45, 128, 45};
   unique_ptr<Cube* []> data;
   Cube null = Cube(glm::vec3(0, 0, 0), -1);
   int index(int x, int y, int z);
