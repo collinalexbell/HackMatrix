@@ -102,13 +102,22 @@ const std::vector<glm::vec3> World::getAppCubes() {
 void World::addCube(int x, int y, int z, int blockType) {
   int orderIndex;
   removeCube(x,y,z);
+  int maxX = chunks[0][0]->getSize()[0];
+  int maxZ = chunks[0][0]->getSize()[2];
 
-  if(blockType >= 0) {
-    glm::vec3 pos(x,y,z);
-    Cube cube(pos, blockType);
-    cubes.addCube(cube, x,y,z);
-    if (renderer != NULL) {
-      stringstream ss;
+  int chunkX = x/maxX;
+  int chunkZ = z/maxZ;
+  x = x%maxX;
+  z = z%maxZ;
+
+  if(chunkX < chunks.size() && chunkZ < chunks[chunkX].size()) {
+    if(blockType >= 0) {
+      glm::vec3 pos(x,y,z);
+      Cube cube(pos, blockType);
+      if(chunkX == 0 && chunkZ == 0) {
+        cubes.addCube(cube, x,y,z);
+      }
+      chunks[chunkX][chunkZ]->addCube(cube, x,y,z);
     }
   }
 }
