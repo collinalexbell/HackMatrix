@@ -101,7 +101,6 @@ const std::vector<glm::vec3> World::getAppCubes() {
 
 void World::addCube(int x, int y, int z, int blockType) {
   int orderIndex;
-  removeCube(x,y,z);
   int maxX = chunks[0][0]->getSize()[0];
   int maxZ = chunks[0][0]->getSize()[2];
 
@@ -110,6 +109,7 @@ void World::addCube(int x, int y, int z, int blockType) {
   x = x%maxX;
   z = z%maxZ;
 
+  removeCube(chunkX, chunkZ, x,y,z);
   if(chunkX < chunks.size() && chunkZ < chunks[chunkX].size()) {
     if(blockType >= 0) {
       glm::vec3 pos(x,y,z);
@@ -174,11 +174,20 @@ void World::updateDamage(int index) {
   }
 }
 
-void World::removeCube(int x, int y, int z) {
-    Cube *c = cubes.getCube(x,y,z);
+void World::removeCube(int chunkX,int chunkZ, int x, int y, int z) {
+  Cube *c; 
+  if(chunkX == 0 && chunkZ == 0) {
+    c = cubes.getCube(x,y,z);
     if(c->blockType() >= 0) {
       cubes.removeCube(x, y, z);
     }
+  }
+  if(chunkX < chunks.size() && chunkZ < chunks[chunkX].size()){
+    c = chunks[chunkX][chunkZ]->getCube(x,y,z);
+    if(c->blockType() >= 0) {
+      chunks[chunkX][chunkZ]->removeCube(x, y, z);
+    }
+  }
 }
 
 void World::removeLine(Line l) {
@@ -422,7 +431,8 @@ void World::action(Action toTake) {
       mesh();
     }
     if(toTake == REMOVE_CUBE) {
-      removeCube(lookingAt.x,lookingAt.y,lookingAt.z);
+      // TODO: chunks, change the 0,0
+      removeCube(0,0,lookingAt.x,lookingAt.y,lookingAt.z);
       mesh();
     }
     if(toTake == SELECT_CUBE) {
