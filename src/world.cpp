@@ -50,12 +50,14 @@ World::~World() {}
 void World::mesh(bool greedy) {
   double currentTime = glfwGetTime();
   vector<ChunkMesh> m;
+  int sizeX = chunks[0][0]->getSize()[0];
+  int sizeZ = chunks[0][0]->getSize()[2];
   for(int x = 0; x < chunks.size(); x++) {
     for(int z = 0; z < chunks[x].size(); z++) {
       if(!greedy) {
         m.push_back(chunks[x][z]->mesh());
       } else {
-        m.push_back(mesher->meshGreedy(chunks[x][z]));
+        m.push_back(mesher->meshGreedy(x,z,chunks[x][z]));
       }
     }
   }
@@ -106,7 +108,6 @@ void World::addCube(int x, int y, int z, int blockType) {
   int orderIndex;
   int maxX = chunks[0][0]->getSize()[0];
   int maxZ = chunks[0][0]->getSize()[2];
-
   int chunkX = x/maxX;
   int chunkZ = z/maxZ;
   x = x%maxX;

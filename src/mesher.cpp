@@ -8,7 +8,7 @@ Mesher::Mesher() {
   logger->set_level(spdlog::level::debug);
 }
 
-ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
+ChunkMesh Mesher::meshGreedy(int chunkX, int chunkZ, Chunk* chunk) {
   double currentTime = glfwGetTime();
   ChunkMesh mesh;
   int i, j, k, l, w, h, u, v;
@@ -17,6 +17,7 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
   int du[3];
   int dv[3];
   bool blockCurrent, blockCompare, done;
+  int chunkOffset[3] = {chunkX * chunk->getSize()[0], 0, chunkZ*chunk->getSize()[2]};
   for (int dimension = 0; dimension < 3; ++dimension) {
     u = (dimension + 1) % 3;
     v = (dimension + 2) % 3;
@@ -138,7 +139,7 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
             // Create a quad for this face. Colour, normal or textures are not
             // stored in this block vertex format.
 
-            glm::vec3 offset(-0.5,-0.5,-0.5);
+            glm::vec3 offset = glm::vec3(-0.5,-0.5,-0.5) + glm::vec3(chunkOffset[0], chunkOffset[1], chunkOffset[2]);
 
             mesh.positions.push_back(offset+glm::vec3(x[0], x[1], x[2]));
             mesh.positions.push_back(offset+glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
