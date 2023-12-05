@@ -32,10 +32,12 @@ Cube *Chunk::getCube_(int x, int y, int z) {
 }
 
 void Chunk::removeCube(int x, int y, int z) {
+  damaged = true;
   delete data[index(x, y, z)];
   data[index(x, y, z)] = NULL;
 }
 void Chunk::addCube(Cube c, int x, int y, int z) {
+  damaged = true;
   data[index(x, y, z)] = new Cube(c);
 }
 
@@ -190,7 +192,24 @@ ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
   return rv;
 }
 
-ChunkMesh Chunk::mesh() {
+ChunkMesh Chunk::mesh(bool greedy) {
+  bool wasDamaged = damaged;
+  damaged = false;
+
+  if(greedy) {
+    if(wasDamaged) {
+      // TODO: compute cachedGreedyMesh
+    }
+    return cachedGreedyMesh;
+  } else {
+    if(wasDamaged) {
+      cachedSimpleMesh = simpleMesh();
+    }
+    return cachedSimpleMesh;
+  }
+}
+
+ChunkMesh Chunk::simpleMesh() {
   ChunkMesh rv;
   int totalSize = size[0] * size[1] * size[2];
   glm::vec3 offset(posX*size[0], posY*size[1], posZ*size[2]);

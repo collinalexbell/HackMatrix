@@ -53,7 +53,7 @@ void World::mesh(bool greedy) {
   for(int x = 0; x < chunks.size(); x++) {
     for(int z = 0; z < chunks[x].size(); z++) {
       if(!greedy) {
-        m.push_back(chunks[x][z]->mesh());
+        m.push_back(chunks[x][z]->mesh(false));
       } else {
         m.push_back(mesher->meshGreedy(x,z,chunks[x][z]));
       }
