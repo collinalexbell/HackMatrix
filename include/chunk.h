@@ -30,6 +30,10 @@ class Chunk {
   vector<glm::vec3> getOffsetsFromFace(Face face);
   vector<glm::vec2> getTexCoordsFromFace(Face face);
   Face getFaceFromNormal(glm::vec3 normal);
+  ChunkMesh cachedSimpleMesh;
+  ChunkMesh cachedGreedyMesh;
+  bool damaged = true;
+  ChunkMesh simpleMesh();
 
 public:
   static glm::vec2 texModels[6][6];
@@ -40,7 +44,7 @@ public:
   void removeCube(int x, int y, int z);
   void addCube(Cube c, int x, int y, int z);
   ChunkCoords getCoords(int i);
-  ChunkMesh mesh();
+  ChunkMesh mesh(bool greedy);
   ChunkMesh meshedFaceFromPosition(Position position);
   const vector<int> getSize();
 };
