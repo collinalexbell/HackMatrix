@@ -19,7 +19,6 @@ using namespace std;
 
 
 World::World(Camera *camera, bool debug) : camera(camera) {
-  mesher = new Mesher();
   logger = make_shared<spdlog::logger>("World", fileSink);
   logger->set_level(spdlog::level::debug);
   float z = 10.0;

@@ -51,7 +51,7 @@ build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h incl
 build/cube.o: src/cube.cpp include/cube.h
 	g++ -std=c++20 $(FLAGS) -o build/cube.o -c src/cube.cpp $(INCLUDES)
 
-build/chunk.o: src/chunk.cpp include/chunk.h
+build/chunk.o: src/chunk.cpp include/chunk.h include/mesher.h
 	g++ -std=c++20 $(FLAGS) -o build/chunk.o -c src/chunk.cpp $(INCLUDES)
 
 build/mesher.o: src/mesher.cpp include/mesher.h
