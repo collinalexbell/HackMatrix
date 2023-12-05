@@ -5,7 +5,6 @@
 #include "renderer.h"
 #include "wm.h"
 #include "world.h"
-#include "mesher.h"
 
 #include <GLFW/glfw3.h>
 #include <memory>
@@ -14,7 +13,6 @@ void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
 class Engine {
 
-  Mesher* mesher = NULL;
   World *world;
   Api *api;
   Renderer *renderer;

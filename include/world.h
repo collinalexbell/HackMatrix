@@ -3,7 +3,6 @@
 
 #include "app.h"
 #include "coreStructs.h"
-#include "mesher.h"
 #include "cube.h"
 #include "chunk.h"
 #include "camera.h"
@@ -35,7 +34,6 @@ enum Action {
 };
 
 class World {
-  Mesher *mesher;
   std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
