@@ -1,7 +1,7 @@
 # UrbaNetica
 ## Purpose
 Immerse people in their projects
-
+Show the love of God
 ## Game Theme
 - Living in a crystal city filled with cybernetic organisms
 - Divine/magical power and hormony
