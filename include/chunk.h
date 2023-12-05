@@ -41,7 +41,7 @@ public:
   void removeCube(int x, int y, int z);
   void addCube(Cube c, int x, int y, int z);
   ChunkCoords getCoords(int i);
-  ChunkMesh mesh(bool greedy);
+  ChunkMesh mesh(bool realTime);
   ChunkMesh meshedFaceFromPosition(Position position);
   const vector<int> getSize();
 };

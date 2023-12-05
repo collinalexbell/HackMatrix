@@ -8,7 +8,12 @@ using namespace std;
 
 class Chunk;
 
+enum MESH_TYPE {
+  SIMPLE, GREEDY
+};
+
 struct ChunkMesh {
+  MESH_TYPE type;
   vector<glm::vec3> positions;
   vector<glm::vec2> texCoords;
   vector<int> blockTypes;

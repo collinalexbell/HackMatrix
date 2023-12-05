@@ -45,25 +45,21 @@ World::World(Camera *camera, bool debug) : camera(camera) {
 
 World::~World() {}
 
-void World::mesh(bool greedy) {
+void World::mesh(bool realTime) {
   double currentTime = glfwGetTime();
   vector<ChunkMesh> m;
   int sizeX = chunks[0][0]->getSize()[0];
   int sizeZ = chunks[0][0]->getSize()[2];
   for(int x = 0; x < chunks.size(); x++) {
     for(int z = 0; z < chunks[x].size(); z++) {
-      if(!greedy) {
-        m.push_back(chunks[x][z]->mesh(false));
-      } else {
-        m.push_back(chunks[x][z]->mesh(true));
-      }
+        m.push_back(chunks[x][z]->mesh(realTime));
     }
   }
   stringstream ss;
   ss << "time: " << glfwGetTime() - currentTime;
   logger->debug(ss.str());
   logger->flush();
-  renderer->updateChunkMeshBuffers(m, greedy);
+  renderer->updateChunkMeshBuffers(m);
 }
 
 const std::vector<Cube*> World::getCubes() {

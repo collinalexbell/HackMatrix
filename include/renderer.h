@@ -42,7 +42,6 @@ class Renderer {
   unsigned int VOXEL_SELECTION_TEX_COORDS;
 
   bool isWireframe = false;
-  bool isGreedyMesh;
 
   Shader* shader;
   Shader* appShader;
@@ -84,7 +83,7 @@ public:
   ~Renderer();
   Camera* getCamera();
   void render();
-  void updateChunkMeshBuffers(vector<ChunkMesh> meshes, bool greedy);
+  void updateChunkMeshBuffers(vector<ChunkMesh> meshes);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
   void registerApp(X11App* app, int index);

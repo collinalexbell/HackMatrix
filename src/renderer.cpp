@@ -241,13 +241,9 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void Renderer::updateChunkMeshBuffers(vector<ChunkMesh> meshes, bool greedy) {
+void Renderer::updateChunkMeshBuffers(vector<ChunkMesh> meshes) {
   verticesInMesh = 0;
   for(auto mesh: meshes) {
-    if(greedy) {
-      logger->critical(mesh.positions.size());
-    }
-    isGreedyMesh = greedy;
     glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * verticesInMesh,
                     sizeof(glm::vec3) * mesh.positions.size(),
@@ -378,11 +374,9 @@ void Renderer::updateShaderUniforms() {
 void Renderer::renderChunkMesh() {
   shader->setBool("isMesh", true);
   glBindVertexArray(MESH_VERTEX);
-  glEnable(GL_CULL_FACE);
-  if(isGreedyMesh) {
-    // fix the winding order on the mesh and then I can remove this
-    glDisable(GL_CULL_FACE);
-  }
+  // TODO: fix this
+  //glEnable(GL_CULL_FACE);
+  glDisable(GL_CULL_FACE);
   glDrawArrays(GL_TRIANGLES, 0, verticesInMesh);
   shader->setBool("isMesh", false);
 }

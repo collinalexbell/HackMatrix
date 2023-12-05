@@ -14,6 +14,7 @@ Mesher::Mesher() {
 ChunkMesh Mesher::meshGreedy(int chunkX, int chunkZ, Chunk* chunk) {
   double currentTime = glfwGetTime();
   ChunkMesh mesh;
+  mesh.type = GREEDY;
   int i, j, k, l, w, h, u, v;
   int x[3];
   int q[3];
