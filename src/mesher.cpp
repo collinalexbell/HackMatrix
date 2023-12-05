@@ -3,8 +3,11 @@
 #include "glm/geometric.hpp"
 #include "mesher.h"
 
+shared_ptr<spdlog::logger> Mesher::logger = shared_ptr<spdlog::logger>();
 Mesher::Mesher() {
-  logger = make_shared<spdlog::logger>("Mesher", fileSink);
+  if(!logger) {
+    logger = make_shared<spdlog::logger>("Mesher", fileSink);
+  }
   logger->set_level(spdlog::level::debug);
 }
 
