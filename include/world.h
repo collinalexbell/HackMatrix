@@ -85,7 +85,7 @@ public:
   void load(string filename);
   void loadLatest();
 
-  void mesh(bool greedy = false);
+  void mesh(bool realTime = true);
   ChunkMesh meshSelectedCube(Position position);
 };
 

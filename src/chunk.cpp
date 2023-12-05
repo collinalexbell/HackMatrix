@@ -199,9 +199,8 @@ ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
   return rv;
 }
 
-ChunkMesh Chunk::mesh(bool greedy) {
-
-  if(greedy) {
+ChunkMesh Chunk::mesh(bool realTime) {
+  if(!realTime || !damagedGreedy) {
     if(damagedGreedy) {
       cachedGreedyMesh = mesher->meshGreedy(posX, posZ, this);
       damagedGreedy = false;
@@ -218,6 +217,7 @@ ChunkMesh Chunk::mesh(bool greedy) {
 
 ChunkMesh Chunk::simpleMesh() {
   ChunkMesh rv;
+  rv.type = SIMPLE;
   int totalSize = size[0] * size[1] * size[2];
   glm::vec3 offset(posX*size[0], posY*size[1], posZ*size[2]);
   ChunkCoords neighborCoords;
