@@ -1,5 +1,6 @@
 #include "chunk.h"
 #include <cassert>
+#include <memory>
 
 Chunk::Chunk(int x, int y, int z): posX(x), posY(y), posZ(z) {
   data = make_unique<Cube* []>(size[0] * size[1] * size[2]);
@@ -9,6 +10,7 @@ Chunk::Chunk(int x, int y, int z): posX(x), posY(y), posZ(z) {
 }
 
 Chunk::Chunk() {
+  mesher = make_unique<Mesher>();
   posX = 0; posY=0; posZ=0;
   data = make_unique<Cube *[]>(size[0] * size[1] * size[2]);
   for (int i = 0; i < size[0] * size[1] * size[2]; i++) {
@@ -32,13 +34,18 @@ Cube *Chunk::getCube_(int x, int y, int z) {
 }
 
 void Chunk::removeCube(int x, int y, int z) {
-  damaged = true;
+  setDamaged();
   delete data[index(x, y, z)];
   data[index(x, y, z)] = NULL;
 }
 void Chunk::addCube(Cube c, int x, int y, int z) {
-  damaged = true;
+  setDamaged();
   data[index(x, y, z)] = new Cube(c);
+}
+
+void Chunk::setDamaged() {
+  damagedSimple = true;
+  damagedGreedy = true;
 }
 
 glm::vec2 Chunk::texModels[6][6] = {
@@ -193,17 +200,17 @@ ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
 }
 
 ChunkMesh Chunk::mesh(bool greedy) {
-  bool wasDamaged = damaged;
-  damaged = false;
 
   if(greedy) {
-    if(wasDamaged) {
-      // TODO: compute cachedGreedyMesh
+    if(damagedGreedy) {
+      cachedGreedyMesh = mesher->meshGreedy(posX, posZ, this);
+      damagedGreedy = false;
     }
     return cachedGreedyMesh;
   } else {
-    if(wasDamaged) {
+    if(damagedSimple) {
       cachedSimpleMesh = simpleMesh();
+      damagedSimple = false;
     }
     return cachedSimpleMesh;
   }

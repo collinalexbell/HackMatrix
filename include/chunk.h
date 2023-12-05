@@ -3,6 +3,7 @@
 #include "coreStructs.h"
 #include <memory>
 #include <vector>
+#include "mesher.h"
 
 
 struct ChunkCoords {
@@ -12,13 +13,6 @@ struct ChunkCoords {
 };
 
 enum Face { LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK };
-struct ChunkMesh {
-  vector<glm::vec3> positions;
-  vector<glm::vec2> texCoords;
-  vector<int> blockTypes;
-  vector<int> selects;
-};
-
 class Chunk {
   int posX,posY,posZ;
   static Face neighborFaces[6];
@@ -30,9 +24,12 @@ class Chunk {
   vector<glm::vec3> getOffsetsFromFace(Face face);
   vector<glm::vec2> getTexCoordsFromFace(Face face);
   Face getFaceFromNormal(glm::vec3 normal);
+  unique_ptr<Mesher> mesher;
   ChunkMesh cachedSimpleMesh;
   ChunkMesh cachedGreedyMesh;
-  bool damaged = true;
+  bool damagedSimple = true;
+  bool damagedGreedy = true;
+  void setDamaged();
   ChunkMesh simpleMesh();
 
 public:

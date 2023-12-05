@@ -55,7 +55,7 @@ void World::mesh(bool greedy) {
       if(!greedy) {
         m.push_back(chunks[x][z]->mesh(false));
       } else {
-        m.push_back(mesher->meshGreedy(x,z,chunks[x][z]));
+        m.push_back(chunks[x][z]->mesh(true));
       }
     }
   }
