@@ -70,8 +70,7 @@ glm::vec2 Chunk::texModels[6][6] = {
 
 Face Chunk::neighborFaces[] = {FRONT, BACK, LEFT, RIGHT, BOTTOM, TOP};
 
-glm::vec3 faceModels[6][6] = {
-
+glm::vec3 Chunk::faceModels[6][6] = {
 
   // front
   {
@@ -208,47 +207,11 @@ ChunkMesh Chunk::mesh(bool realTime) {
     return cachedGreedyMesh;
   } else {
     if(damagedSimple) {
-      cachedSimpleMesh = simpleMesh();
+      cachedSimpleMesh = mesher->simpleMesh(posX, posZ, this);
       damagedSimple = false;
     }
     return cachedSimpleMesh;
   }
-}
-
-ChunkMesh Chunk::simpleMesh() {
-  ChunkMesh rv;
-  rv.type = SIMPLE;
-  int totalSize = size[0] * size[1] * size[2];
-  glm::vec3 offset(posX*size[0], posY*size[1], posZ*size[2]);
-  ChunkCoords neighborCoords;
-  Cube* neighbor;
-  for(int i = 0; i<totalSize; i++) {
-    if(data[i] != NULL) {
-      ChunkCoords ci = getCoords(i);
-      ChunkCoords neighbors[6] = {
-          ChunkCoords{ci.x, ci.y, ci.z - 1},
-          ChunkCoords{ci.x, ci.y, ci.z + 1},
-          ChunkCoords{ci.x - 1, ci.y, ci.z},
-          ChunkCoords{ci.x + 1, ci.y, ci.z},
-          ChunkCoords{ci.x, ci.y - 1, ci.z},
-          ChunkCoords{ci.x, ci.y + 1, ci.z},
-      };
-
-      for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
-        neighborCoords = neighbors[neighborIndex];
-        neighbor = getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
-        if(neighbor == NULL) {
-          for(int vertex = 0; vertex < 6; vertex++) {
-            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex] + offset);
-            rv.texCoords.push_back(texModels[neighborIndex][vertex]);
-            rv.blockTypes.push_back(data[i]->blockType());
-            rv.selects.push_back(data[i]->selected());
-          }
-        }
-      }
-    }
-  }
-  return rv;
 }
 
 int Chunk::index(int x, int y, int z) {

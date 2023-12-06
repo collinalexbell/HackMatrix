@@ -25,4 +25,5 @@ class Mesher {
 public:
   Mesher();
   ChunkMesh meshGreedy(int chunkX, int chunkZ, Chunk *chunk);
+  ChunkMesh simpleMesh(int chunkX, int chunkZ, Chunk *chunk);
 };

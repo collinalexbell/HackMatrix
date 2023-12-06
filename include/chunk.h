@@ -16,6 +16,7 @@ enum Face { LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK };
 class Chunk {
   int posX,posY,posZ;
   static Face neighborFaces[6];
+  static glm::vec3 faceModels[6][6];
   static int findNeighborFaceIndex(Face face);
   const vector<int> size = {32, 128, 32};
   unique_ptr<Cube* []> data;
@@ -30,7 +31,7 @@ class Chunk {
   bool damagedSimple = true;
   bool damagedGreedy = true;
   void setDamaged();
-  ChunkMesh simpleMesh();
+  friend ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk);
 
 public:
   static glm::vec2 texModels[6][6];

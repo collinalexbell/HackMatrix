@@ -11,6 +11,44 @@ Mesher::Mesher() {
   logger->set_level(spdlog::level::debug);
 }
 
+ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk) {
+  ChunkMesh rv;
+  rv.type = SIMPLE;
+  auto size = chunk->getSize();
+
+  int totalSize = size[0] * size[1] * size[2];
+  glm::vec3 offset(size[0]*chunkX, 0, size[2]*chunkZ);
+  ChunkCoords neighborCoords;
+  Cube* neighbor;
+  for(int i = 0; i<totalSize; i++) {
+    if(chunk->data[i] != NULL) {
+      ChunkCoords ci = chunk->getCoords(i);
+      ChunkCoords neighbors[6] = {
+          ChunkCoords{ci.x, ci.y, ci.z - 1},
+          ChunkCoords{ci.x, ci.y, ci.z + 1},
+          ChunkCoords{ci.x - 1, ci.y, ci.z},
+          ChunkCoords{ci.x + 1, ci.y, ci.z},
+          ChunkCoords{ci.x, ci.y - 1, ci.z},
+          ChunkCoords{ci.x, ci.y + 1, ci.z},
+      };
+
+      for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
+        neighborCoords = neighbors[neighborIndex];
+        neighbor = chunk->getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
+        if(neighbor == NULL) {
+          for(int vertex = 0; vertex < 6; vertex++) {
+            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + chunk->faceModels[neighborIndex][vertex] + offset);
+            rv.texCoords.push_back(chunk->texModels[neighborIndex][vertex]);
+            rv.blockTypes.push_back(chunk->data[i]->blockType());
+            rv.selects.push_back(chunk->data[i]->selected());
+          }
+        }
+      }
+    }
+  }
+  return rv;
+}
+
 ChunkMesh Mesher::meshGreedy(int chunkX, int chunkZ, Chunk* chunk) {
   double currentTime = glfwGetTime();
   ChunkMesh mesh;
