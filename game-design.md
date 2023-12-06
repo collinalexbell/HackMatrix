@@ -496,3 +496,5 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
 - Starcel
 - Robocraft
 - Plasma game
+- Eragon
+- Pokemon
