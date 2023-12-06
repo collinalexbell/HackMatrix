@@ -189,7 +189,7 @@ ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
     vector<glm::vec2> texCoords = getTexCoordsFromFace(face);
     assert(offsets.size() == texCoords.size());
     for(int i = 0; i < offsets.size(); i++) {
-      rv.positions.push_back(offsets[i] + glm::vec3(position.x, position.y, position.z));
+      rv.positions.push_back(offsets[i] + glm::vec3(position.x, position.y, position.z) + glm::vec3(posX*size[0], posY*size[1], posZ*size[2]));
       rv.blockTypes.push_back(c->blockType());
       rv.selects.push_back(c->selected());
       rv.texCoords.push_back(texCoords[i]);

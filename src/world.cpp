@@ -268,8 +268,15 @@ void World::attachRenderer(Renderer* renderer){
 }
 
 Cube* World::getCube(float x, float y, float z) {
-  Cube* rv = cubes.getCube(x,y,z);
-  if(rv->blockType() != -1) {
+  if(chunks.size() > 0 && chunks[0].size() > 0) {
+    vector<int> sizes = chunks[0][0]->getSize();
+    int chunkX = x/sizes[0];
+    int chunkZ = z/sizes[2];
+    int xInChunk = (int)x%sizes[0];
+    int yInChunk = y;
+    int zInChunk = (int)z%sizes[2];
+    Chunk *chunk = chunks[chunkX][chunkZ];
+    Cube* rv = chunk->getCube_(xInChunk, yInChunk, zInChunk);
     return rv;
   }
   return NULL;
@@ -393,27 +400,33 @@ Position World::getLookedAtCube() {
         normal = normalZ;
       }
     }
-    // positive guard until chunking is done
-    auto chunkSize = cubes.getSize();
-    if(x >= 0 && y >= 0 && z >= 0 && x < chunkSize[0] && y < chunkSize[1] && z < chunkSize[2]) {
-      Cube* closest = getCube(x,y,z);
-      if(closest!=NULL) {
-        rv.x = x;
-        rv.y = y;
-        rv.z = z;
-        rv.normal = normal;
-        rv.valid = true;
-
-        return rv;
-      }
+    Cube *closest = getCube(x, y, z);
+    if (closest != NULL) {
+      rv.x = x;
+      rv.y = y;
+      rv.z = z;
+      rv.normal = normal;
+      rv.valid = true;
+      return rv;
     }
-  } while(tMaxX < limit || tMaxY < limit || tMaxZ < limit);
+  } while (tMaxX < limit || tMaxY < limit || tMaxZ < limit);
 
   return rv;
 }
 
 ChunkMesh World::meshSelectedCube(Position position) {
-  return cubes.meshedFaceFromPosition(position);
+  if(chunks.size() > 0 && chunks[0].size() > 0) {
+    auto sizes = chunks[0][0]->getSize();
+    int chunkX = position.x / sizes[0];
+    int chunkZ = position.z / sizes[2];
+    position.x = position.x % sizes[0];
+    position.z = position.z % sizes[2];
+    if(chunks.size() > chunkX && chunks[chunkX].size() > chunkZ) {
+      Chunk *chunk = chunks[chunkX][chunkZ];
+      return chunk->meshedFaceFromPosition(position);
+    }
+  }
+  return ChunkMesh{};
 }
 
 void World::action(Action toTake) {
@@ -428,9 +441,15 @@ void World::action(Action toTake) {
       mesh();
     }
     if(toTake == REMOVE_CUBE) {
-      // TODO: chunks, change the 0,0
-      removeCube(0,0,lookingAt.x,lookingAt.y,lookingAt.z);
-      mesh();
+      if(chunks.size() > 0 && chunks[0].size() > 0) {
+        auto sizes = chunks[0][0]->getSize();
+        int chunkX = lookingAt.x / sizes[0];
+        int chunkZ = lookingAt.z / sizes[2];
+        int x = lookingAt.x % sizes[0];
+        int z = lookingAt.z % sizes[2];
+        removeCube(chunkX,chunkZ,x,lookingAt.y,z);
+        mesh();
+      }
     }
     if(toTake == SELECT_CUBE) {
       lookedAt->toggleSelect();
