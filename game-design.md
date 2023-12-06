@@ -1,6 +1,4 @@
-# UrbaNetica
-# Cybernetica
-# Atlantis Cybernetica
+# UrbaNetica or Cybernetica or Atlantis Cybernetica
 ## Purpose
 Immerse people in their projects
 Show the love of God
@@ -42,6 +40,11 @@ Embeds the hacker in a 3d hacker environment
 
 
 ## Development
+### Tickets
+- Fix block placement outside of first chunk
+-
+-
+-
 ### Milestones
 #### Pre kickstarter
 - 10 cities in voxels (maybe it is better just to use one city?) (maybe not)
