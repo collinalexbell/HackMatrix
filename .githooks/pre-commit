@@ -1,4 +1,5 @@
 #!/bin/bash
 
 make cloc
+sed -i '/github.com\/AlDanial\/cloc/d' line-count
 git add line-count
