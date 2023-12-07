@@ -61,9 +61,15 @@ void World::mesh(bool realTime) {
   renderer->updateChunkMeshBuffers(m);
 }
 
-const std::vector<Cube*> World::getCubes() {
-  auto chunkSize = cubes.getSize();
-  return getCubes(0,0,0,chunkSize[0], chunkSize[1], chunkSize[2]);
+const vector<Cube*> World::getCubes() {
+  if(chunks.size()>0 && chunks[0].size() > 0) {
+    auto chunkSize = chunks[0][0]->getSize();
+    return getCubes(0,0,0,
+                    chunkSize[0]*chunks.size(),
+                    chunkSize[1],
+                    chunkSize[2]*chunks[0].size());
+  }
+  return vector<Cube*>{};
 }
 
 const std::vector<Cube*> World::getCubes(int _x1, int _y1, int _z1,
@@ -79,7 +85,7 @@ const std::vector<Cube*> World::getCubes(int _x1, int _y1, int _z1,
   for (int x = x1; x < x2; x++) {
     for (int y = y1; y < y2; y++) {
       for (int z = z1; z < z2; z++) {
-        Cube *cube = cubes.getCube(x, y, z);
+        Cube *cube = getCube(x, y, z);
         if (cube->blockType() != -1) {
           rv.push_back(cube);
         }
@@ -172,15 +178,8 @@ void World::updateDamage(int index) {
 }
 
 void World::removeCube(int chunkX,int chunkZ, int x, int y, int z) {
-  Cube *c; 
-  if(chunkX == 0 && chunkZ == 0) {
-    c = cubes.getCube(x,y,z);
-    if(c->blockType() >= 0) {
-      cubes.removeCube(x, y, z);
-    }
-  }
   if(chunkX < chunks.size() && chunkZ < chunks[chunkX].size()){
-    c = chunks[chunkX][chunkZ]->getCube(x,y,z);
+    Cube *c = chunks[chunkX][chunkZ]->getCube(x,y,z);
     if(c->blockType() >= 0) {
       chunks[chunkX][chunkZ]->removeCube(x, y, z);
     }
