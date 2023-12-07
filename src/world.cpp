@@ -29,9 +29,9 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   availableAppPositions.push(glm::vec3(5.2, 1.0, z));
   availableAppPositions.push(glm::vec3(2.5, 1.75, z));
   availableAppPositions.push(glm::vec3(5.2, 1.75, z));
-  for(int x = 0; x<10; x++) {
+  for(int x = -10; x<10; x++) {
     chunks.push_back(vector<Chunk*>());
-    for(int z=0; z<10; z++) {
+    for(int z=-10; z<10; z++) {
       chunks.back().push_back(new Chunk(x,0,z));
     }
   }
