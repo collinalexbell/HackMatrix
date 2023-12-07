@@ -239,3 +239,25 @@ ChunkMesh Mesher::meshGreedy(int chunkX, int chunkZ, Chunk* chunk) {
   logger->flush();
   return mesh;
 }
+
+
+ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
+  ChunkMesh rv;
+  Cube *c = chunk->getCube_(position.x, position.y, position.z);
+  if (c != NULL) {
+    Face face = chunk->getFaceFromNormal(position.normal);
+    vector<glm::vec3> offsets = chunk->getOffsetsFromFace(face);
+    vector<glm::vec2> texCoords = chunk->getTexCoordsFromFace(face);
+    assert(offsets.size() == texCoords.size());
+    auto size = chunk->getSize();
+    for (int i = 0; i < offsets.size(); i++) {
+      rv.positions.push_back(
+          offsets[i] + glm::vec3(position.x, position.y, position.z) +
+          glm::vec3(chunk->posX * size[0], chunk->posY * size[1], chunk->posZ * size[2]));
+      rv.blockTypes.push_back(c->blockType());
+      rv.selects.push_back(c->selected());
+      rv.texCoords.push_back(texCoords[i]);
+    }
+  }
+  return rv;
+}

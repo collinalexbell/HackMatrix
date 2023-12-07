@@ -181,21 +181,7 @@ vector<glm::vec2> Chunk::getTexCoordsFromFace(Face face) {
 }
 
 ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
-  ChunkMesh rv;
-  Cube *c = getCube_(position.x, position.y, position.z);
-  if(c != NULL) {
-    Face face = getFaceFromNormal(position.normal);
-    vector<glm::vec3> offsets = getOffsetsFromFace(face);
-    vector<glm::vec2> texCoords = getTexCoordsFromFace(face);
-    assert(offsets.size() == texCoords.size());
-    for(int i = 0; i < offsets.size(); i++) {
-      rv.positions.push_back(offsets[i] + glm::vec3(position.x, position.y, position.z) + glm::vec3(posX*size[0], posY*size[1], posZ*size[2]));
-      rv.blockTypes.push_back(c->blockType());
-      rv.selects.push_back(c->selected());
-      rv.texCoords.push_back(texCoords[i]);
-    }
-  }
-  return rv;
+  return mesher->meshedFaceFromPosition(this, position);
 }
 
 ChunkMesh Chunk::mesh(bool realTime) {

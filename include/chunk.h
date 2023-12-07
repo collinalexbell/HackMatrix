@@ -32,6 +32,8 @@ class Chunk {
   bool damagedGreedy = true;
   void setDamaged();
   friend ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk);
+  friend ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position);
+
 
 public:
   static glm::vec2 texModels[6][6];
