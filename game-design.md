@@ -498,3 +498,7 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
 - Plasma game
 - Eragon
 - Pokemon
+  - The city exploration
+  - The MissingNo cheat
+  - The colors
+  - The badges (which lined up with the show)
