@@ -7,6 +7,7 @@
 using namespace std;
 
 class Chunk;
+class Position;
 
 enum MESH_TYPE {
   SIMPLE, GREEDY
@@ -24,6 +25,7 @@ class Mesher {
   static std::shared_ptr<spdlog::logger> logger;
 public:
   Mesher();
+  ChunkMesh meshedFaceFromPosition(Chunk* chunk, Position position);
   ChunkMesh meshGreedy(int chunkX, int chunkZ, Chunk *chunk);
   ChunkMesh simpleMesh(int chunkX, int chunkZ, Chunk *chunk);
 };
