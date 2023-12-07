@@ -502,3 +502,6 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
   - The MissingNo cheat
   - The colors
   - The badges (which lined up with the show)
+
+## World
+The UrbaNetica world will be made "trans media", because people will act it out in the real world
