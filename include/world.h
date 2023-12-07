@@ -42,7 +42,6 @@ class World {
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
-  Chunk cubes;
   vector<vector<Chunk*>> chunks;
   int damageIndex = -1;
   bool isDamaged = false;
