@@ -97,5 +97,8 @@ imgui_objects: $(IMGUI_OBJ)
 ######## Utils ########
 #######################
 
+cloc:
+	cloc include/ src/ --exclude-dir=imgui,glad,glm,octree,protos,stb,zmq > build/cloc
+
 clean:
 	rm build/*.o 2> /dev/null || true
