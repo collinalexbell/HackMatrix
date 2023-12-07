@@ -41,8 +41,8 @@ Embeds the hacker in a 3d hacker environment
 
 ## Development
 ### Tickets
-- Fix block placement outside of first chunk
--
+- $Fix block placement outside of first chunk
+- Get multi chunk scrolling working
 -
 -
 ### Milestones
