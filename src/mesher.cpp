@@ -3,14 +3,6 @@
 #include "glm/geometric.hpp"
 #include "mesher.h"
 
-shared_ptr<spdlog::logger> Mesher::logger = shared_ptr<spdlog::logger>();
-Mesher::Mesher() {
-  if(!logger) {
-    logger = make_shared<spdlog::logger>("Mesher", fileSink);
-  }
-  logger->set_level(spdlog::level::debug);
-}
-
 ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk) {
   ChunkMesh rv;
   rv.type = SIMPLE;
@@ -235,8 +227,6 @@ ChunkMesh Mesher::meshGreedy(int chunkX, int chunkZ, Chunk* chunk) {
     }
   }
 
-  logger->debug("time:" + to_string(glfwGetTime()-currentTime));
-  logger->flush();
   return mesh;
 }
 
