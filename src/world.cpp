@@ -117,9 +117,6 @@ void World::addCube(int x, int y, int z, int blockType) {
     if(blockType >= 0) {
       glm::vec3 pos(x,y,z);
       Cube cube(pos, blockType);
-      if(chunkX == 0 && chunkZ == 0) {
-        cubes.addCube(cube, x,y,z);
-      }
       chunks[chunkX][chunkZ]->addCube(cube, x,y,z);
     }
   }
@@ -510,7 +507,12 @@ void World::save(string filename) {
   std::ofstream outputFile(filename);
   auto cubes = getCubes();
   for(auto it = cubes.begin(); it != cubes.end(); it++) {
-    outputFile << (*it)->position().x << "," << (*it)->position().y << "," << (*it)->position().z << "," << (*it)->blockType() << endl;
+    if(*it != NULL) {
+      outputFile << (*it)->position().x << ","
+                 << (*it)->position().y << ","
+                 << (*it)->position().z << ","
+                 << (*it)->blockType() << endl;
+    }
   }
   outputFile.close();
 }
