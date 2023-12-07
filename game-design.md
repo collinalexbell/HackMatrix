@@ -450,6 +450,8 @@ $ OpenGL
     - OpenStreetMap
 
 
+- Chunks will probably need to be stored in a database
+
 
 ? Multiple X windows to allow a browser as well
 - recompilable while playing
