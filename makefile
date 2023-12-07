@@ -98,7 +98,7 @@ imgui_objects: $(IMGUI_OBJ)
 #######################
 
 cloc:
-	cloc include/ src/ --exclude-dir=imgui,glad,glm,octree,protos,stb,zmq > build/cloc
+	cloc include/ src/ --exclude-dir=imgui,glad,glm,octree,protos,stb,zmq > line-count
 
 clean:
 	rm build/*.o 2> /dev/null || true
