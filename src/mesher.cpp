@@ -37,8 +37,8 @@ ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk) {
         neighbor = chunk->getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
         if(neighbor == NULL) {
           for(int vertex = 0; vertex < 6; vertex++) {
-            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + chunk->faceModels[neighborIndex][vertex] + offset);
-            rv.texCoords.push_back(chunk->texModels[neighborIndex][vertex]);
+            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex] + offset);
+            rv.texCoords.push_back(texModels[neighborIndex][vertex]);
             rv.blockTypes.push_back(chunk->data[i]->blockType());
             rv.selects.push_back(chunk->data[i]->selected());
           }
@@ -245,9 +245,9 @@ ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
   ChunkMesh rv;
   Cube *c = chunk->getCube_(position.x, position.y, position.z);
   if (c != NULL) {
-    Face face = chunk->getFaceFromNormal(position.normal);
-    vector<glm::vec3> offsets = chunk->getOffsetsFromFace(face);
-    vector<glm::vec2> texCoords = chunk->getTexCoordsFromFace(face);
+    Face face = getFaceFromNormal(position.normal);
+    vector<glm::vec3> offsets = getOffsetsFromFace(face);
+    vector<glm::vec2> texCoords = getTexCoordsFromFace(face);
     assert(offsets.size() == texCoords.size());
     auto size = chunk->getSize();
     for (int i = 0; i < offsets.size(); i++) {
@@ -261,3 +261,143 @@ ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
   }
   return rv;
 }
+
+vector<glm::vec2> Mesher::getTexCoordsFromFace(Face face) {
+  int index = findNeighborFaceIndex(face);
+  glm::vec2 *coords = texModels[index];
+  vector<glm::vec2> rv;
+  for (int i = 0; i < 6; i++) {
+    rv.push_back(coords[i]);
+  }
+  return rv;
+}
+
+int Mesher::findNeighborFaceIndex(Face face) {
+  int index = 0;
+  for (index = 0; index < 6; index++) {
+    if (neighborFaces[index] == face) {
+      break;
+    }
+  }
+
+  // neighborFaces should have all Face enums
+  assert(index != 6);
+
+  return index;
+}
+
+vector<glm::vec3> Mesher::getOffsetsFromFace(Face face) {
+  int index = findNeighborFaceIndex(face);
+  glm::vec3 *offsets = faceModels[index];
+  vector<glm::vec3> rv;
+  for (int i = 0; i < 6; i++) {
+    rv.push_back(offsets[i]);
+  }
+  return rv;
+}
+
+Face Mesher::getFaceFromNormal(glm::vec3 normal) {
+  // TBI
+  if (normal.x < 0)
+    return LEFT;
+  if (normal.x > 0)
+    return RIGHT;
+  if (normal.y < 0)
+    return BOTTOM;
+  if (normal.y > 0)
+    return TOP;
+  if (normal.z < 0)
+    return FRONT;
+  if (normal.z > 0)
+    return BACK;
+
+  // null vector
+  assert(false);
+  return FRONT;
+}
+
+
+glm::vec2 Mesher::texModels[6][6] = {
+    {glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f),
+     glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+
+    {glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f),
+     glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f)},
+
+    {glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
+     glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+
+    {glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f),
+     glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
+
+    {glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f),
+     glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+
+    {glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
+     glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f)}
+};
+
+Face Mesher::neighborFaces[] = {FRONT, BACK, LEFT, RIGHT, BOTTOM, TOP};
+
+glm::vec3 Mesher::faceModels[6][6] = {
+
+  // front
+  {
+   glm::vec3(-0.5f, -0.5f, -0.5f),
+   glm::vec3(-0.5f, 0.5f, -0.5f),
+   glm::vec3(0.5f, 0.5f, -0.5f),
+   glm::vec3(0.5f, 0.5f, -0.5f),
+   glm::vec3(0.5f, -0.5f, -0.5f),
+   glm::vec3(-0.5f, -0.5f, -0.5f)
+  },
+
+  // back
+  {
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+  },
+
+  // left
+  {
+    glm::vec3(-0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, -0.5f),
+    glm::vec3(-0.5f, -0.5f, -0.5f),
+    glm::vec3(-0.5f, -0.5f, -0.5f),
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, 0.5f)
+  },
+
+  // right
+  {
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f)
+  },
+
+  // down
+  {
+    glm::vec3(-0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, -0.5f, -0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(0.5f, -0.5f, 0.5f),
+    glm::vec3(-0.5f, -0.5f, 0.5f),
+    glm::vec3(-0.5f, -0.5f, -0.5f)
+  },
+
+  // up
+  {
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(0.5f, 0.5f, -0.5f),
+    glm::vec3(-0.5f, 0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, 0.5f),
+    glm::vec3(-0.5f, 0.5f, -0.5f),
+    glm::vec3(-0.5f, 0.5f, 0.5f)
+  }};
+
