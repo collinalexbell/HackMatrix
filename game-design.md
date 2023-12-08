@@ -210,10 +210,10 @@ Houses are the apps (lololol)
     a utility corporation to help citizens produce cybernetics
     which they use internally to run the city, as well as export to other
     municipalities.
-#### Tokens
-- earn tokens to make API calls, these tokens can be specific types of manna or something else.
-
-
+#### KarmaCoin
+Since all goods are reproducible, the primary currency in game is [KarmaCoin](https://github.com/collinalexbell/LogosCoin)
+All users have an infinite stock of their own KarmaCoin
+KarmaCoin is love based
 ### Object builder (and seller)
 ### Physical
 - physics
@@ -507,3 +507,10 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
 
 ## World
 The UrbaNetica world will be made "trans media", because people will act it out in the real world
+
+## Characters
+### AIs that occupy a space
+What did I call these years ago? Daemons... prior to that?
+### Policy
+The policy on characters is that users should create them
+and put them into the world
