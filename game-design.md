@@ -350,6 +350,7 @@ Every person who buys this gets:
 ### What version will I launch
 - Portland
 - Maybe other cities
+- Making this an MMO makes me think I'm in WAY over my head
 ### Pitch
 - HackMatrix engine
 - UrbaNetica replica of Portland
