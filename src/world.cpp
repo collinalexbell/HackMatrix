@@ -154,7 +154,7 @@ Chunk *World::getChunk(int x, int z) {
 
 void World::addCube(int x, int y, int z, int blockType) {
   WorldPosition pos = translateToWorldPosition(x, y, z);
-  removeCube(pos.chunkX, pos.chunkZ, pos.x,pos.y,pos.z);
+  removeCube(pos);
   if (blockType >= 0) {
     glm::vec3 positionInChunk(pos.x, pos.y, pos.z);
     Cube cube(positionInChunk, blockType);
@@ -203,12 +203,12 @@ void World::updateDamage(int index) {
   }
 }
 
-void World::removeCube(int chunkX,int chunkZ, int x, int y, int z) {
-  Chunk* chunk = getChunk(chunkX, chunkZ);
+void World::removeCube(WorldPosition pos) {
+  Chunk* chunk = getChunk(pos.chunkX, pos.chunkZ);
   if(chunk != NULL) {
-    Cube *c = chunk->getCube(x,y,z);
+    Cube *c = chunk->getCube(pos.x,pos.y,pos.z);
     if(c->blockType() >= 0) {
-      chunk->removeCube(x, y, z);
+      chunk->removeCube(pos.x, pos.y, pos.z);
     }
   }
 }
@@ -460,15 +460,9 @@ void World::action(Action toTake) {
       mesh();
     }
     if(toTake == REMOVE_CUBE) {
-      if(chunks.size() > 0 && chunks[0].size() > 0) {
-        auto sizes = chunks[0][0]->getSize();
-        int chunkX = lookingAt.x / sizes[0];
-        int chunkZ = lookingAt.z / sizes[2];
-        int x = lookingAt.x % sizes[0];
-        int z = lookingAt.z % sizes[2];
-        removeCube(chunkX,chunkZ,x,lookingAt.y,z);
-        mesh();
-      }
+      WorldPosition pos = translateToWorldPosition(lookingAt.x, lookingAt.y, lookingAt.z);
+      removeCube(pos);
+      mesh();
     }
     if(toTake == SELECT_CUBE) {
       lookedAt->toggleSelect();

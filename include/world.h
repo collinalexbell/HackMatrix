@@ -65,7 +65,7 @@ class World {
   const std::vector<Cube*> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
   void updateDamage(int index);
   queue<glm::vec3> availableAppPositions;
-  void removeCube(int chunkX, int chunkY, int x, int y, int z);
+  void removeCube(WorldPosition position);
 
 public:
   const float CUBE_SIZE = 0.1;
