@@ -253,6 +253,8 @@ ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
 }
 
 ChunkMesh Mesher::mesh(bool realTime, Chunk* chunk) {
+  cachedSimpleMesh.updated = false;
+  cachedGreedyMesh.updated = false;
   if (!realTime || !damagedGreedy) {
     if (damagedGreedy) {
       cachedGreedyMesh = meshGreedy(chunk);
