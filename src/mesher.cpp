@@ -3,7 +3,7 @@
 #include "glm/geometric.hpp"
 #include "mesher.h"
 
-ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk) {
+ChunkMesh Mesher::simpleMesh(Chunk *chunk) {
   ChunkMesh rv;
   rv.type = SIMPLE;
   auto size = chunk->getSize();
@@ -41,7 +41,7 @@ ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk) {
   return rv;
 }
 
-ChunkMesh Mesher::meshGreedy(int chunkX, int chunkZ, Chunk* chunk) {
+ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
   double currentTime = glfwGetTime();
   ChunkMesh mesh;
   mesh.type = GREEDY;
@@ -243,13 +243,34 @@ ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
     for (int i = 0; i < offsets.size(); i++) {
       rv.positions.push_back(
           offsets[i] + glm::vec3(position.x, position.y, position.z) +
-          glm::vec3(chunk->posX * size[0], chunk->posY * size[1], chunk->posZ * size[2]));
+          glm::vec3(chunkX * size[0], 0 * size[1], chunkZ * size[2]));
       rv.blockTypes.push_back(c->blockType());
       rv.selects.push_back(c->selected());
       rv.texCoords.push_back(texCoords[i]);
     }
   }
   return rv;
+}
+
+ChunkMesh Mesher::mesh(bool realTime, Chunk* chunk) {
+  if (!realTime || !damagedGreedy) {
+    if (damagedGreedy) {
+      cachedGreedyMesh = meshGreedy(chunk);
+      damagedGreedy = false;
+    }
+    return cachedGreedyMesh;
+  } else {
+    if (damagedSimple) {
+      cachedSimpleMesh = simpleMesh(chunk);
+      damagedSimple = false;
+    }
+    return cachedSimpleMesh;
+  }
+}
+
+void Mesher::meshDamaged() {
+  damagedSimple = true;
+  damagedGreedy = true;
 }
 
 vector<glm::vec2> Mesher::getTexCoordsFromFace(Face face) {

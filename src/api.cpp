@@ -184,28 +184,26 @@ void Api::poll() {
 void Api::mutateWorld() {
   long time = glfwGetTime();
   long target = time + 0.005;
-  bool hasDelete = false;
+  bool hasMeshChange = false;
   grabBatched();
   stringstream logStream;
   for (; time <= target && batchedCubes.size() != 0; time = glfwGetTime()) {
     ApiCube c = batchedCubes.front();
     world->addCube(c.x, c.y, c.z, c.blockType);
     batchedCubes.pop();
+    hasMeshChange = true;
   }
   time = glfwGetTime();
   target = time + 0.10;
   for (; time <= target && batchedLines.size() != 0; time = glfwGetTime()) {
     Line l = batchedLines.front();
-    if (l.color.r < 0) {
-      hasDelete = true;
-    }
     world->addLine(l);
     batchedLines.pop();
   }
-  if(hasDelete) {
-    world->refreshRendererCubes();
-  }
   releaseBatched();
+  if(hasMeshChange) {
+    world->mesh();
+  }
 }
 
 void Api::grabBatched() {
