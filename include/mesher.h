@@ -21,9 +21,15 @@ struct ChunkMesh {
   vector<glm::vec2> texCoords;
   vector<int> blockTypes;
   vector<int> selects;
+  bool updated = true;
 };
 
 class Mesher {
+  int chunkX, chunkZ;
+  bool damagedGreedy;
+  bool damagedSimple;
+  ChunkMesh cachedGreedyMesh;
+  ChunkMesh cachedSimpleMesh;
   static glm::vec2 texModels[6][6];
   static Face neighborFaces[6];
   static glm::vec3 faceModels[6][6];
@@ -32,7 +38,10 @@ class Mesher {
   vector<glm::vec3> getOffsetsFromFace(Face face);
   Face getFaceFromNormal(glm::vec3 normal);
 public:
+  Mesher(int chunkX, int chunkZ):chunkX(chunkX), chunkZ(chunkZ){}
   ChunkMesh meshedFaceFromPosition(Chunk* chunk, Position position);
-  ChunkMesh meshGreedy(int chunkX, int chunkZ, Chunk *chunk);
-  ChunkMesh simpleMesh(int chunkX, int chunkZ, Chunk *chunk);
+  ChunkMesh meshGreedy(Chunk *chunk);
+  ChunkMesh simpleMesh(Chunk *chunk);
+  ChunkMesh mesh(bool realTime, Chunk* chunk);
+  void meshDamaged();
 };

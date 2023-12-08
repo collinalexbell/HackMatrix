@@ -3,6 +3,7 @@
 #include <memory>
 
 Chunk::Chunk(int x, int y, int z): posX(x), posY(y), posZ(z) {
+  mesher = make_unique<Mesher>(x, z);
   data = make_unique<Cube* []>(size[0] * size[1] * size[2]);
   for(int i=0; i < size[0]*size[1]*size[2]; i++) {
     data[i] = NULL;
@@ -10,8 +11,8 @@ Chunk::Chunk(int x, int y, int z): posX(x), posY(y), posZ(z) {
 }
 
 Chunk::Chunk() {
-  mesher = make_unique<Mesher>();
   posX = 0; posY=0; posZ=0;
+  mesher = make_unique<Mesher>(posX, posZ);
   data = make_unique<Cube *[]>(size[0] * size[1] * size[2]);
   for (int i = 0; i < size[0] * size[1] * size[2]; i++) {
     data[i] = NULL;
@@ -34,38 +35,23 @@ Cube *Chunk::getCube_(int x, int y, int z) {
 }
 
 void Chunk::removeCube(int x, int y, int z) {
-  setDamaged();
+  mesher->meshDamaged();
   delete data[index(x, y, z)];
   data[index(x, y, z)] = NULL;
 }
 void Chunk::addCube(Cube c, int x, int y, int z) {
-  setDamaged();
+  mesher->meshDamaged();
   data[index(x, y, z)] = new Cube(c);
 }
 
-void Chunk::setDamaged() {
-  damagedSimple = true;
-  damagedGreedy = true;
-}
+
 
 ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
   return mesher->meshedFaceFromPosition(this, position);
 }
 
 ChunkMesh Chunk::mesh(bool realTime) {
-  if(!realTime || !damagedGreedy) {
-    if(damagedGreedy) {
-      cachedGreedyMesh = mesher->meshGreedy(posX, posZ, this);
-      damagedGreedy = false;
-    }
-    return cachedGreedyMesh;
-  } else {
-    if(damagedSimple) {
-      cachedSimpleMesh = mesher->simpleMesh(posX, posZ, this);
-      damagedSimple = false;
-    }
-    return cachedSimpleMesh;
-  }
+  return mesher->mesh(realTime, this);
 }
 
 int Chunk::index(int x, int y, int z) {

@@ -154,7 +154,7 @@ Chunk *World::getChunk(int x, int z) {
 
 void World::addCube(int x, int y, int z, int blockType) {
   WorldPosition pos = translateToWorldPosition(x, y, z);
-  // removeCube(pos->chunkX, pos->chunkZ, x,y,z);
+  removeCube(pos.chunkX, pos.chunkZ, pos.x,pos.y,pos.z);
   if (blockType >= 0) {
     glm::vec3 positionInChunk(pos.x, pos.y, pos.z);
     Cube cube(positionInChunk, blockType);
@@ -189,20 +189,6 @@ void World::addLine(Line line) {
 }
 
 void World::refreshRendererCubes() {
-  for(int i = 0; i < lines.size(); i++) {
-    stringstream lineInfo;
-    Line l = lines[i];
-    lineInfo << "adding line:"
-             << l.points[0].x << ", "
-             << l.points[0].y << ","
-             << l.points[0].z << ","
-             << l.points[1].x << ","
-             << l.points[1].y << ","
-             << l.points[1].z;
-    logger->critical(lineInfo.str());
-    renderer->addLine(i, lines[i]);
-  }
-
   vector<glm::vec3> appCubesV = getAppCubes();
   for(int i=0; i < appCubesV.size(); i++){
     renderer->addAppCube(i, appCubesV[i]);

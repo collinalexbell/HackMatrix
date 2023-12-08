@@ -32,9 +32,9 @@ class Chunk {
   bool damagedSimple = true;
   bool damagedGreedy = true;
   void setDamaged();
-  friend ChunkMesh Mesher::simpleMesh(int chunkX, int chunkZ, Chunk *chunk);
-  friend ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position);
 
+  // shares data[]
+  friend ChunkMesh Mesher::simpleMesh(Chunk *chunk);
 
 public:
   Chunk();
