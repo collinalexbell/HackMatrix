@@ -139,16 +139,16 @@ void Renderer::fillBuffers() {
 
 
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 36 * MAX_CUBES), (void *) 0, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 36 * MAX_CUBES), (void *) 0, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec2) * 36 * MAX_CUBES), (void *)0,
-               GL_STATIC_DRAW);
+               GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
-               GL_STATIC_DRAW);
+               GL_DYNAMIC_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(int) * 36 * MAX_CUBES), (void *)0,
-               GL_STATIC_DRAW);
+               GL_DYNAMIC_DRAW);
 
 
   glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_POSITIONS);
