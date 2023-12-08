@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <vector>
 #include <queue>
+#include <optional>
 
 class Renderer;
 
@@ -24,6 +25,19 @@ struct Line {
 struct App {
   X11App* app;
   glm::vec3 position;
+};
+
+struct WorldPosition {
+  int x;
+  int y;
+  int z;
+  int chunkX;
+  int chunkZ;
+};
+
+struct ChunkIndex {
+  int firstIndex;
+  int secondIndex;
 };
 
 enum Action {
@@ -84,6 +98,8 @@ public:
 
   void mesh(bool realTime = true);
   ChunkMesh meshSelectedCube(Position position);
+  WorldPosition translateToWorldPosition(int x, int y, int z);
+  Chunk *getChunk(int chunkX, int chunkZ);
 };
 
 #endif

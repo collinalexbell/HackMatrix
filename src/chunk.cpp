@@ -87,3 +87,7 @@ ChunkCoords Chunk::getCoords(int index) {
 const vector<int> Chunk::getSize() {
   return size;
 }
+
+ChunkPosition Chunk::getPosition() {
+  return ChunkPosition{posX, posY, posZ};
+}

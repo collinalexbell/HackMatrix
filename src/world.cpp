@@ -1,5 +1,6 @@
 #include "world.h"
 #include "app.h"
+#include "chunk.h"
 #include "glm/geometric.hpp"
 #include "renderer.h"
 #include <algorithm>
@@ -35,8 +36,12 @@ World::World(Camera *camera, bool debug) : camera(camera) {
       chunks.back().push_back(new Chunk(x,0,z));
     }
   }
-  for(int x = 0; x < (10 * chunks[0][0]->getSize()[0]); x++) {
-    for (int z = 0; z < (10 * chunks[0][0]->getSize()[2]); z++) {
+  for (int x = /*-1* (10 * chunks[0][0]->getSize()[0]);*/ 0;
+       x < (10 * chunks[0][0]->getSize()[0]);
+       x++) {
+    for (int z = /*-1 * (10 * chunks[0][0]->getSize()[2]);*/ 0;
+         z < (10 * chunks[0][0]->getSize()[2]);
+         z++) {
       addCube(x, 5, z, 3);
     }
   }
@@ -103,21 +108,40 @@ const std::vector<glm::vec3> World::getAppCubes() {
   return appCubeKeys;
 }
 
-void World::addCube(int x, int y, int z, int blockType) {
-  int orderIndex;
-  int maxX = chunks[0][0]->getSize()[0];
-  int maxZ = chunks[0][0]->getSize()[2];
-  int chunkX = x/maxX;
-  int chunkZ = z/maxZ;
-  x = x%maxX;
-  z = z%maxZ;
+WorldPosition World::translateToWorldPosition(int x, int y, int z) {
+  WorldPosition rv;
+  auto chunkSize = chunks[0][0]->getSize();
+  // TODO: need to do negative numbers
+  rv.x = x % chunkSize[0];
+  rv.y = y;
+  rv.z = z % chunkSize[2];
+  rv.chunkX = x / chunkSize[0];
+  rv.chunkZ = z / chunkSize[2];
+  return rv;
+}
 
-  removeCube(chunkX, chunkZ, x,y,z);
-  if(chunkX < chunks.size() && chunkZ < chunks[chunkX].size()) {
-    if(blockType >= 0) {
-      glm::vec3 pos(x,y,z);
-      Cube cube(pos, blockType);
-      chunks[chunkX][chunkZ]->addCube(cube, x,y,z);
+Chunk *World::getChunk(int x, int z) {
+  ChunkPosition minChunkPosition = chunks[0][0]->getPosition();
+  ChunkPosition maxChunkPosition = chunks.back().back()->getPosition();
+  // todo, guard against out of range indices
+  int indexX = x - minChunkPosition.x;
+  int indexZ = z - minChunkPosition.z;
+  if(indexX >= 0 && indexX < chunks.size() &&
+     indexZ >= 0 && indexZ < chunks[0].size()) {
+    return chunks[indexX][indexZ];
+  }
+  return NULL;
+}
+
+void World::addCube(int x, int y, int z, int blockType) {
+  WorldPosition pos = translateToWorldPosition(x, y, z);
+  // removeCube(pos->chunkX, pos->chunkZ, x,y,z);
+  if (blockType >= 0) {
+    glm::vec3 positionInChunk(pos.x, pos.y, pos.z);
+    Cube cube(positionInChunk, blockType);
+    Chunk *chunk = getChunk(pos.chunkX, pos.chunkZ);
+    if (chunk != NULL) {
+      chunk->addCube(cube, pos.x, pos.y, pos.z);
     }
   }
 }
@@ -175,10 +199,11 @@ void World::updateDamage(int index) {
 }
 
 void World::removeCube(int chunkX,int chunkZ, int x, int y, int z) {
-  if(chunkX < chunks.size() && chunkZ < chunks[chunkX].size()){
-    Cube *c = chunks[chunkX][chunkZ]->getCube(x,y,z);
+  Chunk* chunk = getChunk(chunkX, chunkZ);
+  if(chunk != NULL) {
+    Cube *c = chunk->getCube(x,y,z);
     if(c->blockType() >= 0) {
-      chunks[chunkX][chunkZ]->removeCube(x, y, z);
+      chunk->removeCube(x, y, z);
     }
   }
 }
@@ -265,14 +290,9 @@ void World::attachRenderer(Renderer* renderer){
 
 Cube* World::getCube(float x, float y, float z) {
   if(chunks.size() > 0 && chunks[0].size() > 0) {
-    vector<int> sizes = chunks[0][0]->getSize();
-    int chunkX = x/sizes[0];
-    int chunkZ = z/sizes[2];
-    int xInChunk = (int)x%sizes[0];
-    int yInChunk = y;
-    int zInChunk = (int)z%sizes[2];
-    Chunk *chunk = chunks[chunkX][chunkZ];
-    Cube* rv = chunk->getCube_(xInChunk, yInChunk, zInChunk);
+    WorldPosition pos = translateToWorldPosition(x,y,z);
+    Chunk *chunk = getChunk(pos.chunkX, pos.chunkZ);
+    Cube* rv = chunk->getCube_(pos.x, pos.y, pos.z);
     return rv;
   }
   return NULL;
@@ -412,15 +432,13 @@ Position World::getLookedAtCube() {
 
 ChunkMesh World::meshSelectedCube(Position position) {
   if(chunks.size() > 0 && chunks[0].size() > 0) {
-    auto sizes = chunks[0][0]->getSize();
-    int chunkX = position.x / sizes[0];
-    int chunkZ = position.z / sizes[2];
-    position.x = position.x % sizes[0];
-    position.z = position.z % sizes[2];
-    if(chunks.size() > chunkX && chunks[chunkX].size() > chunkZ) {
-      Chunk *chunk = chunks[chunkX][chunkZ];
-      return chunk->meshedFaceFromPosition(position);
-    }
+    WorldPosition worldPosition = translateToWorldPosition(position.x, position.y, position.z);
+    Chunk *chunk = getChunk(worldPosition.chunkX, worldPosition.chunkZ);
+    Position posInChunk{
+      worldPosition.x, worldPosition.y, worldPosition.z,
+      true, position.normal
+    };
+    return chunk->meshedFaceFromPosition(posInChunk);
   }
   return ChunkMesh{};
 }
@@ -482,7 +500,6 @@ float World::getViewDistanceForWindowSize(X11App *app) {
     }
     return zBest;
 }
-
 
 glm::vec3 World::getAppPosition(X11App* app) {
   int index = -1;

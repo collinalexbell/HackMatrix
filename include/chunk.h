@@ -6,7 +6,14 @@
 #include "mesher.h"
 
 
+// TODO: rename, this is coords in chunk
 struct ChunkCoords {
+  int x;
+  int y;
+  int z;
+};
+
+struct ChunkPosition {
   int x;
   int y;
   int z;
@@ -40,4 +47,5 @@ public:
   ChunkMesh mesh(bool realTime);
   ChunkMesh meshedFaceFromPosition(Position position);
   const vector<int> getSize();
+  ChunkPosition getPosition();
 };

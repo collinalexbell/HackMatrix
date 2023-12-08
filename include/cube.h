@@ -39,8 +39,11 @@ public:
   ~Cube();
   Cube &operator=(const Cube &other);
   bool operator==(const Cube &cmp);
+
+  // TODO: remove position, uneeded ATM;
   glm::vec3 position() const;
   glm::vec3 &position();
+
   int blockType() const;
   int &blockType();
   int selected() const;
