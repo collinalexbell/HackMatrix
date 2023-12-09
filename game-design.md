@@ -1,4 +1,4 @@
-# UrbaNetica or Cybernetica or Atlantis Cybernetica
+# Gaianetica
 ## Purpose
 Immerse people in their projects
 Show the love of God
