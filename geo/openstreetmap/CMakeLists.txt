@@ -20,5 +20,6 @@ include_directories(${ZMQ_INCLUDE_DIRS})
 include_directories(${OSMIUM_INCLUDE_DIRS})
 include_directories(${EXPAT_INCLUDE_DIRS})
 include_directories (../../include)
+include_directories(./)
 
 target_link_libraries(worldGen PRIVATE EXPAT::EXPAT ZLIB::ZLIB BZip2::BZip2 zmq protobuf)

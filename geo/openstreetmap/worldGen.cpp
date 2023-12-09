@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <map>
 #include <osmium/handler.hpp>
 #include <osmium/io/any_input.hpp>
@@ -8,97 +9,15 @@
 #include <utility>
 #include "protos/api.pb.h"
 #include <zmq/zmq.hpp>
+#include "voxelizer.h"
 
 using namespace std;
 
 namespace WorldGen {
-  struct Node {
-    int id;
-    osmium::Location location;
-  };
-
-  struct Way {
-    int id;
-    vector<Node*> nodes;
-    void addNodeRef(int nodeRef) {
-      nodeRefs.push_back(nodeRef);
-    }
-  private:
-    vector<int> nodeRefs;
-  };
-
-  class Voxelizer : public osmium::handler::Handler {
-    // Handlers need to handle data in a stream, not just marshal them into memory
-    vector<Way> ways;
-    map<int, Node> nodes;
-  public:
-    void way(const osmium::Way &way) {
-      Way w;
-      std::cout << "way " << way.id() << ": {\n";
-      w.id = way.id();
-      for (const osmium::Tag &t : way.tags()) {
-        std::cout << t.key() << "=" << t.value() << '\n';
-      }
-      for (const osmium::NodeRef &nr : way.nodes()) {
-        std::cout << "ref=" << nr.ref() << '\n';
-        w.addNodeRef(nr.ref());
-      }
-      std::cout << "}\n";
-      ways.push_back(w);
-    }
-
-    void node(const osmium::Node &node) {
-      Node n;
-      n.id = node.id();
-      n.location = node.location();
-      std::cout << "node " << node.id() << "," <<  node.location() << '\n';
-      nodes[n.id] = n;
-    }
-
-    vector<Way> getWays() {
-      return ways;
-    }
-  };
-}
-
-zmq::context_t context(1);
-zmq::socket_t socket(context, zmq::socket_type::req);
-
-void addCube(int x, int y, int z, int blockType) {
-  AddCube cube;
-  cube.set_x(x);
-  cube.set_y(y);
-  cube.set_z(z);
-  cube.set_blocktype(blockType);
-
-  // Create an instance of ApiRequest and set its type and payload
-  ApiRequest request;
-  request.set_type(MessageType::ADD_CUBE);
-  request.mutable_addcube()->CopyFrom(cube);
-
-  // Serialize the ApiRequest message to send over the socket
-  std::string serializedRequest;
-  if (request.SerializeToString(&serializedRequest)) {
-    zmq::message_t message(serializedRequest.size());
-    memcpy(message.data(), serializedRequest.data(), serializedRequest.size());
-
-    // Send the serialized message
-    socket.send(message, zmq::send_flags::none);
-  } else {
-    // Handle serialization failure
-  }
-
-  // Wait for the server response if needed
-  zmq::message_t response;
-  zmq::recv_result_t result = socket.recv(response, zmq::recv_flags::dontwait);
-}
-
-void connectToZmqServer() {
-  // Connect to the server
-  socket.connect("tcp://localhost:3333");
 }
 
 int main(int argc, char** argv) {
+  std::cout.precision(10);
   cout << "world generator" << endl;
   string fileName = "testMap.osm";
   if(argc > 1) {
@@ -106,11 +25,21 @@ int main(int argc, char** argv) {
   }
   osmium::io::File input_file{fileName};
   osmium::io::Reader reader{input_file};
-  WorldGen::Voxelizer voxelizer;
+  Voxelizer voxelizer;
   osmium::apply(reader, voxelizer);
-  connectToZmqServer();
-  addCube(0,6,0,2);
-  cout << "# ways:" << voxelizer.getWays().size() << endl;
+  voxelizer.addCube(10,6,-10,2);
+  for(auto way: voxelizer.getWays()) {
+    if(way.tags["addr:housenumber"] == "2724") {
+      cout << "way at: ";
+      for(auto node: way.nodes) {
+        cout << "("
+             << node->location.lat() << ","
+             << node->location.lon() << "),";
+      }
+      cout << endl;
+    }
+
+  }
   reader.close();
   return 0;
 }
