@@ -7,15 +7,18 @@ find_package(EXPAT MODULE REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
 
-
 if(NOT OSMIUM_FOUND)
     message(WARNING "Libosmium not found!\n")
 endif()
 
+file(GLOB PROTO_FILES ../../src/*.pb.cc)
 
-add_executable(worldGen worldGen.cpp)
+add_executable(worldGen worldGen.cpp ${PROTO_FILES})
 
+
+include_directories(${ZMQ_INCLUDE_DIRS})
 include_directories(${OSMIUM_INCLUDE_DIRS})
 include_directories(${EXPAT_INCLUDE_DIRS})
+include_directories (../../include)
 
-target_link_libraries(worldGen PRIVATE EXPAT::EXPAT ZLIB::ZLIB BZip2::BZip2)
+target_link_libraries(worldGen PRIVATE EXPAT::EXPAT ZLIB::ZLIB BZip2::BZip2 zmq protobuf)

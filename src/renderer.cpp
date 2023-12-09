@@ -244,7 +244,7 @@ void Renderer::updateTransformMatrices() {
 void Renderer::updateChunkMeshBuffers(vector<ChunkMesh> meshes) {
   verticesInMesh = 0;
   for(auto mesh: meshes) {
-    if(mesh.updated) {
+    //if(mesh.updated) {
       glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
       glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * verticesInMesh,
                       sizeof(glm::vec3) * mesh.positions.size(),
@@ -264,7 +264,7 @@ void Renderer::updateChunkMeshBuffers(vector<ChunkMesh> meshes) {
       glBufferSubData(GL_ARRAY_BUFFER, sizeof(int) * verticesInMesh,
                       sizeof(int) * mesh.selects.size(),
                       mesh.selects.data());
-    }
+      //}
     verticesInMesh += mesh.positions.size();
   }
 }
