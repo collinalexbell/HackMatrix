@@ -27,14 +27,6 @@ struct App {
   glm::vec3 position;
 };
 
-struct WorldPosition {
-  int x;
-  int y;
-  int z;
-  int chunkX;
-  int chunkZ;
-};
-
 struct ChunkIndex {
   int firstIndex;
   int secondIndex;
