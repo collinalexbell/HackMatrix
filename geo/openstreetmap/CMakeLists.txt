@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(CityOfCybernetics)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package(Osmium REQUIRED)
 find_package(EXPAT MODULE REQUIRED)

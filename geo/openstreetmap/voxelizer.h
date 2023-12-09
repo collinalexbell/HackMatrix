@@ -7,9 +7,11 @@
 #include <osmium/osm/location.hpp>
 #include <osmium/osm/types.hpp>
 #include <osmium/visitor.hpp>
+#include <unistd.h>
 #include <utility>
 #include <zmq/zmq.hpp>
 #include <vector>
+#include "coreStructs.h"
 
 using namespace std;
 
@@ -69,7 +71,7 @@ public:
     // Wait for the server response if needed
     zmq::message_t response;
     zmq::recv_result_t result =
-        socket.recv(response, zmq::recv_flags::dontwait);
+      socket.recv(response, zmq::recv_flags::none);
   }
   void way(const osmium::Way &way) {
     Way w;
@@ -100,4 +102,39 @@ public:
     }
     return ways;
   }
+
+  void drawBuilding(vector<AbsolutePosition> corners) {
+    bool first = true;
+    int x[2];
+    int z[2];
+    for(auto corner: corners) {
+      if(first || corner.x < x[0]) {
+        x[0] = corner.x;
+      }
+      if (first || corner.x > x[1]) {
+        x[1] = corner.x;
+      }
+      if (first || corner.z < z[0]) {
+        z[0] = corner.z;
+      }
+      if (first || corner.z > z[1]) {
+        z[1] = corner.z;
+      }
+      first = false;
+    }
+
+    int height = 10;
+    for(int y = 6; y < height+6; y++) {
+      for(int xs=x[0]; xs<x[1]; xs++) {
+        addCube(xs-120, y, z[0]-120, 2);
+        addCube(xs-120, y, z[1]-120, 2);
+      }
+
+      for (int zs = z[0]; zs<z[1]; zs++) {
+        addCube(x[0]-120, y, zs-120, 2);
+        addCube(x[1]-120, y, zs-120, 2);
+      }
+    }
+  }
 };
+

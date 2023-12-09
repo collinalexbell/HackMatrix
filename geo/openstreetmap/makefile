@@ -6,5 +6,4 @@ run:
 		./build/worldGen $(ARGS)
 
 taggart: all
-		printf '\n\n\n\n\n'
 		./build/worldGen taggartSquare.osm
