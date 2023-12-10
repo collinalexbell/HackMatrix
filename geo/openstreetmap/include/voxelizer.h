@@ -14,6 +14,7 @@
 #include "coreStructs.h"
 #include "building.h"
 #include "apiInterface.h"
+#include "geo.h"
 
 using namespace std;
 
@@ -115,6 +116,50 @@ public:
     for (auto tag = tags.begin(); tag != tags.end(); tag++) {
       cout << *tag << endl;
     }
+  }
+
+  void voxelizeBuildings() {
+
+vector<Building> buildings;
+  set<string> buildingsVisited;
+  set<string> toVisit;
+  toVisit.insert("2724");
+  toVisit.insert("2714");
+  toVisit.insert("2202");
+  toVisit.insert("2218");
+  toVisit.insert("2136");
+  toVisit.insert("2717");
+  toVisit.insert("2725");
+  //toVisit.insert("2735");
+  toVisit.insert("2636");
+  toVisit.insert("2133");
+  for(auto way: getWays()) {
+    string addr = way.tags["addr:housenumber"];
+    for(auto tag = way.tags.begin(); tag != way.tags.end(); tag++) {
+      for(auto addr: toVisit) {
+        if(tag->second.find(addr) != string::npos) {
+          cout << addr << ":" << tag->first << ":" << tag->second << ":" << addr.length() << endl;
+        }
+      }
+    }
+    if (addr.length() == 4 &&
+        !buildingsVisited.contains(addr) &&
+        toVisit.contains(addr)) {
+      buildingsVisited.insert(way.tags["addr:housenumber"]);
+      Building building;
+      for(auto node: way.nodes) {
+        AbsolutePosition pos = getPosition(node->location);
+        if(building.size() < 4) {
+          building.addCorner(pos);
+        }
+      }
+      buildings.push_back(building);
+      building.printCorners();
+      building.draw(this);
+    }
+  }
+  cout << "num buildings found: " << buildings.size() << endl;
+
   }
 };
 
