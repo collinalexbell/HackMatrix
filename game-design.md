@@ -1,4 +1,8 @@
 # Gaianetica
+## What do I love about Gianetica
+- I built it
+- It is a 3d linux system
+- It will immerse peole and connect them
 ## Purpose
 Immerse people in their projects
 Show the love of God
