@@ -128,13 +128,13 @@ public:
     int height = 10;
     for(int y = 6; y < height+6; y++) {
       for(int xs=x[0]; xs<x[1]; xs++) {
-        addCube(xs-650, y, z[0]-120, 2);
-        addCube(xs-650, y, z[1]-120, 2);
+        addCube(xs-650, y, -1*(z[0]-50), 2);
+        addCube(xs-650, y, -1*(z[1]-50), 2);
       }
 
       for (int zs = z[0]; zs<z[1]; zs++) {
-        addCube(x[0]-650, y, zs-120, 2);
-        addCube(x[1]-650, y, zs-120, 2);
+        addCube(x[0]-650, y, -1*(zs-50), 2);
+        addCube(x[1]-650, y, -1*(zs-50), 2);
       }
     }
   }

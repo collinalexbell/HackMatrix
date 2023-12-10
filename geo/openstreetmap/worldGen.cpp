@@ -42,6 +42,7 @@ AbsolutePosition getPosition(osmium::Location location) {
   osmium::Location origin;
   origin.set_lat(45.50295489999999887231751927174627780914);
   origin.set_lon(-122.6454810999999978093910613097250461578);
+
   osmium::Location latOnly = origin;
   latOnly.set_lat(location.lat());
 
@@ -79,7 +80,14 @@ int main(int argc, char** argv) {
   set<string> toVisit;
   toVisit.insert("2724");
   toVisit.insert("2714");
-  toVisit.insert("2734");
+  toVisit.insert("2202");
+  toVisit.insert("2218");
+  toVisit.insert("2136");
+  toVisit.insert("2717");
+  toVisit.insert("2725");
+  //toVisit.insert("2735");
+  toVisit.insert("2636");
+  toVisit.insert("2133");
   for(auto way: voxelizer.getWays()) {
     string addr = way.tags["addr:housenumber"];
     for(auto tag = way.tags.begin(); tag != way.tags.end(); tag++) {
@@ -102,7 +110,7 @@ int main(int argc, char** argv) {
       }
       buildings.push_back(building);
       building.printCorners();
-      //voxelizer.drawBuilding(building);
+      voxelizer.drawBuilding(building);
     }
   }
   cout << "num buildings found: " << buildings.size() << endl;
