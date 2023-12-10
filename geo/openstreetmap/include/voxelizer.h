@@ -183,7 +183,7 @@ public:
     for(auto street: street.nodes) {
       AbsolutePosition position = getPosition(street->location);
       position.x = position.x - 650;
-      position.z = -1 * (position.z - 50);
+      position.z = -1 * (position.z - 132);
       position.y = 6;
       positions.push_back(position);
     }
@@ -216,7 +216,7 @@ public:
   void voxelizeStreets() {
     vector<Way> streets;
     map<string, int> counts;
-    set<string> streetTags = {"surface"};
+    set<string> streetTags = {"maxspeed"};
     for(auto way: ways) {
       bool isStreet = false;
       for(auto tag: way.tags) {
@@ -234,12 +234,13 @@ public:
       }
     }
     for(auto street: streets) {
-      cout << "street:";
+      cout << "street:" << street.tags["name"] << ": ";
       for(auto node: street.nodes) {
-        printLocation(node->location);
+        //printLocation(node->location);
       }
       cout << endl;
-      drawStreet(street);
+      if (street.tags["name"] == "Southeast 22nd Avenue")
+        drawStreet(street);
     }
   }
 };
