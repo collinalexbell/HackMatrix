@@ -172,6 +172,47 @@ public:
     cout << "(" << "lat:" << location.lat() << ", " << "lon:" << location.lon() << ")";
   }
 
+  struct RoadSegment {
+    AbsolutePosition start;
+    AbsolutePosition stop;
+    double slope;
+  };
+
+  void drawStreet(Way street) {
+    vector<AbsolutePosition> positions;
+    for(auto street: street.nodes) {
+      AbsolutePosition position = getPosition(street->location);
+      position.x -= 650;
+      position.z = -1 * (position.z - 50);
+      position.y = 6;
+      positions.push_back(position);
+    }
+    vector<RoadSegment> roadSegments;
+    for(int i = 1; i < positions.size(); i++) {
+      double slope = (double)(positions[i].z - positions[i - 1].z) / (double)(positions[i].x - positions[i-1].x);
+      RoadSegment roadSegment = {positions[i - 1], positions[i], slope};
+      roadSegments.push_back(roadSegment);
+    }
+    for (const auto &segment : roadSegments) {
+      // Calculate the number of steps or cubes needed for interpolation
+      // This determines the granularity of the interpolation
+      // Adjust this step size based on your requirements
+      int steps = 40/* Calculate number of steps */;
+
+      for (int step = 0; step <= steps; ++step) {
+        // Interpolate along the road segment
+        double t = static_cast<double>(step) / static_cast<double>(steps);
+        int x = segment.start.x + t * (segment.stop.x - segment.start.x);
+        int z = segment.start.z + t * (segment.stop.z - segment.start.z);
+
+        double y = 6;
+
+        // Call addCube() with interpolated x, y, z coordinates
+        addCube(x, y, z, 0);
+      }
+    }
+  }
+
   void voxelizeStreets() {
     vector<Way> streets;
     map<string, int> counts;
@@ -198,6 +239,7 @@ public:
         printLocation(node->location);
       }
       cout << endl;
+      drawStreet(street);
     }
   }
 };
