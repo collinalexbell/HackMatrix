@@ -33,6 +33,7 @@ class Building {
   }
 
   void draw(ApiInterface *api) {
+    // TODO: add height
     vector<AbsolutePosition> corners = getCorners();
     bool first = true;
     int x[2];

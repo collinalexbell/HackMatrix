@@ -118,7 +118,7 @@ public:
     }
   }
 
-  void voxelizeBuildings() {
+  void voxelizeBuildings(bool debug = false) {
     vector<Building> buildings;
     set<string> buildingsVisited;
     set<string> toVisit;
@@ -137,8 +137,10 @@ public:
       for (auto tag = way.tags.begin(); tag != way.tags.end(); tag++) {
         for (auto addr : toVisit) {
           if (tag->second.find(addr) != string::npos) {
-            cout << addr << ":" << tag->first << ":" << tag->second << ":"
-                 << addr.length() << endl;
+            if(debug) {
+              cout << addr << ":" << tag->first << ":" << tag->second << ":"
+                  << addr.length() << endl;
+            }
           }
         }
       }
@@ -153,10 +155,47 @@ public:
           }
         }
         buildings.push_back(building);
-        building.printCorners();
+        if(debug) {
+          building.printCorners();
+        }
         building.draw(this);
       }
     }
-    cout << "num buildings found: " << buildings.size() << endl;
+    if(debug) {
+      cout << "num buildings found: " << buildings.size() << endl;
+    }
+  }
+
+  void printLocation(osmium::Location location) {
+    cout << "(" << "lat:" << location.lat() << ", " << "lon:" << location.lon() << ")";
+  }
+
+  void voxelizeStreets() {
+    vector<Way> streets;
+    map<string, int> counts;
+    set<string> streetTags = {"lanes", "surface", "maxspeed"};
+    for(auto way: ways) {
+      bool isStreet = false;
+      for(auto tag: way.tags) {
+        if(counts.contains(tag.first)) {
+          counts[tag.first]++;
+        } else {
+          counts[tag.first] = 1;
+        }
+        if(streetTags.contains(tag.first)) {
+          isStreet = true;
+        }
+      }
+      if(isStreet) {
+        streets.push_back(way);
+      }
+    }
+    for(auto street: streets) {
+      cout << "street:";
+      for(auto node: street.nodes) {
+        printLocation(node->location);
+      }
+      cout << endl;
+    }
   }
 };

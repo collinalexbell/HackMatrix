@@ -26,7 +26,9 @@ int main(int argc, char** argv) {
   osmium::io::Reader reader{input_file};
   Voxelizer voxelizer;
   osmium::apply(reader, voxelizer);
-  voxelizer.voxelizeBuildings();
+  voxelizer.printAllTags();
+  //voxelizer.voxelizeBuildings();
+  voxelizer.voxelizeStreets();
   reader.close();
   return 0;
 }
