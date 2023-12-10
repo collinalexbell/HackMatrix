@@ -9,6 +9,7 @@
 #include <utility>
 #include "protos/api.pb.h"
 #include <zmq/zmq.hpp>
+#include "building.h"
 #include "voxelizer.h"
 #include "coreStructs.h"
 
@@ -73,34 +74,38 @@ int main(int argc, char** argv) {
   osmium::io::Reader reader{input_file};
   Voxelizer voxelizer;
   osmium::apply(reader, voxelizer);
+  vector<Building> buildings;
   set<string> buildingsVisited;
   set<string> toVisit;
-  set<string> tags;
   toVisit.insert("2724");
   toVisit.insert("2714");
   toVisit.insert("2734");
   for(auto way: voxelizer.getWays()) {
     string addr = way.tags["addr:housenumber"];
     for(auto tag = way.tags.begin(); tag != way.tags.end(); tag++) {
-      tags.insert(tag->first);
+      for(auto addr: toVisit) {
+        if(tag->second.find(addr) != string::npos) {
+          cout << addr << ":" << tag->first << ":" << tag->second << ":" << addr.length() << endl;
+        }
+      }
     }
     if (addr.length() == 4 &&
         !buildingsVisited.contains(addr) &&
         toVisit.contains(addr)) {
       buildingsVisited.insert(way.tags["addr:housenumber"]);
-      vector<AbsolutePosition> building;
+      Building building;
       for(auto node: way.nodes) {
         AbsolutePosition pos = getPosition(node->location);
         if(building.size() < 4) {
-          building.push_back(pos);
+          building.addCorner(pos);
         }
       }
+      buildings.push_back(building);
+      building.printCorners();
       voxelizer.drawBuilding(building);
     }
   }
-  for(auto tagName = tags.begin(); tagName != tags.end(); tagName++) {
-    cout << *tagName << endl;
-  }
+  cout << "num buildings found: " << buildings.size();
   reader.close();
   return 0;
 }

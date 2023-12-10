@@ -12,6 +12,7 @@
 #include <zmq/zmq.hpp>
 #include <vector>
 #include "coreStructs.h"
+#include "building.h"
 
 using namespace std;
 
@@ -103,7 +104,8 @@ public:
     return ways;
   }
 
-  void drawBuilding(vector<AbsolutePosition> corners) {
+  void drawBuilding(Building building) {
+    vector<AbsolutePosition> corners = building.getCorners();
     bool first = true;
     int x[2];
     int z[2];
@@ -126,14 +128,26 @@ public:
     int height = 10;
     for(int y = 6; y < height+6; y++) {
       for(int xs=x[0]; xs<x[1]; xs++) {
-        addCube(xs-120, y, z[0]-120, 2);
-        addCube(xs-120, y, z[1]-120, 2);
+        addCube(xs-650, y, z[0]-120, 2);
+        addCube(xs-650, y, z[1]-120, 2);
       }
 
       for (int zs = z[0]; zs<z[1]; zs++) {
-        addCube(x[0]-120, y, zs-120, 2);
-        addCube(x[1]-120, y, zs-120, 2);
+        addCube(x[0]-650, y, zs-120, 2);
+        addCube(x[1]-650, y, zs-120, 2);
       }
+    }
+  }
+
+  void printAllTags() {
+    set<string> tags;
+    for (auto way : getWays()) {
+      for (auto tag = way.tags.begin(); tag != way.tags.end(); tag++) {
+        tags.insert(tag->first);
+      }
+    }
+    for (auto tag = tags.begin(); tag != tags.end(); tag++) {
+      cout << *tag << endl;
     }
   }
 };

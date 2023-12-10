@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/collin/matrix/geo/openstreetmap",
+  "command": "/usr/bin/c++ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -I/home/collin/matrix/geo/openstreetmap/../../include -I/home/collin/matrix/geo/openstreetmap/./include -std=gnu++20 -o CMakeFiles/worldGen.dir/worldGen.cpp.o -c /home/collin/matrix/geo/openstreetmap/worldGen.cpp",
+  "file": "/home/collin/matrix/geo/openstreetmap/worldGen.cpp"
+},
+{
+  "directory": "/home/collin/matrix/geo/openstreetmap",
+  "command": "/usr/bin/c++ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -I/home/collin/matrix/geo/openstreetmap/../../include -I/home/collin/matrix/geo/openstreetmap/./include -std=gnu++20 -o CMakeFiles/worldGen.dir/home/collin/matrix/src/api.pb.cc.o -c /home/collin/matrix/src/api.pb.cc",
+  "file": "/home/collin/matrix/src/api.pb.cc"
+}
+]
