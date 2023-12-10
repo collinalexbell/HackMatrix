@@ -8,7 +8,9 @@ using namespace std;
 
 class Building {
   vector<AbsolutePosition> corners;
+  int height;
  public:
+  void setHeight(int _height) {height = _height;}
   void addCorner(AbsolutePosition corner) {
     if(corners.size() < 4) {
       corners.push_back(corner);
@@ -54,7 +56,6 @@ class Building {
       first = false;
     }
 
-    int height = 10;
     for (int y = 6; y < height + 6; y++) {
       for (int xs = x[0]; xs < x[1]; xs++) {
         api->addCube(xs - 650, y, -1 * (z[0] - 50), 2);
