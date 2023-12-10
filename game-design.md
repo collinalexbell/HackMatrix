@@ -3,6 +3,7 @@
 - It will help me to know everything about portland
 - It will help me to love software engineering and cybernetics development
 - It will help me love portland
+- I will be able to connect better with others
 - I built it
 - It is a 3d linux system
 - It will immerse peole and connect them
