@@ -154,7 +154,6 @@ public:
             building.addCorner(pos);
           }
         }
-        cout << way.tags["height"] << endl;
         int height = (int)(stod(way.tags["height"]) / 0.25);
         building.setHeight(height);
         buildings.push_back(building);
