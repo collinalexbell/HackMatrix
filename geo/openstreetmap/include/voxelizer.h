@@ -182,7 +182,7 @@ public:
     vector<AbsolutePosition> positions;
     for(auto street: street.nodes) {
       AbsolutePosition position = getPosition(street->location);
-      position.x -= 650;
+      position.x = position.x - 650;
       position.z = -1 * (position.z - 50);
       position.y = 6;
       positions.push_back(position);
@@ -216,7 +216,7 @@ public:
   void voxelizeStreets() {
     vector<Way> streets;
     map<string, int> counts;
-    set<string> streetTags = {"lanes", "surface", "maxspeed"};
+    set<string> streetTags = {"surface"};
     for(auto way: ways) {
       bool isStreet = false;
       for(auto tag: way.tags) {
