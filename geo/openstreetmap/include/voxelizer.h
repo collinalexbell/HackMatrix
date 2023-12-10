@@ -245,7 +245,6 @@ public:
         drawStreet(street);
       // Taggart street is messed u// p
       // // This is the same problem as the building issue. Everything close to 0 is fucked. Maybe it is an absolute value problem  (it is, because of distance I bet)
-      p
     }
   }
 };
