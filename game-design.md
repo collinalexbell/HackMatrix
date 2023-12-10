@@ -507,6 +507,9 @@ I meditated on various ideas that could achieve a 100x multiplier in Kickstarter
 The UrbaNetica world will be made "trans media", because people will act it out in the real world
 
 ## Characters
+### Avitars
+I like the idea of fully customizable avitars
+    Like VRChat
 ### AIs that occupy a space
 What did I call these years ago? Daemons... prior to that?
 ### Policy
