@@ -3,6 +3,7 @@
 - I built it
 - It is a 3d linux system
 - It will immerse peole and connect them
+- It will make computing free again (in the VR era)
 ## Purpose
 Immerse people in their projects
 Show the love of God
