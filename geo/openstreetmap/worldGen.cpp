@@ -102,10 +102,10 @@ int main(int argc, char** argv) {
       }
       buildings.push_back(building);
       building.printCorners();
-      voxelizer.drawBuilding(building);
+      //voxelizer.drawBuilding(building);
     }
   }
-  cout << "num buildings found: " << buildings.size();
+  cout << "num buildings found: " << buildings.size() << endl;
   reader.close();
   return 0;
 }
