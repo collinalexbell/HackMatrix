@@ -243,6 +243,7 @@ public:
         drawStreet(street);
       if (street.tags["name"] == "Southeast Clinton Street")
         drawStreet(street);
+      // Taggart street is messed up
     }
   }
 };
