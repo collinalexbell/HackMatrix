@@ -343,10 +343,6 @@ I need 150k to live a full free year in Portland Oregon
     - expiriment
     - love
 
-Every person who buys this gets:
-0) HackMatrix beta with full source code, released 12-23-23
-1) HackMatrix alpha,                      released 12-23-24
-
 ### What version will I launch
 - Portland
 - Maybe other cities
