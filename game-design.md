@@ -448,7 +448,8 @@ $ OpenGL
 
 
 - Chunks will probably need to be stored in a database
-
+- Load in minecraft buildings
+- Load in magicavoxel data
 
 ? Multiple X windows to allow a browser as well
 - recompilable while playing
