@@ -354,6 +354,11 @@ p.276: interest curves: 2134 (higher, more exciting)
 200$: Choose one of the 3 user selected playable cities
 300$: Choose one of the 3 user selected playable cities
 500$: Choose one of the 3 user selected playable cities
+### Final Evaluation of the Lenses
+I should do a final evaluation of lenses
+to ensure that the game is most impactful
+before I hit the ship button.
+I can do this after I submit for review (while waiting for review)
 ## Interface
 Minimal currently. Probably needs a bit more of something.
 At least a build mode with block selection or something.
