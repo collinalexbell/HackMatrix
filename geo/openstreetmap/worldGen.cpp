@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
       }
       buildings.push_back(building);
       building.printCorners();
-      voxelizer.drawBuilding(building);
+      building.draw(&voxelizer);
     }
   }
   cout << "num buildings found: " << buildings.size() << endl;

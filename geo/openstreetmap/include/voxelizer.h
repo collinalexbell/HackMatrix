@@ -13,6 +13,7 @@
 #include <vector>
 #include "coreStructs.h"
 #include "building.h"
+#include "apiInterface.h"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ struct Way {
   vector<int> nodeRefs;
 };
 
-class Voxelizer : public osmium::handler::Handler {
+class Voxelizer : public osmium::handler::Handler, public ApiInterface {
   // Handlers need to handle data in a stream, not just marshal them into memory
   bool wired = false;
   vector<Way> ways;
@@ -44,7 +45,7 @@ public:
     socket.connect("tcp://localhost:3333");
   }
 
-  void addCube(int x, int y, int z, int blockType) {
+  void addCube(int x, int y, int z, int blockType) override {
     AddCube cube;
     cube.set_x(x);
     cube.set_y(y);
@@ -102,41 +103,6 @@ public:
       }
     }
     return ways;
-  }
-
-  void drawBuilding(Building building) {
-    vector<AbsolutePosition> corners = building.getCorners();
-    bool first = true;
-    int x[2];
-    int z[2];
-    for(auto corner: corners) {
-      if(first || corner.x < x[0]) {
-        x[0] = corner.x;
-      }
-      if (first || corner.x > x[1]) {
-        x[1] = corner.x;
-      }
-      if (first || corner.z < z[0]) {
-        z[0] = corner.z;
-      }
-      if (first || corner.z > z[1]) {
-        z[1] = corner.z;
-      }
-      first = false;
-    }
-
-    int height = 10;
-    for(int y = 6; y < height+6; y++) {
-      for(int xs=x[0]; xs<x[1]; xs++) {
-        addCube(xs-650, y, -1*(z[0]-50), 2);
-        addCube(xs-650, y, -1*(z[1]-50), 2);
-      }
-
-      for (int zs = z[0]; zs<z[1]; zs++) {
-        addCube(x[0]-650, y, -1*(zs-50), 2);
-        addCube(x[1]-650, y, -1*(zs-50), 2);
-      }
-    }
   }
 
   void printAllTags() {
