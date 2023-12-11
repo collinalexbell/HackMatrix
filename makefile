@@ -70,6 +70,9 @@ build/x-raise: src/x-raise.c
 build/diagnosis: src/diagnosis.cpp
 	g++ -o build/diagnosis src/diagnosis.cpp
 
+build/db: src/db.cpp
+	g++ -o build/db src/db.cpp -lpqxx
+
 docs: game-design.md
 	pandoc -s game-design.md -o index.html
 	python -m http.server
