@@ -28,8 +28,11 @@ int main(int argc, char** argv) {
   Voxelizer voxelizer;
   osmium::apply(reader, voxelizer);
   voxelizer.printAllTags();
-  //voxelizer.voxelizeBuildings();
-  voxelizer.voxelizeStreets();
+  if(argc < 3 || string(argv[2]) == "-b") {
+    voxelizer.voxelizeBuildings();
+  } else {
+    voxelizer.voxelizeStreets();
+  }
   reader.close();
   return 0;
 }
