@@ -144,8 +144,8 @@ public:
           }
         }
       }
-      if (addr.length() == 4 && !buildingsVisited.contains(addr) &&
-          toVisit.contains(addr)) {
+      if (addr.length() == 4 && !buildingsVisited.contains(addr) //&&
+          /*toVisit.contains(addr)*/) {
         buildingsVisited.insert(way.tags["addr:housenumber"]);
         Building building;
         for (auto node : way.nodes) {
@@ -238,13 +238,7 @@ public:
       for(auto node: street.nodes) {
         //printLocation(node->location);
       }
-      cout << endl;
-      if (street.tags["name"] == "Southeast 22nd Avenue")
-        drawStreet(street);
-      if (street.tags["name"] == "Southeast Clinton Street")
-        drawStreet(street);
-      // Taggart street is messed u// p
-      // // This is the same problem as the building issue. Everything close to 0 is fucked. Maybe it is an absolute value problem  (it is, because of distance I bet)
+      drawStreet(street);
     }
   }
 };

@@ -52,6 +52,9 @@ AbsolutePosition getPosition(osmium::Location location) {
   double latDistance = distance(origin, latOnly);
   double lonDistance = distance(origin, lonOnly);
 
+  if(location.lat()-origin.lat() < 0) latDistance *= -1;
+  if(location.lon()-origin.lon() < 0) lonDistance *= -1;
+
   double cubeSize = 0.25;
 
   AbsolutePosition rv;
