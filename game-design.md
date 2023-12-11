@@ -11,6 +11,7 @@
 ## Purpose
 Immerse people in their projects
 Show the love of God
+Commune with others while working on thier projects from anywhere in the world
 ## Game Theme
 - Living in a crystal city filled with cybernetic organisms
 - Divine/magical power and hormony
