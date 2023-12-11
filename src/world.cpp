@@ -521,13 +521,24 @@ vector<Line> World::getLines() {
 
 void World::save(string filename) {
   std::ofstream outputFile(filename);
-  auto cubes = getCubes();
-  for(auto it = cubes.begin(); it != cubes.end(); it++) {
-    if(*it != NULL) {
-      outputFile << (*it)->position().x << ","
-                 << (*it)->position().y << ","
-                 << (*it)->position().z << ","
-                 << (*it)->blockType() << endl;
+  for(int chunkX = 0; chunkX < chunks.size(); chunkX++){
+    for(int chunkZ = 0; chunkZ < chunks[0].size(); chunkZ++) {
+      Chunk* chunk = chunks[chunkX][chunkZ];
+      auto position = chunk->getPosition();
+      auto size = chunk->getSize();
+      for(int x=0; x<size[0]; x++) {
+        for(int y=0; y<size[1]; y++) {
+          for(int z=0; z<size[2]; z++) {
+            Cube* cube = chunk->getCube_(x,y,z);
+            if(cube != NULL) {
+            outputFile << cube->position().x + size[0] * position.x << ","
+                      << cube->position().y << ","
+                      << cube->position().z + size[2] * position.z << ","
+                      << cube->blockType() << endl;
+            }
+          }
+        }
+      }
     }
   }
   outputFile.close();
