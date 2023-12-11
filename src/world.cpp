@@ -23,13 +23,13 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   logger = make_shared<spdlog::logger>("World", fileSink);
   logger->set_level(spdlog::level::debug);
   float z = 10.0;
-  availableAppPositions.push(glm::vec3(2.8, 1.0, z));
-  availableAppPositions.push(glm::vec3(4.0, 1.0, z));
-  availableAppPositions.push(glm::vec3(4.0, 1.75, z));
-  availableAppPositions.push(glm::vec3(4.0, 2.50, z));
-  availableAppPositions.push(glm::vec3(5.2, 1.0, z));
-  availableAppPositions.push(glm::vec3(2.5, 1.75, z));
-  availableAppPositions.push(glm::vec3(5.2, 1.75, z));
+  availableAppPositions.push(glm::vec3(5.0, 1.0, z));
+  availableAppPositions.push(glm::vec3(6.2, 1.0, z));
+  availableAppPositions.push(glm::vec3(6.2, 1.75, z));
+  availableAppPositions.push(glm::vec3(6.2, 2.50, z));
+  availableAppPositions.push(glm::vec3(7.4, 1.0, z));
+  availableAppPositions.push(glm::vec3(4.7, 1.75, z));
+  availableAppPositions.push(glm::vec3(7.4, 1.75, z));
   for(int x = -10; x<10; x++) {
     chunks.push_back(vector<Chunk*>());
     for(int z=-10; z<10; z++) {

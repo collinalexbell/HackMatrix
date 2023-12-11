@@ -161,6 +161,7 @@ public:
           building.printCorners();
         }
         building.draw(this);
+        usleep(50000);
       }
     }
     if(debug) {

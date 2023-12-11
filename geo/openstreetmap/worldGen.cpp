@@ -12,6 +12,7 @@
 #include "building.h"
 #include "voxelizer.h"
 #include "coreStructs.h"
+#include <unistd.h>
 
 using namespace std;
 
@@ -27,7 +28,7 @@ int main(int argc, char** argv) {
   Voxelizer voxelizer;
   osmium::apply(reader, voxelizer);
   voxelizer.printAllTags();
-  voxelizer.voxelizeBuildings();
+  //voxelizer.voxelizeBuildings();
   voxelizer.voxelizeStreets();
   reader.close();
   return 0;
