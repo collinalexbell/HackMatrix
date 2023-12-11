@@ -1,6 +1,6 @@
 # Gaianetica
 ## What do I love about Gianetica
-- It will help me to know everything about portland
+- It will help me to know everything about Portland
 - It will help me to love software engineering and cybernetics development
 - It will help me love portland
 - I will be able to connect better with others
@@ -53,8 +53,7 @@ Embeds the hacker in a 3d hacker environment
 ### Tickets
 - $Fix block placement outside of first chunk
 - Get multi chunk scrolling working
--
--
+- Fix level saving (probably negative coordinates issue)
 ### Milestones
 #### Pre kickstarter
 - 10 cities in voxels (maybe it is better just to use one city?) (maybe not)
@@ -208,6 +207,8 @@ Houses are the apps (lololol)
   than the environment.
 - Or, maybe I can use pre-existing cad software and seamlessly yeet the models into the game
 ### Economics:
+    Logos Coin
+
     By the year 2030,
     The City of Cybernetics produces
     a municipal  revenue
@@ -282,6 +283,8 @@ $ Players use an in game IDE to write code that influences the game world
   - Objects in the world are scriptable
   - Objects can be spawned
 $ Click in and click out of windows (maybe with a button frame or hotkey)
+
+- Move window manager around
 
 - Subtle synchronicities that if players follow - will drastically improve their playing experience
 
@@ -528,3 +531,11 @@ What did I call these years ago? Daemons... prior to that?
 ### Policy
 The policy on characters is that users should create them
 and put them into the world
+
+## Multiplayer
+### Voice chat
+### Avitars
+### Screen sharing
+### Space sharing
+### Events
+### Permissions
