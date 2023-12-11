@@ -362,6 +362,7 @@ I need 150k to live a full free year in Portland Oregon
 - UrbaNetica replica of Portland
 - Multiplayer
 - Play in our world... or design your own
+- Alternative economy experiment
 p.276: interest curves: 2134 (higher, more exciting)
 ### Perks
 200$: Choose one of the 3 user selected playable cities
