@@ -58,18 +58,18 @@ class Building {
 
     for (int y = 6; y < height + 6; y++) {
       for (int xs = x[0]; xs < x[1]; xs++) {
-        api->addCube(xs - 650, y, -1 * (z[0] - 50), 2);
-        api->addCube(xs - 650, y, -1 * (z[1] - 50), 2);
+        api->addCube(xs - 650, y, -1 * (z[0] - 50), 0);
+        api->addCube(xs - 650, y, -1 * (z[1] - 50), 0);
       }
 
       for (int zs = z[0]; zs < z[1]; zs++) {
-        api->addCube(x[0] - 650, y, -1 * (zs - 50), 2);
-        api->addCube(x[1] - 650, y, -1 * (zs - 50), 2);
+        api->addCube(x[0] - 650, y, -1 * (zs - 50), 0);
+        api->addCube(x[1] - 650, y, -1 * (zs - 50), 0);
       }
     }
     for(int xs = x[0]; xs < x[1]; xs++) {
       for(int zs = z[0]; zs < z[1]; zs++) {
-        api->addCube(xs - 650, 16, -1 * (zs - 50), 2);
+        api->addCube(xs - 650, 16, -1 * (zs - 50), 0);
       }
     }
   }
