@@ -549,6 +549,7 @@ and put them into the world
 ### Permissions
 
 ## Architecture
+How do I give the architecture a timeless, essential quality (way of timeless building)
 - Procedurally generated buildings
 - Manually generated buildings (by me)
 - Precedurally replicated buildings
