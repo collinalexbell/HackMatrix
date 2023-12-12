@@ -179,6 +179,14 @@ public:
     double slope;
   };
 
+  int square(int a) {
+    return a*a;
+  }
+
+  int distance(AbsolutePosition a, AbsolutePosition b) {
+    return sqrt(square(a.x-b.x)+square(a.y-b.y)+square(a.z-b.z));
+  }
+
   void drawStreet(Way street) {
     vector<AbsolutePosition> positions;
     for(auto street: street.nodes) {
@@ -198,7 +206,7 @@ public:
       // Calculate the number of steps or cubes needed for interpolation
       // This determines the granularity of the interpolation
       // Adjust this step size based on your requirements
-      int steps = 40/* Calculate number of steps */;
+      int steps = distance(segment.start, segment.stop)+10;
 
       for (int step = 0; step <= steps; ++step) {
         // Interpolate along the road segment
