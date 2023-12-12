@@ -1,5 +1,8 @@
+#include <fstream>
 #include <iostream>
+#include <pqxx/connection.hxx>
 #include <pqxx/pqxx>
+#include <sstream>
 
 int main()
 {
@@ -10,7 +13,16 @@ int main()
     // The constructor parses options exactly like libpq's
     // PQconnectdb/PQconnect, see:
     // https://www.postgresql.org/docs/10/static/libpq-connect.html
-    pqxx::connection c;
+
+    std::ifstream ifs("secrets/db-pass");
+    std::string password((std::istreambuf_iterator<char>(ifs)),
+                        (std::istreambuf_iterator<char>()));
+
+    std::stringstream connectionParams;
+    connectionParams
+        << "postgresql://localhost/matrix?user=collinalexbell&password="
+        << password;
+    pqxx::connection c(connectionParams.str());
     // Start a transaction.  In libpqxx, you always work in one.
     pqxx::work w(c);
     // work::exec1() executes a query returning a single row of data.
