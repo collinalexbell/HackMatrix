@@ -28,8 +28,9 @@ struct App {
 };
 
 struct ChunkIndex {
-  int firstIndex;
-  int secondIndex;
+  bool isValid;
+  int x;
+  int z;
 };
 
 enum Action {
@@ -58,6 +59,7 @@ class World {
   void updateDamage(int index);
   queue<glm::vec3> availableAppPositions;
   void removeCube(WorldPosition position);
+  ChunkIndex getChunkIndex(int x, int z);
 
 public:
   const float CUBE_SIZE = 0.1;
