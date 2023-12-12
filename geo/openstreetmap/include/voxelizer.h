@@ -231,7 +231,7 @@ public:
 
         // Draw road width w on each side of the center line
         for (int i = -width / 2; i <= width / 2; ++i) {
-          addCube(x + wx * i, y, z + wz * i, 0);
+          addCube(x + wx * i, y, z + wz * i, 6);
         }
       }
     }

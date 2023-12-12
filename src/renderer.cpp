@@ -187,7 +187,8 @@ Renderer::Renderer(Camera *camera, World *world) {
   std::vector<std::string> images = {
       "images/bAndGrey.png",         "images/purpleRoad.png",
       "images/bAndGreySpeckled.png", "images/grass.png",
-      "images/pillar.png",           "images/reactor_texture.png"};
+      "images/pillar.png",           "images/reactor_texture.png",
+      "images/road.png"};
   textures.insert(std::pair<string, Texture *>(
       "allBlocks", new Texture(images, GL_TEXTURE0)));
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
