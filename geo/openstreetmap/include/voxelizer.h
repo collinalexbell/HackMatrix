@@ -188,6 +188,7 @@ public:
   }
 
   void drawStreet(Way street) {
+    int width = 10;
     vector<AbsolutePosition> positions;
     for(auto street: street.nodes) {
       AbsolutePosition position = getPosition(street->location);
@@ -202,22 +203,36 @@ public:
       RoadSegment roadSegment = {positions[i - 1], positions[i], slope};
       roadSegments.push_back(roadSegment);
     }
+
+
     for (const auto &segment : roadSegments) {
+
       // Calculate the number of steps or cubes needed for interpolation
       // This determines the granularity of the interpolation
       // Adjust this step size based on your requirements
       int steps = distance(segment.start, segment.stop)+10;
 
+      // Calculate direction vector for the road segment
+      double dxdt = static_cast<double>(segment.stop.x - segment.start.x) / static_cast<double>(steps);
+      double dzdt = static_cast<double>(segment.stop.z - segment.start.z) / static_cast<double>(steps);
+
       for (int step = 0; step <= steps; ++step) {
         // Interpolate along the road segment
-        double t = static_cast<double>(step) / static_cast<double>(steps);
-        int x = segment.start.x + t * (segment.stop.x - segment.start.x);
-        int z = segment.start.z + t * (segment.stop.z - segment.start.z);
+        double x = segment.start.x + static_cast<double>(step) * dxdt;
+        double z = segment.start.z + static_cast<double>(step) * dzdt;
+
+        // Rotate the width based on the orientation of the road segment
+        double wx = -dzdt; // Rotate width along x-axis
+        double wz = dxdt;  // Rotate width along z-axis
 
         double y = 6;
 
-        // Call addCube() with interpolated x, y, z coordinates
-        addCube(x, y, z, 0);
+        //addCube(x,y,z,0);
+
+        // Draw road width w on each side of the center line
+        for (int i = -width / 2; i <= width / 2; ++i) {
+          addCube(x + wx * i, y, z + wz * i, 0);
+        }
       }
     }
   }
