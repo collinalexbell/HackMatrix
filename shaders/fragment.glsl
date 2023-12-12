@@ -80,8 +80,6 @@ void main()
 		}
 	} else if(isLine) {
 		FragColor = vec4(lineColor, lineColor.r);
-	} else if(BlockType == 6) {
-		FragColor = vec4(255.0/255,222.0/255,100.0/255, 1);
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
 	}
