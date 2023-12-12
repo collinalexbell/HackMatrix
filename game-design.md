@@ -1,5 +1,6 @@
 # Gaianetica
 ## What do I love about Gianetica
+- It gives people mental power
 - It will help me to know everything about Portland
 - It will help me to love software engineering and cybernetics development
 - It will help me love portland
@@ -479,7 +480,9 @@ $ OpenGL
 - Elon Musk; I want Elon Musk to play this game!
 - 16-35 year olds
 - professional SWEs or noobs?
-
+- creators (in general)
+- intellectuals
+- the esoteric
 
 ## BrainStorms
 ### Value multipliers
