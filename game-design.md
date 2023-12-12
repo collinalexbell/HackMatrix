@@ -1,5 +1,6 @@
 # Gaianetica
 ## What do I love about Gianetica
+- It brings computing into the physical and social realm
 - It gives people mental power
 - It will help me to know everything about Portland
 - It will help me to love software engineering and cybernetics development
