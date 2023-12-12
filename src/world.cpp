@@ -139,15 +139,28 @@ WorldPosition World::translateToWorldPosition(int x, int y, int z) {
   return rv;
 }
 
-Chunk *World::getChunk(int x, int z) {
+ChunkIndex World::getChunkIndex(int x, int z) {
   ChunkPosition minChunkPosition = chunks[0][0]->getPosition();
   ChunkPosition maxChunkPosition = chunks.back().back()->getPosition();
   // todo, guard against out of range indices
-  int indexX = x - minChunkPosition.x;
-  int indexZ = z - minChunkPosition.z;
-  if(indexX >= 0 && indexX < chunks.size() &&
-     indexZ >= 0 && indexZ < chunks[0].size()) {
-    return chunks[indexX][indexZ];
+  ChunkIndex index;
+  index.x = x - minChunkPosition.x;
+  index.z = z - minChunkPosition.z;
+  if (index.x >= 0 && index.x < chunks.size() && index.z >= 0 &&
+      index.z < chunks[0].size()) {
+    index.isValid = true;
+  } else {
+    index.isValid = false;
+  }
+
+  return index;
+}
+
+
+Chunk *World::getChunk(int x, int z) {
+  ChunkIndex index = getChunkIndex(x, z);
+  if(index.isValid) {
+    return chunks[index.x][index.z];
   }
   return NULL;
 }
