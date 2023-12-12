@@ -545,3 +545,10 @@ and put them into the world
 ### Space sharing
 ### Events
 ### Permissions
+
+## Architecture
+- Procedurally generated buildings
+- Manually generated buildings (by me)
+- Precedurally replicated buildings
+- Hand crafted replicated buildings
+- Manually generated large iconic buildings, with other modes for non-iconics
