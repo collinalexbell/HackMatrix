@@ -20,8 +20,17 @@ using namespace std;
 
 
 World::World(Camera *camera, bool debug) : camera(camera) {
+  initLogger();
+  initAppPositions();
+  initChunks();
+}
+
+void World::initLogger() {
   logger = make_shared<spdlog::logger>("World", fileSink);
   logger->set_level(spdlog::level::debug);
+}
+
+void World::initAppPositions() {
   float z = 10.0;
   availableAppPositions.push(glm::vec3(5.0, 1.0, z));
   availableAppPositions.push(glm::vec3(6.2, 1.0, z));
@@ -30,7 +39,6 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   availableAppPositions.push(glm::vec3(7.4, 1.0, z));
   availableAppPositions.push(glm::vec3(4.7, 1.75, z));
   availableAppPositions.push(glm::vec3(7.4, 1.75, z));
-  initChunks();
 }
 
 void World::initChunks() {
@@ -165,18 +173,10 @@ ChunkIndex World::calculateMiddleIndex() {
   return middleIndex;
 }
 
-int playerChunkIndexCallCount = 0;
 ChunkIndex World::playersChunkIndex() {
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
   auto worldPosition = translateToWorldPosition(voxelSpace.x, voxelSpace.y, voxelSpace.z);
   ChunkIndex rv = getChunkIndex(worldPosition.chunkX, worldPosition.chunkZ);
-  if(playerChunkIndexCallCount % 400 == 0) {
-    stringstream ss;
-    ss << "cameraPos: " << camera->position.x << "," << camera->position.z << endl;
-    logger->critical(ss.str());
-    logger->flush();
-  }
-  playerChunkIndexCallCount++;
   return rv;
 }
 
