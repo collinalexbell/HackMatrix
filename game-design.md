@@ -560,4 +560,9 @@ How do I give the architecture a timeless, essential quality (way of timeless bu
 - Hand crafted replicated buildings
 - Manually generated large iconic buildings, with other modes for non-iconics
 - Trail creation via feet erosion of grass (not sure where this should be added).
-- I want the center of my world to be a grand Magical University
+### Grand Magical University
+- Center of the World
+- Best looking Architecture
+- Many code mages
+- Occult symbols
+- Lots of purple
