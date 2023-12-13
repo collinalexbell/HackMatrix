@@ -101,7 +101,7 @@ imgui_objects: $(IMGUI_OBJ)
 #######################
 
 cloc:
-	cloc include/ src/ --exclude-dir=imgui,glad,glm,octree,protos,stb,zmq > line-count
+	cloc include/ src/ py/ client_libs/js client_libs/python/hackMatrix/api.py levels/ --exclude-dir=imgui,glad,glm,octree,protos,stb,zmq,scns,__pychache__,node_modules --not-match-f=\.json > line-count
 	sed -i '/github.com\/AlDanial\/cloc/d' line-count
 
 clean:
