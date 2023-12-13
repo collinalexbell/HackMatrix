@@ -12,8 +12,10 @@
 - It will make computing free again (in the VR era)
 - It is written in C++
 ## Purpose
-Immerse people in their projects
+Immerse people in their projects by making them feel like they are in a magical fiction novel while doing their work
+
 Show the love of God
+
 Commune with others while working on thier projects from anywhere in the world
 ## Game Theme
 - Living in a crystal city filled with cybernetic organisms
