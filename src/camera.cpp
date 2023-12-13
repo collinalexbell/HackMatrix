@@ -103,3 +103,8 @@ std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetF
   movements.push(movement);
   return isDone;
 }
+
+
+bool Camera::isMoving() {
+  return movements.size() > 0;
+}
