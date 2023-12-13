@@ -162,7 +162,7 @@ ChunkIndex World::getChunkIndex(int x, int z) {
 void World::loadChunksIfNeccissary() {
   ChunkIndex curIndex = playersChunkIndex();
   if(curIndex.x < middleIndex.x) {
-    deque<Chunk*> chunksToRm; chunks.back();
+    deque<Chunk*> chunksToRm = chunks.back();
     for(Chunk* toRm: chunksToRm) {
       delete toRm;
     }
@@ -183,6 +183,25 @@ void World::loadChunksIfNeccissary() {
     mesh();
   }
   if(curIndex.x > middleIndex.x) {
+    deque<Chunk *> chunksToRm = chunks.front();
+    for (Chunk *toRm : chunksToRm) {
+      delete toRm;
+    }
+    chunks.pop_front();
+    deque<Chunk *> toAdd;
+    auto pos = chunks.back()[0]->getPosition();
+    auto size = chunks.back()[0]->getSize();
+    for (int i = 0; i < chunks[0].size(); i++) {
+      toAdd.push_back(new Chunk(pos.x + 1, pos.y, pos.z + i));
+    }
+    chunks.push_back(toAdd);
+    int sign = std::signbit(pos.z) ? -1 : 1;
+    for (int i = 0; i < size[0]; i++) {
+      for (int j = 0; j < size[2] * chunks[0].size(); j++) {
+        addCube(pos.x * size[0] + i, 5, pos.z * size[2] + j, 3);
+      }
+    }
+    mesh();
   }
   if(curIndex.z < middleIndex.z) {
   }
