@@ -60,8 +60,10 @@ class World {
   queue<glm::vec3> availableAppPositions;
   void removeCube(WorldPosition position);
   ChunkIndex getChunkIndex(int x, int z);
+  ChunkIndex playersChunkIndex();
 
 public:
+  void tick();
   const float CUBE_SIZE = 0.1;
   World(Camera *camera, bool debug = false);
   ~World();

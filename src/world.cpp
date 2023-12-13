@@ -142,7 +142,6 @@ WorldPosition World::translateToWorldPosition(int x, int y, int z) {
 ChunkIndex World::getChunkIndex(int x, int z) {
   ChunkPosition minChunkPosition = chunks[0][0]->getPosition();
   ChunkPosition maxChunkPosition = chunks.back().back()->getPosition();
-  // todo, guard against out of range indices
   ChunkIndex index;
   index.x = x - minChunkPosition.x;
   index.z = z - minChunkPosition.z;
@@ -154,6 +153,25 @@ ChunkIndex World::getChunkIndex(int x, int z) {
   }
 
   return index;
+}
+
+
+int playerChunkIndexCallCount = 0;
+ChunkIndex World::playersChunkIndex() {
+  glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
+  auto worldPosition = translateToWorldPosition(voxelSpace.x, voxelSpace.y, voxelSpace.z);
+  ChunkIndex rv = getChunkIndex(worldPosition.chunkX, worldPosition.chunkZ);
+  if((rv.x != 11 || rv.z != 13) && !camera->isMoving()) {
+    camera->moveTo(glm::vec3(6.2,camera->position.y,10.799), camera->front, 2);
+  }
+  if(playerChunkIndexCallCount % 400 == 0) {
+    stringstream ss;
+    ss << "cameraPos: " << camera->position.x << "," << camera->position.z << endl;
+    logger->critical(ss.str());
+    logger->flush();
+  }
+  playerChunkIndexCallCount++;
+  return rv;
 }
 
 
@@ -594,4 +612,8 @@ void World::loadLatest() {
   }
 
   load("saves/" + latestSave);
+}
+
+void World::tick(){
+  playersChunkIndex();
 }

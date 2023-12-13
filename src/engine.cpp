@@ -101,6 +101,7 @@ void Engine::loop() {
 
       renderImGui(fps, frameIndex, frameTimes);
       frameStart = glfwGetTime();
+      world->tick();
       renderer->render();
       api->mutateWorld();
       wm->mutateWorld();
