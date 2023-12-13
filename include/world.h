@@ -61,6 +61,9 @@ class World {
   void removeCube(WorldPosition position);
   ChunkIndex getChunkIndex(int x, int z);
   ChunkIndex playersChunkIndex();
+  ChunkIndex calculateMiddleIndex();
+  ChunkIndex middleIndex;
+  void initChunks();
 
 public:
   void tick();

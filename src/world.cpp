@@ -30,21 +30,17 @@ World::World(Camera *camera, bool debug) : camera(camera) {
   availableAppPositions.push(glm::vec3(7.4, 1.0, z));
   availableAppPositions.push(glm::vec3(4.7, 1.75, z));
   availableAppPositions.push(glm::vec3(7.4, 1.75, z));
-  for(int x = -10; x<10; x++) {
-    chunks.push_back(vector<Chunk*>());
-    for(int z=-10; z<10; z++) {
-      chunks.back().push_back(new Chunk(x,0,z));
+  initChunks();
+}
+
+void World::initChunks() {
+  for (int x = -10; x <= 10; x++) {
+    chunks.push_back(vector<Chunk *>());
+    for (int z = -10; z <= 10; z++) {
+      chunks.back().push_back(new Chunk(x, 0, z));
     }
   }
-  for (int x = -1* (10 * chunks[0][0]->getSize()[0]);
-       x < (10 * chunks[0][0]->getSize()[0]);
-       x++) {
-    for (int z = -1 * (10 * chunks[0][0]->getSize()[2]);
-         z < (10 * chunks[0][0]->getSize()[2]);
-         z++) {
-      addCube(x, 5, z, 3);
-    }
-  }
+  middleIndex = calculateMiddleIndex();
 }
 
 World::~World() {}
@@ -156,14 +152,24 @@ ChunkIndex World::getChunkIndex(int x, int z) {
 }
 
 
+ChunkIndex World::calculateMiddleIndex() {
+  ChunkIndex middleIndex;
+  // even, make a choice, left or right (no middle)
+  //20/2 = 10;
+  // odd, index is clearly correct
+  //21/2 = 10;
+
+  middleIndex.x = chunks.size()/2;
+  middleIndex.z = chunks[0].size()/2;
+  middleIndex.isValid = true;
+  return middleIndex;
+}
+
 int playerChunkIndexCallCount = 0;
 ChunkIndex World::playersChunkIndex() {
   glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
   auto worldPosition = translateToWorldPosition(voxelSpace.x, voxelSpace.y, voxelSpace.z);
   ChunkIndex rv = getChunkIndex(worldPosition.chunkX, worldPosition.chunkZ);
-  if((rv.x != 11 || rv.z != 13) && !camera->isMoving()) {
-    camera->moveTo(glm::vec3(6.2,camera->position.y,10.799), camera->front, 2);
-  }
   if(playerChunkIndexCallCount % 400 == 0) {
     stringstream ss;
     ss << "cameraPos: " << camera->position.x << "," << camera->position.z << endl;
