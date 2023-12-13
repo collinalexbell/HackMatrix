@@ -43,7 +43,7 @@ void World::initAppPositions() {
 
 void World::initChunks() {
   for (int x = -10; x <= 10; x++) {
-    chunks.push_back(vector<Chunk *>());
+    chunks.push_back(deque<Chunk *>());
     for (int z = -10; z <= 10; z++) {
       chunks.back().push_back(new Chunk(x, 0, z));
     }
@@ -159,6 +159,36 @@ ChunkIndex World::getChunkIndex(int x, int z) {
   return index;
 }
 
+void World::loadChunksIfNeccissary() {
+  ChunkIndex curIndex = playersChunkIndex();
+  if(curIndex.x < middleIndex.x) {
+    deque<Chunk*> chunksToRm; chunks.back();
+    for(Chunk* toRm: chunksToRm) {
+      delete toRm;
+    }
+    chunks.pop_back();
+    deque<Chunk *> toAdd;
+    auto pos = chunks[0][0]->getPosition();
+    auto size = chunks[0][0]->getSize();
+    for(int i = 0; i < chunks[0].size(); i++) {
+      toAdd.push_back(new Chunk(pos.x-1, pos.y, pos.z+i));
+    }
+    chunks.push_front(toAdd);
+    int sign = std::signbit(pos.z) ? -1 : 1;
+    for(int i = 0; i<size[0]; i++) {
+      for(int j = 0; j<size[2]*chunks[0].size(); j++) {
+        addCube((pos.x-1)*size[0]+i,5,pos.z*size[2]+j,3);
+      }
+    }
+    mesh();
+  }
+  if(curIndex.x > middleIndex.x) {
+  }
+  if(curIndex.z < middleIndex.z) {
+  }
+  if(curIndex.z > middleIndex.z) {
+  }
+}
 
 ChunkIndex World::calculateMiddleIndex() {
   ChunkIndex middleIndex;
@@ -621,5 +651,5 @@ void World::loadLatest() {
 }
 
 void World::tick(){
-  playersChunkIndex();
+  loadChunksIfNeccissary();
 }

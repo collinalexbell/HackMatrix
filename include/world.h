@@ -49,7 +49,7 @@ class World {
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
-  vector<vector<Chunk*>> chunks;
+  deque<deque<Chunk*>> chunks;
   int damageIndex = -1;
   bool isDamaged = false;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
@@ -66,6 +66,7 @@ class World {
   void initChunks();
   void initAppPositions();
   void initLogger();
+  void loadChunksIfNeccissary();
 
 public:
   void tick();
