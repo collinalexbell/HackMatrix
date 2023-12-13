@@ -64,6 +64,8 @@ class World {
   ChunkIndex calculateMiddleIndex();
   ChunkIndex middleIndex;
   void initChunks();
+  void initAppPositions();
+  void initLogger();
 
 public:
   void tick();
