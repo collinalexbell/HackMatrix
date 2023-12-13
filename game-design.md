@@ -363,6 +363,7 @@ I need 150k to live a full free year in Portland Oregon
 - Maybe other cities
 - Making this an MMO makes me think I'm in WAY over my head
 - Part of me only wants to do a Hogwarts like Castle
+- What if I replaced Reed with a Hogwarts like Castle
 ### Pitch
 - HackMatrix engine
 - UrbaNetica replica of Portland
