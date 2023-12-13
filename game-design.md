@@ -555,3 +555,4 @@ How do I give the architecture a timeless, essential quality (way of timeless bu
 - Precedurally replicated buildings
 - Hand crafted replicated buildings
 - Manually generated large iconic buildings, with other modes for non-iconics
+- Trail creation via feet erosion of grass (not sure where this should be added).
