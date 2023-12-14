@@ -204,8 +204,10 @@ void World::loadChunksIfNeccissary() {
     mesh();
   }
   if(curIndex.z < middleIndex.z) {
+    // to be implemented later
   }
   if(curIndex.z > middleIndex.z) {
+    // to be implemented later
   }
 }
 
@@ -670,5 +672,5 @@ void World::loadLatest() {
 }
 
 void World::tick(){
-  loadChunksIfNeccissary();
+  //loadChunksIfNeccissary();
 }
