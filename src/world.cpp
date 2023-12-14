@@ -294,8 +294,8 @@ void World::updateDamage(int index) {
 void World::removeCube(WorldPosition pos) {
   Chunk* chunk = getChunk(pos.chunkX, pos.chunkZ);
   if(chunk != NULL) {
-    Cube *c = chunk->getCube(pos.x,pos.y,pos.z);
-    if(c->blockType() >= 0) {
+    Cube *c = chunk->getCube_(pos.x,pos.y,pos.z);
+    if(c != NULL) {
       chunk->removeCube(pos.x, pos.y, pos.z);
     }
   }
