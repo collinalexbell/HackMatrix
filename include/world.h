@@ -49,6 +49,8 @@ struct Coordinate {
     z = coords[1];
   }
 
+  Coordinate(int x, int z): x(x), z(z){}
+
   bool operator==(const Coordinate &other) const {
     return x == other.x && z == other.z;
   }
@@ -117,6 +119,7 @@ public:
 
   void save(string filename);
   void load(string filename);
+  void loadRegion(Coordinate regionCoordinate);
   void loadMinecraft(string folderName);
   void loadLatest();
 

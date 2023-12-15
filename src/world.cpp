@@ -14,6 +14,7 @@
 #include <limits>
 #include <cmath>
 #include <filesystem>
+#include "anvil/region_file_reader.h"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -677,14 +678,34 @@ std::array<int, 2> getCoordinatesFromRegionFilename(const std::string &filename)
   return coordinates;
 }
 
+void World::loadRegion(Coordinate regionCoordinate) {
+  string path = regionFiles[regionCoordinate];
+  region_file_reader reader(path);
+  reader.read();
+  for (unsigned int z = 0; z < 32; ++z) {
+    for (unsigned int x = 0; x < 32; ++x) {
+
+      // this keeps an exception from being thrown
+      // when a non-existant chunk is requested
+      if (!reader.is_filled(x, z))
+        continue;
+
+      // if everything goes well, retrieve the block/height data
+      auto blocks = reader.get_blocks_at(x, z);
+      //heights = reader.get_heightmap_at(x, z);
+    }
+  }
+}
+
 void World::loadMinecraft(string folderName) {
   auto fileNames = getFilesInFolder(folderName);
   for(auto fileName: fileNames) {
     stringstream ss;
     auto coords = getCoordinatesFromRegionFilename(fileName);
     auto key = Coordinate(coords);
-    regionFiles[key] = fileName;
+    regionFiles[key] = folderName + fileName;
   }
+  loadRegion(Coordinate{0,0});
 }
 
 void World::loadLatest() {
