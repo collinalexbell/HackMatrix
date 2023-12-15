@@ -335,6 +335,10 @@ V probably not
 150k by Dec 31st...
   ...so 5,000 - 10,000 backers!
   20k minumum to get me through to march.
+### MVDemo
+- Hackwits castle
+- Rendering a 2nd matrix into a framebuffer (to directly draw to screen
+    (and mimick wayland))
 ### Video
     - Story
     - Show Mechanics
