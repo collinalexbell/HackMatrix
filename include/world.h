@@ -96,6 +96,7 @@ public:
 
   void save(string filename);
   void load(string filename);
+  void loadMinecraft(string folderName);
   void loadLatest();
 
   void mesh(bool realTime = true);
