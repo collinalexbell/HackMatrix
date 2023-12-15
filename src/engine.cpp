@@ -66,7 +66,8 @@ void Engine::wire() {
   world->attachRenderer(renderer);
   wm->attachWorld(world);
   wm->addAppsToWorld();
-  world->loadLatest();
+  //world->loadLatest();
+  world->loadMinecraft("/home/collin/hogwarts/region/");
 }
 
 void Engine::renderImGui(double &fps, int frameIndex, const vector<double> &frameTimes) {
