@@ -682,6 +682,8 @@ void World::loadMinecraft(string folderName) {
   for(auto fileName: fileNames) {
     stringstream ss;
     auto coords = getCoordinatesFromRegionFilename(fileName);
+    auto key = Coordinate(coords);
+    regionFiles[key] = fileName;
   }
 }
 
