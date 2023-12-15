@@ -16,8 +16,7 @@
 #include <filesystem>
 
 using namespace std;
-
-
+namespace fs = std::filesystem;
 
 World::World(Camera *camera, bool debug) : camera(camera) {
   initLogger();
@@ -644,7 +643,23 @@ void World::load(string filename) {
   mesh();
 }
 
+std::vector<std::string> getFilesInFolder(const std::string &folderPath) {
+  std::vector<std::string> files;
+
+  for (const auto &entry : fs::directory_iterator(folderPath)) {
+    if (fs::is_regular_file(entry.path())) {
+      files.push_back(entry.path().filename().string());
+    }
+  }
+
+  return files;
+}
+
 void World::loadMinecraft(string folderName) {
+  auto fileNames = getFilesInFolder(folderName);
+  for(auto fileName: fileNames) {
+
+  }
 }
 
 void World::loadLatest() {
