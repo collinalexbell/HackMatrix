@@ -644,6 +644,9 @@ void World::load(string filename) {
   mesh();
 }
 
+void World::loadMinecraft(string folderName) {
+}
+
 void World::loadLatest() {
   std::filesystem::path dirPath("saves");
 
