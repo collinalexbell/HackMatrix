@@ -40,11 +40,32 @@ enum Action {
   OPEN_SELECTION_CODE
 };
 
+struct Coordinate {
+  int x;
+  int z;
+
+  Coordinate(array<int, 2> coords) {
+    x = coords[0];
+    z = coords[1];
+  }
+
+  bool operator==(const Coordinate &other) const {
+    return x == other.x && z == other.z;
+  }
+};
+
+struct CoordinateHash {
+  size_t operator()(const Coordinate &coordinate) const {
+    return std::hash<int>()(coordinate.x) ^ (std::hash<int>()(coordinate.z) << 1);
+  }
+};
+
+
 class World {
   std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
-
+  unordered_map<Coordinate, string, CoordinateHash> regionFiles;
   int gotItCount = 0;
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
