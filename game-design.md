@@ -558,6 +558,9 @@ The policy on characters is that users should create them
 and put them into the world
 
 ## Multiplayer
+### Style
+- Cooperative
+- Meeting up
 ### Voice chat
 ### Avitars
 ### Screen sharing
