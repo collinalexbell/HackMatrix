@@ -678,22 +678,58 @@ std::array<int, 2> getCoordinatesFromRegionFilename(const std::string &filename)
   return coordinates;
 }
 
+unsigned int getIndexIntoRegion(int x, int y, int z) {
+  return (y * 16 + z) * 16 + x;
+}
+
 void World::loadRegion(Coordinate regionCoordinate) {
+  map<int, int> counts;
   string path = regionFiles[regionCoordinate];
+  logger->critical(path);
+  logger->flush();
   region_file_reader reader(path);
   reader.read();
-  for (unsigned int z = 0; z < 32; ++z) {
-    for (unsigned int x = 0; x < 32; ++x) {
+  for (unsigned int chunkZ = 0; chunkZ < 32; ++chunkZ) {
+    for (unsigned int chunkX = 0; chunkX < 32; ++chunkX) {
 
       // this keeps an exception from being thrown
       // when a non-existant chunk is requested
-      if (!reader.is_filled(x, z))
+      if (!reader.is_filled(chunkX, chunkZ))
         continue;
 
-      // if everything goes well, retrieve the block/height data
-      auto blocks = reader.get_blocks_at(x, z);
+      for(int x = 0; x < 16; x++) {
+        for(int y = 0; y < 16; y++) {
+          for(int z = 0; z < 256; z++) {
+            //auto id = reader.get_block_at(chunkX, chunkZ, x,y,z);
+            int id = 0;
+            if(!counts.contains(id)) {
+              counts[id] = 1;
+            } else {
+              counts[id]++;
+            }
+            //addCube(x+chunkX*16, y, z+chunkZ*16, blocks[index]);
+          }
+        }
+      }
       //heights = reader.get_heightmap_at(x, z);
     }
+  }
+  // Create a vector of pairs to sort by value (count)
+  std::vector<std::pair<int, int>> sortedCounts(counts.begin(), counts.end());
+  std::sort(sortedCounts.begin(), sortedCounts.end(),
+            [](const auto &a, const auto &b) {
+              return a.second > b.second; // Sort in descending order
+            });
+  int count = 0;
+  for (const auto &entry : sortedCounts) {
+    stringstream ss;
+    ss << "Block ID: " << entry.first << ", Count: " << entry.second
+              << std::endl;
+    logger->critical(ss.str());
+    logger->flush();
+    count++;
+    if (count == 6) // Stop after printing the top 6
+      break;
   }
 }
 
