@@ -490,6 +490,8 @@ $ OpenGL
 - Load in minecraft buildings
 - Load in magicavoxel data
 
+- It is becomming obvious that I will need to optimize my renderer even more.
+
 ? Multiple X windows to allow a browser as well
 - recompilable while playing
 
