@@ -4,6 +4,8 @@ It seems there will be a nearing *deadline* where
 I might actually be dead if I cross it.
 
 I despise working in this way... but I have faith
+
+I will succeed
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
 - It gives people mental power
