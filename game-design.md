@@ -461,7 +461,8 @@ $ watch blocks do stuff
   - if permissions
 - interact with screens that others own
   - if permissions of course
-
+- talk with others
+- VRChat like muting system... etc
 
 ## Technology
 $ X Window to allow IDE
