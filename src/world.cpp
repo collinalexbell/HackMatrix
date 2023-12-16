@@ -697,17 +697,24 @@ void World::loadRegion(Coordinate regionCoordinate) {
       enkiMICoordinate chunkOriginPos = enkiGetChunkOrigin(&aChunk); // y always 0
       int chunkX = chunkOriginPos.x;
       int chunkZ = chunkOriginPos.z;
-      for (int x = 0; x < 16; x++) {
-        for (int y = 0; y < 16; y++) {
-          for (int z = 0; z < 256; z++) {
-            // auto id = reader.get_block_at(chunkX, chunkZ, x,y,z);
-            int id = 0;
-            if (!counts.contains(id)) {
-              counts[id] = 1;
-            } else {
-              counts[id]++;
+      for (int section = 0; section < ENKI_MI_NUM_SECTIONS_PER_CHUNK; ++section) {
+        if (aChunk.sections[section]) {
+          enkiMICoordinate sectionOrigin = enkiGetChunkSectionOrigin(&aChunk, section);
+          enkiMICoordinate sPos;
+          for (sPos.y = 0; sPos.y < ENKI_MI_SIZE_SECTIONS; ++sPos.y) {
+            for (sPos.z = 0; sPos.z < ENKI_MI_SIZE_SECTIONS; ++sPos.z) {
+              for (sPos.x = 0; sPos.x < ENKI_MI_SIZE_SECTIONS; ++sPos.x) {
+                uint8_t voxel =
+                    enkiGetChunkSectionVoxel(&aChunk, section, sPos);
+                if (voxel) {
+                  if (!counts.contains(voxel)) {
+                    counts[voxel] = 1;
+                  } else {
+                    counts[voxel]++;
+                  }
+                }
+              }
             }
-            // addCube(x+chunkX*16, y, z+chunkZ*16, blocks[index]);
           }
         }
       }
