@@ -16,6 +16,12 @@ I despise working in this way... but I have faith
 - It will immerse people and connect them
 - It will make computing free again (in the VR era)
 - It is written in C++
+## Audio
+I really need to think about audio
+I want to introduce the world to trance music and would love to include all trance songs
+, but I don't think I could get that many liscenses.
+
+Maybe I should just natively support spotify so people can use their own music
 ## Purpose
 Immerse people in their projects by making them feel like they are in a magical fiction novel while doing their work
 
