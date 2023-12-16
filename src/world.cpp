@@ -713,6 +713,24 @@ void World::loadRegion(Coordinate regionCoordinate) {
                     counts[voxel]++;
                   }
                 }
+                int x = sPos.x + sectionOrigin.x;
+                int y = sPos.y + sectionOrigin.y;
+                int z = sPos.z + sectionOrigin.z;
+                if (voxel == 1) {
+                  addCube(x,y,z,6);
+                }
+                if(voxel == 3) {
+                  addCube(x,y,z,3);
+                }
+                if(voxel == 161) {
+                  addCube(x,y,z,0);
+                }
+                if(voxel == 251) {
+                  addCube(x,y,z, 1);
+                }
+                if (voxel == 17) {
+                  addCube(x, y, z, 2);
+                }
               }
             }
           }
@@ -749,6 +767,7 @@ void World::loadMinecraft(string folderName) {
     regionFiles[key] = folderName + fileName;
   }
   loadRegion(Coordinate{0,0});
+  mesh();
 }
 
 void World::loadLatest() {
