@@ -1,19 +1,20 @@
 #include "world.h"
 #include "app.h"
 #include "chunk.h"
+#include "enkimi.h"
 #include "glm/geometric.hpp"
 #include "renderer.h"
 #include <algorithm>
-#include <sstream>
-#include <fstream>
-#include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtx/intersect.hpp>
-#include <octree/octree.h>
-#include <iostream>
-#include <limits>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
+#include <glm/glm.hpp>
+#include <glm/gtx/intersect.hpp>
+#include <iostream>
+#include <limits>
+#include <octree/octree.h>
+#include <sstream>
+#include <vector>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -684,26 +685,34 @@ unsigned int getIndexIntoRegion(int x, int y, int z) {
 void World::loadRegion(Coordinate regionCoordinate) {
   map<int, int> counts;
   string path = regionFiles[regionCoordinate];
+  FILE *fp = fopen(path.c_str(), "rb");
+  enkiRegionFile regionFile = enkiRegionFileLoad(fp);
   logger->critical(path);
   logger->flush();
-  for (unsigned int chunkZ = 0; chunkZ < 32; ++chunkZ) {
-    for (unsigned int chunkX = 0; chunkX < 32; ++chunkX) {
-      for(int x = 0; x < 16; x++) {
-        for(int y = 0; y < 16; y++) {
-          for(int z = 0; z < 256; z++) {
-            //auto id = reader.get_block_at(chunkX, chunkZ, x,y,z);
+  for (unsigned int chunk = 0; chunk < ENKI_MI_REGION_CHUNKS_NUMBER; chunk++) {
+    enkiNBTDataStream stream;
+    enkiInitNBTDataStreamForChunk(regionFile, chunk, &stream);
+    if(stream.dataLength) {
+      enkiChunkBlockData aChunk = enkiNBTReadChunk(&stream);
+      enkiMICoordinate chunkOriginPos = enkiGetChunkOrigin(&aChunk); // y always 0
+      int chunkX = chunkOriginPos.x;
+      int chunkZ = chunkOriginPos.z;
+      for (int x = 0; x < 16; x++) {
+        for (int y = 0; y < 16; y++) {
+          for (int z = 0; z < 256; z++) {
+            // auto id = reader.get_block_at(chunkX, chunkZ, x,y,z);
             int id = 0;
-            if(!counts.contains(id)) {
+            if (!counts.contains(id)) {
               counts[id] = 1;
             } else {
               counts[id]++;
             }
-            //addCube(x+chunkX*16, y, z+chunkZ*16, blocks[index]);
+            // addCube(x+chunkX*16, y, z+chunkZ*16, blocks[index]);
           }
         }
       }
-      //heights = reader.get_heightmap_at(x, z);
     }
+      //heights = reader.get_heightmap_at(x, z);
   }
   // Create a vector of pairs to sort by value (count)
   std::vector<std::pair<int, int>> sortedCounts(counts.begin(), counts.end());
