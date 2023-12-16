@@ -14,7 +14,6 @@
 #include <limits>
 #include <cmath>
 #include <filesystem>
-#include "anvil/region_file_reader.h"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -687,16 +686,8 @@ void World::loadRegion(Coordinate regionCoordinate) {
   string path = regionFiles[regionCoordinate];
   logger->critical(path);
   logger->flush();
-  region_file_reader reader(path);
-  reader.read();
   for (unsigned int chunkZ = 0; chunkZ < 32; ++chunkZ) {
     for (unsigned int chunkX = 0; chunkX < 32; ++chunkX) {
-
-      // this keeps an exception from being thrown
-      // when a non-existant chunk is requested
-      if (!reader.is_filled(chunkX, chunkZ))
-        continue;
-
       for(int x = 0; x < 16; x++) {
         for(int y = 0; y < 16; y++) {
           for(int z = 0; z < 256; z++) {
