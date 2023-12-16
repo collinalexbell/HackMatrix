@@ -418,10 +418,6 @@ Overall, I'm liking the spacemacs colors... however, it will be nice to see what
 - look at fall over the smokies
 
 
-### architecture
-- I kind of want to design a city here... like a futuristic Earth city
-- MarkovJunior buildings
-- Roads are smooth
 ### shaders
 crt: https://www.shadertoy.com/view/Ms23DR
 outlined voxels: https://www.youtube.com/watch?v=3PeYSrakvCw
@@ -576,6 +572,9 @@ How do I give the architecture a timeless, essential quality (way of timeless bu
 - Hand crafted replicated buildings
 - Manually generated large iconic buildings, with other modes for non-iconics
 - Trail creation via feet erosion of grass (not sure where this should be added).
+- MarkovJunior buildings
+- I kind of want to design a city here... like a futuristic Earth city
+- Roads are smooth
 ### Grand Magical University
 - Center of the World
 - Best looking Architecture
