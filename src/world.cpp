@@ -758,6 +758,15 @@ void World::loadRegion(Coordinate regionCoordinate) {
   }
 }
 
+Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ) {
+  return Coordinate{0,0};
+}
+
+Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
+  return Coordinate{0,0};
+}
+
+
 void World::loadMinecraft(string folderName) {
   auto fileNames = getFilesInFolder(folderName);
   for(auto fileName: fileNames) {
