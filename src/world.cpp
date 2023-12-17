@@ -42,12 +42,60 @@ void World::initAppPositions() {
 }
 
 void World::initChunks() {
-  for (int x = -5; x <= 5; x++) {
+  int xMin = -5; int xMax = 5;
+  int zMin = -5; int zMax = 5;
+  for (int x = xMin; x <= xMax; x++) {
     chunks.push_back(deque<Chunk *>());
-    for (int z = -5; z <= 5; z++) {
+    for (int z = zMin; z <= zMax; z++) {
       chunks.back().push_back(new Chunk(x, 0, z));
     }
   }
+
+  preloadVectors[NORTH] = {0,1};
+  preloadVectors[SOUTH] = {0, -1};
+  preloadVectors[EAST] = {1, 0};
+  preloadVectors[WEST] = {-1, 0};
+
+  // NORTH
+  preloadedChunks[NORTH] = deque<deque<Chunk *>>();
+  for(int z = zMax+1; z<zMax+1+PRELOAD_SIZE; z++) {
+    deque<Chunk*> oneZ;
+    for(int x = xMin; x <= xMax; x++) {
+      oneZ.push_back(new Chunk(x,0,z));
+    }
+    preloadedChunks[NORTH].push_back(oneZ);
+  }
+
+  // SOUTH
+  preloadedChunks[SOUTH] = deque<deque<Chunk *>>();
+  for (int z = zMin - 1; z > zMin - 1 - PRELOAD_SIZE; z--) {
+    deque<Chunk *> oneZ;
+    for (int x = xMin; x <= xMax; x++) {
+      oneZ.push_back(new Chunk(x, 0, z));
+    }
+    preloadedChunks[SOUTH].push_back(oneZ);
+  }
+
+  // EAST
+  preloadedChunks[EAST] = deque<deque<Chunk *>>();
+  for (int x = xMax + 1; x < xMax + 1 + PRELOAD_SIZE; x++) {
+    deque<Chunk *> oneX;
+    for (int z = zMin; z <= zMax; z++) {
+      oneX.push_back(new Chunk(x, 0, z));
+    }
+    preloadedChunks[EAST].push_back(oneX);
+  }
+
+  // WEST
+  preloadedChunks[WEST] = deque<deque<Chunk *>>();
+  for (int x = xMin - 1; x > xMin - 1 - PRELOAD_SIZE; x--) {
+    deque<Chunk *> oneX;
+    for (int z = zMin; z <= zMax; z++) {
+      oneX.push_back(new Chunk(x, 0, z));
+    }
+    preloadedChunks[WEST].push_back(oneX);
+  }
+
   middleIndex = calculateMiddleIndex();
 }
 
@@ -162,45 +210,76 @@ ChunkIndex World::getChunkIndex(int x, int z) {
 void World::loadChunksIfNeccissary() {
   ChunkIndex curIndex = playersChunkIndex();
   if(curIndex.x < middleIndex.x) {
-    deque<Chunk*> chunksToRm = chunks.back();
+
+    // rm bumped preloadedChunk on opposite side
+    deque<Chunk*> chunksToRm = preloadedChunks[EAST].back();
     for(Chunk* toRm: chunksToRm) {
       delete toRm;
     }
+    preloadedChunks[EAST].pop_back();
+
+    // transfer from chunks to preloaded (opposite side)
+    preloadedChunks[EAST].push_front(chunks.back());
     chunks.pop_back();
+
+    // transfer from preloaded to chunks
+    chunks.push_front(preloadedChunks[WEST].front());
+    preloadedChunks[WEST].pop_front();
+
+    // add chunks to preloaded
     deque<Chunk *> toAdd;
     auto pos = chunks[0][0]->getPosition();
     auto size = chunks[0][0]->getSize();
     for(int i = 0; i < chunks[0].size(); i++) {
-      toAdd.push_back(new Chunk(pos.x-1, pos.y, pos.z+i));
+      toAdd.push_back(new Chunk(pos.x-1-preloadedChunks[WEST].size(), pos.y, pos.z+i));
     }
-    chunks.push_front(toAdd);
+    preloadedChunks[WEST].push_back(toAdd);
     int sign = std::signbit(pos.z) ? -1 : 1;
+
+    /*
     for(int i = 0; i<size[0]; i++) {
       for(int j = 0; j<size[2]*chunks[0].size(); j++) {
         addCube((pos.x-1)*size[0]+i,5,pos.z*size[2]+j,3);
       }
     }
+    */
+
     mesh();
   }
   if(curIndex.x > middleIndex.x) {
-    deque<Chunk *> chunksToRm = chunks.front();
+
+    // rm bumped preloadedChunk on opposite side
+    deque<Chunk *> chunksToRm = preloadedChunks[WEST].back();
     for (Chunk *toRm : chunksToRm) {
       delete toRm;
     }
+    preloadedChunks[WEST].pop_back();
+
+    // transfer from chunks to preloaded (opposite side)
+    preloadedChunks[WEST].push_front(chunks.front());
     chunks.pop_front();
+
+    // transfer from preloaded to chunks
+    chunks.push_back(preloadedChunks[EAST].front());
+    preloadedChunks[EAST].pop_front();
+
     deque<Chunk *> toAdd;
     auto pos = chunks.back()[0]->getPosition();
     auto size = chunks.back()[0]->getSize();
     for (int i = 0; i < chunks[0].size(); i++) {
-      toAdd.push_back(new Chunk(pos.x + 1, pos.y, pos.z + i));
+      toAdd.push_back(new Chunk(pos.x+1+preloadedChunks[EAST].size(), pos.y, pos.z + i));
     }
-    chunks.push_back(toAdd);
+    preloadedChunks[EAST].push_back(toAdd);
+
+    /*
     int sign = std::signbit(pos.z) ? -1 : 1;
     for (int i = 0; i < size[0]; i++) {
       for (int j = 0; j < size[2] * chunks[0].size(); j++) {
         addCube(pos.x * size[0] + i, 5, pos.z * size[2] + j, 3);
       }
     }
+    */
+
     mesh();
   }
   if(curIndex.z < middleIndex.z) {
@@ -766,7 +845,6 @@ Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
   return Coordinate{0,0};
 }
 
-
 void World::loadMinecraft(string folderName) {
   auto fileNames = getFilesInFolder(folderName);
   for(auto fileName: fileNames) {
@@ -807,5 +885,5 @@ void World::loadLatest() {
 }
 
 void World::tick(){
-  //loadChunksIfNeccissary();
+  loadChunksIfNeccissary();
 }

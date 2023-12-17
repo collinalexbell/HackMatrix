@@ -63,6 +63,10 @@ struct CoordinateHash {
 };
 
 
+enum DIRECTION {
+  NORTH, SOUTH, EAST, WEST
+};
+
 class World {
   std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
@@ -73,6 +77,9 @@ class World {
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
   deque<deque<Chunk*>> chunks;
+  map<DIRECTION, array<int, 2>> preloadVectors;
+  map<DIRECTION, deque<deque<Chunk*>>> preloadedChunks;
+  int PRELOAD_SIZE = 3;
   int damageIndex = -1;
   bool isDamaged = false;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
@@ -90,6 +97,7 @@ class World {
   void initAppPositions();
   void initLogger();
   void loadChunksIfNeccissary();
+  void initPreloadedChunks();
 
 public:
   void tick();
