@@ -242,7 +242,7 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void Renderer::updateChunkMeshBuffers(vector<ChunkMesh> meshes) {
+void Renderer::updateChunkMeshBuffers(vector<ChunkMesh> &meshes) {
   verticesInMesh = 0;
   for(auto mesh: meshes) {
     //if(mesh.updated) {
