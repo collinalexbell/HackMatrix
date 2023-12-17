@@ -70,6 +70,7 @@ Embeds the hacker in a 3d hacker environment
 ## Development
 ### Process
 - Attack and keep attacking
+- Conciousness reset. (raise above, every day, each week)
 ### Tickets
 - $Fix block placement outside of first chunk
 - Get multi chunk scrolling working
