@@ -567,6 +567,7 @@ and put them into the world
 - Cooperative
 - Meeting up
 ### Voice chat
+- How will players choose when to talk with someone (or have it be chosen for them?)
 ### Avitars
 ### Screen sharing
 ### Space sharing
