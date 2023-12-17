@@ -42,9 +42,9 @@ void World::initAppPositions() {
 }
 
 void World::initChunks() {
-  for (int x = -10; x <= 10; x++) {
+  for (int x = -5; x <= 5; x++) {
     chunks.push_back(deque<Chunk *>());
-    for (int z = -10; z <= 10; z++) {
+    for (int z = -5; z <= 5; z++) {
       chunks.back().push_back(new Chunk(x, 0, z));
     }
   }
