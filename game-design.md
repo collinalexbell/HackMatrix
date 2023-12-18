@@ -1,6 +1,6 @@
 # HackMatrix: an RPG about coding a window manager
 ## Deadline:
-New Years. I will succeed
+New Years. I will succeed.
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
 - It gives people mental power
