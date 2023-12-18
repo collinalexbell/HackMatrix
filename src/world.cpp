@@ -103,7 +103,7 @@ World::~World() {}
 
 void World::mesh(bool realTime) {
   double currentTime = glfwGetTime();
-  vector<ChunkMesh> m;
+  vector<shared_ptr<ChunkMesh>> m;
   int sizeX = chunks[0][0]->getSize()[0];
   int sizeZ = chunks[0][0]->getSize()[2];
   for(int x = 0; x < chunks.size(); x++) {
@@ -212,6 +212,7 @@ void World::loadChunksIfNeccissary() {
   if(curIndex.x < middleIndex.x) {
 
     // rm bumped preloadedChunk on opposite side
+    // I could do this off thread
     deque<Chunk*> chunksToRm = preloadedChunks[EAST].back();
     for(Chunk* toRm: chunksToRm) {
       delete toRm;
@@ -227,6 +228,7 @@ void World::loadChunksIfNeccissary() {
     preloadedChunks[WEST].pop_front();
 
     // add chunks to preloaded
+    // this allocates, so I could do this off thread
     deque<Chunk *> toAdd;
     auto pos = chunks[0][0]->getPosition();
     auto size = chunks[0][0]->getSize();

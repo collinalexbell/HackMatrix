@@ -50,7 +50,7 @@ ChunkMesh Chunk::meshedFaceFromPosition(Position position) {
   return mesher->meshedFaceFromPosition(this, position);
 }
 
-ChunkMesh Chunk::mesh(bool realTime) {
+shared_ptr<ChunkMesh> Chunk::mesh(bool realTime) {
   return mesher->mesh(realTime, this);
 }
 

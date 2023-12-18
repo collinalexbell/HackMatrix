@@ -34,7 +34,7 @@ class Chunk {
   void setDamaged();
 
   // shares data[]
-  friend ChunkMesh Mesher::simpleMesh(Chunk *chunk);
+  friend shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk *chunk);
 
 public:
   Chunk();
@@ -44,7 +44,7 @@ public:
   void removeCube(int x, int y, int z);
   void addCube(Cube c, int x, int y, int z);
   ChunkCoords getCoords(int i);
-  ChunkMesh mesh(bool realTime);
+  shared_ptr<ChunkMesh> mesh(bool realTime);
   ChunkMesh meshedFaceFromPosition(Position position);
   const vector<int> getSize();
   ChunkPosition getPosition();

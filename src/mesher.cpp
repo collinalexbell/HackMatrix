@@ -1,11 +1,12 @@
 #include <GLFW/glfw3.h>
+#include <memory>
 #include "chunk.h"
 #include "glm/geometric.hpp"
 #include "mesher.h"
 
-ChunkMesh Mesher::simpleMesh(Chunk *chunk) {
-  ChunkMesh rv;
-  rv.type = SIMPLE;
+shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk *chunk) {
+  auto rv = make_shared<ChunkMesh>(ChunkMesh());
+  rv->type = SIMPLE;
   auto size = chunk->getSize();
 
   int totalSize = size[0] * size[1] * size[2];
@@ -29,10 +30,10 @@ ChunkMesh Mesher::simpleMesh(Chunk *chunk) {
         neighbor = chunk->getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
         if(neighbor == NULL) {
           for(int vertex = 0; vertex < 6; vertex++) {
-            rv.positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex] + offset);
-            rv.texCoords.push_back(texModels[neighborIndex][vertex]);
-            rv.blockTypes.push_back(chunk->data[i]->blockType());
-            rv.selects.push_back(chunk->data[i]->selected());
+            rv->positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex] + offset);
+            rv->texCoords.push_back(texModels[neighborIndex][vertex]);
+            rv->blockTypes.push_back(chunk->data[i]->blockType());
+            rv->selects.push_back(chunk->data[i]->selected());
           }
         }
       }
@@ -41,10 +42,10 @@ ChunkMesh Mesher::simpleMesh(Chunk *chunk) {
   return rv;
 }
 
-ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
+shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
   double currentTime = glfwGetTime();
-  ChunkMesh mesh;
-  mesh.type = GREEDY;
+  auto mesh = make_shared<ChunkMesh>(ChunkMesh());
+  mesh->type = GREEDY;
   int i, j, k, l, w, h, u, v;
   int x[3];
   int q[3];
@@ -175,24 +176,24 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
 
             glm::vec3 offset = glm::vec3(-0.5,-0.5,-0.5) + glm::vec3(chunkOffset[0], chunkOffset[1], chunkOffset[2]);
 
-            mesh.positions.push_back(offset+glm::vec3(x[0], x[1], x[2]));
-            mesh.positions.push_back(offset+glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
-            mesh.positions.push_back(offset+glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+            mesh->positions.push_back(offset+glm::vec3(x[0], x[1], x[2]));
+            mesh->positions.push_back(offset+glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+            mesh->positions.push_back(offset+glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
-            mesh.positions.push_back(offset+glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
-            mesh.positions.push_back(offset+glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
-            mesh.positions.push_back(offset+
+            mesh->positions.push_back(offset+glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+            mesh->positions.push_back(offset+glm::vec3(x[0] + du[0] + dv[0], x[1] + du[1] + dv[1], x[2] + du[2] + dv[2]));
+            mesh->positions.push_back(offset+
                 glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
 
             for(int i = 0; i < 6; i++) {
               if(c != NULL) {
                 // until I fix the bounding box, I need to test for presense of cube
-                mesh.blockTypes.push_back(c->blockType());
+                mesh->blockTypes.push_back(c->blockType());
               } else {
-                mesh.blockTypes.push_back(0);
+                mesh->blockTypes.push_back(0);
               }
-              mesh.selects.push_back(0);
+              mesh->selects.push_back(0);
             }
             float yTexDist = glm::distance(
                 glm::vec3(x[0],x[1],x[2]),
@@ -202,13 +203,13 @@ ChunkMesh Mesher::meshGreedy(Chunk* chunk) {
                 glm::vec3(x[0], x[1], x[2]),
                 glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
-            mesh.texCoords.push_back(glm::vec2(0.0f, 0.0f));
-            mesh.texCoords.push_back(glm::vec2(0.0f, yTexDist));
-            mesh.texCoords.push_back(glm::vec2(xTexDist, 0.0f));
+            mesh->texCoords.push_back(glm::vec2(0.0f, 0.0f));
+            mesh->texCoords.push_back(glm::vec2(0.0f, yTexDist));
+            mesh->texCoords.push_back(glm::vec2(xTexDist, 0.0f));
 
-            mesh.texCoords.push_back(glm::vec2(0.0f, yTexDist));
-            mesh.texCoords.push_back(glm::vec2(xTexDist, yTexDist));
-            mesh.texCoords.push_back(glm::vec2(xTexDist, 0.0f));
+            mesh->texCoords.push_back(glm::vec2(0.0f, yTexDist));
+            mesh->texCoords.push_back(glm::vec2(xTexDist, yTexDist));
+            mesh->texCoords.push_back(glm::vec2(xTexDist, 0.0f));
 
             // Clear this part of the mask, so we don't add duplicate faces
             for (l = 0; l < h; ++l)
@@ -252,9 +253,9 @@ ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
   return rv;
 }
 
-ChunkMesh Mesher::mesh(bool realTime, Chunk* chunk) {
-  cachedSimpleMesh.updated = false;
-  cachedGreedyMesh.updated = false;
+shared_ptr<ChunkMesh> Mesher::mesh(bool realTime, Chunk* chunk) {
+  cachedSimpleMesh->updated = false;
+  cachedGreedyMesh->updated = false;
   if (!realTime || !damagedGreedy) {
     if (damagedGreedy) {
       cachedGreedyMesh = meshGreedy(chunk);

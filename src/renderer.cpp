@@ -242,31 +242,31 @@ void Renderer::updateTransformMatrices() {
   glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
-void Renderer::updateChunkMeshBuffers(vector<ChunkMesh> &meshes) {
+void Renderer::updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes) {
   verticesInMesh = 0;
   for(auto mesh: meshes) {
     //if(mesh.updated) {
       glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_POSITIONS);
       glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * verticesInMesh,
-                      sizeof(glm::vec3) * mesh.positions.size(),
-                      mesh.positions.data());
+                      sizeof(glm::vec3) * mesh->positions.size(),
+                      mesh->positions.data());
 
       glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_TEX_COORDS);
       glBufferSubData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * verticesInMesh,
-                      sizeof(glm::vec2) * mesh.texCoords.size(),
-                      mesh.texCoords.data());
+                      sizeof(glm::vec2) * mesh->texCoords.size(),
+                      mesh->texCoords.data());
 
       glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_BLOCK_TYPES);
       glBufferSubData(GL_ARRAY_BUFFER, sizeof(int) * verticesInMesh,
-                      sizeof(int) * mesh.blockTypes.size(),
-                      mesh.blockTypes.data());
+                      sizeof(int) * mesh->blockTypes.size(),
+                      mesh->blockTypes.data());
 
       glBindBuffer(GL_ARRAY_BUFFER, MESH_VERTEX_SELECTS);
       glBufferSubData(GL_ARRAY_BUFFER, sizeof(int) * verticesInMesh,
-                      sizeof(int) * mesh.selects.size(),
-                      mesh.selects.data());
+                      sizeof(int) * mesh->selects.size(),
+                      mesh->selects.data());
       //}
-    verticesInMesh += mesh.positions.size();
+    verticesInMesh += mesh->positions.size();
   }
 }
 
