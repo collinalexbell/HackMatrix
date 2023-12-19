@@ -302,6 +302,28 @@ Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
 
 deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                          array<Coordinate, 2> regionCoords) {
+
+  int startX;
+  int endX;
+  int startZ;
+  int endZ;
+
+  if(regionCoords[0].x < regionCoords[1].x) {
+    startX = regionCoords[0].x;
+    endX = regionCoords[1].x;
+  } else {
+    startZ = regionCoords[0].z;
+    endZ = regionCoords[1].z;
+  }
+
+  assert(startX==endX || startZ==endZ);
+
+  // now, only one of these should iterate more than once
+  for(int x = startX; x <= endX; x++) {
+    for(int z = startZ; x <= endZ; z++) {
+      // loadRegion, but a version that retuns a deque
+    }
+  }
   return deque<Chunk*>();
 }
 
@@ -631,7 +653,6 @@ X11App* World::getLookedAtApp(){
   }
   return NULL;
 }
-
 
 Position World::getLookedAtCube() {
   Position rv;
