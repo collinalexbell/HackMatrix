@@ -574,6 +574,10 @@ and put them into the world
 ### Events
 ### Permissions
 
+### Guilds/houses
+I want these to form naturally,
+so I will build the infrastructure once
+informal groups form.
 ## Architecture
 How do I give the architecture a timeless, essential quality (way of timeless building)
 - Procedurally generated buildings
