@@ -305,6 +305,35 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
   return deque<Chunk*>();
 }
 
+OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE side) {
+  switch(direction) {
+  case NORTH:
+    if(side == preload::LEFT) {
+      return OrthoginalPreload{true, preloadedChunks[WEST]};
+    } else {
+      return OrthoginalPreload{true, preloadedChunks[EAST]};
+    }
+  case SOUTH:
+    if(side == preload::LEFT) {
+      return OrthoginalPreload{false, preloadedChunks[EAST]};
+    } else {
+      return OrthoginalPreload {false, preloadedChunks[WEST]};
+    }
+  case EAST:
+    if(side == preload::LEFT) {
+      return OrthoginalPreload{false, preloadedChunks[NORTH]};
+    } else {
+      return OrthoginalPreload{false, preloadedChunks[SOUTH]};
+    }
+  case WEST:
+    if(side == preload::LEFT) {
+      return OrthoginalPreload{true, preloadedChunks[SOUTH]};
+    } else {
+      return OrthoginalPreload{true, preloadedChunks[NORTH]};
+    }
+  }
+}
+
 void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
   auto matrixChunkPositions = getNextPreloadedChunkPositions(direction);
   // this needs to account for preload edges and doesn't currently
@@ -327,14 +356,31 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
                                                      next.end()-PRELOAD_SIZE));
 
   // sides
-  auto left = deque<Chunk*>(next.begin(), next.begin()+PRELOAD_SIZE);
-  for(auto toAdd = left.rbegin(); toAdd != left.rend(); toAdd++) {
-    // iterate front to back of preload, (which is why reverse iterator in outerloop)
+  auto leftChunks = deque<Chunk*>(next.begin(), next.begin()+PRELOAD_SIZE);
+  OrthoginalPreload preloadLeft = orthoginalPreload(direction, preload::LEFT);
+  int i = 0;
+  for(auto toAdd = leftChunks.rbegin(); toAdd != leftChunks.rend(); toAdd++) {
+    // iterate front to back of preload deque
+    // (which is why reverse iterator in outerloop)
+    if(preloadLeft.addToFront) {
+      preloadLeft.chunks[i].push_front(*toAdd);
+    } else {
+      preloadLeft.chunks[i].push_back(*toAdd);
+    }
+    i++;
   }
 
-  auto right = deque<Chunk *>(next.begin()-PRELOAD_SIZE, next.end());
-  for (auto toAdd = right.begin(); toAdd != right.end(); toAdd++) {
+  auto rightChunks = deque<Chunk *>(next.begin()-PRELOAD_SIZE, next.end());
+  OrthoginalPreload preloadRight = orthoginalPreload(direction, preload::RIGHT);
+  i = 0;
+  for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end(); toAdd++) {
     // front to back of preload is the same orientation as right, outerloop std iterator
+    if (preloadRight.addToFront) {
+      preloadRight.chunks[i].push_front(*toAdd);
+    } else {
+      preloadRight.chunks[i].push_back(*toAdd);
+    }
+    i++;
   }
 }
 

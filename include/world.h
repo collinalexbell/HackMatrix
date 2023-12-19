@@ -67,6 +67,17 @@ enum DIRECTION {
   NORTH, SOUTH, EAST, WEST
 };
 
+namespace preload {
+  enum SIDE {
+    LEFT, RIGHT
+  };
+};
+
+struct OrthoginalPreload {
+  bool addToFront;
+  deque<deque<Chunk*>>& chunks;
+};
+
 class World {
   std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
@@ -95,6 +106,7 @@ class World {
   ChunkIndex playersChunkIndex();
   ChunkIndex calculateMiddleIndex();
   array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction);
+  OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction);
   ChunkIndex middleIndex;
   void initChunks();
