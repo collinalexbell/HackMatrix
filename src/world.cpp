@@ -354,6 +354,7 @@ OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE si
       return OrthoginalPreload{true, preloadedChunks[NORTH]};
     }
   }
+  return OrthoginalPreload{true, preloadedChunks[NORTH]};
 }
 
 void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
