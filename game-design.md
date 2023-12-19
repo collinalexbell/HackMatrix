@@ -228,6 +228,8 @@ Houses are the apps (lololol)
   than the environment.
 - Or, maybe I can use pre-existing cad software and seamlessly yeet the models into the game
 ### Economics:
+    Ownership, both communal and private
+
     Logos Coin
 
     By the year 2030,
@@ -242,6 +244,7 @@ Houses are the apps (lololol)
     a utility corporation to help citizens produce cybernetics
     which they use internally to run the city, as well as export to other
     municipalities.
+    
 #### KarmaCoin
 Since all goods are reproducible, the primary currency in game is [KarmaCoin](https://github.com/collinalexbell/LogosCoin)
 All users have an infinite stock of their own KarmaCoin
@@ -459,6 +462,7 @@ $ place blocks
 $ watch blocks do stuff
 
 ## Multiplayer
+- community property
 - occupy the same space as others
 - view screens that others can view
   - if permissions
