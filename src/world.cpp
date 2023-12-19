@@ -292,6 +292,68 @@ void World::loadChunksIfNeccissary() {
   }
 }
 
+Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ) {
+  return Coordinate{0, 0};
+}
+
+Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
+  return Coordinate{0, 0};
+}
+
+deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
+                                         array<Coordinate, 2> regionCoords) {
+  return deque<Chunk*>();
+}
+
+void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
+  auto matrixChunkPositions = getNextPreloadedChunkPositions(direction);
+  // this needs to account for preload edges and doesn't currently
+  // the reason is if I preload some WEST and then move NORTH...
+  // there will be some NORTH that hasn't been preloaded
+
+  array<Coordinate, 2> minecraftChunkPositions = {
+    getMinecraftChunkPos(matrixChunkPositions[0].x, matrixChunkPositions[0].z),
+    getMinecraftChunkPos(matrixChunkPositions[1].x, matrixChunkPositions[1].z)
+  };
+  array<Coordinate, 2> minecraftRegions = {
+    getMinecraftRegion(minecraftChunkPositions[0].x, minecraftChunkPositions[0].z),
+    getMinecraftRegion(minecraftChunkPositions[1].x, minecraftChunkPositions[1].z)
+  };
+
+  auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
+  // add one side preload
+  // add other side preload
+  // add main direction preload
+}
+
+array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION direction) {
+  int xAddition = 0, zAddition = 0;
+  switch (direction) {
+  case WEST:
+    xAddition = -1;
+    break;
+  case EAST:
+    xAddition = 1;
+    break;
+  case NORTH:
+    zAddition = 1;
+    break;
+  case SOUTH:
+    zAddition = -1;
+    break;
+  }
+  array<ChunkPosition, 2> positions = {
+    preloadedChunks[direction].back().back()->getPosition(),
+    preloadedChunks[direction].back().front()->getPosition()
+  };
+
+  positions[0].x += xAddition;
+  positions[0].z += zAddition;
+  positions[1].x += xAddition;
+  positions[1].z += zAddition;
+  return positions;
+}
+
 ChunkIndex World::calculateMiddleIndex() {
   ChunkIndex middleIndex;
   // even, make a choice, left or right (no middle)
@@ -837,14 +899,6 @@ void World::loadRegion(Coordinate regionCoordinate) {
     if (count == 6) // Stop after printing the top 6
       break;
   }
-}
-
-Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ) {
-  return Coordinate{0,0};
-}
-
-Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
-  return Coordinate{0,0};
 }
 
 void World::loadMinecraft(string folderName) {

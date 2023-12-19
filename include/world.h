@@ -79,6 +79,8 @@ class World {
   deque<deque<Chunk*>> chunks;
   map<DIRECTION, array<int, 2>> preloadVectors;
   map<DIRECTION, deque<deque<Chunk*>>> preloadedChunks;
+  deque<Chunk*> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
+                                   array<Coordinate, 2> regionCoords);
   int PRELOAD_SIZE = 3;
   int damageIndex = -1;
   bool isDamaged = false;
@@ -92,6 +94,8 @@ class World {
   ChunkIndex getChunkIndex(int x, int z);
   ChunkIndex playersChunkIndex();
   ChunkIndex calculateMiddleIndex();
+  array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction);
+  void loadNextPreloadedChunkDeque(DIRECTION direction);
   ChunkIndex middleIndex;
   void initChunks();
   void initAppPositions();
