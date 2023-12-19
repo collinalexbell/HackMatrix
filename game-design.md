@@ -1,4 +1,6 @@
-# HackMatrix: an RPG about coding a window manager
+# HackMatrix (v1)
+In this game, you will code your own 3d desktop environment
+
 ## Deadline:
 New Years. I will succeed.
 How?
