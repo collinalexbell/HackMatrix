@@ -62,6 +62,11 @@ struct CoordinateHash {
   }
 };
 
+struct LoaderChunk {
+  int foreignChunkX, foreignChunkY, foreignChunkZ;
+  vector<AbsolutePosition> cubePositions;
+};
+
 
 enum DIRECTION {
   NORTH, SOUTH, EAST, WEST
@@ -144,6 +149,7 @@ public:
   void save(string filename);
   void load(string filename);
   void loadRegion(Coordinate regionCoordinate);
+  vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
   void loadMinecraft(string folderName);
   void loadLatest();
 
