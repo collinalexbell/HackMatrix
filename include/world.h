@@ -62,9 +62,13 @@ struct CoordinateHash {
   }
 };
 
+struct LoaderCube: public AbsolutePosition {
+  int blockType;
+};
+
 struct LoaderChunk {
   int foreignChunkX, foreignChunkY, foreignChunkZ;
-  vector<AbsolutePosition> cubePositions;
+  vector<LoaderCube> cubePositions;
 };
 
 

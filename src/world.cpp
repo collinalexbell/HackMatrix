@@ -1,6 +1,7 @@
 #include "world.h"
 #include "app.h"
 #include "chunk.h"
+#include "coreStructs.h"
 #include "enkimi.h"
 #include "glm/geometric.hpp"
 #include "renderer.h"
@@ -906,13 +907,12 @@ unsigned int getIndexIntoRegion(int x, int y, int z) {
 }
 
 
-vector<LoaderChunk> getRegion(Coordinate regionCoordinate) {
+vector<LoaderChunk> World::getRegion(Coordinate regionCoordinate) {
   // copy contents of loadRegion except for addCube (which get converted to push_back())
   // in loadRegion, iterate over the chunks and cubes: call addCube()
-  return vector<LoaderChunk>();
-}
 
-void World::loadRegion(Coordinate regionCoordinate) {
+  vector<LoaderChunk> chunks;
+
   map<int, int> counts;
   string path = regionFiles[regionCoordinate];
   FILE *fp = fopen(path.c_str(), "rb");
@@ -927,6 +927,11 @@ void World::loadRegion(Coordinate regionCoordinate) {
       enkiMICoordinate chunkOriginPos = enkiGetChunkOrigin(&aChunk); // y always 0
       int chunkX = chunkOriginPos.x;
       int chunkZ = chunkOriginPos.z;
+      LoaderChunk lChunk;
+      lChunk.foreignChunkX = chunkX;
+      lChunk.foreignChunkY = 0;
+      lChunk.foreignChunkZ = chunkZ;
+      chunks.push_back(lChunk);
       for (int section = 0; section < ENKI_MI_NUM_SECTIONS_PER_CHUNK; ++section) {
         if (aChunk.sections[section]) {
           enkiMICoordinate sectionOrigin = enkiGetChunkSectionOrigin(&aChunk, section);
@@ -943,23 +948,34 @@ void World::loadRegion(Coordinate regionCoordinate) {
                     counts[voxel]++;
                   }
                 }
-                int x = sPos.x + sectionOrigin.x;
-                int y = sPos.y + sectionOrigin.y;
-                int z = sPos.z + sectionOrigin.z;
+                LoaderCube cube;
+                cube.x = sPos.x + sectionOrigin.x;
+                cube.y = sPos.y + sectionOrigin.y;
+                cube.z = sPos.z + sectionOrigin.z;
+                bool shouldAdd = false;
                 if (voxel == 1) {
-                  addCube(x,y,z,6);
+                  cube.blockType = 6;
+                  shouldAdd = true;
                 }
                 if(voxel == 3) {
-                  addCube(x,y,z,3);
+                  cube.blockType = 3;
+                  shouldAdd = true;
                 }
                 if(voxel == 161) {
-                  addCube(x,y,z,0);
+                  cube.blockType = 0;
+                  shouldAdd = true;
                 }
                 if(voxel == 251) {
-                  addCube(x,y,z, 1);
+                  cube.blockType = 1;
+                  shouldAdd = true;
                 }
                 if (voxel == 17) {
-                  addCube(x, y, z, 2);
+                  cube.blockType = 2;
+                  shouldAdd = true;
+                }
+
+                if(shouldAdd) {
+                  chunks.back().cubePositions.push_back(cube);
                 }
               }
             }
@@ -985,6 +1001,17 @@ void World::loadRegion(Coordinate regionCoordinate) {
     count++;
     if (count == 6) // Stop after printing the top 6
       break;
+  }
+
+  return chunks;
+}
+
+void World::loadRegion(Coordinate regionCoordinate) {
+  auto region = getRegion(regionCoordinate);
+  for(auto chunk: region) {
+    for(auto cube: chunk.cubePositions) {
+      addCube(cube.x, cube.y, cube.z, cube.blockType);
+    }
   }
 }
 
