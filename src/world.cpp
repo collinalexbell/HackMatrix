@@ -905,6 +905,13 @@ unsigned int getIndexIntoRegion(int x, int y, int z) {
   return (y * 16 + z) * 16 + x;
 }
 
+
+vector<LoaderChunk> getRegion(Coordinate regionCoordinate) {
+  // copy contents of loadRegion except for addCube (which get converted to push_back())
+  // in loadRegion, iterate over the chunks and cubes: call addCube()
+  return vector<LoaderChunk>();
+}
+
 void World::loadRegion(Coordinate regionCoordinate) {
   map<int, int> counts;
   string path = regionFiles[regionCoordinate];
