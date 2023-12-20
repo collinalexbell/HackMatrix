@@ -2,10 +2,16 @@
 In this game, you will code your own 3d desktop environment
 
 ## Deadline:
-New Years. I will succeed.
+New Years submit for review. Launch on my birthday.
+
+I will succeed.
 How?
+
 Faith. A mind closed to failure.
 Persistent continuous action.
+
+# HackMatrix (v1+x)
+
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
 - It gives people mental power
