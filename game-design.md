@@ -10,8 +10,45 @@ How?
 Faith. A mind closed to failure.
 Persistent continuous action.
 
-# HackMatrix (v1+x)
+## Kickstarter
+### Goal
+150k
+### MVDemo
+- Hackwits castle
+- Rendering a 2nd matrix into a framebuffer (to directly draw to screen
+    (and mimick wayland))
+- Processes as owls
+Thats it... thats all I will need
+### Video
+    - Story
+    - Show Mechanics
+    - Show World
+    - Follow interest curves (I don't know how I'll do this).
 
+### Perks
+200$: Choose one of the 3 user selected playable cities
+300$: Choose one of the 3 user selected playable cities
+500$: Choose one of the 3 user selected playable cities
+
+### Final Evaluation of the Lenses
+I should do a final evaluation of lenses
+to ensure that the game is most impactful
+before I hit the ship button.
+I can do this after I submit for review (while waiting for review)
+
+
+### Why
+I need 150k to live a full free year in Portland Oregon
+    So I can:
+    - read
+    - meditate
+    - expiriment
+    - love
+
+
+
+
+# HackMatrix (v1+x)
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
 - It gives people mental power
@@ -354,63 +391,6 @@ $ implemented
 V probably not
 ```
 
-## Kickstarter
-150k by Dec 31st...
-  ...so 5,000 - 10,000 backers!
-  20k minumum to get me through to march.
-### MVDemo
-- Hackwits castle
-- Rendering a 2nd matrix into a framebuffer (to directly draw to screen
-    (and mimick wayland))
-- Processes as owls
-Thats it... thats all I will need
-### Video
-    - Story
-    - Show Mechanics
-    - Show World
-    - Follow interest curves (I don't know how I'll do this).
-### Target Market
-Cyber people
-### Path
-#### Approval
-Just get a decent demo out
-
-#### Success
-- replicate Portland
-- make avitar
-- script bots to demo multiplayer
-Mon, Nov 27: Submit Kickstarter for Review
-
-### Why
-I need 150k to live a full free year in Portland Oregon
-    So I can:
-    - read
-    - meditate
-    - expiriment
-    - love
-
-### What version will I launch
-- Portland
-- Maybe other cities
-- Making this an MMO makes me think I'm in WAY over my head
-- Part of me only wants to do a Hogwarts like Castle
-- What if I replaced Reed with a Hogwarts like Castle
-### Pitch
-- HackMatrix engine
-- UrbaNetica replica of Portland
-- Multiplayer
-- Play in our world... or design your own
-- Alternative economy experiment
-p.276: interest curves: 2134 (higher, more exciting)
-### Perks
-200$: Choose one of the 3 user selected playable cities
-300$: Choose one of the 3 user selected playable cities
-500$: Choose one of the 3 user selected playable cities
-### Final Evaluation of the Lenses
-I should do a final evaluation of lenses
-to ensure that the game is most impactful
-before I hit the ship button.
-I can do this after I submit for review (while waiting for review)
 ## Interface
 Minimal currently. Probably needs a bit more of something.
 At least a build mode with block selection or something.
