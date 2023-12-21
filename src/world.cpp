@@ -317,15 +317,39 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
     endZ = regionCoords[1].z;
   }
 
-  assert(startX==endX || startZ==endZ);
 
+  int chunkStartX;
+  int chunkEndX;
+  int chunkStartZ;
+  int chunkEndZ;
+
+  if (chunkCoords[0].x < chunkCoords[1].x) {
+    chunkStartX = chunkCoords[0].x;
+    chunkEndX = chunkCoords[1].x;
+  } else {
+    chunkStartZ = chunkCoords[0].z;
+    chunkEndZ = chunkCoords[1].z;
+  }
+
+  assert(chunkStartX == chunkEndX || chunkStartZ == chunkEndZ);
+  assert(startX == endX || startZ == endZ);
+
+  deque<Chunk*> nextChunkDeque;
   // now, only one of these should iterate more than once
   for(int x = startX; x <= endX; x++) {
     for(int z = startZ; x <= endZ; z++) {
       Coordinate regionCoords{x,z};
       auto region = getRegion(regionCoords);
       for(auto chunk: region) {
-        // TODO: add chunk to the deque
+        if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
+           chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
+
+          // TODO: translate these from foreignChunk
+          int worldChunkX = 0;
+          int worldChunkZ = 0;
+
+          nextChunkDeque.push_back(new Chunk(worldChunkX, 0, worldChunkZ));
+        }
       }
     }
   }
