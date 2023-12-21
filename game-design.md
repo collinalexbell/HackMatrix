@@ -14,7 +14,7 @@ Persistent continuous action.
 ### Goal
 150k
 ### MVDemo
-- Hackwits castle
+- HackMatrix castle
 - Rendering a 2nd matrix into a framebuffer (to directly draw to screen
     (and mimick wayland))
 - Processes as owls
@@ -26,10 +26,6 @@ Thats it... thats all I will need
     - Follow interest curves (I don't know how I'll do this).
 
 ### Perks
-200$: Choose one of the 3 user selected playable cities
-300$: Choose one of the 3 user selected playable cities
-500$: Choose one of the 3 user selected playable cities
-
 ### Final Evaluation of the Lenses
 I should do a final evaluation of lenses
 to ensure that the game is most impactful
@@ -45,10 +41,28 @@ I need 150k to live a full free year in Portland Oregon
     - expiriment
     - love
 
+## Altered Perceptual Experiences of the Game
+After recieving funding, I will create 2 altered perceptual experiences of my game.
+### Cannabis (0.5-1.5g; a big dose)
+### Lucy (150-200ug)
 
+## Multiplayer
+### Style
+- Cooperative
+- Meeting up
+### Voice chat
+- How will players choose when to talk with someone (or have it be chosen for them?)
+### Avitars
+### Screen sharing
+### Space sharing
+### Events
+### Permissions
 
-
-# HackMatrix (v1+x)
+### Guilds/houses
+I want these to form naturally,
+so I will build the infrastructure once
+informal groups form.
+# HackMatrix (v1+x ... x could be 0)
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
 - It gives people mental power
@@ -553,22 +567,6 @@ What did I call these years ago? Daemons... prior to that?
 The policy on characters is that users should create them
 and put them into the world
 
-## Multiplayer
-### Style
-- Cooperative
-- Meeting up
-### Voice chat
-- How will players choose when to talk with someone (or have it be chosen for them?)
-### Avitars
-### Screen sharing
-### Space sharing
-### Events
-### Permissions
-
-### Guilds/houses
-I want these to form naturally,
-so I will build the infrastructure once
-informal groups form.
 ## Architecture
 How do I give the architecture a timeless, essential quality (way of timeless building)
 - Procedurally generated buildings
@@ -586,10 +584,5 @@ How do I give the architecture a timeless, essential quality (way of timeless bu
 - Many code mages
 - Occult symbols
 - Lots of purple
-
-## Altered Perceptual Experiences of the Game
-After recieving funding, I will create 2 altered perceptual experiences of my game.
-### Cannabis (0.5-1.5g; a big dose)
-### Lucy (150-200ug)
 
 ## Backstory
