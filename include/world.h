@@ -71,7 +71,6 @@ struct LoaderChunk {
   vector<LoaderCube> cubePositions;
 };
 
-
 enum DIRECTION {
   NORTH, SOUTH, EAST, WEST
 };

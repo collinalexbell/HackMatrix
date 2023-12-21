@@ -322,9 +322,16 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
   // now, only one of these should iterate more than once
   for(int x = startX; x <= endX; x++) {
     for(int z = startZ; x <= endZ; z++) {
-      // loadRegion, but a version that retuns a deque
+      Coordinate regionCoords{x,z};
+      auto region = getRegion(regionCoords);
+      for(auto chunk: region) {
+        // TODO: add chunk to the deque
+      }
     }
   }
+  // TODO: sort the deque by chunk coords
+
+  // TODO: return it
   return deque<Chunk*>();
 }
 
