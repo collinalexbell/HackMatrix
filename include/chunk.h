@@ -22,7 +22,7 @@ struct ChunkPosition {
 class Chunk {
   int posX,posY,posZ;
   static int findNeighborFaceIndex(Face face);
-  const vector<int> size = {32, 256, 32};
+  static const vector<int> size;
   unique_ptr<Cube* []> data;
   Cube null = Cube(glm::vec3(0, 0, 0), -1);
   int index(int x, int y, int z);
@@ -46,6 +46,6 @@ public:
   ChunkCoords getCoords(int i);
   shared_ptr<ChunkMesh> mesh(bool realTime);
   ChunkMesh meshedFaceFromPosition(Position position);
-  const vector<int> getSize();
+  static const vector<int> getSize();
   ChunkPosition getPosition();
 };

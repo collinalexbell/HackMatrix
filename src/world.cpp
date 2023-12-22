@@ -294,7 +294,11 @@ void World::loadChunksIfNeccissary() {
 }
 
 Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ) {
-  return Coordinate{0, 0};
+  auto matrixChunkSize = Chunk::getSize();
+  vector<int> minecraftChunkSize = {16,16,256};
+  auto x = matrixChunkX*matrixChunkSize[0]/minecraftChunkSize[0];
+  auto z = matrixChunkZ * matrixChunkSize[2] / minecraftChunkSize[2];
+  return Coordinate{x, z};
 }
 
 Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {

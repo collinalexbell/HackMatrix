@@ -10,6 +10,8 @@ Chunk::Chunk(int x, int y, int z): posX(x), posY(y), posZ(z) {
   }
 }
 
+const vector<int> Chunk::size = {32, 256, 32};
+
 Chunk::Chunk() {
   posX = 0; posY=0; posZ=0;
   mesher = make_unique<Mesher>(posX, posZ);
