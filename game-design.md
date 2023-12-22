@@ -481,6 +481,7 @@ $ watch blocks do stuff
 - VRChat like muting system... etc
 ### Griefing strategy
 - Make worlds mostly uneditable.
+- AI screen sharing NSFW detection combined with user reporting
 
 ## Technology
 $ X Window to allow IDE
