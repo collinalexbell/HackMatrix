@@ -308,8 +308,11 @@ Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
 }
 
 Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ) {
-  //TODO: implement
-  return Coordinate{0, 0};
+  auto matrixChunkSize = Chunk::getSize();
+  vector<int> minecraftChunkSize = {16, 16, 256};
+  auto x = minecraftChunkX * minecraftChunkSize[0] / matrixChunkSize[0];
+  auto z = minecraftChunkZ * minecraftChunkSize[2] / matrixChunkSize[2];
+  return Coordinate{x, z};
 }
 
 // Comparison function to sort by smallest x, z
