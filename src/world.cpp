@@ -302,7 +302,9 @@ Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ) {
 }
 
 Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
-  return Coordinate{0, 0};
+  vector<int> regionSize = {32, 32};
+  assert(ENKI_MI_REGION_CHUNKS_NUMBER == regionSize[0]*regionSize[1]);
+  return Coordinate{minecraftChunkX/regionSize[0], minecraftChunkZ/regionSize[0]};
 }
 
 Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ) {
