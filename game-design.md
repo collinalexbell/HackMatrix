@@ -62,6 +62,7 @@ After recieving funding, I will create 2 altered perceptual experiences of my ga
 I want these to form naturally,
 so I will build the infrastructure once
 informal groups form.
+## Events
 # HackMatrix (v1+x ... x could be 0)
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
