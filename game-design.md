@@ -482,6 +482,7 @@ $ watch blocks do stuff
 ### Griefing strategy
 - Make worlds mostly uneditable.
 - AI screen sharing NSFW detection combined with user reporting
+- Connect real world social media to the world (to prevent anonymous griefing)
 
 ## Technology
 $ X Window to allow IDE
