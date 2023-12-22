@@ -43,7 +43,7 @@ void WM::createAndRegisterApps(char **envp) {
                 microsoftEdge, envp);
   forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
                 envp);
-  forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
+  //forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
 
   logger->info("exit createAndRegisterApps()");
 }
@@ -93,7 +93,7 @@ void WM::addAppsToWorld() {
   world->addApp(terminator);
   world->addApp(emacs);
   world->addApp(microsoftEdge);
-  world->addApp(obs);
+  //world->addApp(obs);
 }
 
 void WM::createApp(Window window) {
@@ -132,7 +132,7 @@ void WM::onDestroyNotify(XDestroyWindowEvent event) {
 void WM::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-  vector<X11App*> appsWithHotKeys = {emacs, microsoftEdge, terminator, obs};
+  vector<X11App*> appsWithHotKeys = {emacs, microsoftEdge, terminator};
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
