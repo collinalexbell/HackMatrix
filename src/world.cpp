@@ -301,6 +301,21 @@ Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
   return Coordinate{0, 0};
 }
 
+Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ) {
+  return Coordinate{0, 0};
+}
+
+// Comparison function to sort by smallest x, z
+bool sortByXZ(Chunk* chunk1, Chunk* chunk2) {
+  auto pos1 = chunk1->getPosition();
+  auto pos2 = chunk2->getPosition();
+  if (pos1.x != pos2.x) {
+    return pos1.x < pos2.x;
+  } else {
+    return pos1.z < pos2.z;
+  }
+}
+
 deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                          array<Coordinate, 2> regionCoords) {
 
@@ -343,20 +358,16 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
       for(auto chunk: region) {
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
-
-          // TODO: translate these from foreignChunk
-          int worldChunkX = 0;
-          int worldChunkZ = 0;
-
-          nextChunkDeque.push_back(new Chunk(worldChunkX, 0, worldChunkZ));
+          auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
+          nextChunkDeque.push_back(new Chunk(worldChunkPos.x, 0, worldChunkPos.z));
         }
       }
     }
   }
-  // TODO: sort the deque by chunk coords
 
-  // TODO: return it
-  return deque<Chunk*>();
+  std::sort(nextChunkDeque.begin(), nextChunkDeque.end(), sortByXZ);
+
+  return nextChunkDeque;
 }
 
 OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE side) {
