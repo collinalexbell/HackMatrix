@@ -26,6 +26,12 @@ Thats it... thats all I will need
     - Follow interest curves (I don't know how I'll do this).
 
 ### Perks
+#### Instutional sponsorship plaque:
+Are you a University or Corporation that wants to support HackMatrix?
+This perk will allow you to put a unique sponsorship plaque.
+#### Instutional sponsorship monument:
+Are you a University or Corporation that wants to support HackMatrix?
+This perk will allow you to put a unique sponsorship monument into the game.
 ### Final Evaluation of the Lenses
 I should do a final evaluation of lenses
 to ensure that the game is most impactful
