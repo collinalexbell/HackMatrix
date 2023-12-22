@@ -478,6 +478,8 @@ $ watch blocks do stuff
   - if permissions of course
 - talk with others
 - VRChat like muting system... etc
+### Griefing strategy
+- Make worlds mostly uneditable.
 
 ## Technology
 $ X Window to allow IDE
