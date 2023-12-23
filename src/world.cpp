@@ -369,7 +369,9 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
   // now, only one of these should iterate more than once
   for(int x = startX; x <= endX; x++) {
     for(int z = startZ; x <= endZ; z++) {
+
       Coordinate regionCoords{x,z};
+
       auto region = getRegion(regionCoords);
       for(auto chunk: region) {
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
@@ -426,10 +428,14 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
     getMinecraftChunkPos(matrixChunkPositions[0].x, matrixChunkPositions[0].z),
     getMinecraftChunkPos(matrixChunkPositions[1].x, matrixChunkPositions[1].z)
   };
+
+  // TODO:: fix regionCoordinate being {x=0,z=6} 
   array<Coordinate, 2> minecraftRegions = {
     getMinecraftRegion(minecraftChunkPositions[0].x, minecraftChunkPositions[0].z),
     getMinecraftRegion(minecraftChunkPositions[1].x, minecraftChunkPositions[1].z)
   };
+
+
 
   auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
@@ -969,11 +975,14 @@ vector<LoaderChunk> World::getRegion(Coordinate regionCoordinate) {
   // copy contents of loadRegion except for addCube (which get converted to push_back())
   // in loadRegion, iterate over the chunks and cubes: call addCube()
 
+
   vector<LoaderChunk> chunks;
 
   map<int, int> counts;
+  // TODO:: fix path
   string path = regionFiles[regionCoordinate];
   FILE *fp = fopen(path.c_str(), "rb");
+  // TODO: fix region file loading
   enkiRegionFile regionFile = enkiRegionFileLoad(fp);
   logger->critical(path);
   logger->flush();
