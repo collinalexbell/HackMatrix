@@ -16,6 +16,7 @@ In a way, attention is love.
 - I love that I understand how it works
 - I love that its design is rooted in many years of thought
 - I love that it wwill evolve to help me with robotics
+- I love that it is the first product I've worked on since discovering communication with God
 
 ## Deadline:
 New Years submit for review. Launch on my birthday.
