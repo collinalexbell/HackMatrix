@@ -3,6 +3,11 @@ In this game, you will code your own 3d desktop environment
 
 ## Love
 How do I increase love for my game?
+
+Give it loving attention.
+Attention will increase love.
+In a way, attention is love.
+
 ## Deadline:
 New Years submit for review. Launch on my birthday.
 
