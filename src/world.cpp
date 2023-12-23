@@ -344,10 +344,24 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
     startX = regionCoords[0].x;
     endX = regionCoords[1].x;
   } else {
-    startZ = regionCoords[0].z;
-    endZ = regionCoords[1].z;
+    startX = regionCoords[1].x;
+    endX = regionCoords[0].x;
   }
 
+  if (regionCoords[0].z < regionCoords[1].z) {
+    startZ = regionCoords[0].z;
+    endZ = regionCoords[1].z;
+  } else {
+    startZ = regionCoords[1].z;
+    endZ = regionCoords[0].z;
+  }
+
+  stringstream regionsDebug;
+  regionsDebug << "regionCoords: (("
+               << startX << "," << startZ << "),"
+               << "("  << endX << "," << endZ << "))" << endl;
+  logger->debug(regionsDebug.str());
+  logger->flush();
 
   int chunkStartX;
   int chunkEndX;
@@ -368,7 +382,7 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
   deque<Chunk*> nextChunkDeque;
   // now, only one of these should iterate more than once
   for(int x = startX; x <= endX; x++) {
-    for(int z = startZ; x <= endZ; z++) {
+    for(int z = startZ; z <= endZ; z++) {
 
       Coordinate regionCoords{x,z};
 
@@ -429,13 +443,45 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
     getMinecraftChunkPos(matrixChunkPositions[1].x, matrixChunkPositions[1].z)
   };
 
-  // TODO:: fix regionCoordinate being {x=0,z=6} 
   array<Coordinate, 2> minecraftRegions = {
     getMinecraftRegion(minecraftChunkPositions[0].x, minecraftChunkPositions[0].z),
     getMinecraftRegion(minecraftChunkPositions[1].x, minecraftChunkPositions[1].z)
   };
 
+  stringstream positionDebugStream;
+  positionDebugStream << "matrixChunk: (("
+                      << matrixChunkPositions[0].x
+                      << ","
+                      << matrixChunkPositions[0].z
+                      << "),("
+                      << matrixChunkPositions[1].x
+                      << ","
+                      << matrixChunkPositions[1].z
+                      << "))"
+                      << endl
+                      << "minecraftChunk: (("
+                      << minecraftChunkPositions[0].x
+                      << ","
+                      << minecraftChunkPositions[0].z
+                      << "),("
+                      << minecraftChunkPositions[1].x
+                      << ","
+                      << minecraftChunkPositions[1].z
+                      << "))"
+                      << endl
+                      << "minecraftRegions: (("
+                      << minecraftRegions[0].x
+                      << ","
+                      << minecraftRegions[0].z
+                      << "),("
+                      << minecraftRegions[1].x
+                      << ","
+                      << minecraftRegions[1].z
+                      << "))"
+                      << endl;
 
+  logger->debug(positionDebugStream.str());
+  logger->flush();
 
   auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
