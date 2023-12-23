@@ -8,6 +8,15 @@ Give it loving attention.
 Attention will increase love.
 In a way, attention is love.
 
+### What do I love about v1?
+- It is the first software creation of mine that has recieve 100k views and 10k likes.
+- It replaces my desktop environment
+- It gives me hope for the future off computing
+- I love that it is written in C++
+- I love that I understand how it works
+- I love that its design is rooted in many years of thought
+- I love that it wwill evolve to help me with robotics
+
 ## Deadline:
 New Years submit for review. Launch on my birthday.
 
