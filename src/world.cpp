@@ -230,14 +230,19 @@ void World::loadChunksIfNeccissary() {
 
     // add chunks to preloaded
     // this allocates, so I could do this off thread
+    /*
     deque<Chunk *> toAdd;
     auto pos = chunks[0][0]->getPosition();
     auto size = chunks[0][0]->getSize();
     for(int i = 0; i < chunks[0].size(); i++) {
-      toAdd.push_back(new Chunk(pos.x-1-preloadedChunks[WEST].size(), pos.y, pos.z+i));
+      toAdd.push_back(new Chunk(pos.x-1-preloadedChunks[WEST].size(), pos.y,
+    pos.z+i));
     }
     preloadedChunks[WEST].push_back(toAdd);
-    int sign = std::signbit(pos.z) ? -1 : 1;
+    */
+
+    loadNextPreloadedChunkDeque(WEST);
+    //int sign = std::signbit(pos.z) ? -1 : 1;
 
     /*
     for(int i = 0; i<size[0]; i++) {
@@ -272,6 +277,7 @@ void World::loadChunksIfNeccissary() {
     for (int i = 0; i < chunks[0].size(); i++) {
       toAdd.push_back(new Chunk(pos.x+1+preloadedChunks[EAST].size(), pos.y, pos.z + i));
     }
+
     preloadedChunks[EAST].push_back(toAdd);
 
     /*
