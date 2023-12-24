@@ -487,6 +487,8 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
   auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
   // add main direction preload
+  // TODO: fix this problem
+  assert(next.size() > PRELOAD_SIZE);
   preloadedChunks[direction].push_back(deque<Chunk*>(next.begin()+PRELOAD_SIZE,
                                                      next.end()-PRELOAD_SIZE));
 
