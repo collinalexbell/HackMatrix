@@ -387,6 +387,7 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
       Coordinate regionCoords{x,z};
 
       auto region = getRegion(regionCoords);
+      // TODO: some deque is getting to large(maybe in an infinite loop?). fix
       for(auto chunk: region) {
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
