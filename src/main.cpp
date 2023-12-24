@@ -57,6 +57,7 @@ int main(int argc, char** argv, char** envp) {
 
   } catch (const std::exception &e) {
     // signal error to the trampoline
-    return -1;
+    //return -1;
+    throw;
   }
 }
