@@ -122,9 +122,9 @@ class World {
   void initLogger();
   void loadChunksIfNeccissary();
   void initPreloadedChunks();
+  void logCoordinates(array<Coordinate, 2> c, string label);
 
-public:
-  void tick();
+public : void tick();
   const float CUBE_SIZE = 0.1;
   World(Camera *camera, bool debug = false);
   ~World();
