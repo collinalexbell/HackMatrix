@@ -89,6 +89,11 @@ so I will build the infrastructure once
 informal groups form.
 ## Events
 - HackMatrix opening ceremony?
+## TODO
+- get castle loaded
+- fix performance issues
+- create video
+- create perks
 # HackMatrix (v1+x ... x could be 0)
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
