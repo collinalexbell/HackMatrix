@@ -20,6 +20,7 @@ In a way, attention is love.
 - I love that it is the first product I've worked on since discovering communication with God
 - I love that it is my last stand. That this is the product I have decided will succeed.
 - I love that this is a genre of game no one has attempted
+- I love that it could function as Mission Match
 
 ## Deadline:
 New Years submit for review. Launch on my birthday.
