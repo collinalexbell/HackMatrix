@@ -521,6 +521,15 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
   logger->debug(positionDebugStream.str());
   logger->flush();
 
+  // TODO: fix this
+  // minecraftChunkPositions are absolute
+  // I need positions relative to the minecraft region
+  // abs(pos) % 32
+  // subtract from 31 if pos is negative.
+  // ex1: -32, -32
+  //       0,   0
+  //       31, 31
+  // region -2, -2
   auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
   // add main direction preload
