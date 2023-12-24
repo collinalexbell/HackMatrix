@@ -301,21 +301,35 @@ void World::loadChunksIfNeccissary() {
 
 Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ) {
   auto matrixChunkSize = Chunk::getSize();
-  vector<int> minecraftChunkSize = {16,16,256};
+  vector<int> minecraftChunkSize = {16,256,16};
   auto x = matrixChunkX*matrixChunkSize[0]/minecraftChunkSize[0];
   auto z = matrixChunkZ * matrixChunkSize[2] / minecraftChunkSize[2];
   return Coordinate{x, z};
 }
 
 Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
+  // TODO: my understanding about how chunk regions work is wrong
+  // the foreign chunk position is relative to the region I believe
+  // this is working with absolute chunk positions.
   vector<int> regionSize = {32, 32};
   assert(ENKI_MI_REGION_CHUNKS_NUMBER == regionSize[0]*regionSize[1]);
-  return Coordinate{minecraftChunkX/regionSize[0], minecraftChunkZ/regionSize[0]};
+  int subtractorX = 0;
+  int subtractorZ = 0;
+  if(minecraftChunkX < 0) {
+    subtractorX = 1;
+  }
+  if(minecraftChunkZ < 0) {
+    subtractorZ = 1;
+  }
+  return Coordinate{
+    minecraftChunkX/regionSize[0]-subtractorX,
+    minecraftChunkZ/regionSize[0]-subtractorZ
+  };
 }
 
 Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ) {
   auto matrixChunkSize = Chunk::getSize();
-  vector<int> minecraftChunkSize = {16, 16, 256};
+  vector<int> minecraftChunkSize = {16,256,16};
   auto x = minecraftChunkX * minecraftChunkSize[0] / matrixChunkSize[0];
   auto z = minecraftChunkZ * minecraftChunkSize[2] / matrixChunkSize[2];
   return Coordinate{x, z};
@@ -330,6 +344,17 @@ bool sortByXZ(Chunk* chunk1, Chunk* chunk2) {
   } else {
     return pos1.z < pos2.z;
   }
+}
+
+void World::logCoordinates(array<Coordinate,2> c, string label) {
+  stringstream ss;
+  ss << label << ": (("
+     << c[0].x << "," << c[0].z
+     << "),("
+     << c[1].x << "," << c[1].z
+     << "))";
+  logger->critical(ss.str());
+  logger->flush();
 }
 
 deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
@@ -372,12 +397,24 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
     chunkStartX = chunkCoords[0].x;
     chunkEndX = chunkCoords[1].x;
   } else {
+    chunkStartX = chunkCoords[1].x;
+    chunkEndX = chunkCoords[0].x;
+  }
+
+  if (chunkCoords[0].z < chunkCoords[1].z) {
     chunkStartZ = chunkCoords[0].z;
     chunkEndZ = chunkCoords[1].z;
+  } else {
+    chunkStartZ = chunkCoords[1].z;
+    chunkEndZ = chunkCoords[0].z;
   }
 
   assert(chunkStartX == chunkEndX || chunkStartZ == chunkEndZ);
   assert(startX == endX || startZ == endZ);
+
+  logCoordinates({Coordinate{chunkStartX, chunkStartZ},
+                  Coordinate{chunkEndX, chunkEndZ}},
+                 "chunkStart");
 
   deque<Chunk*> nextChunkDeque;
   // now, only one of these should iterate more than once
