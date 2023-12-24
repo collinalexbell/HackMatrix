@@ -1,6 +1,7 @@
 # HackMatrix (v1)
 In this game, you will code your own 3d desktop environment
-
+## Financial Goal
+150,000$
 ## Love
 How do I increase love for my game?
 
