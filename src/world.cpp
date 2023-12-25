@@ -554,7 +554,7 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
     i++;
   }
 
-  auto rightChunks = deque<Chunk *>(next.begin()-PRELOAD_SIZE, next.end());
+  auto rightChunks = deque<Chunk *>(next.end()-PRELOAD_SIZE, next.end());
   OrthoginalPreload preloadRight = orthoginalPreload(direction, preload::RIGHT);
   i = 0;
   for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end(); toAdd++) {
