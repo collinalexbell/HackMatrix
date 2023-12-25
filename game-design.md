@@ -1,5 +1,8 @@
 # HackMatrix (v1)
 In this game, you will code your own 3d desktop environment
+## Mechanic
+- Conceptual excercises and quests based on structures
+  and algorithms needed to build the 3d desktop environment
 ## Financial Goal
 150,000$
 ## Love
