@@ -92,6 +92,10 @@ so I will build the infrastructure once
 informal groups form.
 ## Events
 - HackMatrix opening ceremony?
+## What are things that have the highest value to the backer
+- A high quality place (HackMatrix castle)
+- Multiplayer (to be implemented)
+- A desire to use the system
 ## TODO
 - get castle loaded
 - fix performance issues
