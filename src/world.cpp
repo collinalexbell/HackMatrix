@@ -322,9 +322,6 @@ Coordinate getRelativeMinecraftChunkPos(int minecraftChunkX, int minecraftChunkZ
 }
 
 Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
-  // TODO: my understanding about how chunk regions work is wrong
-  // the foreign chunk position is relative to the region I believe
-  // this is working with absolute chunk positions.
   vector<int> regionSize = {32, 32};
   assert(ENKI_MI_REGION_CHUNKS_NUMBER == regionSize[0]*regionSize[1]);
   int subtractorX = 0;
@@ -438,13 +435,11 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
       Coordinate regionCoords{x,z};
 
       auto region = getRegion(regionCoords);
-      // TODO: some deque is getting to large(maybe in an infinite loop?). fix
       for(auto chunk: region) {
         logger->critical(chunk.foreignChunkX);
         logger->flush();
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
-          // TODO: this will need to change, because foreignChunkX is presumably relative
           auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
           nextChunkDeque.push_back(new Chunk(worldChunkPos.x, 0, worldChunkPos.z));
         }
@@ -538,19 +533,8 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
   logger->debug(positionDebugStream.str());
   logger->flush();
 
-  // TODO: fix this
-  // minecraftChunkPositions are absolute
-  // I need positions relative to the minecraft region
-  // abs(pos) % 32
-  // subtract from 31 if pos is negative.
-  // ex1: -32, -32
-  //       0,   0
-  //       31, 31
-  // region -2, -2
   auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
-  // add main direction preload
-  // TODO: fix this problem
   assert(next.size() > PRELOAD_SIZE);
   preloadedChunks[direction].push_back(deque<Chunk*>(next.begin()+PRELOAD_SIZE,
                                                      next.end()-PRELOAD_SIZE));
@@ -1091,10 +1075,8 @@ vector<LoaderChunk> World::getRegion(Coordinate regionCoordinate) {
   vector<LoaderChunk> chunks;
 
   map<int, int> counts;
-  // TODO:: fix path
   string path = regionFiles[regionCoordinate];
   FILE *fp = fopen(path.c_str(), "rb");
-  // TODO: fix region file loading
   enkiRegionFile regionFile = enkiRegionFileLoad(fp);
   logger->critical(path);
   logger->flush();
