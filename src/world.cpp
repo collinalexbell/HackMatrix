@@ -307,6 +307,20 @@ Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ) {
   return Coordinate{x, z};
 }
 
+Coordinate getRelativeMinecraftChunkPos(int minecraftChunkX, int minecraftChunkZ) {
+  vector<int> regionSize = {32, 32};
+  assert(ENKI_MI_REGION_CHUNKS_NUMBER == regionSize[0] * regionSize[1]);
+  int x = abs(minecraftChunkX) % 32;
+  int z = abs(minecraftChunkZ) % 32;
+  if(minecraftChunkX < 0) {
+    x = 31 - x;
+  }
+  if(minecraftChunkZ < 0) {
+    z = 31 - z;
+  }
+  return Coordinate{x,z};
+}
+
 Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
   // TODO: my understanding about how chunk regions work is wrong
   // the foreign chunk position is relative to the region I believe
@@ -426,8 +440,11 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
       auto region = getRegion(regionCoords);
       // TODO: some deque is getting to large(maybe in an infinite loop?). fix
       for(auto chunk: region) {
+        logger->critical(chunk.foreignChunkX);
+        logger->flush();
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
+          // TODO: this will need to change, because foreignChunkX is presumably relative
           auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
           nextChunkDeque.push_back(new Chunk(worldChunkPos.x, 0, worldChunkPos.z));
         }
@@ -1087,12 +1104,12 @@ vector<LoaderChunk> World::getRegion(Coordinate regionCoordinate) {
     if(stream.dataLength) {
       enkiChunkBlockData aChunk = enkiNBTReadChunk(&stream);
       enkiMICoordinate chunkOriginPos = enkiGetChunkOrigin(&aChunk); // y always 0
-      int chunkX = chunkOriginPos.x;
-      int chunkZ = chunkOriginPos.z;
+      int chunkXPos = chunkOriginPos.x;
+      int chunkZPos = chunkOriginPos.z;
       LoaderChunk lChunk;
-      lChunk.foreignChunkX = chunkX;
+      lChunk.foreignChunkX = chunkXPos / 16;
       lChunk.foreignChunkY = 0;
-      lChunk.foreignChunkZ = chunkZ;
+      lChunk.foreignChunkZ = chunkZPos / 16;
       chunks.push_back(lChunk);
       for (int section = 0; section < ENKI_MI_NUM_SECTIONS_PER_CHUNK; ++section) {
         if (aChunk.sections[section]) {
