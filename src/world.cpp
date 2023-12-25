@@ -436,8 +436,6 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
 
       auto region = getRegion(regionCoords);
       for(auto chunk: region) {
-        logger->critical(chunk.foreignChunkX);
-        logger->flush();
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
           auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
@@ -584,6 +582,8 @@ array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION directio
     zAddition = -1;
     break;
   }
+
+  // TODO: fix this off by one error when getting these positions
   array<ChunkPosition, 2> positions = {
     preloadedChunks[direction].back().back()->getPosition(),
     preloadedChunks[direction].back().front()->getPosition()
