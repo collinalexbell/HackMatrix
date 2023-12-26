@@ -25,6 +25,7 @@ In a way, attention is love.
 - I love that this is a genre of game no one has attempted
 - I love that it could function as Mission Match
 - This will be my first significant success
+- It is the first 3d game I'll have produced
 
 ## Deadline:
 New Years submit for review. Launch on my birthday.
