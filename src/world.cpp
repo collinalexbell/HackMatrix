@@ -574,18 +574,23 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
 
 array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION direction) {
   int xAddition = 0, zAddition = 0;
+  int xExpand=0, zExpand=0;
   switch (direction) {
   case WEST:
     xAddition = -1;
+    zExpand = PRELOAD_SIZE;
     break;
   case EAST:
     xAddition = 1;
+    zExpand = PRELOAD_SIZE;
     break;
   case NORTH:
     zAddition = 1;
+    xExpand = PRELOAD_SIZE;
     break;
   case SOUTH:
     zAddition = -1;
+    xExpand = PRELOAD_SIZE;
     break;
   }
 
@@ -596,9 +601,18 @@ array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION directio
   };
 
   positions[0].x += xAddition;
+  positions[0].x -= xExpand;
+
   positions[0].z += zAddition;
+  positions[0].z -= zExpand;
+
+
   positions[1].x += xAddition;
+  positions[1].x += xExpand;
+
   positions[1].z += zAddition;
+  positions[1].z += zExpand;
+
   return positions;
 }
 
