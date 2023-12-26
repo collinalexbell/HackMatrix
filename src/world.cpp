@@ -594,8 +594,11 @@ array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION directio
 
   // TODO: fix this off by one error when getting these positions
   array<ChunkPosition, 2> positions = {
-    preloadedChunks[direction].back().back()->getPosition(),
-    preloadedChunks[direction].back().front()->getPosition()
+    // Lets make sure these are sorted properly...
+    // the front should be the smallest...
+    // at least according to initChunks
+    preloadedChunks[direction].back().front()->getPosition(),
+    preloadedChunks[direction].back().back()->getPosition()
   };
 
   positions[0].x += xAddition;
