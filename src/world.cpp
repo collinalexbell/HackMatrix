@@ -535,8 +535,6 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
   stringstream sizeSS;
   sizeSS << "alreadyLoaded:"<< preloadedChunks[direction][0].size()+2*PRELOAD_SIZE << ", next:" << next.size();
   logger->critical(sizeSS.str());
-  // It is off by 4 on either side. I don't know why.
-  // Sometimes it is under, sometimes over.
 
 
   assert(next.size() > PRELOAD_SIZE);
