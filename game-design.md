@@ -1,5 +1,57 @@
-# HackMatrix (v1)
-In this game, you will code your own 3d desktop environment
+# HackMatrix
+## Kickstarter
+### Goal
+150k
+### The Play
+Show my values.
+Show how I've incorporated my values into HackMatrix.
+Show how I will incorporate my values into the finished product.
+Be authentic and sell from that position.
+This is a sales play. If I make the sale, the product will follow.
+Promise the world and then I will deliver. I can do this.
+### MVDemo
+- HackMatrix castle
+- Rendering a 2nd matrix into a framebuffer (to directly draw to screen
+    (and mimick wayland))
+- Processes as owls
+Thats it... thats all I will need
+### Video
+    - Story
+    - Show Mechanics
+    - Show World
+    - Follow interest curves (I don't know how I'll do this).
+
+### Perks
+#### Instutional sponsorship plaque:
+Are you a University or Corporation that wants to support HackMatrix?
+This perk will allow you to put a unique sponsorship plaque.
+#### Instutional sponsorship monument:
+Are you a University or Corporation that wants to support HackMatrix?
+This perk will allow you to put a unique sponsorship monument into the game.
+### Final Evaluation of the Lenses
+I should do a final evaluation of lenses
+to ensure that the game is most impactful
+before I hit the ship button.
+I can do this after I submit for review (while waiting for review)
+
+
+### Why
+I need 150k to live a full free year in Portland Oregon
+    So I can:
+    - read
+    - meditate
+    - expiriment
+    - love
+
+## Deadline:
+New Years submit for review. Launch on my birthday.
+
+I will succeed.
+How?
+
+Faith. A mind closed to failure.
+Persistent continuous action.
+
 ## Design Mindset
 ### I am building a Jewel
 I have something here. I just need to add more material to the kernel
@@ -42,52 +94,6 @@ In a way, attention is love.
 - This will be my first significant success
 - It is the first 3d game I'll have produced
 
-## Deadline:
-New Years submit for review. Launch on my birthday.
-
-I will succeed.
-How?
-
-Faith. A mind closed to failure.
-Persistent continuous action.
-
-## Kickstarter
-### Goal
-150k
-### MVDemo
-- HackMatrix castle
-- Rendering a 2nd matrix into a framebuffer (to directly draw to screen
-    (and mimick wayland))
-- Processes as owls
-Thats it... thats all I will need
-### Video
-    - Story
-    - Show Mechanics
-    - Show World
-    - Follow interest curves (I don't know how I'll do this).
-
-### Perks
-#### Instutional sponsorship plaque:
-Are you a University or Corporation that wants to support HackMatrix?
-This perk will allow you to put a unique sponsorship plaque.
-#### Instutional sponsorship monument:
-Are you a University or Corporation that wants to support HackMatrix?
-This perk will allow you to put a unique sponsorship monument into the game.
-### Final Evaluation of the Lenses
-I should do a final evaluation of lenses
-to ensure that the game is most impactful
-before I hit the ship button.
-I can do this after I submit for review (while waiting for review)
-
-
-### Why
-I need 150k to live a full free year in Portland Oregon
-    So I can:
-    - read
-    - meditate
-    - expiriment
-    - love
-
 ## Altered Perceptual Experiences of the Game
 After recieving funding, I will create 2 altered perceptual experiences of my game.
 ### Cannabis (0.5-1.5g; a big dose)
@@ -120,7 +126,6 @@ informal groups form.
 - fix performance issues
 - create video
 - create perks
-# HackMatrix (v1+x ... x could be 0)
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
 - It gives people mental power
