@@ -439,6 +439,13 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
           auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
+
+          // TODO: this is creating minecraft sized chunks
+          // I need to somehow translate
+          // the chunk positions to actual chunk
+          // Also, I need to add the cube positions the chunk itself!
+          // right now it is definitely not doing that.
+
           nextChunkDeque.push_back(new Chunk(worldChunkPos.x, 0, worldChunkPos.z));
         }
       }
