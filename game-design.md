@@ -1,5 +1,9 @@
 # HackMatrix (v1)
 In this game, you will code your own 3d desktop environment
+## Design Mindset
+### I am building a Jewel
+I have something here. I just need to add more material to the kernel
+and compress it hard enough. Slow, methodical, consitent compression.
 ## Mechanic
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
@@ -433,20 +437,6 @@ V Blow stuff up with placed charges that have customizable size!
 - The world should be free
 
 
-
-## Design Mindset
-### I am building a Jewel
-I have something here. I just need to add more material to the kernel
-and compress it hard enough. Slow, methodical, consitent compression.
-
-```
-$ implemented
-~ kindof have it
-* working on
-- committed
-? maybe
-V probably not
-```
 
 ## Interface
 Minimal currently. Probably needs a bit more of something.
