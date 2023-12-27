@@ -428,8 +428,9 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                  "chunkStart");
 
   deque<Chunk*> nextChunkDeque;
-  // now, only one of these should iterate more than once
-  for(int x = startX; x <= endX; x++) {
+  unordered_map < Coordinate, Chunk*, CoordinateHash> nextChunks;
+      // now, only one of these should iterate more than once
+  for (int x = startX; x <= endX; x++) {
     for(int z = startZ; z <= endZ; z++) {
 
       Coordinate regionCoords{x,z};
@@ -440,16 +441,28 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
           auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
 
-          // TODO: this is creating minecraft sized chunks
-          // I need to somehow translate
-          // the chunk positions to actual chunk
-          // Also, I need to add the cube positions the chunk itself!
-          // right now it is definitely not doing that.
-
-          nextChunkDeque.push_back(new Chunk(worldChunkPos.x, 0, worldChunkPos.z));
+          if(!nextChunks.contains(worldChunkPos)) {
+            Chunk *toAdd = new Chunk(worldChunkPos.x, 0, worldChunkPos.z);
+            nextChunks[worldChunkPos] = toAdd;
+          }
+          for(auto cube: chunk.cubePositions){
+            auto worldPos = translateToWorldPosition(cube.x, cube.y, cube.z);
+            /*
+              TODO: This fails, will need to be fixed
+            assert(worldPos.chunkX == worldChunkPos.x &&
+                   worldPos.chunkZ == worldChunkPos.z);
+            */
+            glm::vec3 pos {worldPos.x, worldPos.y, worldPos.z};
+            Cube c(pos, cube.blockType);
+            nextChunks[worldChunkPos]->addCube(c, worldPos.x, worldPos.y, worldPos.z);
+          }
         }
       }
     }
+  }
+
+  for(auto nextChunk: nextChunks) {
+    nextChunkDeque.push_back(nextChunk.second);
   }
 
   std::sort(nextChunkDeque.begin(), nextChunkDeque.end(), sortByXZ);
