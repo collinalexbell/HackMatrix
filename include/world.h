@@ -100,6 +100,7 @@ class World {
   map<DIRECTION, deque<deque<Chunk*>>> preloadedChunks;
   deque<Chunk*> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                    array<Coordinate, 2> regionCoords);
+  int WORLD_SIZE = 7;
   int PRELOAD_SIZE = 3;
   int damageIndex = -1;
   bool isDamaged = false;
