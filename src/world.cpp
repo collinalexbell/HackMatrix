@@ -43,8 +43,13 @@ void World::initAppPositions() {
 }
 
 void World::initChunks() {
-  int xMin = -5; int xMax = 5;
-  int zMin = -5; int zMax = 5;
+  assert(WORLD_SIZE % 2 == 1);
+
+  int xMin = -1*WORLD_SIZE/2; int xMax = WORLD_SIZE/2;
+  int zMin = -1*WORLD_SIZE/2; int zMax = WORLD_SIZE/2;
+
+  assert(abs(xMin) == xMax);
+  assert(abs(zMin) == zMax);
   for (int x = xMin; x <= xMax; x++) {
     chunks.push_back(deque<Chunk *>());
     for (int z = zMin; z <= zMax; z++) {
