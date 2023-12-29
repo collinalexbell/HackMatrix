@@ -2,6 +2,8 @@
 ## Kickstarter
 ### Goal
 150k
+### Plan
+12 hour hack days until I get the money
 ### The Play
 Show my values.
 Show how I've incorporated my values into HackMatrix.
