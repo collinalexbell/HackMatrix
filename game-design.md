@@ -97,6 +97,9 @@ In a way, attention is love.
 - This will be my first significant success
 - It is the first 3d game I'll have produced
 
+## Playtesting
+How the F am I supposed to play test this thing prior to the Kickstarter
+Perhaps I need to playtest prior to release after the Kickstarter?
 ## Altered Perceptual Experiences of the Game
 After recieving funding, I will create 2 altered perceptual experiences of my game.
 ### Cannabis (0.5-1.5g; a big dose)
