@@ -54,7 +54,7 @@ void Engine::initImGui() {
 void Engine::initialize(){
   wm = new WM(glfwGetX11Window(window));
   camera = new Camera();
-  world = new World(camera, true);
+  world = new World(camera, "/home/collin/hogwarts/region/", true);
   api = new Api("tcp://*:3333", world);
   renderer = new Renderer(camera, world);
   controls = new Controls(wm, world, camera, renderer);
@@ -67,7 +67,7 @@ void Engine::wire() {
   wm->attachWorld(world);
   wm->addAppsToWorld();
   //world->loadLatest();
-  world->loadMinecraft("/home/collin/hogwarts/region/");
+  world->loadMinecraft();
 }
 
 void Engine::renderImGui(double &fps, int frameIndex, const vector<double> &frameTimes) {

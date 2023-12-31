@@ -20,9 +20,10 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-World::World(Camera *camera, bool debug) : camera(camera) {
+World::World(Camera *camera, string minecraftFolder, bool debug) : camera(camera) {
   initLogger();
   initAppPositions();
+  initMinecraft(minecraftFolder);
   initChunks();
 }
 
@@ -95,11 +96,7 @@ void World::initChunks() {
   // WEST
   preloadedChunks[WEST] = deque<deque<Chunk *>>();
   for (int x = xMin - 1; x > xMin - 1 - PRELOAD_SIZE; x--) {
-    deque<Chunk *> oneX;
-    for (int z = zMin; z <= zMax; z++) {
-      oneX.push_back(new Chunk(x, 0, z));
-    }
-    preloadedChunks[WEST].push_back(oneX);
+    loadNextPreloadedChunkDeque(WEST, true);
   }
 
   middleIndex = calculateMiddleIndex();
@@ -512,8 +509,8 @@ OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE si
   return OrthoginalPreload{true, preloadedChunks[NORTH]};
 }
 
-void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
-  auto matrixChunkPositions = getNextPreloadedChunkPositions(direction);
+void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
+  auto matrixChunkPositions = getNextPreloadedChunkPositions(direction, initial);
   // this needs to account for preload edges and doesn't currently
   // the reason is if I preload some WEST and then move NORTH...
   // there will be some NORTH that hasn't been preloaded
@@ -573,45 +570,46 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
   logger->flush();
 
   auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
-  stringstream sizeSS;
-  sizeSS << "alreadyLoaded:"<< preloadedChunks[direction][0].size()+2*PRELOAD_SIZE << ", next:" << next.size();
-  logger->critical(sizeSS.str());
-
 
   assert(next.size() > PRELOAD_SIZE);
-  preloadedChunks[direction].push_back(deque<Chunk*>(next.begin()+PRELOAD_SIZE,
-                                                     next.end()-PRELOAD_SIZE));
 
-  // sides
-  auto leftChunks = deque<Chunk*>(next.begin(), next.begin()+PRELOAD_SIZE);
-  OrthoginalPreload preloadLeft = orthoginalPreload(direction, preload::LEFT);
-  int i = 0;
-  for(auto toAdd = leftChunks.rbegin(); toAdd != leftChunks.rend(); toAdd++) {
-    // iterate front to back of preload deque
-    // (which is why reverse iterator in outerloop)
-    if(preloadLeft.addToFront) {
-      preloadLeft.chunks[i].push_front(*toAdd);
-    } else {
-      preloadLeft.chunks[i].push_back(*toAdd);
-    }
-    i++;
-  }
+  if(initial) {
+    preloadedChunks[direction].push_back(deque<Chunk*>(next.begin(), next.end()));
+  } else {
+    preloadedChunks[direction].push_back(deque<Chunk*>(next.begin()+PRELOAD_SIZE,
+                                                      next.end()-PRELOAD_SIZE));
 
-  auto rightChunks = deque<Chunk *>(next.end()-PRELOAD_SIZE, next.end());
-  OrthoginalPreload preloadRight = orthoginalPreload(direction, preload::RIGHT);
-  i = 0;
-  for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end(); toAdd++) {
-    // front to back of preload is the same orientation as right, outerloop std iterator
-    if (preloadRight.addToFront) {
-      preloadRight.chunks[i].push_front(*toAdd);
-    } else {
-      preloadRight.chunks[i].push_back(*toAdd);
+    // sides
+    auto leftChunks = deque<Chunk*>(next.begin(), next.begin()+PRELOAD_SIZE);
+    OrthoginalPreload preloadLeft = orthoginalPreload(direction, preload::LEFT);
+    int i = 0;
+    for(auto toAdd = leftChunks.rbegin(); toAdd != leftChunks.rend(); toAdd++) {
+      // iterate front to back of preload deque
+      // (which is why reverse iterator in outerloop)
+      if(preloadLeft.addToFront) {
+        preloadLeft.chunks[i].push_front(*toAdd);
+      } else {
+        preloadLeft.chunks[i].push_back(*toAdd);
+      }
+      i++;
     }
-    i++;
+
+    auto rightChunks = deque<Chunk *>(next.end()-PRELOAD_SIZE, next.end());
+    OrthoginalPreload preloadRight = orthoginalPreload(direction, preload::RIGHT);
+    i = 0;
+    for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end(); toAdd++) {
+      // front to back of preload is the same orientation as right, outerloop std iterator
+      if (preloadRight.addToFront) {
+        preloadRight.chunks[i].push_front(*toAdd);
+      } else {
+        preloadRight.chunks[i].push_back(*toAdd);
+      }
+      i++;
+    }
   }
 }
 
-array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION direction) {
+array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION direction, bool initial) {
   int xAddition = 0, zAddition = 0;
   int xExpand=0, zExpand=0;
   switch (direction) {
@@ -633,27 +631,54 @@ array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION directio
     break;
   }
 
-  // TODO: fix this off by one error when getting these positions
-  array<ChunkPosition, 2> positions = {
-    // Lets make sure these are sorted properly...
-    // the front should be the smallest...
-    // at least according to initChunks
-    preloadedChunks[direction].back().front()->getPosition(),
-    preloadedChunks[direction].back().back()->getPosition()
-  };
+  array<ChunkPosition, 2> positions;
+  if(initial) {
+    int xIndex = -1, zIndex = -1;
+    switch(direction) {
+    case NORTH:
+      zIndex = 0;
+      break;
+    case SOUTH:
+      zIndex = chunks[0].size() - 1;
+      break;
+    case EAST:
+      xIndex = chunks.size() - 1;
+      break;
+    case WEST:
+      xIndex = 0;
+      break;
+    }
+    if(xIndex >= 0) {
+      positions = {
+        chunks[xIndex].front()->getPosition(),
+        chunks[xIndex].back()->getPosition()
+      };
+    }
+    if(zIndex >= 0) {
+      positions = {
+        chunks.front()[zIndex]->getPosition(),
+        chunks.back()[zIndex]->getPosition()
+      };
+    }
+  } else {
+    positions = {
+      // Lets make sure these are sorted properly...
+      // the front should be the smallest...
+      // at least according to initChunks
+      preloadedChunks[direction].back().front()->getPosition(),
+      preloadedChunks[direction].back().back()->getPosition()
+    };
+
+    positions[0].x -= xExpand;
+    positions[0].z -= zExpand;
+    positions[1].x += xExpand;
+    positions[1].z += zExpand;
+  }
 
   positions[0].x += xAddition;
-  positions[0].x -= xExpand;
-
   positions[0].z += zAddition;
-  positions[0].z -= zExpand;
-
-
   positions[1].x += xAddition;
-  positions[1].x += xExpand;
-
   positions[1].z += zAddition;
-  positions[1].z += zExpand;
 
   return positions;
 }
@@ -1238,7 +1263,7 @@ void World::loadRegion(Coordinate regionCoordinate) {
   }
 }
 
-void World::loadMinecraft(string folderName) {
+void World::initMinecraft(string folderName) {
   auto fileNames = getFilesInFolder(folderName);
   for(auto fileName: fileNames) {
     stringstream ss;
@@ -1246,6 +1271,9 @@ void World::loadMinecraft(string folderName) {
     auto key = Coordinate(coords);
     regionFiles[key] = folderName + fileName;
   }
+}
+
+void World::loadMinecraft() {
   loadRegion(Coordinate{0,0});
   mesh();
 }
