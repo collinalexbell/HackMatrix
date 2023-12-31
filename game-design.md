@@ -59,7 +59,7 @@ Persistent continuous action.
 I have something here. I just need to add more material to the kernel
 and compress it hard enough. Slow, methodical, consitent compression.
 ## Visualization
-### Travel (13 nights)
+### Travel to Portland (13 nights)
 - Powell (way too long)
 - Knoxville (3 nights)
 - St Louis (3 nights)
@@ -69,6 +69,7 @@ and compress it hard enough. Slow, methodical, consitent compression.
 - Boise (1 night)
 - Bend (1 night)
 - Portland (10 years (I'll know within a week))
+### Travel to NYC
 ## Mechanic
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
