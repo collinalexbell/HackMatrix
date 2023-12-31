@@ -114,9 +114,9 @@ class World {
   ChunkIndex getChunkIndex(int x, int z);
   ChunkIndex playersChunkIndex();
   ChunkIndex calculateMiddleIndex();
-  array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction);
+  array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction, bool initial=false);
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
-  void loadNextPreloadedChunkDeque(DIRECTION direction);
+  void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
   ChunkIndex middleIndex;
   void initChunks();
   void initAppPositions();
@@ -127,7 +127,7 @@ class World {
 
 public : void tick();
   const float CUBE_SIZE = 0.1;
-  World(Camera *camera, bool debug = false);
+  World(Camera *camera, string minecraftFolder, bool debug = false);
   ~World();
   void attachRenderer(Renderer *renderer);
   float getViewDistanceForWindowSize(X11App *app);
@@ -154,7 +154,8 @@ public : void tick();
   void load(string filename);
   void loadRegion(Coordinate regionCoordinate);
   vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
-  void loadMinecraft(string folderName);
+  void loadMinecraft();
+  void initMinecraft(string folderName);
   void loadLatest();
 
   void mesh(bool realTime = true);
