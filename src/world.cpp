@@ -425,7 +425,6 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
     chunkEndZ = chunkCoords[0].z;
   }
 
-  assert(chunkStartX == chunkEndX || chunkStartZ == chunkEndZ);
   assert(startX == endX || startZ == endZ);
 
   logCoordinates({Coordinate{chunkStartX, chunkStartZ},
@@ -434,7 +433,6 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
 
   deque<Chunk*> nextChunkDeque;
   unordered_map < Coordinate, Chunk*, CoordinateHash> nextChunks;
-      // now, only one of these should iterate more than once
   for (int x = startX; x <= endX; x++) {
     for(int z = startZ; z <= endZ; z++) {
 
@@ -511,10 +509,19 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction) {
   // the reason is if I preload some WEST and then move NORTH...
   // there will be some NORTH that hasn't been preloaded
 
+  int minecraftChunkSize = 16;
+  int myChunkSize = 32;
+  int minecraftPerMine = myChunkSize / minecraftChunkSize;
+  // subtract 1 because we already have the first accounted for (we want the
+  // end);
+  int endAddition = minecraftPerMine - 1;
+
   array<Coordinate, 2> minecraftChunkPositions = {
     getMinecraftChunkPos(matrixChunkPositions[0].x, matrixChunkPositions[0].z),
     getMinecraftChunkPos(matrixChunkPositions[1].x, matrixChunkPositions[1].z)
   };
+  minecraftChunkPositions[1].x += endAddition;
+  minecraftChunkPositions[1].z += endAddition;
 
   array<Coordinate, 2> minecraftRegions = {
     getMinecraftRegion(minecraftChunkPositions[0].x, minecraftChunkPositions[0].z),
