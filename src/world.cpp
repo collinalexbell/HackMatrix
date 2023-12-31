@@ -346,8 +346,17 @@ Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ) {
 Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ) {
   auto matrixChunkSize = Chunk::getSize();
   vector<int> minecraftChunkSize = {16,256,16};
-  auto x = minecraftChunkX * minecraftChunkSize[0] / matrixChunkSize[0];
-  auto z = minecraftChunkZ * minecraftChunkSize[2] / matrixChunkSize[2];
+  float xf = float(minecraftChunkX * minecraftChunkSize[0]) / float(matrixChunkSize[0]);
+  if(xf < 0) {
+    xf = floor(xf);
+  }
+  int x = xf;
+
+  float zf = float(minecraftChunkZ * minecraftChunkSize[2]) / float(matrixChunkSize[2]);
+  if(zf < 0) {
+    zf = floor(zf);
+  }
+  int z = zf;
   return Coordinate{x, z};
 }
 
