@@ -24,7 +24,7 @@ build/shader.o: src/shader.cpp include/shader.h
 build/texture.o: src/texture.cpp include/texture.h
 	g++  -std=c++20 $(FLAGS) -o build/texture.o -c src/texture.cpp $(INCLUDES)
 
-build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h
+build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h include/loader.h
 	g++ -std=c++20 $(FLAGS) -O3 -o build/world.o -c src/world.cpp $(INCLUDES)
 
 build/camera.o: src/camera.cpp include/camera.h

@@ -14,6 +14,7 @@
 #include <vector>
 #include <queue>
 #include <optional>
+#include "loader.h"
 
 class Renderer;
 
@@ -27,65 +28,11 @@ struct App {
   glm::vec3 position;
 };
 
-struct ChunkIndex {
-  bool isValid;
-  int x;
-  int z;
-};
-
 enum Action {
   PLACE_CUBE,
   REMOVE_CUBE,
   SELECT_CUBE,
   OPEN_SELECTION_CODE
-};
-
-struct Coordinate {
-  int x;
-  int z;
-
-  Coordinate(array<int, 2> coords) {
-    x = coords[0];
-    z = coords[1];
-  }
-
-  Coordinate(int x, int z): x(x), z(z){}
-
-  bool operator==(const Coordinate &other) const {
-    return x == other.x && z == other.z;
-  }
-};
-
-struct CoordinateHash {
-  size_t operator()(const Coordinate &coordinate) const {
-    return std::hash<int>()(coordinate.x) ^ (std::hash<int>()(coordinate.z) << 1);
-  }
-};
-
-struct LoaderCube: public AbsolutePosition {
-  int blockType;
-};
-
-struct LoaderChunk {
-  int foreignChunkX, foreignChunkY, foreignChunkZ;
-  vector<LoaderCube> cubePositions;
-};
-
-// TODO: rm
-enum DIRECTION {
-  NORTH, SOUTH, EAST, WEST
-};
-
-// TODO: rm
-namespace preload {
-  enum SIDE {
-    LEFT, RIGHT
-  };
-};
-
-struct OrthoginalPreload {
-  bool addToFront;
-  deque<deque<Chunk*>>& chunks;
 };
 
 class World {

@@ -45,6 +45,16 @@ struct CoordinateHash {
   }
 };
 
+struct LoaderCube : public AbsolutePosition {
+  int blockType;
+};
+
+struct LoaderChunk {
+  int foreignChunkX, foreignChunkY, foreignChunkZ;
+  vector<LoaderCube> cubePositions;
+};
+
+/*
 class Loader {
   unordered_map<Coordinate, string, CoordinateHash> regionFiles;
   array<ChunkPosition, 2> getNextPreloadedChunkPositions(DIRECTION direction,
@@ -55,3 +65,4 @@ class Loader {
   ChunkIndex playersChunkIndex();
   ChunkIndex calculateMiddleIndex();
 };
+*/
