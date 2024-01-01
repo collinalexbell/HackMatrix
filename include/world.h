@@ -71,10 +71,12 @@ struct LoaderChunk {
   vector<LoaderCube> cubePositions;
 };
 
+// TODO: rm
 enum DIRECTION {
   NORTH, SOUTH, EAST, WEST
 };
 
+// TODO: rm
 namespace preload {
   enum SIDE {
     LEFT, RIGHT
@@ -90,6 +92,7 @@ class World {
   std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
+  // TODO: rm
   unordered_map<Coordinate, string, CoordinateHash> regionFiles;
   int gotItCount = 0;
   vector<Line> lines;
@@ -110,10 +113,15 @@ class World {
   void updateDamage(int index);
   queue<glm::vec3> availableAppPositions;
   void removeCube(WorldPosition position);
+  // TODO: rm
   ChunkIndex getChunkIndex(int x, int z);
+  // TODO: rm
   ChunkIndex playersChunkIndex();
+  // TODO: rm
   ChunkIndex calculateMiddleIndex();
+  // TODO: rm
   array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction, bool initial=false);
+  // TODO: rm
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
   ChunkIndex middleIndex;
