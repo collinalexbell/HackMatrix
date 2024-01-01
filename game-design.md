@@ -98,8 +98,10 @@ In a way, attention is love.
 - It is the first 3d game I'll have produced
 
 ## Playtesting
-How the F am I supposed to play test this thing prior to the Kickstarter
-Perhaps I need to playtest prior to release after the Kickstarter?
+### Pre-Kickstarter
+- Go to Knox Makerspace on Jan 2nd or Jan 9th (if mother and Jeff are out of the house)
+### Post-Kickstarter, Pre-delivery
+- Go to maker spaces or tech conferences
 ## Altered Perceptual Experiences of the Game
 After recieving funding, I will create 2 altered perceptual experiences of my game.
 ### Cannabis (0.5-1.5g; a big dose)
