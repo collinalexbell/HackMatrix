@@ -60,6 +60,8 @@ Persistent continuous action.
 ### I am building a Jewel
 I have something here. I just need to add more material to the kernel
 and compress it hard enough. Slow, methodical, consitent compression.
+
+Have no fear in this approach... just keep it up
 ## Visualization
 ### Travel to Portland (13 nights)
 - Powell (way too long)
