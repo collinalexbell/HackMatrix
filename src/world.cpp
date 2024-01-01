@@ -58,11 +58,6 @@ void World::initChunks() {
     }
   }
 
-  preloadVectors[NORTH] = {0,1};
-  preloadVectors[SOUTH] = {0, -1};
-  preloadVectors[EAST] = {1, 0};
-  preloadVectors[WEST] = {-1, 0};
-
   // NORTH
   preloadedChunks[NORTH] = deque<deque<Chunk *>>();
   for(int z = zMax+1; z<zMax+1+PRELOAD_SIZE; z++) {
@@ -86,11 +81,7 @@ void World::initChunks() {
   // EAST
   preloadedChunks[EAST] = deque<deque<Chunk *>>();
   for (int x = xMax + 1; x < xMax + 1 + PRELOAD_SIZE; x++) {
-    deque<Chunk *> oneX;
-    for (int z = zMin; z <= zMax; z++) {
-      oneX.push_back(new Chunk(x, 0, z));
-    }
-    preloadedChunks[EAST].push_back(oneX);
+    loadNextPreloadedChunkDeque(EAST, true);
   }
 
   // WEST
@@ -273,24 +264,7 @@ void World::loadChunksIfNeccissary() {
     chunks.push_back(preloadedChunks[EAST].front());
     preloadedChunks[EAST].pop_front();
 
-    deque<Chunk *> toAdd;
-    auto pos = chunks.back()[0]->getPosition();
-    auto size = chunks.back()[0]->getSize();
-    for (int i = 0; i < chunks[0].size(); i++) {
-      toAdd.push_back(new Chunk(pos.x+1+preloadedChunks[EAST].size(), pos.y, pos.z + i));
-    }
-
-    preloadedChunks[EAST].push_back(toAdd);
-
-    /*
-    int sign = std::signbit(pos.z) ? -1 : 1;
-    for (int i = 0; i < size[0]; i++) {
-      for (int j = 0; j < size[2] * chunks[0].size(); j++) {
-        addCube(pos.x * size[0] + i, 5, pos.z * size[2] + j, 3);
-      }
-    }
-    */
-
+    loadNextPreloadedChunkDeque(EAST);
     mesh();
   }
   if(curIndex.z < middleIndex.z) {
