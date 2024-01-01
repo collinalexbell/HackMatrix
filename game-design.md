@@ -47,6 +47,8 @@ I need 150k to live a full free year in Portland Oregon
 
 ## Deadline:
 New Years submit for review. Launch on my birthday.
+(I now have a little over an hour before I "submit for review")
+I don't want to postpone, but I don't want to submit a shite kickstarter
 
 I will succeed.
 How?
