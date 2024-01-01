@@ -96,7 +96,6 @@ class World {
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
   deque<deque<Chunk*>> chunks;
-  map<DIRECTION, array<int, 2>> preloadVectors;
   map<DIRECTION, deque<deque<Chunk*>>> preloadedChunks;
   deque<Chunk*> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                    array<Coordinate, 2> regionCoords);
