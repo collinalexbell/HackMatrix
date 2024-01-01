@@ -221,30 +221,7 @@ void World::loadChunksIfNeccissary() {
     chunks.push_front(preloadedChunks[WEST].front());
     preloadedChunks[WEST].pop_front();
 
-    // add chunks to preloaded
-    // this allocates, so I could do this off thread
-    /*
-    deque<Chunk *> toAdd;
-    auto pos = chunks[0][0]->getPosition();
-    auto size = chunks[0][0]->getSize();
-    for(int i = 0; i < chunks[0].size(); i++) {
-      toAdd.push_back(new Chunk(pos.x-1-preloadedChunks[WEST].size(), pos.y,
-    pos.z+i));
-    }
-    preloadedChunks[WEST].push_back(toAdd);
-    */
-
     loadNextPreloadedChunkDeque(WEST);
-    //int sign = std::signbit(pos.z) ? -1 : 1;
-
-    /*
-    for(int i = 0; i<size[0]; i++) {
-      for(int j = 0; j<size[2]*chunks[0].size(); j++) {
-        addCube((pos.x-1)*size[0]+i,5,pos.z*size[2]+j,3);
-      }
-    }
-    */
-
     mesh();
   }
   if(curIndex.x > middleIndex.x) {
