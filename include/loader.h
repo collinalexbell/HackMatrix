@@ -54,15 +54,19 @@ struct LoaderChunk {
   vector<LoaderCube> cubePositions;
 };
 
-/*
-class Loader {
-  unordered_map<Coordinate, string, CoordinateHash> regionFiles;
-  array<ChunkPosition, 2> getNextPreloadedChunkPositions(DIRECTION direction,
-                                                         bool initial = false);
+Coordinate getMinecraftChunkPos(int matrixChunkX, int matrixChunkZ);
+Coordinate getRelativeMinecraftChunkPos(int minecraftChunkX, int minecraftChunkZ);
+Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ);
+Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ);
 
-  OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
-  ChunkIndex getChunkIndex(int x, int z);
-  ChunkIndex playersChunkIndex();
-  ChunkIndex calculateMiddleIndex();
-};
-*/
+    /*
+    class Loader {
+      unordered_map<Coordinate, string, CoordinateHash> regionFiles;
+      array<ChunkPosition, 2> getNextPreloadedChunkPositions(DIRECTION
+    direction, bool initial = false);
+
+      OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE
+    side); ChunkIndex getChunkIndex(int x, int z); ChunkIndex
+    playersChunkIndex(); ChunkIndex calculateMiddleIndex();
+    };
+    */

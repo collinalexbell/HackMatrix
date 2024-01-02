@@ -6,8 +6,8 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 FLAGS = -g
 all: matrix trampoline build/diagnosis
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o imgui_objects include/protos/api.pb.h src/api.pb.cc
-	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o src/api.pb.cc src/glad.c src/glad_glx.c src/enkimi.c src/miniz.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o imgui_objects include/protos/api.pb.h src/api.pb.cc
+	g++ -std=c++20 -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o src/api.pb.cc src/glad.c src/glad_glx.c src/enkimi.c src/miniz.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -56,6 +56,9 @@ build/chunk.o: src/chunk.cpp include/chunk.h include/mesher.h
 
 build/mesher.o: src/mesher.cpp include/mesher.h
 	g++ -std=c++20 $(FLAGS) -o build/mesher.o -c src/mesher.cpp $(INCLUDES)
+
+build/loader.o: src/loader.cpp include/loader.h
+	g++ -std=c++20 $(FLAGS) -o build/loader.o -c src/loader.cpp $(INCLUDES)
 
 include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=./ protos/api.proto
