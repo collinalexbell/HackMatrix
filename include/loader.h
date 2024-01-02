@@ -59,16 +59,20 @@ Coordinate getRelativeMinecraftChunkPos(int minecraftChunkX, int minecraftChunkZ
 Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ);
 Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ);
 
-class Loader {
-      /*
-      unordered_map<Coordinate, string, CoordinateHash> regionFiles;
-      array<ChunkPosition, 2> getNextPreloadedChunkPositions(DIRECTION
-    direction, bool initial = false);
+// TODO: these are impl details. rm after full extractiton from world.cpp
+std::array<int, 2> getCoordinatesFromRegionFilename(const std::string &filename);
+std::vector<std::string> getFilesInFolder(const std::string &folderPath);
 
-      OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE
-    side); ChunkIndex getChunkIndex(int x, int z); ChunkIndex
-    playersChunkIndex(); ChunkIndex calculateMiddleIndex();
-    */
+class Loader {
+  /*
+  unordered_map<Coordinate, string, CoordinateHash> regionFiles;
+  array<ChunkPosition, 2> getNextPreloadedChunkPositions(DIRECTION
+direction, bool initial = false);
+
+  OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE
+side); ChunkIndex getChunkIndex(int x, int z); ChunkIndex
+playersChunkIndex(); ChunkIndex calculateMiddleIndex();
+*/
   unordered_map<Coordinate, string, CoordinateHash> regionFiles;
  public:
   Loader(string folderName);
