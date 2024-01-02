@@ -672,3 +672,6 @@ How do I give the architecture a timeless, essential quality (way of timeless bu
 - Lots of purple
 
 ## Backstory
+
+## Retrospective
+- Doing this alone is MEGA painful
