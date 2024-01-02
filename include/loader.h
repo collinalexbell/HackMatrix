@@ -59,8 +59,8 @@ Coordinate getRelativeMinecraftChunkPos(int minecraftChunkX, int minecraftChunkZ
 Coordinate getMinecraftRegion(int minecraftChunkX, int minecraftChunkZ);
 Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunkZ);
 
-    /*
-    class Loader {
+class Loader {
+      /*
       unordered_map<Coordinate, string, CoordinateHash> regionFiles;
       array<ChunkPosition, 2> getNextPreloadedChunkPositions(DIRECTION
     direction, bool initial = false);
@@ -68,5 +68,8 @@ Coordinate getWorldChunkPosFromMinecraft(int minecraftChunkX, int minecraftChunk
       OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE
     side); ChunkIndex getChunkIndex(int x, int z); ChunkIndex
     playersChunkIndex(); ChunkIndex calculateMiddleIndex();
-    };
     */
+  unordered_map<Coordinate, string, CoordinateHash> regionFiles;
+ public:
+  Loader(string folderName);
+};
