@@ -64,16 +64,37 @@ and compress it hard enough. Slow, methodical, consitent compression.
 Have no fear in this approach... just keep it up
 ## Visualization
 ### Travel to Portland (13 nights)
-- Powell (way too long)
-- Knoxville (3 nights)
-- St Louis (3 nights)
-- Kansas City (2 nights)
-- Denver (2 nights)
-- Provo (1 night)
-- Boise (1 night)
-- Bend (1 night)
-- Portland (10 years (I'll know within a week))
-### Travel to NYC
+#### Powell (way too long)
+#### Knoxville (3 nights)
+  - Checking into Red Roof Inn
+    - Getting keys
+    - Unlocking door
+    - Jumping on the bed
+    - Meditating
+  - Getting my car
+    - Booking
+    - Driving it into the Red Roof Parking Lot
+  - Leaving
+    - Morning Coffee
+    - Get in car bright and early
+    - Signs of Nashville
+#### St Louis (3 nights)
+  - Getting cannabis
+  - Walking around the park
+  - Sitting at Mediteranean resturant high
+  - Looking at my game for the first time stoned
+#### Kansas City (1 night)
+  - Arriving, going to sleep, just getting up early the next morning
+#### Denver (2 nights)
+  - Staying at the hotel near 17th
+  - Walking down 16th ave
+#### Vail (1 night)
+  - Spending the morning into noon just walking around
+#### Provo (1 night)
+#### Boise (1 night)
+#### Bend (1 night)
+#### Portland (10 years (I'll know within a week))
+  I need something to do here
 ## Mechanic
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
