@@ -101,7 +101,10 @@ Have no fear in this approach... just keep it up
 ## Financial Goal
 150,000$
 ## Love
+### This would be so much easier if I loved my game more.
 How do I increase love for my game?
+
+Perhaps I could run through all the things I love about my game as part of the short wave?
 
 Give it loving attention.
 Attention will increase love.
