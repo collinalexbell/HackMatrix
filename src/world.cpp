@@ -18,12 +18,11 @@
 #include <vector>
 
 using namespace std;
-namespace fs = std::filesystem;
 
 World::World(Camera *camera, string minecraftFolder, bool debug) : camera(camera) {
   initLogger();
   initAppPositions();
-  initMinecraft(minecraftFolder);
+  initLoader(minecraftFolder);
   initChunks();
 }
 
@@ -341,7 +340,7 @@ deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
 
       Coordinate regionCoords{x,z};
 
-      auto region = getRegion(regionCoords);
+      auto region = loader->getRegion(regionCoords);
       for(auto chunk: region) {
         if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
            chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
@@ -1016,109 +1015,8 @@ unsigned int getIndexIntoRegion(int x, int y, int z) {
   return (y * 16 + z) * 16 + x;
 }
 
-
-vector<LoaderChunk> World::getRegion(Coordinate regionCoordinate) {
-  // copy contents of loadRegion except for addCube (which get converted to push_back())
-  // in loadRegion, iterate over the chunks and cubes: call addCube()
-
-
-  vector<LoaderChunk> chunks;
-
-  map<int, int> counts;
-  string path = regionFiles[regionCoordinate];
-  FILE *fp = fopen(path.c_str(), "rb");
-  enkiRegionFile regionFile = enkiRegionFileLoad(fp);
-  logger->critical(path);
-  logger->flush();
-  for (unsigned int chunk = 0; chunk < ENKI_MI_REGION_CHUNKS_NUMBER; chunk++) {
-    enkiNBTDataStream stream;
-    enkiInitNBTDataStreamForChunk(regionFile, chunk, &stream);
-    if(stream.dataLength) {
-      enkiChunkBlockData aChunk = enkiNBTReadChunk(&stream);
-      enkiMICoordinate chunkOriginPos = enkiGetChunkOrigin(&aChunk); // y always 0
-      int chunkXPos = chunkOriginPos.x;
-      int chunkZPos = chunkOriginPos.z;
-      LoaderChunk lChunk;
-      lChunk.foreignChunkX = chunkXPos / 16;
-      lChunk.foreignChunkY = 0;
-      lChunk.foreignChunkZ = chunkZPos / 16;
-      chunks.push_back(lChunk);
-      for (int section = 0; section < ENKI_MI_NUM_SECTIONS_PER_CHUNK; ++section) {
-        if (aChunk.sections[section]) {
-          enkiMICoordinate sectionOrigin = enkiGetChunkSectionOrigin(&aChunk, section);
-          enkiMICoordinate sPos;
-          for (sPos.y = 0; sPos.y < ENKI_MI_SIZE_SECTIONS; ++sPos.y) {
-            for (sPos.z = 0; sPos.z < ENKI_MI_SIZE_SECTIONS; ++sPos.z) {
-              for (sPos.x = 0; sPos.x < ENKI_MI_SIZE_SECTIONS; ++sPos.x) {
-                uint8_t voxel =
-                    enkiGetChunkSectionVoxel(&aChunk, section, sPos);
-                if (voxel) {
-                  if (!counts.contains(voxel)) {
-                    counts[voxel] = 1;
-                  } else {
-                    counts[voxel]++;
-                  }
-                }
-                LoaderCube cube;
-                cube.x = sPos.x + sectionOrigin.x;
-                cube.y = sPos.y + sectionOrigin.y;
-                cube.z = sPos.z + sectionOrigin.z;
-                bool shouldAdd = false;
-                if (voxel == 1) {
-                  cube.blockType = 6;
-                  shouldAdd = true;
-                }
-                if(voxel == 3) {
-                  cube.blockType = 3;
-                  shouldAdd = true;
-                }
-                if(voxel == 161) {
-                  cube.blockType = 0;
-                  shouldAdd = true;
-                }
-                if(voxel == 251) {
-                  cube.blockType = 1;
-                  shouldAdd = true;
-                }
-                if (voxel == 17) {
-                  cube.blockType = 2;
-                  shouldAdd = true;
-                }
-
-                if(shouldAdd) {
-                  chunks.back().cubePositions.push_back(cube);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-      //heights = reader.get_heightmap_at(x, z);
-  }
-  // Create a vector of pairs to sort by value (count)
-  std::vector<std::pair<int, int>> sortedCounts(counts.begin(), counts.end());
-  std::sort(sortedCounts.begin(), sortedCounts.end(),
-            [](const auto &a, const auto &b) {
-              return a.second > b.second; // Sort in descending order
-            });
-  int count = 0;
-  for (const auto &entry : sortedCounts) {
-    stringstream ss;
-    ss << "Block ID: " << entry.first << ", Count: " << entry.second
-              << std::endl;
-    logger->critical(ss.str());
-    logger->flush();
-    count++;
-    if (count == 6) // Stop after printing the top 6
-      break;
-  }
-
-  return chunks;
-}
-
 void World::loadRegion(Coordinate regionCoordinate) {
-  auto region = getRegion(regionCoordinate);
+  auto region = loader->getRegion(regionCoordinate);
   for(auto chunk: region) {
     for(auto cube: chunk.cubePositions) {
       addCube(cube.x, cube.y, cube.z, cube.blockType);
@@ -1126,14 +1024,8 @@ void World::loadRegion(Coordinate regionCoordinate) {
   }
 }
 
-void World::initMinecraft(string folderName) {
-  auto fileNames = getFilesInFolder(folderName);
-  for(auto fileName: fileNames) {
-    stringstream ss;
-    auto coords = getCoordinatesFromRegionFilename(fileName);
-    auto key = Coordinate(coords);
-    regionFiles[key] = folderName + fileName;
-  }
+void World::initLoader(string folderName) {
+  loader = new Loader(folderName);
 }
 
 void World::loadMinecraft() {
