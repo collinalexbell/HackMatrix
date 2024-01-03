@@ -111,13 +111,13 @@ Attention will increase love.
 In a way, attention is love.
 
 ### What do I love about v1?
-- It is the first software creation of mine that has recieve 100k views and 10k likes.
+- It is the first software creation of mine that has recieved 100k views and 10k likes.
 - It replaces my desktop environment
 - It gives me hope for the future off computing
 - I love that it is written in C++
 - I love that I understand how it works
 - I love that its design is rooted in many years of thought
-- I love that it wwill evolve to help me with robotics
+- I love that it will evolve to help me with robotics
 - I love that it is the first product I've worked on since discovering communication with God
 - I love that it is my last stand. That this is the product I have decided will succeed.
 - I love that this is a genre of game no one has attempted
@@ -194,10 +194,6 @@ Commune with others while working on thier projects from anywhere in the world
        and learn to harmonize themselves
            with the spirit of Wralda
               and the love of other free people
-## Essential Experience
-- Concious hackers
-- transform their own city
-- and become fully enlightened cyber soveriegns
 ## Questions that arise from the purpose
 ### What are the problems with current methods of immersion?
 
