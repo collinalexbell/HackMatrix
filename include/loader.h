@@ -77,4 +77,6 @@ playersChunkIndex(); ChunkIndex calculateMiddleIndex();
  public:
   Loader(string folderName);
   vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
+  deque<Chunk *> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
+                                    array<Coordinate, 2> regionCoords);
 };

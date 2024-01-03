@@ -1,5 +1,6 @@
 #include "loader.h"
 #include "enkimi.h"
+#include "utility.h"
 #include <vector>
 #include <sstream>
 #include <iostream>
@@ -198,4 +199,109 @@ vector<LoaderChunk> Loader::getRegion(Coordinate regionCoordinate) {
   }
 
   return chunks;
+}
+
+// Comparison function to sort by smallest x, z
+bool sortByXZ(Chunk *chunk1, Chunk *chunk2) {
+  auto pos1 = chunk1->getPosition();
+  auto pos2 = chunk2->getPosition();
+  if (pos1.x != pos2.x) {
+    return pos1.x < pos2.x;
+  } else {
+    return pos1.z < pos2.z;
+  }
+}
+
+deque<Chunk *> Loader::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
+                                         array<Coordinate, 2> regionCoords) {
+
+  int startX;
+  int endX;
+  int startZ;
+  int endZ;
+
+  if(regionCoords[0].x < regionCoords[1].x) {
+    startX = regionCoords[0].x;
+    endX = regionCoords[1].x;
+  } else {
+    startX = regionCoords[1].x;
+    endX = regionCoords[0].x;
+  }
+
+  if (regionCoords[0].z < regionCoords[1].z) {
+    startZ = regionCoords[0].z;
+    endZ = regionCoords[1].z;
+  } else {
+    startZ = regionCoords[1].z;
+    endZ = regionCoords[0].z;
+  }
+
+  stringstream regionsDebug;
+  regionsDebug << "regionCoords: (("
+               << startX << "," << startZ << "),"
+               << "("  << endX << "," << endZ << "))" << endl;
+
+  int chunkStartX;
+  int chunkEndX;
+  int chunkStartZ;
+  int chunkEndZ;
+
+  if (chunkCoords[0].x < chunkCoords[1].x) {
+    chunkStartX = chunkCoords[0].x;
+    chunkEndX = chunkCoords[1].x;
+  } else {
+    chunkStartX = chunkCoords[1].x;
+    chunkEndX = chunkCoords[0].x;
+  }
+
+  if (chunkCoords[0].z < chunkCoords[1].z) {
+    chunkStartZ = chunkCoords[0].z;
+    chunkEndZ = chunkCoords[1].z;
+  } else {
+    chunkStartZ = chunkCoords[1].z;
+    chunkEndZ = chunkCoords[0].z;
+  }
+
+  assert(startX == endX || startZ == endZ);
+
+  deque<Chunk*> nextChunkDeque;
+  unordered_map < Coordinate, Chunk*, CoordinateHash> nextChunks;
+  for (int x = startX; x <= endX; x++) {
+    for(int z = startZ; z <= endZ; z++) {
+
+      Coordinate regionCoords{x,z};
+
+      auto region = getRegion(regionCoords);
+      for(auto chunk: region) {
+        if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
+           chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
+          auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
+
+          if(!nextChunks.contains(worldChunkPos)) {
+            Chunk *toAdd = new Chunk(worldChunkPos.x, 0, worldChunkPos.z);
+            nextChunks[worldChunkPos] = toAdd;
+          }
+          for(auto cube: chunk.cubePositions){
+            auto worldPos = translateToWorldPosition(cube.x, cube.y, cube.z);
+            /*
+              TODO: This fails, will need to be fixed
+            assert(worldPos.chunkX == worldChunkPos.x &&
+                   worldPos.chunkZ == worldChunkPos.z);
+            */
+            glm::vec3 pos {worldPos.x, worldPos.y, worldPos.z};
+            Cube c(pos, cube.blockType);
+            nextChunks[worldChunkPos]->addCube(c, worldPos.x, worldPos.y, worldPos.z);
+          }
+        }
+      }
+    }
+  }
+
+  for(auto nextChunk: nextChunks) {
+    nextChunkDeque.push_back(nextChunk.second);
+  }
+
+  std::sort(nextChunkDeque.begin(), nextChunkDeque.end(), sortByXZ);
+
+  return nextChunkDeque;
 }
