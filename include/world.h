@@ -40,7 +40,6 @@ class World {
   Renderer *renderer = NULL;
   Camera *camera = NULL;
   // TODO: rm
-  unordered_map<Coordinate, string, CoordinateHash> regionFiles;
   int gotItCount = 0;
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
@@ -85,6 +84,7 @@ public : void tick();
   ~World();
   void attachRenderer(Renderer *renderer);
   float getViewDistanceForWindowSize(X11App *app);
+  Loader *loader;
 
   X11App *getLookedAtApp();
   Position getLookedAtCube();
@@ -107,9 +107,8 @@ public : void tick();
   void save(string filename);
   void load(string filename);
   void loadRegion(Coordinate regionCoordinate);
-  vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
   void loadMinecraft();
-  void initMinecraft(string folderName);
+  void initLoader(string folderName);
   void loadLatest();
 
   void mesh(bool realTime = true);

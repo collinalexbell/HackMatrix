@@ -76,4 +76,5 @@ playersChunkIndex(); ChunkIndex calculateMiddleIndex();
   unordered_map<Coordinate, string, CoordinateHash> regionFiles;
  public:
   Loader(string folderName);
+  vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
 };
