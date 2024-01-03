@@ -212,6 +212,9 @@ bool sortByXZ(Chunk *chunk1, Chunk *chunk2) {
   }
 }
 
+// what if instead of returning a deque, it returns a future of a deque
+// or a deque of future chunks
+// although, I think it would have to probably a future deck to sort the chunks correctly?
 deque<Chunk *> Loader::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                          array<Coordinate, 2> regionCoords) {
 
