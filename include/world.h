@@ -46,8 +46,6 @@ class World {
   std::vector<X11App*> apps;
   deque<deque<Chunk*>> chunks;
   map<DIRECTION, deque<deque<Chunk*>>> preloadedChunks;
-  deque<Chunk*> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
-                                   array<Coordinate, 2> regionCoords);
   int WORLD_SIZE = 7;
   int PRELOAD_SIZE = 3;
   int damageIndex = -1;
@@ -113,7 +111,6 @@ public : void tick();
 
   void mesh(bool realTime = true);
   ChunkMesh meshSelectedCube(Position position);
-  WorldPosition translateToWorldPosition(int x, int y, int z);
   Chunk *getChunk(int chunkX, int chunkZ);
 };
 

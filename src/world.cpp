@@ -16,6 +16,7 @@
 #include <octree/octree.h>
 #include <sstream>
 #include <vector>
+#include "utility.h"
 
 using namespace std;
 
@@ -153,36 +154,6 @@ const std::vector<glm::vec3> World::getAppCubes() {
   return appCubeKeys;
 }
 
-WorldPosition World::translateToWorldPosition(int x, int y, int z) {
-  WorldPosition rv;
-  auto chunkSize = chunks[0][0]->getSize();
-
-  // x-------------
-  if (x < 0) {
-    int chunksXNegative = (x - chunkSize[0] + 1) / chunkSize[0];
-    rv.chunkX = chunksXNegative;
-    rv.x = x - (chunksXNegative * chunkSize[0]);
-  }
-  else {
-    rv.x = x % chunkSize[0];
-    rv.chunkX = x / chunkSize[0];
-  }
-
-  //y-------------
-  rv.y = y;
-
-  // z-------------
-  if (z < 0) {
-    int chunksZNegative = (z - chunkSize[2] + 1) / chunkSize[2];
-    rv.chunkZ = chunksZNegative;
-    rv.z = z - (chunksZNegative * chunkSize[2]);
-  } else {
-    rv.z = z % chunkSize[2];
-    rv.chunkZ = z / chunkSize[2];
-  }
-
-  return rv;
-}
 
 ChunkIndex World::getChunkIndex(int x, int z) {
   ChunkPosition minChunkPosition = chunks[0][0]->getPosition();
@@ -251,19 +222,6 @@ void World::loadChunksIfNeccissary() {
   }
 }
 
-
-
-// Comparison function to sort by smallest x, z
-bool sortByXZ(Chunk* chunk1, Chunk* chunk2) {
-  auto pos1 = chunk1->getPosition();
-  auto pos2 = chunk2->getPosition();
-  if (pos1.x != pos2.x) {
-    return pos1.x < pos2.x;
-  } else {
-    return pos1.z < pos2.z;
-  }
-}
-
 void World::logCoordinates(array<Coordinate,2> c, string label) {
   stringstream ss;
   ss << label << ": (("
@@ -273,106 +231,6 @@ void World::logCoordinates(array<Coordinate,2> c, string label) {
      << "))";
   logger->critical(ss.str());
   logger->flush();
-}
-
-deque<Chunk *> World::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
-                                         array<Coordinate, 2> regionCoords) {
-
-  int startX;
-  int endX;
-  int startZ;
-  int endZ;
-
-  if(regionCoords[0].x < regionCoords[1].x) {
-    startX = regionCoords[0].x;
-    endX = regionCoords[1].x;
-  } else {
-    startX = regionCoords[1].x;
-    endX = regionCoords[0].x;
-  }
-
-  if (regionCoords[0].z < regionCoords[1].z) {
-    startZ = regionCoords[0].z;
-    endZ = regionCoords[1].z;
-  } else {
-    startZ = regionCoords[1].z;
-    endZ = regionCoords[0].z;
-  }
-
-  stringstream regionsDebug;
-  regionsDebug << "regionCoords: (("
-               << startX << "," << startZ << "),"
-               << "("  << endX << "," << endZ << "))" << endl;
-  logger->debug(regionsDebug.str());
-  logger->flush();
-
-  int chunkStartX;
-  int chunkEndX;
-  int chunkStartZ;
-  int chunkEndZ;
-
-  if (chunkCoords[0].x < chunkCoords[1].x) {
-    chunkStartX = chunkCoords[0].x;
-    chunkEndX = chunkCoords[1].x;
-  } else {
-    chunkStartX = chunkCoords[1].x;
-    chunkEndX = chunkCoords[0].x;
-  }
-
-  if (chunkCoords[0].z < chunkCoords[1].z) {
-    chunkStartZ = chunkCoords[0].z;
-    chunkEndZ = chunkCoords[1].z;
-  } else {
-    chunkStartZ = chunkCoords[1].z;
-    chunkEndZ = chunkCoords[0].z;
-  }
-
-  assert(startX == endX || startZ == endZ);
-
-  logCoordinates({Coordinate{chunkStartX, chunkStartZ},
-                  Coordinate{chunkEndX, chunkEndZ}},
-                 "chunkStart");
-
-  deque<Chunk*> nextChunkDeque;
-  unordered_map < Coordinate, Chunk*, CoordinateHash> nextChunks;
-  for (int x = startX; x <= endX; x++) {
-    for(int z = startZ; z <= endZ; z++) {
-
-      Coordinate regionCoords{x,z};
-
-      auto region = loader->getRegion(regionCoords);
-      for(auto chunk: region) {
-        if(chunk.foreignChunkX >= chunkStartX && chunk.foreignChunkX <= chunkEndX &&
-           chunk.foreignChunkZ >= chunkStartZ && chunk.foreignChunkZ <= chunkEndZ) {
-          auto worldChunkPos = getWorldChunkPosFromMinecraft(chunk.foreignChunkX, chunk.foreignChunkZ);
-
-          if(!nextChunks.contains(worldChunkPos)) {
-            Chunk *toAdd = new Chunk(worldChunkPos.x, 0, worldChunkPos.z);
-            nextChunks[worldChunkPos] = toAdd;
-          }
-          for(auto cube: chunk.cubePositions){
-            auto worldPos = translateToWorldPosition(cube.x, cube.y, cube.z);
-            /*
-              TODO: This fails, will need to be fixed
-            assert(worldPos.chunkX == worldChunkPos.x &&
-                   worldPos.chunkZ == worldChunkPos.z);
-            */
-            glm::vec3 pos {worldPos.x, worldPos.y, worldPos.z};
-            Cube c(pos, cube.blockType);
-            nextChunks[worldChunkPos]->addCube(c, worldPos.x, worldPos.y, worldPos.z);
-          }
-        }
-      }
-    }
-  }
-
-  for(auto nextChunk: nextChunks) {
-    nextChunkDeque.push_back(nextChunk.second);
-  }
-
-  std::sort(nextChunkDeque.begin(), nextChunkDeque.end(), sortByXZ);
-
-  return nextChunkDeque;
 }
 
 OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE side) {
@@ -430,42 +288,7 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
     getMinecraftRegion(minecraftChunkPositions[1].x, minecraftChunkPositions[1].z)
   };
 
-  stringstream positionDebugStream;
-  positionDebugStream << "matrixChunk: (("
-                      << matrixChunkPositions[0].x
-                      << ","
-                      << matrixChunkPositions[0].z
-                      << "),("
-                      << matrixChunkPositions[1].x
-                      << ","
-                      << matrixChunkPositions[1].z
-                      << "))"
-                      << endl
-                      << "minecraftChunk: (("
-                      << minecraftChunkPositions[0].x
-                      << ","
-                      << minecraftChunkPositions[0].z
-                      << "),("
-                      << minecraftChunkPositions[1].x
-                      << ","
-                      << minecraftChunkPositions[1].z
-                      << "))"
-                      << endl
-                      << "minecraftRegions: (("
-                      << minecraftRegions[0].x
-                      << ","
-                      << minecraftRegions[0].z
-                      << "),("
-                      << minecraftRegions[1].x
-                      << ","
-                      << minecraftRegions[1].z
-                      << "))"
-                      << endl;
-
-  logger->debug(positionDebugStream.str());
-  logger->flush();
-
-  auto next = readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
+  auto next = loader->readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
   assert(next.size() > PRELOAD_SIZE);
 
