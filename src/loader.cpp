@@ -104,7 +104,7 @@ Loader::Loader(string folderName) {
   for (auto fileName : fileNames) {
     auto coords = getCoordinatesFromRegionFilename(fileName);
     auto key = Coordinate(coords);
-    regionFiles[key] = folderName + fileName;
+    regionFileNames[key] = folderName + fileName;
   }
 }
 
@@ -116,9 +116,15 @@ vector<LoaderChunk> Loader::getRegion(Coordinate regionCoordinate) {
   vector<LoaderChunk> chunks;
 
   map<int, int> counts;
-  string path = regionFiles[regionCoordinate];
-  FILE *fp = fopen(path.c_str(), "rb");
-  enkiRegionFile regionFile = enkiRegionFileLoad(fp);
+  enkiRegionFile regionFile;
+  string path = regionFileNames[regionCoordinate];
+  if(regionFiles.contains(regionCoordinate)) {
+    regionFile = regionFiles[regionCoordinate];
+  } else {
+    FILE *fp = fopen(path.c_str(), "rb");
+    regionFile = enkiRegionFileLoad(fp);
+    regionFiles[regionCoordinate] = regionFile;
+  }
   for (unsigned int chunk = 0; chunk < ENKI_MI_REGION_CHUNKS_NUMBER; chunk++) {
     enkiNBTDataStream stream;
     enkiInitNBTDataStreamForChunk(regionFile, chunk, &stream);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "chunk.h"
+#include "enkimi.h"
 #include <deque>
 
 using namespace std;
@@ -73,8 +74,9 @@ direction, bool initial = false);
 side); ChunkIndex getChunkIndex(int x, int z); ChunkIndex
 playersChunkIndex(); ChunkIndex calculateMiddleIndex();
 */
-  unordered_map<Coordinate, string, CoordinateHash> regionFiles;
- public:
+  unordered_map<Coordinate, string, CoordinateHash> regionFileNames;
+  unordered_map<Coordinate, enkiRegionFile, CoordinateHash> regionFiles;
+public:
   Loader(string folderName);
   vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
   deque<Chunk *> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
