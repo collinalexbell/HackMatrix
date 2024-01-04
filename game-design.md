@@ -44,6 +44,7 @@ I need 150k to live a full free year in Portland Oregon
     - meditate
     - expiriment
     - love
+    - build my cybernetics corporation
 
 ## Deadline:
 Launch on my birthday.
