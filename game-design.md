@@ -114,17 +114,17 @@ In a way, attention is love.
 ### What do I love about v1?
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
 - It replaces my desktop environment
-- It gives me hope for the future off computing
-- I love that it is written in C++
-- I love that I understand how it works
-- I love that its design is rooted in many years of thought
-- I love that it will evolve to help me with robotics
-- I love that it is the first product I've worked on since discovering communication with God
-- I love that it is my last stand. That this is the product I have decided will succeed.
-- I love that this is a genre of game no one has attempted
-- I love that it could function as Mission Match
+- It gives me hope for the future of computing
+- It is written in C++
+- I understand how it works
+- Its design is rooted in many years of thought
+- It will evolve to help me with robotics
+- It is the first product I've worked on since discovering communication with God
+- It is my last stand. That this is the product I have decided will succeed.
+- This is a genre of game no one has attempted
+- It could function as Mission Match
 - This will be my first significant success
-- It is the first 3d game I'll have produced
+- It is the first 3d program I have written to completion
 
 ## Playtesting
 ### Pre-Kickstarter
