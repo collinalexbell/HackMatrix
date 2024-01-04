@@ -115,6 +115,7 @@ In a way, attention is love.
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
 - It replaces my desktop environment
 - It gives me hope for the future of computing
+- Software is an American core competency, so this product fits within that core
 - It is written in C++
 - I understand how it works
 - Its design is rooted in many years of thought
