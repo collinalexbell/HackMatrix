@@ -8,11 +8,13 @@
 #include "camera.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
+#include <mutex>
 #include <octree/octree.h>
 #include "logger.h"
 #include <unordered_map>
 #include <vector>
 #include <queue>
+#include <future>
 #include <optional>
 #include "loader.h"
 
@@ -45,10 +47,11 @@ class World {
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
   deque<deque<Chunk*>> chunks;
-  map<DIRECTION, deque<deque<Chunk*>>> preloadedChunks;
+  map<DIRECTION, deque<future<deque<Chunk*>>>> preloadedChunks;
   int WORLD_SIZE = 7;
   int PRELOAD_SIZE = 3;
   int damageIndex = -1;
+  mutex preloadMutex;
   bool isDamaged = false;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
   Cube *getCube(float x, float y, float z);
@@ -64,7 +67,7 @@ class World {
   // TODO: rm
   ChunkIndex calculateMiddleIndex();
   // TODO: rm
-  array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction, bool initial=false);
+  array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction, int initial=0);
   // TODO: rm
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
