@@ -3,13 +3,6 @@
 #include <memory>
 #include <sstream>
 
-shared_ptr<spdlog::logger> Cube::logger;
-bool Cube::isInit = false;
-
-void Cube::initClass() {
-  logger = make_shared<spdlog::logger>("Cube", fileSink);
-  logger->set_level(spdlog::level::critical);
-}
 
 glm::vec3 Cube::zeroVec(0, 0, 0);
 int Cube::zeroBlock(-1);
@@ -24,9 +17,6 @@ bool Cube::operator==(const Cube &cmp) {
 }
 
 Cube::Cube(const Cube &cpy) {
-  if(!isInit) {
-    initClass();
-  }
   _blockType = cpy.blockType();
   _position = cpy.position();
   _selected = cpy.selected();
@@ -40,9 +30,6 @@ Cube &Cube::operator=(const Cube &other) {
 }
 
 void Cube::init(glm::vec3 position, int blockType, int selected) {
-  if (!isInit) {
-    initClass();
-  }
   _position = position;
   _blockType = blockType;
   _selected = selected;

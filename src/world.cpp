@@ -59,33 +59,37 @@ void World::initChunks() {
   }
 
   // NORTH
-  preloadedChunks[NORTH] = deque<deque<Chunk *>>();
+  preloadedChunks[NORTH] = deque<future<deque<Chunk *>>>();
   for(int z = zMax+1; z<zMax+1+PRELOAD_SIZE; z++) {
     deque<Chunk*> oneZ;
     for(int x = xMin; x <= xMax; x++) {
       oneZ.push_back(new Chunk(x,0,z));
     }
-    preloadedChunks[NORTH].push_back(oneZ);
+    promise<deque<Chunk*>> oneZPromise;
+    oneZPromise.set_value(oneZ);
+    preloadedChunks[NORTH].push_back(oneZPromise.get_future());
   }
 
   // SOUTH
-  preloadedChunks[SOUTH] = deque<deque<Chunk *>>();
+  preloadedChunks[SOUTH] = deque<future<deque<Chunk *>>>();
   for (int z = zMin - 1; z > zMin - 1 - PRELOAD_SIZE; z--) {
     deque<Chunk *> oneZ;
     for (int x = xMin; x <= xMax; x++) {
       oneZ.push_back(new Chunk(x, 0, z));
     }
-    preloadedChunks[SOUTH].push_back(oneZ);
+    promise<deque<Chunk *>> oneZPromise;
+    oneZPromise.set_value(oneZ);
+    preloadedChunks[SOUTH].push_back(oneZPromise.get_future());
   }
 
   // EAST
-  preloadedChunks[EAST] = deque<deque<Chunk *>>();
+  preloadedChunks[EAST] = deque<future<deque<Chunk *>>>();
   for (int x = xMax + 1; x < xMax + 1 + PRELOAD_SIZE; x++) {
     loadNextPreloadedChunkDeque(EAST, true);
   }
 
   // WEST
-  preloadedChunks[WEST] = deque<deque<Chunk *>>();
+  preloadedChunks[WEST] = deque<future<deque<Chunk *>>>();
   for (int x = xMin - 1; x > xMin - 1 - PRELOAD_SIZE; x--) {
     loadNextPreloadedChunkDeque(WEST, true);
   }
@@ -177,18 +181,20 @@ void World::loadChunksIfNeccissary() {
 
     // rm bumped preloadedChunk on opposite side
     // I could do this off thread
-    deque<Chunk*> chunksToRm = preloadedChunks[EAST].back();
+    deque<Chunk*> chunksToRm = preloadedChunks[EAST].back().get();
     for(Chunk* toRm: chunksToRm) {
       delete toRm;
     }
     preloadedChunks[EAST].pop_back();
 
     // transfer from chunks to preloaded (opposite side)
-    preloadedChunks[EAST].push_front(chunks.back());
+    std::promise<deque<Chunk *>> toPreloaded;
+    toPreloaded.set_value(chunks.back());
+    preloadedChunks[EAST].push_front(toPreloaded.get_future());
     chunks.pop_back();
 
     // transfer from preloaded to chunks
-    chunks.push_front(preloadedChunks[WEST].front());
+    chunks.push_front(preloadedChunks[WEST].front().get());
     preloadedChunks[WEST].pop_front();
 
     loadNextPreloadedChunkDeque(WEST);
@@ -197,18 +203,20 @@ void World::loadChunksIfNeccissary() {
   if(curIndex.x > middleIndex.x) {
 
     // rm bumped preloadedChunk on opposite side
-    deque<Chunk *> chunksToRm = preloadedChunks[WEST].back();
+    deque<Chunk *> chunksToRm = preloadedChunks[WEST].back().get();
     for (Chunk *toRm : chunksToRm) {
       delete toRm;
     }
     preloadedChunks[WEST].pop_back();
 
     // transfer from chunks to preloaded (opposite side)
-    preloadedChunks[WEST].push_front(chunks.front());
+    std::promise<deque<Chunk *>> toPreloaded;
+    toPreloaded.set_value(chunks.front());
+    preloadedChunks[WEST].push_front(toPreloaded.get_future());
     chunks.pop_front();
 
     // transfer from preloaded to chunks
-    chunks.push_back(preloadedChunks[EAST].front());
+    chunks.push_back(preloadedChunks[EAST].front().get());
     preloadedChunks[EAST].pop_front();
 
     loadNextPreloadedChunkDeque(EAST);
@@ -264,7 +272,7 @@ OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE si
 }
 
 void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
-  auto matrixChunkPositions = getNextPreloadedChunkPositions(direction, initial);
+  auto matrixChunkPositions = getNextPreloadedChunkPositions(direction, preloadedChunks[direction].size()+1);
   // this needs to account for preload edges and doesn't currently
   // the reason is if I preload some WEST and then move NORTH...
   // there will be some NORTH that hasn't been preloaded
@@ -290,45 +298,75 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
 
   auto next = loader->readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
-  assert(next.size() > PRELOAD_SIZE);
-
   if(initial) {
-    preloadedChunks[direction].push_back(deque<Chunk*>(next.begin(), next.end()));
+    preloadedChunks[direction].push_back(move(next));
   } else {
-    preloadedChunks[direction].push_back(deque<Chunk*>(next.begin()+PRELOAD_SIZE,
-                                                      next.end()-PRELOAD_SIZE));
+    preloadedChunks[direction].push_back(async(launch::async,
+                                                    [next = move(next), this]() mutable -> deque<Chunk *> {
+                                                      auto nextDeque = next.get();
+                                                      return deque<Chunk *>(nextDeque.begin() + PRELOAD_SIZE,
+                                                                            nextDeque.end() - PRELOAD_SIZE);
+                                             }));
+    /*
+
+          auto leftChunks = deque<Chunk *>(nextDeque.begin(),
+                                           nextDeque.begin() + PRELOAD_SIZE);
+
+          OrthoginalPreload preloadLeft =
+              orthoginalPreload(direction, preload::LEFT);
 
     // sides
-    auto leftChunks = deque<Chunk*>(next.begin(), next.begin()+PRELOAD_SIZE);
-    OrthoginalPreload preloadLeft = orthoginalPreload(direction, preload::LEFT);
     int i = 0;
-    for(auto toAdd = leftChunks.rbegin(); toAdd != leftChunks.rend(); toAdd++) {
-      // iterate front to back of preload deque
-      // (which is why reverse iterator in outerloop)
-      if(preloadLeft.addToFront) {
-        preloadLeft.chunks[i].push_front(*toAdd);
-      } else {
-        preloadLeft.chunks[i].push_back(*toAdd);
-      }
+    for (auto toAdd = leftChunks.rbegin(); toAdd != leftChunks.rend();
+         toAdd++) {
+      preloadMutex.lock();
+      preloadLeft.chunks[i] = async(
+          launch::async, [toAdd, i, &preloadLeft]() -> deque<Chunk *> {
+            // iterate front to back of preload deque
+            // (which is why reverse iterator in outerloop)
+            auto origDeque = preloadLeft.chunks[i].get();
+            if (preloadLeft.addToFront) {
+              origDeque.push_front(*toAdd);
+            } else {
+              origDeque.push_back(*toAdd);
+            }
+            return origDeque;
+          });
+      preloadMutex.unlock();
       i++;
     }
 
-    auto rightChunks = deque<Chunk *>(next.end()-PRELOAD_SIZE, next.end());
-    OrthoginalPreload preloadRight = orthoginalPreload(direction, preload::RIGHT);
+    auto rightChunks =
+        deque<Chunk *>(nextDeque.end() - PRELOAD_SIZE, nextDeque.end());
+
+    OrthoginalPreload preloadRight =
+        orthoginalPreload(direction, preload::RIGHT);
+
     i = 0;
-    for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end(); toAdd++) {
-      // front to back of preload is the same orientation as right, outerloop std iterator
-      if (preloadRight.addToFront) {
-        preloadRight.chunks[i].push_front(*toAdd);
-      } else {
-        preloadRight.chunks[i].push_back(*toAdd);
-      }
+    for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end();
+         toAdd++) {
+      // front to back of preload is the same orientation as right,
+      // outerloop std iterator
+      preloadMutex.lock();
+      preloadRight.chunks[i] = async(
+          launch::async, [toAdd, i, &preloadRight]() -> deque<Chunk *> {
+            auto origDeque = preloadRight.chunks[i].get();
+            if (preloadRight.addToFront) {
+              origDeque.push_front(*toAdd);
+            } else {
+              origDeque.push_back(*toAdd);
+            }
+            return origDeque;
+          });
+      preloadMutex.unlock();
       i++;
     }
+    */
   }
 }
 
-array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION direction, bool initial) {
+array<ChunkPosition, 2>
+World::getNextPreloadedChunkPositions(DIRECTION direction, int initial) {
   int xAddition = 0, zAddition = 0;
   int xExpand=0, zExpand=0;
   switch (direction) {
@@ -351,53 +389,43 @@ array<ChunkPosition, 2> World::getNextPreloadedChunkPositions(DIRECTION directio
   }
 
   array<ChunkPosition, 2> positions;
-  if(initial) {
-    int xIndex = -1, zIndex = -1;
-    switch(direction) {
-    case NORTH:
-      zIndex = 0;
-      break;
-    case SOUTH:
-      zIndex = chunks[0].size() - 1;
-      break;
-    case EAST:
-      xIndex = chunks.size() - 1;
-      break;
-    case WEST:
-      xIndex = 0;
-      break;
-    }
-    if(xIndex >= 0) {
-      positions = {
-        chunks[xIndex].front()->getPosition(),
-        chunks[xIndex].back()->getPosition()
-      };
-    }
-    if(zIndex >= 0) {
-      positions = {
-        chunks.front()[zIndex]->getPosition(),
-        chunks.back()[zIndex]->getPosition()
-      };
-    }
-  } else {
+  int xIndex = -1, zIndex = -1;
+  switch(direction) {
+  case NORTH:
+    zIndex = 0;
+    break;
+  case SOUTH:
+    zIndex = chunks[0].size() - 1;
+    break;
+  case EAST:
+    xIndex = chunks.size() - 1;
+    break;
+  case WEST:
+    xIndex = 0;
+    break;
+  }
+  if(xIndex >= 0) {
     positions = {
-      // Lets make sure these are sorted properly...
-      // the front should be the smallest...
-      // at least according to initChunks
-      preloadedChunks[direction].back().front()->getPosition(),
-      preloadedChunks[direction].back().back()->getPosition()
+      chunks[xIndex].front()->getPosition(),
+      chunks[xIndex].back()->getPosition()
     };
-
+  }
+  if(zIndex >= 0) {
+    positions = {
+      chunks.front()[zIndex]->getPosition(),
+      chunks.back()[zIndex]->getPosition()
+    };
+  }
+  if(initial == PRELOAD_SIZE) {
     positions[0].x -= xExpand;
     positions[0].z -= zExpand;
     positions[1].x += xExpand;
     positions[1].z += zExpand;
   }
-
-  positions[0].x += xAddition;
-  positions[0].z += zAddition;
-  positions[1].x += xAddition;
-  positions[1].z += zAddition;
+  positions[0].x += xAddition * initial;
+  positions[0].z += zAddition * initial;
+  positions[1].x += xAddition * initial;
+  positions[1].z += zAddition * initial;
 
   return positions;
 }

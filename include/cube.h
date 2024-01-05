@@ -23,9 +23,6 @@ class Cube {
   glm::vec3 _position;
   int _blockType;
   int _selected;
-  static bool isInit;
-
-  static shared_ptr<spdlog::logger> logger;
 
   static void initClass();
 
