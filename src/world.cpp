@@ -366,7 +366,7 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
 }
 
 array<ChunkPosition, 2>
-World::getNextPreloadedChunkPositions(DIRECTION direction, int initial) {
+World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount) {
   int xAddition = 0, zAddition = 0;
   int xExpand=0, zExpand=0;
   switch (direction) {
@@ -416,16 +416,16 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int initial) {
       chunks.back()[zIndex]->getPosition()
     };
   }
-  if(initial == PRELOAD_SIZE) {
+  if(nextPreloadCount == PRELOAD_SIZE) {
     positions[0].x -= xExpand;
     positions[0].z -= zExpand;
     positions[1].x += xExpand;
     positions[1].z += zExpand;
   }
-  positions[0].x += xAddition * initial;
-  positions[0].z += zAddition * initial;
-  positions[1].x += xAddition * initial;
-  positions[1].z += zAddition * initial;
+  positions[0].x += xAddition * nextPreloadCount;
+  positions[0].z += zAddition * nextPreloadCount;
+  positions[1].x += xAddition * nextPreloadCount;
+  positions[1].z += zAddition * nextPreloadCount;
 
   return positions;
 }
