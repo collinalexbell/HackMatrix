@@ -64,9 +64,9 @@ and compress it hard enough. Slow, methodical, consitent compression.
 
 Have no fear in this approach... just keep it up
 ## Visualization
-### Travel to Portland (13 nights)
+### Travel to Portland (14 nights)
 #### Powell (way too long)
-#### Knoxville (3 nights)
+#### Knoxville (2 nights)
   - Checking into Red Roof Inn
     - Getting keys
     - Unlocking door
@@ -79,14 +79,14 @@ Have no fear in this approach... just keep it up
     - Morning Coffee
     - Get in car bright and early
     - Signs of Nashville
-#### St Louis (3 nights)
-  - Getting cannabis
-  - Walking around the park
-  - Sitting at Mediteranean resturant high
-  - Looking at my game for the first time stoned
+#### St Louis (6 nights)
+  - Checking into the Cheshire
+  - Buying a 3d printer
+  - HackMatrix meditation while stoned
+  - Walking Zeus in Central Park
 #### Kansas City (1 night)
-  - Arriving, going to sleep, just getting up early the next morning
-#### Denver (2 nights)
+- Arriving, going to sleep, just getting up early the next morning
+#### Denver (1 nights)
   - Staying at the hotel near 17th
   - Walking down 16th ave
 #### Vail (1 night)
