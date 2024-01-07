@@ -7,6 +7,8 @@
 #include "renderer.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <glm/glm.hpp>
@@ -17,6 +19,7 @@
 #include <sstream>
 #include <vector>
 #include "utility.h"
+#include <csignal>
 
 using namespace std;
 
@@ -58,28 +61,16 @@ void World::initChunks() {
     }
   }
 
-  // NORTH
-  preloadedChunks[NORTH] = deque<future<deque<Chunk *>>>();
-  for(int z = zMax+1; z<zMax+1+PRELOAD_SIZE; z++) {
-    deque<Chunk*> oneZ;
-    for(int x = xMin; x <= xMax; x++) {
-      oneZ.push_back(new Chunk(x,0,z));
-    }
-    promise<deque<Chunk*>> oneZPromise;
-    oneZPromise.set_value(oneZ);
-    preloadedChunks[NORTH].push_back(oneZPromise.get_future());
-  }
-
   // SOUTH
   preloadedChunks[SOUTH] = deque<future<deque<Chunk *>>>();
+  for(int z = zMax+1; z<zMax+1+PRELOAD_SIZE; z++) {
+    loadNextPreloadedChunkDeque(SOUTH, true);
+  }
+
+  // NORTH
+  preloadedChunks[NORTH] = deque<future<deque<Chunk *>>>();
   for (int z = zMin - 1; z > zMin - 1 - PRELOAD_SIZE; z--) {
-    deque<Chunk *> oneZ;
-    for (int x = xMin; x <= xMax; x++) {
-      oneZ.push_back(new Chunk(x, 0, z));
-    }
-    promise<deque<Chunk *>> oneZPromise;
-    oneZPromise.set_value(oneZ);
-    preloadedChunks[SOUTH].push_back(oneZPromise.get_future());
+    loadNextPreloadedChunkDeque(NORTH, true);
   }
 
   // EAST
@@ -196,7 +187,6 @@ void World::loadChunksIfNeccissary() {
     // transfer from preloaded to chunks
     chunks.push_front(preloadedChunks[WEST].front().get());
     preloadedChunks[WEST].pop_front();
-
     loadNextPreloadedChunkDeque(WEST);
     mesh();
   }
@@ -223,10 +213,87 @@ void World::loadChunksIfNeccissary() {
     mesh();
   }
   if(curIndex.z < middleIndex.z) {
-    // to be implemented later
+    stringstream ss;
+    ss << "loading chunk, because " << curIndex.z << "<" << middleIndex.z;
+    logger->critical(ss.str());
+    logger->flush();
+    // rm bumped preloadedChunk on opposite side
+    deque<Chunk *> chunksToRm = preloadedChunks[SOUTH].back().get();
+    for (Chunk *toRm : chunksToRm) {
+      delete toRm;
+    }
+    preloadedChunks[SOUTH].pop_back();
+
+    // transfer from chunks to preloaded (opposite side)
+    deque<Chunk *> preloadSlice;
+    for(auto &northSouthSlice: chunks) {
+      preloadSlice.push_back(northSouthSlice.back());
+      northSouthSlice.pop_back();
+    }
+    std::promise<deque<Chunk *>> toPreloaded;
+    toPreloaded.set_value(preloadSlice);
+    preloadedChunks[SOUTH].push_front(toPreloaded.get_future());
+
+    // transfer from preloaded to chunks
+    auto westEastSlice = preloadedChunks[NORTH].front().get();
+
+    int i = 0;
+    for(auto &northSouthSlice: chunks) {
+      northSouthSlice.push_front(westEastSlice[i]);
+      i++;
+    }
+    preloadedChunks[NORTH].pop_front();
+    loadNextPreloadedChunkDeque(NORTH);
+    mesh();
+
   }
   if(curIndex.z > middleIndex.z) {
-    // to be implemented later
+    stringstream ss;
+    ss << "loading chunk, because " << curIndex.z << ">" << middleIndex.z;
+    logger->critical(ss.str());
+    logger->flush();
+    // rm bumped preloadedChunk on opposite side
+    deque<Chunk *> chunksToRm;
+    try {
+      chunksToRm = preloadedChunks[NORTH].back().get();
+    } catch (exception e) {
+      logger->critical("error in rm future");
+      // Register the signal handler
+      raise(SIGINT);
+    }
+    for (Chunk *toRm : chunksToRm) {
+      delete toRm;
+    }
+    preloadedChunks[NORTH].pop_back();
+
+    // transfer from chunks to preloaded (opposite side)
+    deque<Chunk *> preloadSlice;
+    for(auto &northSouthSlice: chunks) {
+      preloadSlice.push_back(northSouthSlice.front());
+      northSouthSlice.pop_front();
+    }
+    std::promise<deque<Chunk *>> toPreloaded;
+    toPreloaded.set_value(preloadSlice);
+    preloadedChunks[NORTH].push_front(toPreloaded.get_future());
+
+    // transfer from preloaded to chunks
+    deque<Chunk *> westEastSlice;
+    try {
+      westEastSlice = preloadedChunks[SOUTH].front().get();
+    } catch (exception e) {
+      logger->critical("error in the transfer into chunk future");
+      // Register the signal handler
+      raise(SIGINT);
+    }
+
+    int i = 0;
+    for(auto &northSouthSlice: chunks) {
+      northSouthSlice.push_back(westEastSlice[i]);
+      i++;
+    }
+    preloadedChunks[SOUTH].pop_front();
+    loadNextPreloadedChunkDeque(SOUTH);
+    mesh();
   }
 }
 
@@ -295,6 +362,10 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
     getMinecraftRegion(minecraftChunkPositions[0].x, minecraftChunkPositions[0].z),
     getMinecraftRegion(minecraftChunkPositions[1].x, minecraftChunkPositions[1].z)
   };
+
+  stringstream ss;
+  ss << minecraftRegions[0].z << ".." << minecraftRegions[1].z;
+  logger->critical(ss.str());
 
   auto next = loader->readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
@@ -379,11 +450,11 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount)
     zExpand = PRELOAD_SIZE;
     break;
   case NORTH:
-    zAddition = 1;
+    zAddition = -1;
     xExpand = PRELOAD_SIZE;
     break;
   case SOUTH:
-    zAddition = -1;
+    zAddition = 1;
     xExpand = PRELOAD_SIZE;
     break;
   }
