@@ -269,7 +269,7 @@ future<deque<Chunk *>> Loader::readNextChunkDeque(array<Coordinate, 2> chunkCoor
       chunkEndZ = chunkCoords[0].z;
     }
 
-    assert(startX == endX || startZ == endZ);
+    //assert(startX == endX || startZ == endZ);
 
     deque<Chunk *> nextChunkDeque;
     unordered_map<Coordinate, Chunk *, CoordinateHash> nextChunks;

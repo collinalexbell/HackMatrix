@@ -372,67 +372,72 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
   if(initial) {
     preloadedChunks[direction].push_back(move(next));
   } else {
-    preloadedChunks[direction].push_back(async(launch::async,
-                                                    [next = move(next), this]() mutable -> deque<Chunk *> {
-                                                      auto nextDeque = next.get();
-                                                      return deque<Chunk *>(nextDeque.begin() + PRELOAD_SIZE,
-                                                                            nextDeque.end() - PRELOAD_SIZE);
-                                             }));
-    /*
+    preloadMutex.lock();
+    preloadedChunks[direction].push_back(async(
+                                               launch::async, [next = move(next), this, direction]() mutable -> deque<Chunk *> {
+          auto nextDeque = next.get();
 
-          auto leftChunks = deque<Chunk *>(nextDeque.begin(),
-                                           nextDeque.begin() + PRELOAD_SIZE);
+                auto leftChunks = deque<Chunk *>(nextDeque.begin(),
+                                                 nextDeque.begin() +
+          PRELOAD_SIZE);
 
-          OrthoginalPreload preloadLeft =
-              orthoginalPreload(direction, preload::LEFT);
+                OrthoginalPreload preloadLeft =
+                    orthoginalPreload(direction, preload::LEFT);
 
-    // sides
-    int i = 0;
-    for (auto toAdd = leftChunks.rbegin(); toAdd != leftChunks.rend();
-         toAdd++) {
-      preloadMutex.lock();
-      preloadLeft.chunks[i] = async(
-          launch::async, [toAdd, i, &preloadLeft]() -> deque<Chunk *> {
-            // iterate front to back of preload deque
-            // (which is why reverse iterator in outerloop)
-            auto origDeque = preloadLeft.chunks[i].get();
-            if (preloadLeft.addToFront) {
-              origDeque.push_front(*toAdd);
-            } else {
-              origDeque.push_back(*toAdd);
-            }
-            return origDeque;
-          });
-      preloadMutex.unlock();
-      i++;
-    }
+          // sides
+          int i = 0;
+          for (auto toAdd = leftChunks.rbegin(); toAdd != leftChunks.rend();
+               toAdd++) {
+            preloadMutex.lock();
+            preloadLeft.chunks[i] = async(
+                                          launch::async, [toAdd, i, leftNext = move(preloadLeft.chunks[i]), addToFront = preloadLeft.addToFront]() mutable -> deque<Chunk *> {
+                  // iterate front to back of preload deque
+                  // (which is why reverse iterator in outerloop)
+                  auto origDeque = leftNext.get();
+                  if (addToFront) {
+                    origDeque.push_front(*toAdd);
+                    origDeque.pop_back();
+                  } else {
+                    origDeque.push_back(*toAdd);
+                    origDeque.pop_front();
+                  }
+                  return origDeque;
+                });
+            preloadMutex.unlock();
+            i++;
+          }
 
-    auto rightChunks =
-        deque<Chunk *>(nextDeque.end() - PRELOAD_SIZE, nextDeque.end());
+          auto rightChunks =
+              deque<Chunk *>(nextDeque.end() - PRELOAD_SIZE, nextDeque.end());
 
-    OrthoginalPreload preloadRight =
-        orthoginalPreload(direction, preload::RIGHT);
+          OrthoginalPreload preloadRight =
+              orthoginalPreload(direction, preload::RIGHT);
 
-    i = 0;
-    for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end();
-         toAdd++) {
-      // front to back of preload is the same orientation as right,
-      // outerloop std iterator
-      preloadMutex.lock();
-      preloadRight.chunks[i] = async(
-          launch::async, [toAdd, i, &preloadRight]() -> deque<Chunk *> {
-            auto origDeque = preloadRight.chunks[i].get();
-            if (preloadRight.addToFront) {
-              origDeque.push_front(*toAdd);
-            } else {
-              origDeque.push_back(*toAdd);
-            }
-            return origDeque;
-          });
-      preloadMutex.unlock();
-      i++;
-    }
-    */
+          i = 0;
+          for (auto toAdd = rightChunks.begin(); toAdd != rightChunks.end();
+               toAdd++) {
+            // front to back of preload is the same orientation as right,
+            // outerloop std iterator
+            preloadMutex.lock();
+            preloadRight.chunks[i] = async(
+                                           launch::async, [toAdd, i, rightNext = move(preloadRight.chunks[i]), addToFront = preloadRight.addToFront]() mutable -> deque<Chunk *> {
+                  auto origDeque = rightNext.get();
+                  if (addToFront) {
+                    origDeque.push_front(*toAdd);
+                    origDeque.pop_back();
+                  } else {
+                    origDeque.push_back(*toAdd);
+                    origDeque.pop_front();
+                  }
+                  return origDeque;
+                });
+            preloadMutex.unlock();
+            i++;
+          }
+          return deque<Chunk *>(nextDeque.begin() + PRELOAD_SIZE,
+                                nextDeque.end() - PRELOAD_SIZE);
+        }));
+    preloadMutex.unlock();
   }
 }
 
