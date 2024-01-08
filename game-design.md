@@ -1,7 +1,14 @@
 # HackMatrix
 ## Kickstarter
 ### Goal
-150k
+150k, so I can move to Oregon and be free for 2 years
+(which will init the rest of my life)
+    - read
+    - meditate
+    - expiriment
+    - love
+    - build my cybernetics corporation
+
 ### Plan
 12 hour hack days until I get the money
 ### The Play
@@ -36,15 +43,6 @@ to ensure that the game is most impactful
 before I hit the ship button.
 I can do this after I submit for review (while waiting for review)
 
-
-### Why
-I need 150k to live a full free year in Portland Oregon
-    So I can:
-    - read
-    - meditate
-    - expiriment
-    - love
-    - build my cybernetics corporation
 
 ## Deadline:
 Launch on my birthday.
