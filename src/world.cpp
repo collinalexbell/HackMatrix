@@ -947,6 +947,9 @@ void World::initLoader(string folderName) {
 
 void World::loadMinecraft() {
   loadRegion(Coordinate{0,0});
+  loadRegion(Coordinate{-1,0});
+  loadRegion(Coordinate{-1, -1});
+  loadRegion(Coordinate{0, -1});
   mesh();
 }
 
