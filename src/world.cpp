@@ -168,6 +168,7 @@ ChunkIndex World::getChunkIndex(int x, int z) {
 
 void World::loadChunksIfNeccissary() {
   ChunkIndex curIndex = playersChunkIndex();
+  /*
   if(curIndex.x < middleIndex.x) {
 
     // rm bumped preloadedChunk on opposite side
@@ -212,6 +213,7 @@ void World::loadChunksIfNeccissary() {
     loadNextPreloadedChunkDeque(EAST);
     mesh();
   }
+*/
   if(curIndex.z < middleIndex.z) {
     stringstream ss;
     ss << "loading chunk, because " << curIndex.z << "<" << middleIndex.z;
@@ -338,8 +340,8 @@ OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE si
   return OrthoginalPreload{true, preloadedChunks[NORTH]};
 }
 
-void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
-  auto matrixChunkPositions = getNextPreloadedChunkPositions(direction, preloadedChunks[direction].size()+1);
+void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
+  auto matrixChunkPositions = getNextPreloadedChunkPositions(direction, preloadedChunks[direction].size()+1, isInitial);
   // this needs to account for preload edges and doesn't currently
   // the reason is if I preload some WEST and then move NORTH...
   // there will be some NORTH that hasn't been preloaded
@@ -364,12 +366,15 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
   };
 
   stringstream ss;
-  ss << minecraftRegions[0].z << ".." << minecraftRegions[1].z;
+  ss << matrixChunkPositions[0].x << ".." << matrixChunkPositions[1].x;
+  logger->critical(ss.str());
+  ss.clear();
+  ss << minecraftChunkPositions[0].x << ".." << minecraftChunkPositions[1].x;
   logger->critical(ss.str());
 
   auto nextUnshared = loader->readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
-  if(initial) {
+  if(isInitial) {
     preloadedChunks[direction].push_back(move(nextUnshared));
   } else {
     auto next = nextUnshared.share();
@@ -432,7 +437,7 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool initial) {
 }
 
 array<ChunkPosition, 2>
-World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount) {
+World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount, bool isInitial) {
   int xAddition = 0, zAddition = 0;
   int xExpand=0, zExpand=0;
   switch (direction) {
@@ -482,7 +487,7 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount)
       chunks.back()[zIndex]->getPosition()
     };
   }
-  if(nextPreloadCount == PRELOAD_SIZE) {
+  if(!isInitial) {
     positions[0].x -= xExpand;
     positions[0].z -= zExpand;
     positions[1].x += xExpand;

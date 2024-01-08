@@ -67,7 +67,7 @@ class World {
   // TODO: rm
   ChunkIndex calculateMiddleIndex();
   // TODO: rm
-  array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction, int initial=0);
+  array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount, bool isInitial);
   // TODO: rm
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
