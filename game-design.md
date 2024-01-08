@@ -46,15 +46,6 @@ I can do this after I submit for review (while waiting for review)
 
 ## Deadline:
 Launch on my birthday.
-(I now have a little over an hour before I "submit for review")
-I don't want to postpone, but I don't want to submit a shite kickstarter
-
-I will succeed.
-How?
-
-Faith. A mind closed to failure.
-Persistent continuous action.
-
 ## Design Mindset
 ### I am building a Jewel
 I have something here. I just need to add more material to the kernel
