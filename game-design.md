@@ -666,3 +666,8 @@ How do I give the architecture a timeless, essential quality (way of timeless bu
 
 ## Retrospective
 - Doing this alone is MEGA painful
+
+## AI
+The game will have AI at some point in some way
+The matrix was concieved as a place to train AIs
+Right now though, this is not foundational to the experience
