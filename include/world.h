@@ -48,7 +48,7 @@ class World {
   std::vector<X11App*> apps;
   deque<deque<Chunk*>> chunks;
   map<DIRECTION, deque<future<deque<Chunk*>>>> preloadedChunks;
-  int WORLD_SIZE = 7;
+  int WORLD_SIZE = 5;
   int PRELOAD_SIZE = 3;
   int damageIndex = -1;
   mutex preloadMutex;
@@ -71,6 +71,7 @@ class World {
   // TODO: rm
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
+  void transferChunksToPreload(DIRECTION direction, deque<Chunk*> slice);
   ChunkIndex middleIndex;
   void initChunks();
   void initAppPositions();
