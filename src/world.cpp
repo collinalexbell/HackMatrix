@@ -168,7 +168,6 @@ ChunkIndex World::getChunkIndex(int x, int z) {
 
 void World::loadChunksIfNeccissary() {
   ChunkIndex curIndex = playersChunkIndex();
-  /*
   if(curIndex.x < middleIndex.x) {
 
     // rm bumped preloadedChunk on opposite side
@@ -213,7 +212,6 @@ void World::loadChunksIfNeccissary() {
     loadNextPreloadedChunkDeque(EAST);
     mesh();
   }
-*/
   if(curIndex.z < middleIndex.z) {
     stringstream ss;
     ss << "loading chunk, because " << curIndex.z << "<" << middleIndex.z;
@@ -312,25 +310,25 @@ void World::logCoordinates(array<Coordinate,2> c, string label) {
 
 OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE side) {
   switch(direction) {
-  case NORTH:
+  case DIRECTION::NORTH:
     if(side == preload::LEFT) {
       return OrthoginalPreload{true, preloadedChunks[WEST]};
     } else {
       return OrthoginalPreload{true, preloadedChunks[EAST]};
     }
-  case SOUTH:
+  case DIRECTION::SOUTH:
     if(side == preload::LEFT) {
       return OrthoginalPreload{false, preloadedChunks[EAST]};
     } else {
       return OrthoginalPreload {false, preloadedChunks[WEST]};
     }
-  case EAST:
+  case DIRECTION::EAST:
     if(side == preload::LEFT) {
       return OrthoginalPreload{false, preloadedChunks[NORTH]};
     } else {
       return OrthoginalPreload{false, preloadedChunks[SOUTH]};
     }
-  case WEST:
+  case DIRECTION::WEST:
     if(side == preload::LEFT) {
       return OrthoginalPreload{true, preloadedChunks[SOUTH]};
     } else {
@@ -366,11 +364,14 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
   };
 
   stringstream ss;
-  ss << matrixChunkPositions[0].x << ".." << matrixChunkPositions[1].x;
+  ss << matrixChunkPositions[0].x << "," << matrixChunkPositions[0].z << ".."
+     << matrixChunkPositions[1].x << "," << matrixChunkPositions[1].z;
   logger->critical(ss.str());
   ss.clear();
-  ss << minecraftChunkPositions[0].x << ".." << minecraftChunkPositions[1].x;
+  ss << minecraftChunkPositions[0].x << "," << minecraftChunkPositions[0].z <<".."
+     << minecraftChunkPositions[1].x << "," << minecraftChunkPositions[1].z;
   logger->critical(ss.str());
+  logger->flush();
 
   auto nextUnshared = loader->readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
@@ -396,30 +397,32 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
             if (addToFront) {
               origDeque.push_front(toAdd);
               origDeque.pop_back();
+              //TODO: clean up with delete or smart pointer
             } else {
               origDeque.push_back(toAdd);
               origDeque.pop_front();
+              // TODO: clean up with delete or smart pointer
             }
             return origDeque;
           });
     }
 
-    OrthoginalPreload preloadRight = orthoginalPreload(direction, preload::RIGHT);
-    for (int preloadIndex = 0; preloadIndex < PRELOAD_SIZE; preloadIndex++) {
-      preloadRight.chunks[preloadIndex] = async(
-          launch::async,
+    OrthoginalPreload preloadRight = orthoginalPreload(direction,
+    preload::RIGHT); for (int preloadIndex = 0; preloadIndex < PRELOAD_SIZE;
+    preloadIndex++) { preloadRight.chunks[preloadIndex] = async( launch::async,
           [PRELOAD_SIZE = this->PRELOAD_SIZE, preloadIndex, next,
            leftNext = move(preloadRight.chunks[preloadIndex]),
            addToFront = preloadRight.addToFront]() mutable -> deque<Chunk *> {
             auto origDeque = leftNext.get();
             auto fulfilledNext = next.get();
-            auto toAdd = fulfilledNext[fulfilledNext.size()-PRELOAD_SIZE-1+preloadIndex];
-            if (addToFront) {
-              origDeque.push_front(toAdd);
-              origDeque.pop_back();
+            auto toAdd =
+    fulfilledNext[fulfilledNext.size()-PRELOAD_SIZE-1+preloadIndex]; if
+    (addToFront) { origDeque.push_front(toAdd); origDeque.pop_back();
+              // TODO: clean up with delete or smart pointer
             } else {
               origDeque.push_back(toAdd);
               origDeque.pop_front();
+              // TODO: clean up with delete or smart pointer
             }
             return origDeque;
           });
@@ -487,6 +490,10 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount,
       chunks.back()[zIndex]->getPosition()
     };
   }
+  stringstream ss;
+  ss <<"positions:" << positions[0].x << "," << positions[0].z << ".."
+     << positions[1].x << "," << positions[1].z;
+  logger->critical(ss.str());
   if(!isInitial) {
     positions[0].x -= xExpand;
     positions[0].z -= zExpand;

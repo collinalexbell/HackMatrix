@@ -212,6 +212,7 @@ vector<LoaderChunk> Loader::getRegion(Coordinate regionCoordinate) {
 bool sortByXZ(Chunk *chunk1, Chunk *chunk2) {
   auto pos1 = chunk1->getPosition();
   auto pos2 = chunk2->getPosition();
+  //assert(pos1.x==pos2.x || pos1.z == pos2.z);
   if (pos1.x != pos2.x) {
     return pos1.x < pos2.x;
   } else {
