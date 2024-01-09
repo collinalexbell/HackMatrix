@@ -4,10 +4,12 @@
 #include "coreStructs.h"
 #include "enkimi.h"
 #include "glm/geometric.hpp"
+#include "loader.h"
 #include "renderer.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <deque>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -166,6 +168,66 @@ ChunkIndex World::getChunkIndex(int x, int z) {
   return index;
 }
 
+void World::transferChunksToPreload(DIRECTION direction, deque<Chunk *> slice) {
+  OrthoginalPreload left = orthoginalPreload(direction, preload::LEFT);
+    vector<shared_future<deque<Chunk*>>> sharedLeft;
+    for(auto &leftDeque: left.chunks) {
+      sharedLeft.push_back(leftDeque.share());
+    }
+    OrthoginalPreload right = orthoginalPreload(direction, preload::RIGHT);
+    vector<shared_future<deque<Chunk *>>> sharedRight;
+    for (auto &rightDeque : right.chunks) {
+      sharedRight.push_back(rightDeque.share());
+    }
+    auto toPreload = async(launch::async, [slice,
+                                           sharedLeft,
+                                           sharedRight,
+                                           leftFromFront = left.addToFront,
+                                           rightFromFront = right.addToFront,
+                                           PRELOAD_SIZE = this->PRELOAD_SIZE
+                                           ]() -> deque<Chunk*> {
+        deque<Chunk*> rv;
+        vector<deque<Chunk *>> leftDeques;
+        vector<deque<Chunk *>> rightDeques;
+        for (auto &sharedLeftDeque : sharedLeft) {
+          leftDeques.push_back(sharedLeftDeque.get());
+        }
+        for (auto &sharedRightDeque : sharedRight) {
+          rightDeques.push_back(sharedRightDeque.get());
+        }
+        for(auto leftDeque = leftDeques.rbegin(); leftDeque != leftDeques.rend(); leftDeque++) {
+          if(leftFromFront) {
+            rv.push_back((*leftDeque)[PRELOAD_SIZE-1]);
+          } else {
+            rv.push_back((*leftDeque)[leftDeque->size()-PRELOAD_SIZE]);
+          }
+        }
+        rv.insert(rv.end(), slice.begin(), slice.end());
+        for (auto rightDeque = rightDeques.begin();
+             rightDeque != rightDeques.end(); rightDeque++) {
+          if (rightFromFront) {
+            rv.push_back((*rightDeque)[PRELOAD_SIZE - 1]);
+          } else {
+            rv.push_back((*rightDeque)[rightDeque->size() - PRELOAD_SIZE]);
+          }
+        }
+        return rv;
+      });
+    // unshare
+    for(int i = 0; i < sharedLeft.size(); i++) {
+      left.chunks[i] = async(launch::async, [sharedLeft, i]() mutable -> deque<Chunk*> {
+          return sharedLeft[i].get();
+        });
+    }
+    for (int i = 0; i < sharedRight.size(); i++) {
+      right.chunks[i] =
+          async(launch::async, [sharedRight, i]() mutable -> deque<Chunk *> {
+            return sharedRight[i].get();
+          });
+    }
+    preloadedChunks[direction].push_front(move(toPreload));
+}
+
 void World::loadChunksIfNeccissary() {
   ChunkIndex curIndex = playersChunkIndex();
   if(curIndex.x < middleIndex.x) {
@@ -174,18 +236,20 @@ void World::loadChunksIfNeccissary() {
     // I could do this off thread
     deque<Chunk*> chunksToRm = preloadedChunks[EAST].back().get();
     for(Chunk* toRm: chunksToRm) {
-      delete toRm;
+      //delete toRm;
+      //TODO: use smart pointers
     }
     preloadedChunks[EAST].pop_back();
 
     // transfer from chunks to preloaded (opposite side)
-    std::promise<deque<Chunk *>> toPreloaded;
-    toPreloaded.set_value(chunks.back());
-    preloadedChunks[EAST].push_front(toPreloaded.get_future());
+    transferChunksToPreload(EAST, chunks.back());
     chunks.pop_back();
 
     // transfer from preloaded to chunks
-    chunks.push_front(preloadedChunks[WEST].front().get());
+    auto full = preloadedChunks[WEST].front().get();
+    deque<Chunk*> toChunks(full.begin()+PRELOAD_SIZE, full.end()-PRELOAD_SIZE);
+    chunks.push_front(toChunks);
+
     preloadedChunks[WEST].pop_front();
     loadNextPreloadedChunkDeque(WEST);
     mesh();
@@ -195,18 +259,19 @@ void World::loadChunksIfNeccissary() {
     // rm bumped preloadedChunk on opposite side
     deque<Chunk *> chunksToRm = preloadedChunks[WEST].back().get();
     for (Chunk *toRm : chunksToRm) {
-      delete toRm;
+      //delete toRm;
+      // TODO: use smart pointers
     }
     preloadedChunks[WEST].pop_back();
 
     // transfer from chunks to preloaded (opposite side)
-    std::promise<deque<Chunk *>> toPreloaded;
-    toPreloaded.set_value(chunks.front());
-    preloadedChunks[WEST].push_front(toPreloaded.get_future());
+    transferChunksToPreload(WEST, chunks.front());
     chunks.pop_front();
 
     // transfer from preloaded to chunks
-    chunks.push_back(preloadedChunks[EAST].front().get());
+    auto full = preloadedChunks[EAST].front().get();
+    deque<Chunk*> toChunks(full.begin()+PRELOAD_SIZE, full.end()-PRELOAD_SIZE);
+    chunks.push_back(toChunks);
     preloadedChunks[EAST].pop_front();
 
     loadNextPreloadedChunkDeque(EAST);
@@ -220,7 +285,8 @@ void World::loadChunksIfNeccissary() {
     // rm bumped preloadedChunk on opposite side
     deque<Chunk *> chunksToRm = preloadedChunks[SOUTH].back().get();
     for (Chunk *toRm : chunksToRm) {
-      delete toRm;
+      //delete toRm;
+      //TODO: use smart pointers
     }
     preloadedChunks[SOUTH].pop_back();
 
@@ -230,13 +296,11 @@ void World::loadChunksIfNeccissary() {
       preloadSlice.push_back(northSouthSlice.back());
       northSouthSlice.pop_back();
     }
-    std::promise<deque<Chunk *>> toPreloaded;
-    toPreloaded.set_value(preloadSlice);
-    preloadedChunks[SOUTH].push_front(toPreloaded.get_future());
+    transferChunksToPreload(SOUTH, preloadSlice);
 
     // transfer from preloaded to chunks
-    auto westEastSlice = preloadedChunks[NORTH].front().get();
-
+    auto full = preloadedChunks[NORTH].front().get();
+    deque<Chunk*> westEastSlice(full.begin()+PRELOAD_SIZE, full.end()-PRELOAD_SIZE);
     int i = 0;
     for(auto &northSouthSlice: chunks) {
       northSouthSlice.push_front(westEastSlice[i]);
@@ -254,15 +318,9 @@ void World::loadChunksIfNeccissary() {
     logger->flush();
     // rm bumped preloadedChunk on opposite side
     deque<Chunk *> chunksToRm;
-    try {
-      chunksToRm = preloadedChunks[NORTH].back().get();
-    } catch (exception e) {
-      logger->critical("error in rm future");
-      // Register the signal handler
-      raise(SIGINT);
-    }
     for (Chunk *toRm : chunksToRm) {
-      delete toRm;
+      //delete toRm;
+      // TODO: use smart pointers
     }
     preloadedChunks[NORTH].pop_back();
 
@@ -272,20 +330,11 @@ void World::loadChunksIfNeccissary() {
       preloadSlice.push_back(northSouthSlice.front());
       northSouthSlice.pop_front();
     }
-    std::promise<deque<Chunk *>> toPreloaded;
-    toPreloaded.set_value(preloadSlice);
-    preloadedChunks[NORTH].push_front(toPreloaded.get_future());
+    transferChunksToPreload(NORTH, preloadSlice);
 
     // transfer from preloaded to chunks
-    deque<Chunk *> westEastSlice;
-    try {
-      westEastSlice = preloadedChunks[SOUTH].front().get();
-    } catch (exception e) {
-      logger->critical("error in the transfer into chunk future");
-      // Register the signal handler
-      raise(SIGINT);
-    }
-
+    auto full = preloadedChunks[SOUTH].front().get();
+    deque<Chunk *> westEastSlice(full.begin()+PRELOAD_SIZE, full.end()+PRELOAD_SIZE);
     int i = 0;
     for(auto &northSouthSlice: chunks) {
       northSouthSlice.push_back(westEastSlice[i]);
@@ -429,12 +478,7 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
     }
     preloadedChunks[direction].push_back(
         async(launch::async, [next, this, direction]() -> deque<Chunk *> {
-          auto nextDeque = next.get();
-
-
-
-          return deque<Chunk *>(nextDeque.begin() + PRELOAD_SIZE,
-                                nextDeque.end() - PRELOAD_SIZE);
+          return next.get();
         }));
   }
 }
@@ -494,12 +538,10 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount,
   ss <<"positions:" << positions[0].x << "," << positions[0].z << ".."
      << positions[1].x << "," << positions[1].z;
   logger->critical(ss.str());
-  if(!isInitial) {
-    positions[0].x -= xExpand;
-    positions[0].z -= zExpand;
-    positions[1].x += xExpand;
-    positions[1].z += zExpand;
-  }
+  positions[0].x -= xExpand;
+  positions[0].z -= zExpand;
+  positions[1].x += xExpand;
+  positions[1].z += zExpand;
   positions[0].x += xAddition * nextPreloadCount;
   positions[0].z += zAddition * nextPreloadCount;
   positions[1].x += xAddition * nextPreloadCount;
