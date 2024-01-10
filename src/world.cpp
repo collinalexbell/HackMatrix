@@ -476,14 +476,13 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
             int index = leftToRight
                             ? PRELOAD_SIZE - 1 - preloadIndex
                             : loadedNext.size() - PRELOAD_SIZE + preloadIndex;
+            auto toAdd = loadedNext[index];
             if (addToFront) {
-              auto toAdd = loadedNext[index];
               origDeque.push_front(toAdd);
               origDeque.pop_back();
               //TODO: clean up with delete or smart pointer
             }
             else {
-              auto toAdd = loadedNext[loadedNext.size() - PRELOAD_SIZE + preloadIndex];
               origDeque.push_back(toAdd);
               origDeque.pop_front();
               // TODO: clean up with delete or smart pointer
@@ -504,13 +503,12 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
             int index = leftToRight ?
               loadedNext.size() - PRELOAD_SIZE + preloadIndex :
               PRELOAD_SIZE - 1 - preloadIndex;
+            auto toAdd = loadedNext[index];
             if (addToFront) {
-              auto toAdd = loadedNext[loadedNext.size() - PRELOAD_SIZE + preloadIndex];
               origDeque.push_front(toAdd);
               origDeque.pop_back();
               // TODO: clean up with delete or smart pointer
             } else {
-              auto toAdd = loadedNext[PRELOAD_SIZE - 1 - preloadIndex];
               origDeque.push_back(toAdd);
               origDeque.pop_front();
               // TODO: clean up with delete or smart pointer
