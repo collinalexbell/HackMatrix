@@ -1,6 +1,7 @@
 # HackMatrix
 ## VR
 This should support VR out of the box. I want a VR desktop and I will have it.
+I will buy a XR headset when I'm in STL and implement XR controls before I leave.
 ## Kickstarter
 ### Goal
 150k, so I can move to Oregon and be free for 2 years
@@ -101,7 +102,6 @@ Perhaps I could run through all the things I love about my game as part of the s
 Give it loving attention.
 Attention will increase love.
 In a way, attention is love.
-
 ### What do I love about v1?
 - Matrix will eventually work on Vision Pro
 - It will work with PCVR, so I can work in VR flawlessly
