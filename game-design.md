@@ -104,6 +104,7 @@ In a way, attention is love.
 
 ### What do I love about v1?
 - Matrix will eventually work on Vision Pro
+- It will work with PCVR, so I can work in VR flawlessly
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
 - It replaces my desktop environment
 - It gives me hope for the future of computing
