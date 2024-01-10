@@ -1,4 +1,6 @@
 # HackMatrix
+## VR
+This should support VR out of the box. I want a VR desktop and I will have it.
 ## Kickstarter
 ### Goal
 150k, so I can move to Oregon and be free for 2 years
