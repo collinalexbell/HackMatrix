@@ -209,7 +209,7 @@ vector<LoaderChunk> Loader::getRegion(Coordinate regionCoordinate) {
 }
 
 // Comparison function to sort by smallest x, z
-bool sortByXZ(Chunk *chunk1, Chunk *chunk2) {
+bool sortByXZ(shared_ptr<Chunk> chunk1, shared_ptr<Chunk> chunk2) {
   auto pos1 = chunk1->getPosition();
   auto pos2 = chunk2->getPosition();
   //assert(pos1.x==pos2.x || pos1.z == pos2.z);
@@ -220,10 +220,10 @@ bool sortByXZ(Chunk *chunk1, Chunk *chunk2) {
   }
 }
 
-future<deque<Chunk *>> Loader::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
+future<deque<shared_ptr<Chunk>>> Loader::readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                          array<Coordinate, 2> regionCoords) {
 
-  return async(launch::async, [this, chunkCoords, regionCoords]() -> deque<Chunk *> {
+  return async(launch::async, [this, chunkCoords, regionCoords]() -> deque<shared_ptr<Chunk>> {
     int startX;
     int endX;
     int startZ;
@@ -272,8 +272,8 @@ future<deque<Chunk *>> Loader::readNextChunkDeque(array<Coordinate, 2> chunkCoor
 
     //assert(startX == endX || startZ == endZ);
 
-    deque<Chunk *> nextChunkDeque;
-    unordered_map<Coordinate, Chunk *, CoordinateHash> nextChunks;
+    deque<shared_ptr<Chunk>> nextChunkDeque;
+    unordered_map<Coordinate, shared_ptr<Chunk>, CoordinateHash> nextChunks;
     for (int x = startX; x <= endX; x++) {
       for (int z = startZ; z <= endZ; z++) {
 
@@ -289,7 +289,7 @@ future<deque<Chunk *>> Loader::readNextChunkDeque(array<Coordinate, 2> chunkCoor
                 chunk.foreignChunkX, chunk.foreignChunkZ);
 
             if (!nextChunks.contains(worldChunkPos)) {
-              Chunk *toAdd = new Chunk(worldChunkPos.x, 0, worldChunkPos.z);
+              shared_ptr<Chunk> toAdd = make_shared<Chunk>(worldChunkPos.x, 0, worldChunkPos.z);
               nextChunks[worldChunkPos] = toAdd;
             }
             for (auto cube : chunk.cubePositions) {
