@@ -168,13 +168,26 @@ ChunkIndex World::getChunkIndex(int x, int z) {
   return index;
 }
 
+DIRECTION oppositeDirection(DIRECTION direction) {
+  switch(direction) {
+  case NORTH:
+    return SOUTH;
+  case SOUTH:
+    return NORTH;
+  case EAST:
+    return WEST;
+  case WEST:
+    return EAST;
+  }
+  return NORTH;
+}
 void World::transferChunksToPreload(DIRECTION direction, deque<Chunk *> slice) {
-  OrthoginalPreload left = orthoginalPreload(direction, preload::LEFT);
+  OrthoginalPreload left = orthoginalPreload(oppositeDirection(direction), preload::LEFT);
     vector<shared_future<deque<Chunk*>>> sharedLeft;
     for(auto &leftDeque: left.chunks) {
       sharedLeft.push_back(leftDeque.share());
     }
-    OrthoginalPreload right = orthoginalPreload(direction, preload::RIGHT);
+    OrthoginalPreload right = orthoginalPreload(oppositeDirection(direction), preload::RIGHT);
     vector<shared_future<deque<Chunk *>>> sharedRight;
     for (auto &rightDeque : right.chunks) {
       sharedRight.push_back(rightDeque.share());
@@ -182,8 +195,8 @@ void World::transferChunksToPreload(DIRECTION direction, deque<Chunk *> slice) {
     auto toPreload = async(launch::async, [slice,
                                            sharedLeft,
                                            sharedRight,
-                                           leftFromFront = left.addToFront,
-                                           rightFromFront = right.addToFront,
+                                           towardFront = left.towardFront,
+                                           leftToRight = left.leftToRight,
                                            PRELOAD_SIZE = this->PRELOAD_SIZE
                                            ]() -> deque<Chunk*> {
         deque<Chunk*> rv;
@@ -195,20 +208,36 @@ void World::transferChunksToPreload(DIRECTION direction, deque<Chunk *> slice) {
         for (auto &sharedRightDeque : sharedRight) {
           rightDeques.push_back(sharedRightDeque.get());
         }
-        for(auto leftDeque = leftDeques.rbegin(); leftDeque != leftDeques.rend(); leftDeque++) {
-          if(leftFromFront) {
-            rv.push_back((*leftDeque)[PRELOAD_SIZE-1]);
-          } else {
-            rv.push_back((*leftDeque)[leftDeque->size()-PRELOAD_SIZE]);
+        if (leftToRight) {
+          for (auto leftDeque = leftDeques.rbegin();
+               leftDeque != leftDeques.rend(); leftDeque++) {
+            int index = towardFront ? leftDeque->size() - PRELOAD_SIZE - 1
+                                         : PRELOAD_SIZE;
+            rv.push_back((*leftDeque)[index]);
+          }
+        }
+        else {
+          for (auto rightDeque = rightDeques.rbegin();
+               rightDeque != rightDeques.rend(); rightDeque++) {
+            int index = towardFront ? rightDeque->size() - PRELOAD_SIZE - 1
+                                         : PRELOAD_SIZE;
+            rv.push_back((*rightDeque)[index]);
           }
         }
         rv.insert(rv.end(), slice.begin(), slice.end());
-        for (auto rightDeque = rightDeques.begin();
-             rightDeque != rightDeques.end(); rightDeque++) {
-          if (rightFromFront) {
-            rv.push_back((*rightDeque)[PRELOAD_SIZE - 1]);
-          } else {
-            rv.push_back((*rightDeque)[rightDeque->size() - PRELOAD_SIZE]);
+        if(leftToRight) {
+          for (auto rightDeque = rightDeques.begin();
+              rightDeque != rightDeques.end(); rightDeque++) {
+            int index = towardFront ? rightDeque->size() - PRELOAD_SIZE - 1
+                                         : PRELOAD_SIZE;
+            rv.push_back((*rightDeque)[index]);
+          }
+        } else {
+          for (auto leftDeque = leftDeques.begin();
+               leftDeque != leftDeques.end(); leftDeque++) {
+            int index = towardFront ? leftDeque->size() - PRELOAD_SIZE - 1
+                                    : PRELOAD_SIZE;
+            rv.push_back((*leftDeque)[index]);
           }
         }
         return rv;
@@ -334,7 +363,7 @@ void World::loadChunksIfNeccissary() {
 
     // transfer from preloaded to chunks
     auto full = preloadedChunks[SOUTH].front().get();
-    deque<Chunk *> westEastSlice(full.begin()+PRELOAD_SIZE, full.end()+PRELOAD_SIZE);
+    deque<Chunk *> westEastSlice(full.begin()+PRELOAD_SIZE, full.end()-PRELOAD_SIZE);
     int i = 0;
     for(auto &northSouthSlice: chunks) {
       northSouthSlice.push_back(westEastSlice[i]);
@@ -361,30 +390,30 @@ OrthoginalPreload World::orthoginalPreload(DIRECTION direction, preload::SIDE si
   switch(direction) {
   case DIRECTION::NORTH:
     if(side == preload::LEFT) {
-      return OrthoginalPreload{true, preloadedChunks[WEST]};
+      return OrthoginalPreload{true, true, preloadedChunks[WEST]};
     } else {
-      return OrthoginalPreload{true, preloadedChunks[EAST]};
+      return OrthoginalPreload{true, true, preloadedChunks[EAST]};
     }
   case DIRECTION::SOUTH:
     if(side == preload::LEFT) {
-      return OrthoginalPreload{false, preloadedChunks[EAST]};
+      return OrthoginalPreload{false, false, preloadedChunks[EAST]};
     } else {
-      return OrthoginalPreload {false, preloadedChunks[WEST]};
+      return OrthoginalPreload {false, false, preloadedChunks[WEST]};
     }
   case DIRECTION::EAST:
     if(side == preload::LEFT) {
-      return OrthoginalPreload{false, preloadedChunks[NORTH]};
+      return OrthoginalPreload{false, true, preloadedChunks[NORTH]};
     } else {
-      return OrthoginalPreload{false, preloadedChunks[SOUTH]};
+      return OrthoginalPreload{false, true, preloadedChunks[SOUTH]};
     }
   case DIRECTION::WEST:
     if(side == preload::LEFT) {
-      return OrthoginalPreload{true, preloadedChunks[SOUTH]};
+      return OrthoginalPreload{true, false, preloadedChunks[SOUTH]};
     } else {
-      return OrthoginalPreload{true, preloadedChunks[NORTH]};
+      return OrthoginalPreload{true, false, preloadedChunks[NORTH]};
     }
   }
-  return OrthoginalPreload{true, preloadedChunks[NORTH]};
+  return OrthoginalPreload{true, true, preloadedChunks[NORTH]};
 }
 
 void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
@@ -436,18 +465,25 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
            preloadIndex,
            next,
            leftNext = move(preloadLeft.chunks[preloadIndex]),
-           addToFront = preloadLeft.addToFront]
+           addToFront = preloadLeft.towardFront,
+           leftToRight = preloadLeft.leftToRight]
           () mutable -> deque<Chunk *> {
             auto origDeque = leftNext.get();
             // PRELOAD_SIZE-1-preloadIndex because...
             // On the left side, preload deque goes from right to left
             // whereas next always goes left to right
-            auto toAdd = next.get()[PRELOAD_SIZE-1-preloadIndex];
+            auto loadedNext = next.get();
+            int index = leftToRight
+                            ? PRELOAD_SIZE - 1 - preloadIndex
+                            : loadedNext.size() - PRELOAD_SIZE + preloadIndex;
             if (addToFront) {
+              auto toAdd = loadedNext[index];
               origDeque.push_front(toAdd);
               origDeque.pop_back();
               //TODO: clean up with delete or smart pointer
-            } else {
+            }
+            else {
+              auto toAdd = loadedNext[loadedNext.size() - PRELOAD_SIZE + preloadIndex];
               origDeque.push_back(toAdd);
               origDeque.pop_front();
               // TODO: clean up with delete or smart pointer
@@ -456,19 +492,25 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
           });
     }
 
-    OrthoginalPreload preloadRight = orthoginalPreload(direction,
-    preload::RIGHT); for (int preloadIndex = 0; preloadIndex < PRELOAD_SIZE;
-    preloadIndex++) { preloadRight.chunks[preloadIndex] = async( launch::async,
+    OrthoginalPreload preloadRight = orthoginalPreload(direction, preload::RIGHT);
+    for (int preloadIndex = 0; preloadIndex < PRELOAD_SIZE; preloadIndex++) {
+      preloadRight.chunks[preloadIndex] = async( launch::async,
           [PRELOAD_SIZE = this->PRELOAD_SIZE, preloadIndex, next,
-           leftNext = move(preloadRight.chunks[preloadIndex]),
-           addToFront = preloadRight.addToFront]() mutable -> deque<Chunk *> {
-            auto origDeque = leftNext.get();
-            auto fulfilledNext = next.get();
-            auto toAdd =
-    fulfilledNext[fulfilledNext.size()-PRELOAD_SIZE-1+preloadIndex]; if
-    (addToFront) { origDeque.push_front(toAdd); origDeque.pop_back();
+           rightNext = move(preloadRight.chunks[preloadIndex]),
+           addToFront = preloadRight.towardFront,
+           leftToRight = preloadRight.leftToRight]() mutable -> deque<Chunk *> {
+            auto origDeque = rightNext.get();
+            auto loadedNext = next.get();
+            int index = leftToRight ?
+              loadedNext.size() - PRELOAD_SIZE + preloadIndex :
+              PRELOAD_SIZE - 1 - preloadIndex;
+            if (addToFront) {
+              auto toAdd = loadedNext[loadedNext.size() - PRELOAD_SIZE + preloadIndex];
+              origDeque.push_front(toAdd);
+              origDeque.pop_back();
               // TODO: clean up with delete or smart pointer
             } else {
+              auto toAdd = loadedNext[PRELOAD_SIZE - 1 - preloadIndex];
               origDeque.push_back(toAdd);
               origDeque.pop_front();
               // TODO: clean up with delete or smart pointer
@@ -538,6 +580,7 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount,
   ss <<"positions:" << positions[0].x << "," << positions[0].z << ".."
      << positions[1].x << "," << positions[1].z;
   logger->critical(ss.str());
+  logger->flush();
   positions[0].x -= xExpand;
   positions[0].z -= zExpand;
   positions[1].x += xExpand;

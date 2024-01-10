@@ -71,7 +71,7 @@ class World {
   // TODO: rm
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
-  void transferChunksToPreload(DIRECTION direction, deque<Chunk*> slice);
+  void transferChunksToPreload(DIRECTION movementDirection, deque<Chunk*> slice);
   ChunkIndex middleIndex;
   void initChunks();
   void initAppPositions();

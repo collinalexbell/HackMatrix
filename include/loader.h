@@ -18,7 +18,8 @@ struct ChunkIndex {
 };
 
 struct OrthoginalPreload {
-  bool addToFront;
+  bool towardFront;
+  bool leftToRight;
   deque<future<deque<Chunk *>>> &chunks;
 };
 
