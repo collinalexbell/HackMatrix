@@ -8,6 +8,7 @@
 #include "camera.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
+#include <memory>
 #include <mutex>
 #include <octree/octree.h>
 #include "logger.h"
@@ -46,8 +47,8 @@ class World {
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
-  deque<deque<Chunk*>> chunks;
-  map<DIRECTION, deque<future<deque<Chunk*>>>> preloadedChunks;
+  deque<deque<shared_ptr<Chunk>>> chunks;
+  map<DIRECTION, deque<future<deque<shared_ptr<Chunk>>>>> preloadedChunks;
   int WORLD_SIZE = 5;
   int PRELOAD_SIZE = 3;
   int damageIndex = -1;
@@ -71,7 +72,7 @@ class World {
   // TODO: rm
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
-  void transferChunksToPreload(DIRECTION movementDirection, deque<Chunk*> slice);
+  void transferChunksToPreload(DIRECTION movementDirection, deque<shared_ptr<Chunk>> slice);
   ChunkIndex middleIndex;
   void initChunks();
   void initAppPositions();
@@ -115,7 +116,7 @@ public : void tick();
 
   void mesh(bool realTime = true);
   ChunkMesh meshSelectedCube(Position position);
-  Chunk *getChunk(int chunkX, int chunkZ);
+  shared_ptr<Chunk> getChunk(int chunkX, int chunkZ);
 };
 
 #endif

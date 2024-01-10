@@ -4,6 +4,7 @@
 #include "enkimi.h"
 #include <deque>
 #include <future>
+#include <memory>
 
 using namespace std;
 
@@ -20,7 +21,7 @@ struct ChunkIndex {
 struct OrthoginalPreload {
   bool towardFront;
   bool leftToRight;
-  deque<future<deque<Chunk *>>> &chunks;
+  deque<future<deque<shared_ptr<Chunk>>>> &chunks;
 };
 
 enum DIRECTION { NORTH, SOUTH, EAST, WEST };
@@ -81,6 +82,6 @@ playersChunkIndex(); ChunkIndex calculateMiddleIndex();
 public:
   Loader(string folderName);
   vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
-  future<deque<Chunk *>> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
+  future<deque<shared_ptr<Chunk>>> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                     array<Coordinate, 2> regionCoords);
 };
