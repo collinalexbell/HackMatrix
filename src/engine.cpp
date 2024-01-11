@@ -1,7 +1,9 @@
+#include <memory>
 #define GLFW_EXPOSE_NATIVE_X11
 #include "engine.h"
-#include <GLFW/glfw3native.h>
+#include "blocks.h"
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -52,11 +54,12 @@ void Engine::initImGui() {
 }
 
 void Engine::initialize(){
+  auto texturePack = make_shared<blocks::TexturePack>(blocks::initializeBasicPack());
   wm = new WM(glfwGetX11Window(window));
   camera = new Camera();
-  world = new World(camera, "/home/collin/hogwarts/region/", true);
+  world = new World(camera, texturePack, "/home/collin/hogwarts/region/", true);
   api = new Api("tcp://*:3333", world);
-  renderer = new Renderer(camera, world);
+  renderer = new Renderer(camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer);
   wm->registerControls(controls);
 }

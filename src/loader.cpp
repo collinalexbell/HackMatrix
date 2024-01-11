@@ -100,7 +100,8 @@ getCoordinatesFromRegionFilename(const std::string &filename) {
   return coordinates;
 }
 
-Loader::Loader(string folderName) {
+Loader::Loader(string folderName, shared_ptr<blocks::TexturePack> texturePack):
+  texturePack(texturePack) {
   auto fileNames = getFilesInFolder(folderName);
   for (auto fileName : fileNames) {
     auto coords = getCoordinatesFromRegionFilename(fileName);
@@ -160,27 +161,11 @@ vector<LoaderChunk> Loader::getRegion(Coordinate regionCoordinate) {
                 cube.y = sPos.y + sectionOrigin.y;
                 cube.z = sPos.z + sectionOrigin.z;
                 bool shouldAdd = false;
-                if (voxel == 1) {
-                  cube.blockType = 6;
+                auto textureIndex = texturePack->textureIndexFromId(voxel);
+                if(textureIndex >= 0) {
+                  cube.blockType = textureIndex;
                   shouldAdd = true;
                 }
-                if(voxel == 3) {
-                  cube.blockType = 3;
-                  shouldAdd = true;
-                }
-                if(voxel == 161) {
-                  cube.blockType = 0;
-                  shouldAdd = true;
-                }
-                if(voxel == 251) {
-                  cube.blockType = 1;
-                  shouldAdd = true;
-                }
-                if (voxel == 17) {
-                  cube.blockType = 2;
-                  shouldAdd = true;
-                }
-
                 if(shouldAdd) {
                   chunks.back().cubePositions.push_back(cube);
                 }

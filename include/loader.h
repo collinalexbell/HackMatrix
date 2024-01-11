@@ -5,6 +5,7 @@
 #include <deque>
 #include <future>
 #include <memory>
+#include "blocks.h"
 
 using namespace std;
 
@@ -77,10 +78,11 @@ direction, bool initial = false);
 side); ChunkIndex getChunkIndex(int x, int z); ChunkIndex
 playersChunkIndex(); ChunkIndex calculateMiddleIndex();
 */
+  shared_ptr<blocks::TexturePack> texturePack;
   unordered_map<Coordinate, string, CoordinateHash> regionFileNames;
   unordered_map<Coordinate, enkiRegionFile, CoordinateHash> regionFiles;
 public:
-  Loader(string folderName);
+  Loader(string folderName, shared_ptr<blocks::TexturePack>);
   vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
   future<deque<shared_ptr<Chunk>>> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
                                     array<Coordinate, 2> regionCoords);

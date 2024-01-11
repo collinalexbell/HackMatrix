@@ -8,8 +8,8 @@ FLAGS = -g -O3
 LOADER_FLAGS = -march=native -funroll-loops
 all: matrix trampoline build/diagnosis
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o
-	g++ -std=c++20 $(FLAGS) -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o
+	g++ -std=c++20 $(FLAGS) -g -o matrix build/renderer.o build/main.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq $(INCLUDES) -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -53,7 +53,7 @@ build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h include/
 build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 $(FLAGS) -o build/logger.o -c src/logger.cpp $(INCLUDES)
 
-build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h
+build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h
 	g++ -std=c++20 $(FLAGS) -o build/engine.o -c src/engine.cpp $(INCLUDES)
 
 build/cube.o: src/cube.cpp include/cube.h
@@ -70,6 +70,10 @@ build/loader.o: src/loader.cpp include/loader.h include/utility.h
 
 build/utility.o: src/utility.cpp include/utility.h
 	g++ -std=c++20 $(FLAGS) -o build/utility.o -c src/utility.cpp $(INCLUDES)
+
+build/blocks.o: src/blocks.cpp include/blocks.h
+	g++ -std=c++20 $(FLAGS) -o build/blocks.o -c src/blocks.cpp $(INCLUDES)
+
 
 include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=./ protos/api.proto
