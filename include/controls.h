@@ -1,5 +1,6 @@
 #pragma once
 
+#include "blocks.h"
 #include "camera.h"
 #include <functional>
 #include <glad/glad.h>
@@ -17,6 +18,7 @@ struct DeferedAction {
 };
 
 class Controls {
+  shared_ptr<blocks::TexturePack> texturePack;
   WM* wm;
   World *world;
   Camera *camera;
@@ -43,13 +45,14 @@ class Controls {
   void handleDebug(GLFWwindow *window);
   void handleToggleMeshing(GLFWwindow *window);
   void handleToggleWireframe(GLFWwindow *window);
+  void handleLogBlockCounts(GLFWwindow *window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleClicks(GLFWwindow* window, World* world);
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
 public:
-  Controls(WM *wm, World *world, Camera *camera, Renderer* renderer) : wm(wm), world(world), camera(camera), renderer(renderer) {}
+  Controls(WM *wm, World *world, Camera *camera, Renderer* renderer, shared_ptr<blocks::TexturePack> texturePack) : wm(wm), world(world), camera(camera), renderer(renderer), texturePack(texturePack) {}
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
   void goToApp(X11App * app);
