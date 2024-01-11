@@ -40,6 +40,7 @@ TexturePack::TexturePack(string textureDir, vector<Block> blocks) : blocks(block
 
 
 int TexturePack::textureIndexFromId(int id) {
+  /*
   if(idToCounts.contains(id)) {
       countsMutex.lock();
       idToCounts[id]++;
@@ -49,8 +50,8 @@ int TexturePack::textureIndexFromId(int id) {
       idToCounts[id] = 0;
       countsMutex.unlock();
   }
+  */
   if (auto index = idToIndex.find(id); index != idToIndex.end()) {
-    
     return index->second;
   } else {
     return -1;
