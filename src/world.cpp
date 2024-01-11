@@ -25,10 +25,10 @@
 
 using namespace std;
 
-World::World(Camera *camera, string minecraftFolder, bool debug) : camera(camera) {
+World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug) : camera(camera) {
   initLogger();
   initAppPositions();
-  initLoader(minecraftFolder);
+  initLoader(minecraftFolder, texturePack);
   initChunks();
 }
 
@@ -1001,8 +1001,8 @@ void World::loadRegion(Coordinate regionCoordinate) {
   }
 }
 
-void World::initLoader(string folderName) {
-  loader = new Loader(folderName);
+void World::initLoader(string folderName, shared_ptr<blocks::TexturePack> texturePack) {
+  loader = new Loader(folderName, texturePack);
 }
 
 void World::loadMinecraft() {

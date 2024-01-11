@@ -169,7 +169,9 @@ void Renderer::toggleWireframe() {
   }
 }
 
-Renderer::Renderer(Camera *camera, World *world) {
+Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack> texturePack):
+  texturePack(texturePack)
+{
   this->camera = camera;
   this->world = world;
 
@@ -184,11 +186,15 @@ Renderer::Renderer(Camera *camera, World *world) {
   fillBuffers();
   setupVertexAttributePointers();
 
+  /*
   std::vector<std::string> images = {
       "images/bAndGrey.png",         "images/purpleRoad.png",
       "images/bAndGreySpeckled.png", "images/grass.png",
       "images/pillar.png",           "images/reactor_texture.png",
       "images/road.png"};
+  */
+
+  std::vector<std::string> images = texturePack->imageNames();
   textures.insert(std::pair<string, Texture *>(
       "allBlocks", new Texture(images, GL_TEXTURE0)));
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");

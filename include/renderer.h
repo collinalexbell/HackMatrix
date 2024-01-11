@@ -1,5 +1,6 @@
 #ifndef __RENDERER_H__
 #define __RENDERER_H__
+#include "blocks.h"
 #include "chunk.h"
 #include "cube.h"
 #include "shader.h"
@@ -23,6 +24,7 @@
 class Cube;
 class World;
 class Renderer {
+  shared_ptr<blocks::TexturePack> texturePack;
   unsigned int APP_VBO;
   unsigned int APP_INSTANCE;
   unsigned int APP_VAO;
@@ -79,7 +81,7 @@ class Renderer {
   int verticesInMesh = 0;
 
 public:
-  Renderer(Camera*, World*);
+  Renderer(Camera*, World*, shared_ptr<blocks::TexturePack>);
   ~Renderer();
   Camera* getCamera();
   void render();

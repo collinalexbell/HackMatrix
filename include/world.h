@@ -2,6 +2,7 @@
 #define __WORLD_H__
 
 #include "app.h"
+#include "blocks.h"
 #include "coreStructs.h"
 #include "cube.h"
 #include "chunk.h"
@@ -83,7 +84,7 @@ class World {
 
 public : void tick();
   const float CUBE_SIZE = 0.1;
-  World(Camera *camera, string minecraftFolder, bool debug = false);
+  World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false);
   ~World();
   void attachRenderer(Renderer *renderer);
   float getViewDistanceForWindowSize(X11App *app);
@@ -111,7 +112,7 @@ public : void tick();
   void load(string filename);
   void loadRegion(Coordinate regionCoordinate);
   void loadMinecraft();
-  void initLoader(string folderName);
+  void initLoader(string folderName, shared_ptr<blocks::TexturePack> texturePack);
   void loadLatest();
 
   void mesh(bool realTime = true);
