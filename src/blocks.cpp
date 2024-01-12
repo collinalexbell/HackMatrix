@@ -25,6 +25,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{98, "stone bricks", "stone_bricks.png"},
       Block{103, "melon block", "melon_side.png"},
       Block{112, "nether block", "red_nether_bricks.png"},
+      Block{129, "emerald ore", "emerald_ore.png"},
       Block{139, "cobblestone wall", "stone_bricks_wall.png"},
       Block{159, "white hardened clay", "clay.png"},
       Block{160, "white stained glass", "white_stained_glass.png"},

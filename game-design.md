@@ -3,6 +3,11 @@
 This should support VR out of the box. I want a VR desktop and I will have it.
 I will buy a XR headset when I'm in STL and implement XR controls before I leave.
 ## Kickstarter
+### Idea (I need to focus on these 4 things to make the 150,000$)
+- a good idea
+- in the right place
+- at the right time
+- sold convincingly
 ### Goal
 150k, so I can move to Oregon and be free for 2 years
 (which will init the rest of my life)
