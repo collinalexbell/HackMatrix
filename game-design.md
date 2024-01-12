@@ -12,6 +12,9 @@ I will buy a XR headset when I'm in STL and implement XR controls before I leave
     - love
     - build my cybernetics corporation
 
+### Units Sold
+To hit the goal, I would need 5000-10000 backers!
+... or better perks than just a 15-30$ game sale
 ### Plan
 12 hour hack days until I get the money
 ### The Play
