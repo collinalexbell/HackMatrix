@@ -1,5 +1,6 @@
 # HackMatrix University
-Learn to code a Voxel world from inside a Voxel university RPG
+A 3d tutorial RPG where you learn to code
+your own 3d voxel desktop environment
 ## VR
 This should support VR out of the box. I want a VR desktop and I will have it.
 I will buy a XR headset when I'm in STL and implement XR controls before I leave.
@@ -101,7 +102,7 @@ Have no fear in this approach... just keep it up
   and algorithms needed to build the 3d desktop environment
 ## Financial Goal
 150,000$
-## Love
+## What I love about the game
 ### This would be so much easier if I loved my game more.
 How do I increase love for my game?
 
