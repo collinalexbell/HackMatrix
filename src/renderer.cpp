@@ -214,7 +214,7 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   } else {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
   }
-  glClearColor(178.0 / 256, 178.0 / 256, 178.0 / 256, 1.0f);
+  glClearColor(108.0/255, 79.0/255, 201.0/255, 1.0f);
   glLineWidth(10.0);
 
   view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
