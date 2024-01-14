@@ -4,6 +4,7 @@ This should support VR out of the box. I want a VR desktop and I will have it.
 I will buy a XR headset when I'm in STL and implement XR controls before I leave.
 ## Kickstarter
 ### Idea (I need to focus on these 4 things to make the 150,000$)
+I should really focus on this lens
 #### a good idea
 - an immersive coding tutorial?
 #### in the right place: here
