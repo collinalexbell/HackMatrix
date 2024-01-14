@@ -1,6 +1,4 @@
-# HackMatrix University
-A 3d tutorial RPG where you learn to code
-your own 3d voxel desktop environment
+# HackMatrix
 ## VR
 This should support VR out of the box. I want a VR desktop and I will have it.
 I will buy a XR headset when I'm in STL and implement XR controls before I leave.
@@ -14,6 +12,12 @@ VR, digital world, english speaking
 VR is used for fun (mostly), no one works full time in it, it isn't used for schooling,
 online universities suck
 #### sold convincingly
+### Be Passionate
+I need to be passionate about the game to sell it.
+This means I must:
+    - love the game
+    - be excited about its future
+    - have commitment, drive, and determination to deliver a quality product
 ### Goal
 150k, so I can move to Oregon and be free for 2 years
 (which will init the rest of my life)
