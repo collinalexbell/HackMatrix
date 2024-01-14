@@ -5,6 +5,7 @@ I will buy a XR headset when I'm in STL and implement XR controls before I leave
 ## Kickstarter
 ### Idea (I need to focus on these 4 things to make the 150,000$)
 #### a good idea
+- an immersive coding tutorial?
 #### in the right place: here
 VR, digital world, english speaking
 #### at the right time: now
@@ -12,6 +13,7 @@ VR, digital world, english speaking
 VR is used for fun (mostly), no one works full time in it, it isn't used for schooling,
 online universities suck
 #### sold convincingly
+If I can get a social media influencer to team up with me, then it can be sold convincingly
 ### Be Passionate
 I need to be passionate about the game to sell it.
 This means I must:
@@ -104,8 +106,6 @@ Have no fear in this approach... just keep it up
 ## Mechanic
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
-## Financial Goal
-150,000$
 ## What I love about the game
 ### This would be so much easier if I loved my game more.
 How do I increase love for my game?
