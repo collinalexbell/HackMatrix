@@ -50,7 +50,7 @@ class World {
   std::vector<X11App*> apps;
   deque<deque<shared_ptr<Chunk>>> chunks;
   map<DIRECTION, deque<future<deque<shared_ptr<Chunk>>>>> preloadedChunks;
-  int WORLD_SIZE = 5;
+  int WORLD_SIZE = 9;
   int PRELOAD_SIZE = 3;
   int damageIndex = -1;
   mutex preloadMutex;
