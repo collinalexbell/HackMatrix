@@ -118,7 +118,7 @@ Give it loving attention.
 Attention will increase love.
 In a way, attention is love.
 ### What do I love about v1?
-- It will be the first product of Portland Cybernetics
+- It will be the first product of Portland Cybernetic
 - Matrix will eventually work on Vision Pro
 - It will work with PCVR, so I can work in VR flawlessly
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
