@@ -43,11 +43,11 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{180, "wooden trapdoor", "birch_trapdoor.png"},
       Block{201, "purple block", "purple_concrete.png"},
       Block{202, "purple pillar", "purpur_pillar.png"},
-      Block{235, "white glazed terracotta", "white_terracotta.png"},
-      Block{236, "orange glazed terracotta", "orange_terracotta.png"},
-      Block{237, "magenta glazed terracotta", "magenta_terracotta.png"},
+      Block{235, "white glazed terracotta", "white_terracotta_rgb.png"},
+      Block{236, "orange glazed terracotta", "orange_terracotta_rgb.png"},
+      Block{237, "magenta glazed terracotta", "magenta_terracotta_rgb.png"},
       Block{239, "yellow glazed terracotta", "yellow_terracotta_rgb.png"},
-      Block{247, "brown glazed terracotta", "brown_terracotta.png"},
+      Block{247, "brown glazed terracotta", "brown_terracotta_rgb.png"},
       Block{251, "white concrete", "white_concrete.png"},
       Block{252, "white concrete powder", "white_concrete_powder.png"}
   };
