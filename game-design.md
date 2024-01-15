@@ -90,8 +90,10 @@ Have no fear in this approach... just keep it up
 #### St Louis (6 nights)
   - Checking into the Cheshire
   - Buying a 3d printer
-  - HackMatrix meditation while stoned
-  - Walking Zeus in Central Park
+  - Buying 3d glasses
+  - Building a robot arm for Matt
+  - Building a robot arm for Zeus
+  - Walking Zeus in Forest Park
 #### Kansas City (1 night)
 - Arriving, going to sleep, just getting up early the next morning
 #### Denver (1 nights)
