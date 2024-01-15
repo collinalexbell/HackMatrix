@@ -406,16 +406,6 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
     getMinecraftRegion(minecraftChunkPositions[1].x, minecraftChunkPositions[1].z)
   };
 
-  stringstream ss;
-  ss << matrixChunkPositions[0].x << "," << matrixChunkPositions[0].z << ".."
-     << matrixChunkPositions[1].x << "," << matrixChunkPositions[1].z;
-  logger->critical(ss.str());
-  ss.clear();
-  ss << minecraftChunkPositions[0].x << "," << minecraftChunkPositions[0].z <<".."
-     << minecraftChunkPositions[1].x << "," << minecraftChunkPositions[1].z;
-  logger->critical(ss.str());
-  logger->flush();
-
   auto nextUnshared = loader->readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
 
   if(isInitial) {
@@ -542,8 +532,6 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount,
   stringstream ss;
   ss <<"positions:" << positions[0].x << "," << positions[0].z << ".."
      << positions[1].x << "," << positions[1].z;
-  logger->critical(ss.str());
-  logger->flush();
   positions[0].x -= xExpand;
   positions[0].z -= zExpand;
   positions[1].x += xExpand;
@@ -611,8 +599,6 @@ void World::addLine(Line line) {
        << line.points[1].y << ","
        << line.points[1].z << ","
        << line.color.r;
-    logger->critical(ss.str());
-    logger->flush();
     if(renderer != NULL) {
       renderer->addLine(i, line);
     }
@@ -901,6 +887,16 @@ void World::action(Action toTake) {
     }
     if(toTake == OPEN_SELECTION_CODE) {
       logger->info("open_selection_code");
+    }
+    if(toTake == LOG_BLOCK_TYPE) {
+      auto pos = translateToWorldPosition(lookingAt.x, lookingAt.y, lookingAt.z);
+      auto chunk = getChunk(pos.chunkX, pos.chunkZ);
+      auto cube = chunk->getCube_(pos.x, pos.y, pos.z);
+      if(cube != NULL) {
+        stringstream ss;
+        ss << "lookedAtBlockType:" << cube->blockType();
+        logger->critical(ss.str());
+      }
     }
   }
 }

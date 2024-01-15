@@ -46,6 +46,7 @@ class Controls {
   void handleToggleMeshing(GLFWwindow *window);
   void handleToggleWireframe(GLFWwindow *window);
   void handleLogBlockCounts(GLFWwindow *window);
+  void handleLogBlockType(GLFWwindow *window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleClicks(GLFWwindow* window, World* world);
