@@ -102,10 +102,6 @@ void World::mesh(bool realTime) {
         m.push_back(chunks[x][z]->mesh(realTime));
     }
   }
-  stringstream ss;
-  ss << "time: " << glfwGetTime() - currentTime;
-  logger->debug(ss.str());
-  logger->flush();
   renderer->updateChunkMeshBuffers(m);
 }
 
@@ -401,12 +397,7 @@ void World::loadNextPreloadedChunkDeque(DIRECTION direction, bool isInitial) {
   minecraftChunkPositions[1].x += endAddition;
   minecraftChunkPositions[1].z += endAddition;
 
-  array<Coordinate, 2> minecraftRegions = {
-    getMinecraftRegion(minecraftChunkPositions[0].x, minecraftChunkPositions[0].z),
-    getMinecraftRegion(minecraftChunkPositions[1].x, minecraftChunkPositions[1].z)
-  };
-
-  auto nextUnshared = loader->readNextChunkDeque(minecraftChunkPositions, minecraftRegions);
+  auto nextUnshared = loader->readNextChunkDeque(minecraftChunkPositions);
 
   if(isInitial) {
     preloadedChunks[direction].push_back(move(nextUnshared));
@@ -894,7 +885,8 @@ void World::action(Action toTake) {
       auto cube = chunk->getCube_(pos.x, pos.y, pos.z);
       if(cube != NULL) {
         stringstream ss;
-        ss << "lookedAtBlockType:" << cube->blockType();
+        ss << "lookedAtBlockType:" << cube->blockType()
+           << ", (" << lookingAt.x << "," << lookingAt.z;
         logger->critical(ss.str());
       }
     }

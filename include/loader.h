@@ -84,6 +84,5 @@ playersChunkIndex(); ChunkIndex calculateMiddleIndex();
 public:
   Loader(string folderName, shared_ptr<blocks::TexturePack>);
   vector<LoaderChunk> getRegion(Coordinate regionCoordinate);
-  future<deque<shared_ptr<Chunk>>> readNextChunkDeque(array<Coordinate, 2> chunkCoords,
-                                    array<Coordinate, 2> regionCoords);
+  future<deque<shared_ptr<Chunk>>> readNextChunkDeque(array<Coordinate, 2> chunkCoords);
 };
