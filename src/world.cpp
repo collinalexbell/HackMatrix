@@ -886,7 +886,7 @@ void World::action(Action toTake) {
       if(cube != NULL) {
         stringstream ss;
         ss << "lookedAtBlockType:" << cube->blockType()
-           << ", (" << lookingAt.x << "," << lookingAt.z;
+           << ", (" << lookingAt.x << "," << lookingAt.z << ")";
         logger->critical(ss.str());
       }
     }
