@@ -109,7 +109,8 @@ Have no fear in this approach... just keep it up
 ## Mechanic
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
-## What I love about the game### This would be so much easier if I loved my game more.
+## What I love about the game
+### This would be so much easier if I loved my game more.
 How do I increase love for my game?
 
 Perhaps I could run through all the things I love about my game as part of the short wave?
@@ -123,16 +124,11 @@ In a way, attention is love.
 - It will work with PCVR, so I can work in VR flawlessly
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
 - It replaces my desktop environment
-- It gives me hope for the future of computing
-- Software is an American core competency, so this product fits within that core
 - It is written in C++
 - I understand how it works
-- Its design is rooted in many years of thought
 - It will evolve to help me with robotics
 - It is the first product I've worked on since discovering communication with God
 - It is my last stand. That this is the product I have decided will succeed.
-- This is a genre of game no one has attempted
-- It could function as Mission Match
 - This will be my first significant success
 - It is the first 3d program I have written to completion
 
