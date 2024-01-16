@@ -501,6 +501,7 @@ V Blow stuff up with placed charges that have customizable size!
 Minimal currently. Probably needs a bit more of something.
 At least a build mode with block selection or something.
 ## Aesthetic
+I don't know if I want it to play or look like Minecraft. It feels to samesy
 $ voxel
 - portland
 ### colors
