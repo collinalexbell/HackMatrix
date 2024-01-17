@@ -117,7 +117,7 @@ Give it loving attention.
 Attention will increase love.
 In a way, attention is love.
 ### What do I love about v1?
-- It will be the first product of Portland Cybernetic
+- It will be the first product of Portland Cybernetics
 - Matrix will eventually work on Vision Pro
 - It will work with PCVR, so I can work in VR flawlessly
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
@@ -130,6 +130,7 @@ In a way, attention is love.
 - This will be my first significant success
 - It is the first 3d program I have written to completion
 
+## Why would players want the game?
 ## Playtesting
 ### Pre-Kickstarter
 - Go to Knox Makerspace on Jan 2nd or Jan 9th (if mother and Jeff are out of the house)
