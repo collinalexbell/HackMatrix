@@ -107,6 +107,9 @@ Have no fear in this approach... just keep it up
 ## Mechanic
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
+- Or to build minecraft clone
+- Or to learn opengl
+- Or to learn/practice data structures
 ## What I love about the game
 ### This would be so much easier if I loved my game more.
 How do I increase love for my game?
