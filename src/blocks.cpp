@@ -23,6 +23,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{44, "stone slab", "stone_slab_rgb.png"},
       Block{45, "bricks", "bricks.png"},
       Block{47, "bookshelf", "bookshelf_rgb.png"},
+      Block{48, "mossy cobblestone", "mossy_cobblestone.png"},
       Block{82, "clay", "clay.png"},
       Block{87, "nether rack", "netherrack.png"},
       Block{95, "white stained glass", "white_stained_glass_rgb.png"},
