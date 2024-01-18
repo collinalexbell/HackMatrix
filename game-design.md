@@ -1,4 +1,5 @@
 # HackMatrix (Codeblocks)
+Feb 2nd, the Kickstarter is a finished success with 150k$
 ## Idea
 Possible pitch ideas
 - Learn data structures
