@@ -71,6 +71,7 @@ and compress it hard enough. Slow, methodical, consitent compression.
 Have no fear in this approach... just keep it up
 
 ## Mechanic
+- Coding Education
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
 - Or to build minecraft clone
