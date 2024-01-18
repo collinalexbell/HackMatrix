@@ -13,6 +13,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{5, "oak wood plank", "oak_planks.png"},
       Block{7, "bedrock", "bedrock_rgb.png"},
       Block{12, "sand", "sand.png"},
+      Block{14, "gold ore", "gold_ore.png"},
       Block{16, "coal ore", "coal_ore.png"},
       Block{17, "oak log", "oak_log.png"},
       Block{18, "oak leaves", "images/oak.png", true},
