@@ -69,41 +69,7 @@ I have something here. I just need to add more material to the kernel
 and compress it hard enough. Slow, methodical, consitent compression.
 
 Have no fear in this approach... just keep it up
-## Visualization
-### Travel to Portland (14 nights)
-#### Powell (way too long)
-#### Knoxville (2 nights)
-  - Checking into Red Roof Inn
-    - Getting keys
-    - Unlocking door
-    - Jumping on the bed
-    - Meditating
-  - Getting my car
-    - Booking
-    - Driving it into the Red Roof Parking Lot
-  - Leaving
-    - Morning Coffee
-    - Get in car bright and early
-    - Signs of Nashville
-#### St Louis (6 nights)
-  - Checking into the Cheshire
-  - Buying a 3d printer
-  - Buying 3d glasses
-  - Building a robot arm for Matt
-  - Building a robot arm for Zeus
-  - Walking Zeus in Forest Park
-#### Kansas City (1 night)
-- Arriving, going to sleep, just getting up early the next morning
-#### Denver (1 nights)
-  - Staying at the hotel near 17th
-  - Walking down 16th ave
-#### Vail (1 night)
-  - Spending the morning into noon just walking around
-#### Provo (1 night)
-#### Boise (1 night)
-#### Bend (1 night)
-#### Portland (10 years (I'll know within a week))
-  I need something to do here
+
 ## Mechanic
 - Conceptual excercises and quests based on structures
   and algorithms needed to build the 3d desktop environment
@@ -120,7 +86,6 @@ Give it loving attention.
 Attention will increase love.
 In a way, attention is love.
 ### What do I love about v1?
-- It will be the first product of Portland Cybernetics
 - Matrix will eventually work on Vision Pro
 - It will work with PCVR, so I can work in VR flawlessly
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
@@ -174,9 +139,7 @@ informal groups form.
 ## What do I love about Gianetica
 - It brings computing into the physical and social realm
 - It gives people mental power
-- It will help me to know everything about Portland
 - It will help me to love software engineering and cybernetics development
-- It will help me love portland
 - I will be able to connect better with others
 - I built it
 - It is a 3d linux system
@@ -293,13 +256,6 @@ Embeds the hacker in a 3d hacker environment
 - I will keep short-wave momentum up until plans for achieving better momentum are transfered from infinite intelligence
 - Every day, no exception
 ## Story
-You are a cybernetician. We all are.
-Thats why we chose to live here, in the City of Cybernetics.
-
-Nestled in the Pacific Northwest,
-at the confluence of the Willamete and Columbia river,
-lies our beautiful city, once called Portland, now called the City of Cybernetics.
-
 We collectively transformed it with our digital imaginings.
 They called it a video game, but we called it our future and then made it so.
 How else was a complex city supposed to be planned?... in meatspace?
@@ -335,7 +291,6 @@ sims or roller coaster tycoon, "no author"
 I might want to add sims elements to my game
 ## Content
 ### 10 Cities
-- Portland
 - Seattle
 - San Fran
 - Berkley
@@ -501,7 +456,6 @@ At least a build mode with block selection or something.
 ## Aesthetic
 I don't know if I want it to play or look like Minecraft. It feels to samesy
 $ voxel
-- portland
 ### colors
 What if I blended man-made colors and natural colors with a sharp distinction between the two
 This would capture the essense of being in a park in the midst of NYC.
@@ -581,7 +535,6 @@ $ ZeroMQ
 $ OpenGL
 
 - City recreation based on google streetview (or some similar)
-  - Portland
   - Using:
     - COLMAP (didn't work)
     - Mapillary
