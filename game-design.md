@@ -1,6 +1,10 @@
 # HackMatrix (Codeblocks)
-I need to get the pitch idea together
-I need to get this thing launched
+## Idea
+Possible pitch ideas
+- Learn data structures
+- Learn how to build a minecraft world
+- LearnOpenGL
+- Just a multiplayer desktop app
 ## VR
 This should support VR out of the box. I want a VR desktop and I will have it.
 I will buy a XR headset when I'm in STL and implement XR controls before I leave.
