@@ -51,6 +51,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{241, "pink glazed terracotta", "pink_terracotta_rgb.png"},
       Block{245, "purple glazed terracotta", "purple_terracotta_rgb.png"},
       Block{247, "brown glazed terracotta", "brown_terracotta_rgb.png"},
+      Block{248, "green glazed terracotta", "green_terracotta_rgb.png"},
       Block{251, "white concrete", "white_concrete.png"},
       Block{252, "white concrete powder", "white_concrete_powder.png"}
   };
