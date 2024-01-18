@@ -39,6 +39,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{161, "acacia leaves", "images/oak.png", true},
       Block{162, "acacia wood", "acacia_log.png"},
       Block{168, "prismarine", "prismarine.png"},
+      Block{169, "sea lantern", "green_teracotta_rgb.png"},
       Block{172, "hardened clay", "clay.png"},
       Block{173, "block of coal", "coal_block.png"},
       Block{179, "red sandstone", "red_sandstone.png"},
