@@ -1,5 +1,8 @@
 # HackMatrix (Codeblocks)
 Feb 2nd, the Kickstarter is a finished success with 150k$
+## Timeline
+If I want to succeed with Kickstarter on the 2nd, I need to launch on the 26th
+If I want to launch on the 26th, I need to submit on the 22nd
 ## Idea
 Possible pitch ideas
 - Learn data structures
