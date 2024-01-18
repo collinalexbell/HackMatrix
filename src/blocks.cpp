@@ -19,6 +19,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{18, "oak leaves", "images/oak.png", true},
       Block{21, "lapis lazuli ore", "lapis_ore.png"},
       Block{24, "sandstone", "stone_bricks_wall.png"},
+      Block{33, "piston", "piston_side.png"},
       Block{35, "white wool", "white_wool.png"},
       Block{41, "gold block", "gold_block.png"},
       Block{44, "stone slab", "stone_slab_rgb.png"},
