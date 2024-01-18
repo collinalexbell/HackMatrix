@@ -44,6 +44,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{169, "sea lantern", "green_teracotta_rgb.png"},
       Block{172, "hardened clay", "clay.png"},
       Block{173, "block of coal", "coal_block.png"},
+      Block{174, "packed ice", "packed_ice.png"},
       Block{179, "red sandstone", "red_sandstone.png"},
       Block{180, "wooden trapdoor", "birch_trapdoor.png"},
       Block{201, "purple block", "purple_concrete.png"},
