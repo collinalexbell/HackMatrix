@@ -65,7 +65,11 @@ bool debounce(double &lastTime) {
 }
 
 void Controls::handleDMenu(GLFWwindow *window, World *world) {
-
+  // its V menu for now :(
+  bool dMenuActive = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
+  if (dMenuActive && debounce(lastKeyPressTime)) {
+    //dMenu();
+  }
 }
 
 void Controls::handleLogBlockType(GLFWwindow *window) {
