@@ -53,6 +53,7 @@ void Controls::handleKeys(GLFWwindow *window, Camera *camera, World* world) {
   handleToggleWireframe(window);
   handleLogBlockCounts(window);
   handleLogBlockType(window);
+  handleDMenu(window, world);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -61,6 +62,10 @@ bool debounce(double &lastTime) {
   double interval = curTime - lastTime;
   lastTime = curTime;
   return interval > DEBOUNCE_TIME;
+}
+
+void Controls::handleDMenu(GLFWwindow *window, World *world) {
+
 }
 
 void Controls::handleLogBlockType(GLFWwindow *window) {
