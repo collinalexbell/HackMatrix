@@ -1,5 +1,7 @@
 # HackMatrix (Codeblocks)
 Feb 2nd, the Kickstarter is a finished success with 150k$
+I want to fucking leave this place. Tennessee is dogshit.
+Kill me God or give me the 150k$ now. I'm done with this part of my life.
 ## Timeline
 If I want to succeed with Kickstarter on the 2nd, I need to launch on the 26th
 If I want to launch on the 26th, I need to submit on the 22nd
