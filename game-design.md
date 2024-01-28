@@ -1,4 +1,59 @@
 # HackMatrix (Codeblocks)
+## Lenses
+### 1) Emotion
+- Intensity
+- Focus
+- Fun
+- Flow
+- Competency
+- Value for the future
+- Learning
+- Insight
+### 2) Essential Experience
+Hacker fully immersed in software
+### 3) Venue
+New York City
+- Time Square (with buildings made of code)
+- Experience Stations (with various layers of code experience and challenges)
+- Corners or Villages or Shops with different specialties (algos, graphics, web, etc)
+### 4) Suprise
+- Bugs to be solved (with graphical insight into how the bugs arose)
+- Bugs in their own code (with graphical insight as well)
+- Suprise by how much the user can learn and be engaged with learning
+### 5) Fun
+- Blowups
+- Extreme parameters
+- Programmed physical experiences
+### 6) Curiosity
+- What crazy things can I do with code?
+- Will this game make me a great engineer?
+- Can it keep me engaged?
+- Is it more valuable than l33tc0de
+### 7) Endogenous Value
+- The player will take real world skill in the game
+- The game will make them fall in love with software
+- They can show off solutions to friends
+- They can attain high scores for solutions
+- They can study with friends
+### 8) Problem solving
+- L33tC0de
+- University Labs
+- Fun minigames solved with code
+- A senior project (hackathon?)
+### 9) Elemental Tetrad
+#### Aesthetic:
+NYC
+#### Mechanics:
+Problem solving in game. Open world.
+#### Technology:
+Code in game. Tech is innovative.
+#### Story:
+Somewhat lacking right now
+### 10) Holographic Design
+The design will be holographic to both designer and user
+I can have different layers or slices of the world which represent different abstractions
+
+
 ## Idea
 Possible pitch ideas
 - Learn data structures
