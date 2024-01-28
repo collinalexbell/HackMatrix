@@ -84,14 +84,6 @@ Have no fear in this approach... just keep it up
 - Or to learn opengl
 - Or to learn/practice data structures
 ## What I love about the game
-### This would be so much easier if I loved my game more.
-How do I increase love for my game?
-
-Perhaps I could run through all the things I love about my game as part of the short wave?
-
-Give it loving attention.
-Attention will increase love.
-In a way, attention is love.
 ### What do I love about v1?
 - Matrix will eventually work on Vision Pro
 - It will work with PCVR, so I can work in VR flawlessly
