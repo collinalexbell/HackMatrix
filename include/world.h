@@ -82,8 +82,10 @@ class World {
   void loadChunksIfNeccissary();
   void initPreloadedChunks();
   void logCoordinates(array<Coordinate, 2> c, string label);
+  vector<pair<X11App*, int>> directRenderApps;
 
 public : void tick();
+  vector<X11App*> getDirectRenderApps();
   const float CUBE_SIZE = 0.1;
   World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false);
   ~World();

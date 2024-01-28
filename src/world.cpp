@@ -636,6 +636,14 @@ void World::removeLine(Line l) {
   }
 }
 
+vector<X11App*> World::getDirectRenderApps() {
+  vector<X11App*> rv;
+  for(auto app: directRenderApps) {
+    rv.push_back(app.first);
+  }
+  return rv;
+}
+
 void World::addApp(X11App* app) {
   if(!app->isAccessory()) {
     glm::vec3 pos = availableAppPositions.front();
@@ -644,11 +652,10 @@ void World::addApp(X11App* app) {
       availableAppPositions.pop();
     }
   } else {
-    /*
     int index = appCubes.size();
+    directRenderApps.push_back(make_pair(app, index));
     apps.push_back(app);
     renderer->registerApp(app, index);
-    */
   }
 }
 
@@ -694,6 +701,19 @@ void World::removeApp(X11App *app) {
       appKV->second--;
     }
   }
+
+  auto directRenderIt = std::find_if(directRenderApps.begin(), directRenderApps.end(),
+                         [index](const std::pair<X11App*, int> &element) {
+                           return element.second == index;
+                         });
+
+  directRenderApps.erase(directRenderIt);
+  for (auto appKV = directRenderApps.begin(); appKV != directRenderApps.end(); appKV++) {
+    if (appKV->second > index) {
+      appKV->second--;
+    }
+  }
+
   renderer->deregisterApp(index);
   refreshRendererCubes();
 }
