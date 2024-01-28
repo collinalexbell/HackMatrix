@@ -406,6 +406,12 @@ void Renderer::renderApps() {
   if (app != NULL && app->isFocused()) {
     drawAppDirect(app);
   }
+
+  vector<X11App*> directRenders = world->getDirectRenderApps();
+  for(auto directApps: directRenders) {
+    drawAppDirect(directApps);
+  }
+
   shader->setBool("isApp", false);
 }
 
