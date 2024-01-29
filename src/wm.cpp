@@ -43,7 +43,7 @@ void WM::createAndRegisterApps(char **envp) {
                 microsoftEdge, envp);
   forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
                 envp);
-  //forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
+  forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
 
   logger->info("exit createAndRegisterApps()");
 }
@@ -93,7 +93,7 @@ void WM::addAppsToWorld() {
   world->addApp(terminator);
   world->addApp(emacs);
   world->addApp(microsoftEdge);
-  //world->addApp(obs);
+  world->addApp(obs);
 }
 
 void WM::createApp(Window window) {

@@ -39,13 +39,13 @@ void World::initLogger() {
 
 void World::initAppPositions() {
   float z = 10.0;
-  availableAppPositions.push(glm::vec3(25.0, 9.5, z));
-  availableAppPositions.push(glm::vec3(26.2, 9.5, z));
-  availableAppPositions.push(glm::vec3(26.2, 10.25, z));
-  availableAppPositions.push(glm::vec3(26.2, 11.00, z));
-  availableAppPositions.push(glm::vec3(27.4, 9.5, z));
-  availableAppPositions.push(glm::vec3(24.7, 10.25, z));
-  availableAppPositions.push(glm::vec3(27.4, 10.25, z));
+  availableAppPositions.push(glm::vec3(5.0+2, 9.5-3, 12));
+  availableAppPositions.push(glm::vec3(6.2+2, 9.5-3, z));
+  availableAppPositions.push(glm::vec3(6.2+2, 10.25-3, z));
+  availableAppPositions.push(glm::vec3(6.2+2, 11.00-3, z));
+  availableAppPositions.push(glm::vec3(7.4+2, 9.5-3, z));
+  availableAppPositions.push(glm::vec3(4.7+2, 10.25-3, z));
+  availableAppPositions.push(glm::vec3(7.4+2, 10.25-3, z));
 }
 
 void World::initChunks() {
