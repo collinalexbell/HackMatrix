@@ -39,7 +39,7 @@ void World::initLogger() {
 
 void World::initAppPositions() {
   float z = 10.0;
-  availableAppPositions.push(glm::vec3(5.0+2, 9.5-3, 12));
+  availableAppPositions.push(glm::vec3(5.0+2, 9.5-3, z));
   availableAppPositions.push(glm::vec3(6.2+2, 9.5-3, z));
   availableAppPositions.push(glm::vec3(6.2+2, 10.25-3, z));
   availableAppPositions.push(glm::vec3(6.2+2, 11.00-3, z));
