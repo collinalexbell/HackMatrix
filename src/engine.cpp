@@ -57,7 +57,7 @@ void Engine::initialize(){
   auto texturePack = blocks::initializeBasicPack();
   wm = new WM(glfwGetX11Window(window));
   camera = new Camera();
-  world = new World(camera, texturePack, "/home/collin/hogwarts/region/", true);
+  world = new World(camera, texturePack, "/home/collin/midtown/", true);
   api = new Api("tcp://*:3333", world);
   renderer = new Renderer(camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
