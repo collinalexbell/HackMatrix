@@ -158,7 +158,7 @@ vector<LoaderChunk> Loader::getRegion(Coordinate regionCoordinate) {
                 }
                 LoaderCube cube;
                 cube.x = sPos.x + sectionOrigin.x;
-                cube.y = sPos.y + sectionOrigin.y;
+                cube.y = sPos.y + sectionOrigin.y + 64;
                 cube.z = sPos.z + sectionOrigin.z;
                 bool shouldAdd = false;
                 auto textureIndex = texturePack->textureIndexFromId(voxel);
