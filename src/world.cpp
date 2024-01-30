@@ -38,14 +38,16 @@ void World::initLogger() {
 }
 
 void World::initAppPositions() {
-  float z = 10.0;
-  availableAppPositions.push(glm::vec3(5.0+2, 9.5-3, z));
-  availableAppPositions.push(glm::vec3(6.2+2, 9.5-3, z));
-  availableAppPositions.push(glm::vec3(6.2+2, 10.25-3, z));
-  availableAppPositions.push(glm::vec3(6.2+2, 11.00-3, z));
-  availableAppPositions.push(glm::vec3(7.4+2, 9.5-3, z));
-  availableAppPositions.push(glm::vec3(4.7+2, 10.25-3, z));
-  availableAppPositions.push(glm::vec3(7.4+2, 10.25-3, z));
+  float z = 0.3;
+  float xOffset = 2;
+  float yOffset = -3;
+  availableAppPositions.push(glm::vec3(5.0+xOffset, 9.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(6.2+xOffset, 9.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(6.2+xOffset, 10.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(6.2+xOffset, 11.00+yOffset, z));
+  availableAppPositions.push(glm::vec3(7.4+xOffset, 9.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(4.7+xOffset, 10.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(7.4+xOffset, 10.25+yOffset, z));
 }
 
 void World::initChunks() {
@@ -652,10 +654,12 @@ void World::addApp(X11App* app) {
       availableAppPositions.pop();
     }
   } else {
+    /*
     int index = appCubes.size();
     directRenderApps.push_back(make_pair(app, index));
     apps.push_back(app);
     renderer->registerApp(app, index);
+    */
   }
 }
 
