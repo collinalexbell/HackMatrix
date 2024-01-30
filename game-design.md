@@ -1,4 +1,4 @@
-# HackMatrix (Codeblocks)
+# HackMatrix or Hackers or Codeblocks or City of Cybernetics
 ## Lenses
 ### 1) Emotion
 - Intensity
@@ -53,6 +53,9 @@ Somewhat lacking right now
 The design will be holographic to both designer and user
 I can have different layers or slices of the world which represent different abstractions
 
+
+### 11) Unification
+Hackers + Matrix + Howels Moving Castle
 
 ## Idea
 Possible pitch ideas
@@ -141,6 +144,7 @@ Have no fear in this approach... just keep it up
 ## What I love about the game
 ### What do I love about v1?
 - Matrix will eventually work on Vision Pro
+- Its venue is NYC
 - It will work with PCVR, so I can work in VR flawlessly
 - It is the first software creation of mine that has recieved 100k views and 10k likes.
 - It replaces my desktop environment
