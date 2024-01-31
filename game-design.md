@@ -57,6 +57,8 @@ I can have different layers or slices of the world which represent different abs
 ### 11) Unification
 Hackers + Matrix + Howels Moving Castle
 
+### 12) Resonance
+What is special about the game is a 3d programming environment.
 ## Idea
 Possible pitch ideas
 - Learn data structures
