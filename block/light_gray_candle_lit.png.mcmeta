@@ -1,0 +1,71 @@
+{
+  "animation": {
+	"interpolate": true,
+    "frames": [
+      {
+        "index": 0,
+        "time": 8
+      },
+	  {
+        "index": 1,
+        "time": 8
+      },
+	  {
+        "index": 0,
+        "time": 9
+      },
+	  {
+        "index": 1,
+        "time": 6
+      },
+	  {
+        "index": 0,
+        "time": 4
+      },
+	  {
+        "index": 1,
+        "time": 9
+      },
+	  {
+        "index": 0,
+        "time": 10
+      },
+	  {
+        "index": 1,
+        "time": 5
+      },
+	  {
+        "index": 0,
+        "time": 7
+      },
+	  {
+        "index": 1,
+        "time": 9
+      },
+	  {
+        "index": 0,
+        "time": 3
+      },
+	  {
+        "index": 1,
+        "time": 2
+      },
+	  {
+        "index": 0,
+        "time": 7
+      },
+	  {
+        "index": 1,
+        "time": 10
+      },
+	  {
+        "index": 0,
+        "time": 9
+      },
+	  {
+        "index": 1,
+        "time": 2
+      }
+    ]
+  }
+}

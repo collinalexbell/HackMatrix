@@ -4,7 +4,7 @@
 using namespace blocks;
 
 shared_ptr<TexturePack> blocks::initializeBasicPack() {
-  string textureDir = "/home/collin/hogwarts/textures/majestica";
+  string textureDir = "/home/collin/matrix/block";
   vector<Block> blocks = {
       Block{1, "stone", "stone.png"},
       Block{2, "grass", "images/grass.png", true},
@@ -16,13 +16,13 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{14, "gold ore", "gold_ore.png"},
       Block{16, "coal ore", "coal_ore.png"},
       Block{17, "oak log", "oak_log.png"},
-      Block{18, "oak leaves", "images/oak.png", true},
+      Block{18, "oak leaves", "oak_leaves_rgb.png"},
       Block{21, "lapis lazuli ore", "lapis_ore.png"},
-      Block{24, "sandstone", "stone_bricks_wall.png"},
+      Block{24, "sandstone", "sandstone_smooth.png"},
       Block{33, "piston", "piston_side.png"},
       Block{35, "white wool", "white_wool.png"},
       Block{41, "gold block", "gold_block.png"},
-      Block{44, "stone slab", "stone_slab_rgb.png"},
+      Block{44, "stone slab", "smooth_stone_slab_side.png"},
       Block{45, "bricks", "bricks.png"},
       Block{47, "bookshelf", "bookshelf_rgb.png"},
       Block{48, "mossy cobblestone", "mossy_cobblestone.png"},
@@ -38,10 +38,10 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{155, "quartz_block_side", "quartz_block_side.png"},
       Block{159, "white hardened clay", "clay.png"},
       Block{160, "white stained glass", "white_stained_glass_rgb.png"},
-      Block{161, "acacia leaves", "images/oak.png", true},
+      Block{161, "acacia leaves", "oak_leaves_rgb.png"},
       Block{162, "acacia wood", "acacia_log.png"},
       Block{168, "prismarine", "prismarine.png"},
-      Block{169, "sea lantern", "green_teracotta_rgb.png"},
+      Block{169, "sea lantern", "green_glazed_teracotta.png"},
       Block{172, "hardened clay", "clay.png"},
       Block{173, "block of coal", "coal_block.png"},
       Block{174, "packed ice", "packed_ice.png"},
@@ -49,15 +49,15 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{180, "wooden trapdoor", "birch_trapdoor.png"},
       Block{201, "purple block", "purple_concrete.png"},
       Block{202, "purple pillar", "purpur_pillar.png"},
-      Block{235, "white glazed terracotta", "white_terracotta_rgb.png"},
-      Block{236, "orange glazed terracotta", "orange_terracotta_rgb.png"},
-      Block{237, "magenta glazed terracotta", "magenta_terracotta_rgb.png"},
-      Block{239, "yellow glazed terracotta", "yellow_terracotta_rgb.png"},
-      Block{241, "pink glazed terracotta", "pink_terracotta_rgb.png"},
-      Block{242, "gray glazed terracotta", "gray_terracotta_rgb.png"},
-      Block{245, "purple glazed terracotta", "purple_terracotta_rgb.png"},
-      Block{247, "brown glazed terracotta", "brown_terracotta_rgb.png"},
-      Block{248, "green glazed terracotta", "green_terracotta_rgb.png"},
+      Block{235, "white glazed terracotta", "white_glazed_terracotta.png"},
+      Block{236, "orange glazed terracotta", "orange_glazed_terracotta.png"},
+      Block{237, "magenta glazed terracotta", "magenta_glazed_terracotta.png"},
+      Block{239, "yellow glazed terracotta", "yellow_glazed_terracotta.png"},
+      Block{241, "pink glazed terracotta", "pink_glazed_terracotta.png"},
+      Block{242, "gray glazed terracotta", "gray_glazed_terracotta.png"},
+      Block{245, "purple glazed terracotta", "purple_glazed_terracotta.png"},
+      Block{247, "brown glazed terracotta", "brown_glazed_terracotta.png"},
+      Block{248, "green glazed terracotta", "green__glazed_terracotta.png"},
       Block{251, "white concrete", "white_concrete.png"},
       Block{252, "white concrete powder", "white_concrete_powder.png"}
   };
