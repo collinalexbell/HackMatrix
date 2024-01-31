@@ -3,6 +3,7 @@
 #include "logger.h"
 #include <glm/glm.hpp>
 #include <vector>
+#include <future>
 
 using namespace std;
 
@@ -26,10 +27,10 @@ struct ChunkMesh {
 
 class Mesher {
   int chunkX, chunkZ;
+  Chunk* chunk;
   bool damagedGreedy;
   bool damagedSimple;
-  shared_ptr<ChunkMesh> cachedGreedyMesh;
-  shared_ptr<ChunkMesh> cachedSimpleMesh;
+  shared_future<shared_ptr<ChunkMesh>> cachedGreedyMesh;
   static glm::vec2 texModels[6][6];
   static Face neighborFaces[6];
   static glm::vec3 faceModels[6][6];
@@ -38,13 +39,11 @@ class Mesher {
   vector<glm::vec3> getOffsetsFromFace(Face face);
   Face getFaceFromNormal(glm::vec3 normal);
 public:
-  Mesher(int chunkX, int chunkZ):chunkX(chunkX), chunkZ(chunkZ){
-    cachedGreedyMesh = make_shared<ChunkMesh>(ChunkMesh());
-    cachedSimpleMesh = make_shared<ChunkMesh>(ChunkMesh());
-  }
-  ChunkMesh meshedFaceFromPosition(Chunk* chunk, Position position);
-  shared_ptr<ChunkMesh> meshGreedy(Chunk *chunk);
-  shared_ptr<ChunkMesh> simpleMesh(Chunk *chunk);
-  shared_ptr<ChunkMesh> mesh(bool realTime, Chunk* chunk);
+  Mesher(Chunk* chunk, int chunkX, int chunkZ);
+  ChunkMesh meshedFaceFromPosition(Position position);
+  shared_ptr<ChunkMesh> meshGreedy(Chunk* chunk);
+  shared_ptr<ChunkMesh> simpleMesh(Chunk* chunk);
+  shared_ptr<ChunkMesh> mesh();
+  void meshAsync();
   void meshDamaged();
 };

@@ -307,6 +307,10 @@ future<deque<shared_ptr<Chunk>>> Loader::readNextChunkDeque(array<Coordinate, 2>
 
         std::sort(nextChunkDeque.begin(), nextChunkDeque.end(), sortByXZ);
 
+        for(auto chunk: nextChunkDeque) {
+          chunk->meshAsync();
+        }
+
         return nextChunkDeque;
       });
 }

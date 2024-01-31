@@ -1,10 +1,11 @@
 #include <GLFW/glfw3.h>
+#include <future>
 #include <memory>
 #include "chunk.h"
 #include "glm/geometric.hpp"
 #include "mesher.h"
 
-shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk *chunk) {
+shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk* chunk) {
   auto rv = make_shared<ChunkMesh>(ChunkMesh());
   rv->type = SIMPLE;
   auto size = chunk->getSize();
@@ -12,7 +13,7 @@ shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk *chunk) {
   int totalSize = size[0] * size[1] * size[2];
   glm::vec3 offset(size[0]*chunkX, 0, size[2]*chunkZ);
   ChunkCoords neighborCoords;
-  Cube* neighbor;
+  shared_ptr<Cube> neighbor;
   for(int i = 0; i<totalSize; i++) {
     if(chunk->data[i] != NULL) {
       ChunkCoords ci = chunk->getCoords(i);
@@ -78,8 +79,8 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
       int n = 0;
       for (x[v] = 0; x[v] < chunkSizes[v]; ++x[v]) {
         for (x[u] = 0; x[u] < chunkSizes[u]; ++x[u]) {
-          Cube *a = chunk->getCube_(x[0], x[1], x[2]);
-          Cube *b = chunk->getCube_(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+          shared_ptr<Cube> a = chunk->getCube_(x[0], x[1], x[2]);
+          shared_ptr<Cube> b = chunk->getCube_(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
           blockCurrent =
             0 <= x[dimension] ? a != NULL
             : false;
@@ -106,7 +107,7 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
             x[u] = i;
             x[v] = j;
 
-            Cube *c = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+            shared_ptr<Cube> c = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
             if(c == NULL) {
               c = chunk->getCube_(x[0] , x[1] , x[2]);
             }
@@ -117,7 +118,7 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
             for (w = 1; i + w < chunkSizes[u]; w++) {
               int tmp = x[u];
               x[u] = x[u] + w;
-              Cube *next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+              shared_ptr<Cube> next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
               if (next == NULL) {
                 next = chunk->getCube_(x[0], x[1], x[2]);
               }
@@ -142,7 +143,7 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
 
                 int tmp = x[v];
                 x[v] = x[v] + h;
-                Cube *next =
+                shared_ptr<Cube> next =
                     chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
                 if (next == NULL) {
                   next = chunk->getCube_(x[0], x[1], x[2]);
@@ -232,9 +233,9 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
 }
 
 
-ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
+ChunkMesh Mesher::meshedFaceFromPosition(Position position) {
   ChunkMesh rv;
-  Cube *c = chunk->getCube_(position.x, position.y, position.z);
+  shared_ptr<Cube> c = chunk->getCube_(position.x, position.y, position.z);
   if (c != NULL) {
     Face face = getFaceFromNormal(position.normal);
     vector<glm::vec3> offsets = getOffsetsFromFace(face);
@@ -253,27 +254,38 @@ ChunkMesh Mesher::meshedFaceFromPosition(Chunk *chunk, Position position) {
   return rv;
 }
 
-shared_ptr<ChunkMesh> Mesher::mesh(bool realTime, Chunk* chunk) {
-  cachedSimpleMesh->updated = false;
-  cachedGreedyMesh->updated = false;
-  if (!realTime || !damagedGreedy) {
+shared_ptr<ChunkMesh> Mesher::mesh() {
     if (damagedGreedy) {
-      cachedGreedyMesh = meshGreedy(chunk);
+      shared_ptr<ChunkMesh> mesh = meshGreedy(chunk);
+      mesh->updated = false;
+      promise<shared_ptr<ChunkMesh>> promisedMesh;
+      promisedMesh.set_value(mesh);
+      cachedGreedyMesh = promisedMesh.get_future();
       damagedGreedy = false;
     }
-    return cachedGreedyMesh;
-  } else {
-    if (damagedSimple) {
-      cachedSimpleMesh = simpleMesh(chunk);
-      damagedSimple = false;
-    }
-    return cachedSimpleMesh;
-  }
+    return cachedGreedyMesh.get();
+}
+
+void Mesher::meshAsync() {
+  Chunk* copiedChunk = new Chunk(*chunk);
+  cachedGreedyMesh = async(launch::async, [copiedChunk, this]() -> shared_ptr<ChunkMesh> {
+    auto rv = meshGreedy(copiedChunk);
+    delete copiedChunk;
+    return rv;
+  });
 }
 
 void Mesher::meshDamaged() {
   damagedSimple = true;
   damagedGreedy = true;
+}
+
+Mesher::Mesher(Chunk* chunk, int chunkX, int chunkZ) : chunk(chunk), chunkX(chunkX), chunkZ(chunkZ) {
+  promise<shared_ptr<ChunkMesh>> emptyMesh;
+  auto mesh = make_shared<ChunkMesh>();
+  emptyMesh.set_value(mesh);
+  cachedGreedyMesh = emptyMesh.get_future();
+  damagedGreedy = false;
 }
 
 vector<glm::vec2> Mesher::getTexCoordsFromFace(Face face) {
@@ -414,4 +426,3 @@ glm::vec3 Mesher::faceModels[6][6] = {
     glm::vec3(-0.5f, 0.5f, -0.5f),
     glm::vec3(-0.5f, 0.5f, 0.5f)
   }};
-

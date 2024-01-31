@@ -101,13 +101,13 @@ void World::mesh(bool realTime) {
   int sizeZ = chunks[0][0]->getSize()[2];
   for(int x = 0; x < chunks.size(); x++) {
     for(int z = 0; z < chunks[x].size(); z++) {
-        m.push_back(chunks[x][z]->mesh(realTime));
+        m.push_back(chunks[x][z]->mesh());
     }
   }
   renderer->updateChunkMeshBuffers(m);
 }
 
-const vector<Cube*> World::getCubes() {
+const vector<shared_ptr<Cube>> World::getCubes() {
   if(chunks.size()>0 && chunks[0].size() > 0) {
     auto chunkSize = chunks[0][0]->getSize();
     return getCubes(0,0,0,
@@ -115,10 +115,10 @@ const vector<Cube*> World::getCubes() {
                     chunkSize[1],
                     chunkSize[2]*chunks[0].size());
   }
-  return vector<Cube*>{};
+  return vector<shared_ptr<Cube>>{};
 }
 
-const std::vector<Cube*> World::getCubes(int _x1, int _y1, int _z1,
+const std::vector<shared_ptr<Cube>> World::getCubes(int _x1, int _y1, int _z1,
                                         int _x2, int _y2, int _z2) {
   int x1 = _x1 < _x2 ? _x1 : _x2;
   int x2 = _x1 < _x2 ? _x2 : _x1;
@@ -127,11 +127,11 @@ const std::vector<Cube*> World::getCubes(int _x1, int _y1, int _z1,
   int z1 = _z1 < _z2 ? _z1 : _z2;
   int z2 = _z1 < _z2 ? _z2 : _z1;
 
-  vector<Cube*> rv;
+  vector<shared_ptr<Cube>> rv;
   for (int x = x1; x < x2; x++) {
     for (int y = y1; y < y2; y++) {
       for (int z = z1; z < z2; z++) {
-        Cube *cube = getCube(x, y, z);
+        auto cube = getCube(x, y, z);
         if (cube->blockType() != -1) {
           rv.push_back(cube);
         }
@@ -606,7 +606,7 @@ void World::updateDamage(int index) {
 void World::removeCube(WorldPosition pos) {
   shared_ptr<Chunk> chunk = getChunk(pos.chunkX, pos.chunkZ);
   if(chunk != NULL) {
-    Cube *c = chunk->getCube_(pos.x,pos.y,pos.z);
+    auto c = chunk->getCube_(pos.x,pos.y,pos.z);
     if(c != NULL) {
       chunk->removeCube(pos.x, pos.y, pos.z);
     }
@@ -708,11 +708,11 @@ void World::attachRenderer(Renderer* renderer){
   refreshRendererCubes();
 }
 
-Cube* World::getCube(float x, float y, float z) {
+shared_ptr<Cube> World::getCube(float x, float y, float z) {
   if(chunks.size() > 0 && chunks[0].size() > 0) {
     WorldPosition pos = translateToWorldPosition(x,y,z);
     shared_ptr<Chunk> chunk = getChunk(pos.chunkX, pos.chunkZ);
-    Cube* rv = chunk->getCube_(pos.x, pos.y, pos.z);
+    auto rv = chunk->getCube_(pos.x, pos.y, pos.z);
     return rv;
   }
   return NULL;
@@ -835,7 +835,7 @@ Position World::getLookedAtCube() {
         normal = normalZ;
       }
     }
-    Cube *closest = getCube(x, y, z);
+    auto closest = getCube(x, y, z);
     if (closest != NULL) {
       rv.x = x;
       rv.y = y;
@@ -865,7 +865,7 @@ ChunkMesh World::meshSelectedCube(Position position) {
 void World::action(Action toTake) {
   Position lookingAt = getLookedAtCube();
   if(lookingAt.valid) {
-    Cube* lookedAt = getCube(lookingAt.x, lookingAt.y, lookingAt.z);
+    auto lookedAt = getCube(lookingAt.x, lookingAt.y, lookingAt.z);
     if(toTake == PLACE_CUBE) {
       int x = lookingAt.x + (int)lookingAt.normal.x;
       int y = lookingAt.y + (int)lookingAt.normal.y;
@@ -954,7 +954,7 @@ void World::save(string filename) {
       for(int x=0; x<size[0]; x++) {
         for(int y=0; y<size[1]; y++) {
           for(int z=0; z<size[2]; z++) {
-            Cube* cube = chunk->getCube_(x,y,z);
+            auto cube = chunk->getCube_(x,y,z);
             if(cube != NULL) {
             outputFile << cube->position().x + size[0] * position.x << ","
                       << cube->position().y << ","

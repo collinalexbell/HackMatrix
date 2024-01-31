@@ -57,9 +57,9 @@ class World {
   mutex preloadMutex;
   bool isDamaged = false;
   glm::vec3 cameraToVoxelSpace(glm::vec3 cameraPosition);
-  Cube *getCube(float x, float y, float z);
-  const std::vector<Cube*> getCubes();
-  const std::vector<Cube*> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
+  shared_ptr<Cube> getCube(float x, float y, float z);
+  const std::vector<shared_ptr<Cube>> getCubes();
+  const std::vector<shared_ptr<Cube>> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
   void updateDamage(int index);
   queue<glm::vec3> availableAppPositions;
   void removeCube(WorldPosition position);
