@@ -522,9 +522,6 @@ World::getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount,
       chunks.back()[zIndex]->getPosition()
     };
   }
-  stringstream ss;
-  ss <<"positions:" << positions[0].x << "," << positions[0].z << ".."
-     << positions[1].x << "," << positions[1].z;
   positions[0].x -= xExpand;
   positions[0].z -= zExpand;
   positions[1].x += xExpand;
@@ -583,15 +580,6 @@ void World::addLine(Line line) {
   if(line.color.r >= 0) {
     int i = lines.size();
     lines.push_back(line);
-    stringstream ss;
-    ss << "adding line (" << i << ")"
-       << line.points[0].x << ","
-       << line.points[0].y << ","
-       << line.points[0].z << ","
-       << line.points[1].x << ","
-       << line.points[1].y << ","
-       << line.points[1].z << ","
-       << line.color.r;
     if(renderer != NULL) {
       renderer->addLine(i, line);
     }
@@ -668,15 +656,8 @@ void World::addApp(glm::vec3 pos, X11App* app) {
   appCubes.insert(std::pair<glm::vec3, int>(pos, index));
   apps.push_back(app);
   if(renderer != NULL) {
-    logger->info("registerApp()");
     renderer->registerApp(app, index);
-    logger->info("addAppCube");
     renderer->addAppCube(index, pos);
-
-    stringstream debugInfo;
-    debugInfo << "index:" << index << ", pos:" << pos.x << "," << pos.y << "," << pos.z;
-    logger->debug(debugInfo.str());
-    logger->flush();
   }
 }
 
