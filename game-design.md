@@ -54,11 +54,20 @@ The design will be holographic to both designer and user
 I can have different layers or slices of the world which represent different abstractions
 
 
-### 11) Unification
+### 11) Unification (Theme)
 Hackers + Matrix + Howels Moving Castle
 
 ### 12) Resonance
 What is special about the game is a 3d, game like programming environment.
+### 15) The Eight Filters
+1) Does the game feel right? No
+2) Will the intended audience like this game enough? No
+3) Is it a well designed game? Yes/No
+4) Is the game novel enough? Yes
+5) Will this game sell? No
+6) Is it technically possible to build this game? Yes
+7) Does this game meet our social and community goals? No
+8) Do the playtesters enjoy this game enough? Yes/No (I'm the only play tester)
 ## Idea
 Possible pitch ideas
 - Learn data structures
