@@ -63,7 +63,8 @@ What is special about the game is a 3d, game like programming environment.
 I want to share my NYC hacker experience with others. I can capture its essence by
 putting the locations I worked, people I met, and maybe even some of the places I lived into the game (homeless shelter becomes a dorm for talented hackers. My buhdist friend becomes a mentor. BJ becomes a game boss, etc
 ### 14) The Problem Statement
-Immerse people in code to make SWE more fun, engaging, magical, social, and captivating.
+SWE can be boring and difficult. I want to...
+...immerse people in code to make SWE more fun, engaging, magical, social, and captivating.
 ### 15) The Eight Filters
 1) Does the game feel right? No
 2) Will the intended audience like this game enough? No
