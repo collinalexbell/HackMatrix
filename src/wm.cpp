@@ -11,6 +11,8 @@
 #include <sstream>
 #include <thread>
 
+#define OBS false
+
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;
 void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app, char **envp) {
@@ -43,7 +45,9 @@ void WM::createAndRegisterApps(char **envp) {
                 microsoftEdge, envp);
   forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
                 envp);
-  forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
+  if(OBS) {
+    forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
+  }
 
   logger->info("exit createAndRegisterApps()");
 }
@@ -93,7 +97,9 @@ void WM::addAppsToWorld() {
   world->addApp(terminator);
   world->addApp(emacs);
   world->addApp(microsoftEdge);
-  world->addApp(obs);
+  if(OBS) {
+    world->addApp(obs);
+  }
 }
 
 void WM::createApp(Window window) {
