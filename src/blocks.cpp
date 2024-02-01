@@ -1,5 +1,8 @@
 #include "blocks.h"
+#include <cstdio>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
 
 using namespace blocks;
 
@@ -29,7 +32,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{82, "clay", "clay.png"},
       Block{87, "nether rack", "netherrack.png"},
       Block{89, "glowstone", "glowstone.png"},
-      Block{95, "white stained glass", "white_stained_glass_rgb.png"},
+      Block{95, "white stained glass", "white_stained_glass.png"},
       Block{98, "stone bricks", "stone_bricks.png"},
       Block{103, "melon block", "melon_side.png"},
       Block{112, "nether block", "red_nether_bricks.png"},
@@ -37,7 +40,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{139, "cobblestone wall", "stone_bricks_wall.png"},
       Block{155, "quartz_block_side", "quartz_block_side.png"},
       Block{159, "white hardened clay", "clay.png"},
-      Block{160, "white stained glass", "white_stained_glass_rgb.png"},
+      Block{160, "white stained glass", "white_stained_glass.png"},
       Block{161, "acacia leaves", "oak_leaves_rgb.png"},
       Block{162, "acacia wood", "acacia_log.png"},
       Block{168, "prismarine", "prismarine.png"},
@@ -64,6 +67,24 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
   return make_shared<TexturePack>(textureDir, blocks);
 };
 
+bool isTransparent(string filename) {
+  std::string cmd = "identify -format '%[channels]' " + filename;
+  std::array<char, 128> buffer;
+  std::string result;
+  std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"),
+                                                pclose);
+
+  if (!pipe) {
+    throw std::runtime_error("popen() failed!");
+  }
+
+  while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    result += buffer.data();
+  }
+
+  return result.find("srgba") != std::string::npos;
+}
+
 TexturePack::TexturePack(string textureDir, vector<Block> blocks) : blocks(blocks), textureDir(textureDir) {
   for(int i = 0; i < blocks.size(); i++) {
     idToIndex[blocks[i].id] = i;
@@ -71,9 +92,17 @@ TexturePack::TexturePack(string textureDir, vector<Block> blocks) : blocks(block
 
   logger = make_shared<spdlog::logger>("TexturePack", fileSink);
   logger->set_level(spdlog::level::debug);
+
+  for(auto name: imageNames()) {
+    auto transparent = isTransparent(name);
+    if(transparent) {
+      stringstream ss;
+      ss << name << " is transparent";
+      logger->debug(ss.str());
+      logger->flush();
+    }
+  }
 };
-
-
 
 int TexturePack::textureIndexFromId(int id) {
   /*
