@@ -94,15 +94,15 @@ void Texture::loadTextureArrayData(vector<string> fnames) {
     cout << "no data" << endl;
     return;
   }
-  unsigned char* buffer = stbi_load(fnames[0].c_str(), &width, &height, &nrChannels, 0);
+  unsigned char* buffer = stbi_load(fnames[0].c_str(), &width, &height, &nrChannels, 4);
   int numMipLevels = 1;
-  glTexStorage3D(GL_TEXTURE_2D_ARRAY, numMipLevels, GL_RGB8, width, height, fnames.size());
+  glTexStorage3D(GL_TEXTURE_2D_ARRAY, numMipLevels, GL_RGBA8, width, height, fnames.size());
   for(int i=0; i<fnames.size(); i++) {
-    buffer = stbi_load(fnames[i].c_str(), &width, &height, &nrChannels, 0);
+    buffer = stbi_load(fnames[i].c_str(), &width, &height, &nrChannels, 4);
     if(!buffer) {
       cout << "couldn't load image" << endl;
     }
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
     stbi_image_free(buffer);
   }
   glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
