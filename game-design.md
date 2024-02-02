@@ -66,6 +66,10 @@ putting the locations I worked, people I met, and maybe even some of the places 
 SWE can be boring and difficult. I want to...
 ...immerse people in code to make SWE more fun, engaging, magical, social, and captivating.
 ### 15) The Eight Filters
+### 16) Risk Mitigation
+Lack of  time to implement core features and give the game polish is a risk to the game.
+I don't know how to stop that from happening though. I've got a deadline. I could take a job, but that would defeat the purpose.
+
 1) Does the game feel right? No
 2) Will the intended audience like this game enough? No
 3) Is it a well designed game? Yes/No
