@@ -44,8 +44,6 @@ class World {
   std::shared_ptr<spdlog::logger> logger;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
-  // TODO: rm
-  int gotItCount = 0;
   vector<Line> lines;
   std::unordered_map<glm::vec3, int> appCubes;
   std::vector<X11App*> apps;
