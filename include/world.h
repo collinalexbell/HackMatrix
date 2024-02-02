@@ -61,15 +61,10 @@ class World {
   void updateDamage(int index);
   queue<glm::vec3> availableAppPositions;
   void removeCube(WorldPosition position);
-  // TODO: rm
   ChunkIndex getChunkIndex(int x, int z);
-  // TODO: rm
   ChunkIndex playersChunkIndex();
-  // TODO: rm
   ChunkIndex calculateMiddleIndex();
-  // TODO: rm
   array<ChunkPosition,2> getNextPreloadedChunkPositions(DIRECTION direction, int nextPreloadCount, bool isInitial);
-  // TODO: rm
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial=false);
   void transferChunksToPreload(DIRECTION movementDirection, deque<shared_ptr<Chunk>> slice);

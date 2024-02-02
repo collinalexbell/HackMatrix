@@ -78,6 +78,9 @@ I don't know how to stop that from happening though. I've got a deadline. I coul
 6) Is it technically possible to build this game? Yes
 7) Does this game meet our social and community goals? No
 8) Do the playtesters enjoy this game enough? Yes/No (I'm the only play tester)
+### 17) The Toy
+If my game had no goal, it would be fun. Making blocks move is fun.
+However, that is just the ideal game. Right now, the game isn't super fun.
 ## Idea
 Possible pitch ideas
 - Learn data structures
