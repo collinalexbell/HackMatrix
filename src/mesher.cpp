@@ -89,6 +89,9 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
                   : false;
 
           // only one face is valid
+          // I will want to check block opacity
+          // If 1 block is transparent and another isn't
+          // then a face should be rendered
           mask[n++] = blockCurrent != blockCompare;
         }
       }
@@ -106,10 +109,8 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
             x[u] = i;
             x[v] = j;
 
-            bool isLesserFace = true;
             shared_ptr<Cube> c = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
             if(c == NULL) {
-              isLesserFace = false;
               c = chunk->getCube_(x[0] , x[1] , x[2]);
             }
             assert(c != NULL);
@@ -120,17 +121,13 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
             for (w = 1; i + w < chunkSizes[u]; w++) {
               int tmp = x[u];
               x[u] = x[u] + w;
-              shared_ptr<Cube> next;
-              if(isLesserFace) {
-                next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
-              }
-              else {
+              shared_ptr<Cube> next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+              if(next == NULL) {
                 next = chunk->getCube_(x[0], x[1], x[2]);
               }
               x[u] = tmp;
 
-              // mask[n+w] && next==NULL indicates c and next are on different sides of the face
-              if(!mask[n + w] || next==NULL || next->blockType() != c->blockType()) {
+              if(!mask[n + w] || next->blockType() != c->blockType()) {
                 break;
               }
             }
@@ -150,16 +147,13 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
 
                 int tmp = x[v];
                 x[v] = x[v] + h;
-                shared_ptr<Cube> next;
-                if(isLesserFace) {
-                    next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
-                }
-                else {
+                shared_ptr<Cube> next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+                if( next==NULL ) {
                   next = chunk->getCube_(x[0], x[1], x[2]);
                 }
                 x[v] = tmp;
 
-                if (!mask[n + k + h * chunkSizes[u]] || next == NULL || next->blockType() != c->blockType()) {
+                if (!mask[n + k + h * chunkSizes[u]] || next->blockType() != c->blockType()) {
                   done = true;
                   break;
                 }
@@ -195,12 +189,7 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
 
 
             for(int i = 0; i < 6; i++) {
-              if(c != NULL) {
-                // until I fix the bounding box, I need to test for presense of cube
-                mesh->blockTypes.push_back(c->blockType());
-              } else {
-                mesh->blockTypes.push_back(0);
-              }
+              mesh->blockTypes.push_back(c->blockType());
               mesh->selects.push_back(0);
             }
             float yTexDist = glm::distance(
