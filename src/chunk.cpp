@@ -42,11 +42,13 @@ shared_ptr<Cube> Chunk::getCube_(int x, int y, int z) {
 }
 
 void Chunk::removeCube(int x, int y, int z) {
-  mesher->meshDamaged();
+  array<int, 3> pos = {x,y,z};
+  mesher->meshDamaged(pos);
   data[index(x, y, z)].reset();
 }
 void Chunk::addCube(Cube c, int x, int y, int z) {
-  mesher->meshDamaged();
+  array<int, 3> pos = {x, y, z};
+  mesher->meshDamaged(pos);
   data[index(x, y, z)] =  make_shared<Cube>(c);
 }
 
