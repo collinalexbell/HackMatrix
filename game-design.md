@@ -81,6 +81,10 @@ I don't know how to stop that from happening though. I've got a deadline. I coul
 ### 17) The Toy
 If my game had no goal, it would be fun. Making blocks move is fun.
 However, that is just the ideal game. Right now, the game isn't super fun.
+### 18) Passion
+Am I filled with blinding passion with how great this game will be?
+If I've lost the passion, can I find it again?
+If the passion isn't comming back, shouldn't I be doing something else?
 ## Idea
 Possible pitch ideas
 - Learn data structures
