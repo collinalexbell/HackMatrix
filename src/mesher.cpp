@@ -68,8 +68,6 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
     vector<int> chunkSizes = chunk->getSize();
 
     bool mask[chunkSizes[0]*chunkSizes[1]*chunkSizes[2]];
-    // mask needs to become a 2d array of bools
-    // mask[pos][blockType]
 
     q[dimension] = 1;
 
@@ -90,6 +88,7 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
                   ? b != NULL
                   : false;
 
+          // only one face is valid
           mask[n++] = blockCurrent != blockCompare;
         }
       }
@@ -107,10 +106,13 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
             x[u] = i;
             x[v] = j;
 
+            bool isLesserFace = true;
             shared_ptr<Cube> c = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
             if(c == NULL) {
+              isLesserFace = false;
               c = chunk->getCube_(x[0] , x[1] , x[2]);
             }
+            assert(c != NULL);
 
             // Compute the width of this quad and store it in w
             //   This is done by searching along the current axis until mask[n +
@@ -118,12 +120,17 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
             for (w = 1; i + w < chunkSizes[u]; w++) {
               int tmp = x[u];
               x[u] = x[u] + w;
-              shared_ptr<Cube> next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
-              if (next == NULL) {
+              shared_ptr<Cube> next;
+              if(isLesserFace) {
+                next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+              }
+              else {
                 next = chunk->getCube_(x[0], x[1], x[2]);
               }
               x[u] = tmp;
-              if(!mask[n + w] || (next!=NULL && c!=NULL && next->blockType() != c->blockType())) {
+
+              // mask[n+w] && next==NULL indicates c and next are on different sides of the face
+              if(!mask[n + w] || next==NULL || next->blockType() != c->blockType()) {
                 break;
               }
             }
@@ -143,16 +150,16 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
 
                 int tmp = x[v];
                 x[v] = x[v] + h;
-                shared_ptr<Cube> next =
-                    chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
-                if (next == NULL) {
+                shared_ptr<Cube> next;
+                if(isLesserFace) {
+                    next = chunk->getCube_(x[0] - q[0], x[1] - q[1], x[2] - q[2]);
+                }
+                else {
                   next = chunk->getCube_(x[0], x[1], x[2]);
                 }
                 x[v] = tmp;
 
-                if (!mask[n + k + h * chunkSizes[u]] ||
-                    (next != NULL && c != NULL &&
-                     next->blockType() != c->blockType())) {
+                if (!mask[n + k + h * chunkSizes[u]] || next == NULL || next->blockType() != c->blockType()) {
                   done = true;
                   break;
                 }
