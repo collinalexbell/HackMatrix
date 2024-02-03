@@ -91,7 +91,7 @@ shared_ptr<ChunkMesh> Mesher::meshGreedy(Chunk* chunk) {
           // only one face is valid
           // I will want to check block opacity
           // If 1 block is transparent and another isn't
-          // then a face should be rendered
+          // then a face (maybe both) should be rendered
           mask[n++] = blockCurrent != blockCompare;
         }
       }
