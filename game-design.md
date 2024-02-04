@@ -85,6 +85,16 @@ However, that is just the ideal game. Right now, the game isn't super fun.
 Am I filled with blinding passion with how great this game will be?
 If I've lost the passion, can I find it again?
 If the passion isn't comming back, shouldn't I be doing something else?
+### 19) The Player
+They like well polished experiences. They like to think they are maximizing value
+They don't like wasting their time or money.
+They expect to see something fun or educational that really helps them in life.
+If I were in their place, I would want an engaging multiplayer learning experience.
+They will dislike how unpolished the game is and how uncohesive the coding problems are.
+
+Perhaps, instead of putting myself in a venue first, I should put myself inside the Tron matrix of pure abstract digital imaginings (*sigh*)
+
+What if I seperated the dynamic object space from the chunked environment space!!!
 ## Idea
 Possible pitch ideas
 - Learn data structures
