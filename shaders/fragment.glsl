@@ -17,6 +17,7 @@ uniform bool isApp;
 uniform bool isLine;
 uniform bool appSelected;
 uniform bool isMesh;
+uniform bool isDynamicObject;
 uniform int totalBlockTypes;
 uniform float time;
 
@@ -80,6 +81,8 @@ void main()
 		}
 	} else if(isLine) {
 		FragColor = vec4(lineColor, lineColor.r);
+  } else if(isDynamicObject) {
+    FragColor = vec4(0.5, 0.5, 0.5, 1.0);
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
 	}

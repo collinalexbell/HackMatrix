@@ -21,6 +21,7 @@ uniform bool isApp;
 uniform bool isLine;
 uniform bool isMesh;
 uniform bool isLookedAt;
+uniform bool isDynamicObject;
 uniform int lookedAtBlockType;
 
 void main()
@@ -33,6 +34,8 @@ void main()
   } else if(isLine) {
     gl_Position = projection * view *  vec4(position, 1.0);
     lineColor = lineInstanceColor;
+  } else if(isDynamicObject) {
+    gl_Position = projection * view * vec4(position, 1.0);
   } else if(isMesh) {
     gl_Position = projection * view * model * vec4(position, 1.0);
     BlockType = blockType;

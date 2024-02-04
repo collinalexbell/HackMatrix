@@ -3,6 +3,7 @@
 #include "blocks.h"
 #include "chunk.h"
 #include "cube.h"
+#include "dynamicObject.h"
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
@@ -39,6 +40,9 @@ class Renderer {
   unsigned int MESH_VERTEX_BLOCK_TYPES;
   unsigned int MESH_VERTEX_SELECTS;
 
+  unsigned int DYNAMIC_OBJECT_VERTEX;
+  unsigned int DYNAMIC_OBJECT_POSITIONS;
+
   unsigned int VOXEL_SELECTIONS;
   unsigned int VOXEL_SELECTION_POSITIONS;
   unsigned int VOXEL_SELECTION_TEX_COORDS;
@@ -70,21 +74,28 @@ class Renderer {
   void renderApps();
   void renderLines();
   void renderLookedAtFace();
+  void renderDynamicObjects();
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
-  void setupMeshVertexAttributePoiners();
 
+  void genDynamicObjectResources();
+  void fillDynamicObjectBuffers();
+  void setupDynamicObjectVertexAttributePointers();
+
+  void setupMeshVertexAttributePoiners();
   void genGlResources();
   void fillBuffers();
   void setupVertexAttributePointers();
 
   int verticesInMesh = 0;
+  int verticesInDynamicObjects = 0;
 
 public:
   Renderer(Camera*, World*, shared_ptr<blocks::TexturePack>);
   ~Renderer();
   Camera* getCamera();
   void render();
+  void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);

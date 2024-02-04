@@ -37,6 +37,11 @@ void Renderer::genMeshResources() {
   glGenBuffers(1, &MESH_VERTEX_SELECTS);
 }
 
+void Renderer::genDynamicObjectResources() {
+  glGenVertexArrays(1, &DYNAMIC_OBJECT_VERTEX);
+  glGenBuffers(1, &DYNAMIC_OBJECT_POSITIONS);
+};
+
 void Renderer::genGlResources() {
   glGenVertexArrays(1, &APP_VAO);
   glGenBuffers(1, &APP_INSTANCE);
@@ -51,6 +56,7 @@ void Renderer::genGlResources() {
   glGenBuffers(1, &VOXEL_SELECTION_TEX_COORDS);
 
   genMeshResources();
+  genDynamicObjectResources();
 }
 
 void Renderer::setupMeshVertexAttributePoiners() {
@@ -74,8 +80,16 @@ void Renderer::setupMeshVertexAttributePoiners() {
 
 }
 
+void Renderer::setupDynamicObjectVertexAttributePointers() {
+  glBindVertexArray(DYNAMIC_OBJECT_VERTEX);
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+}
+
 void Renderer::setupVertexAttributePointers() {
   setupMeshVertexAttributePoiners();
+  setupDynamicObjectVertexAttributePointers();
 
   glBindVertexArray(APP_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
@@ -118,9 +132,15 @@ void Renderer::setupVertexAttributePointers() {
   glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_TEX_COORDS);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
   glEnableVertexAttribArray(1);
+
 }
 
 int MAX_CUBES = 1000000;
+
+void Renderer::fillDynamicObjectBuffers() {
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
+  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 30000), (void *)0, GL_DYNAMIC_DRAW);
+}
 
 void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
@@ -157,6 +177,8 @@ void Renderer::fillBuffers() {
   glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_TEX_COORDS);
   glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec2) * 6), (void *)0,
                GL_DYNAMIC_DRAW);
+
+  fillDynamicObjectBuffers();
 }
 
 void Renderer::toggleWireframe() {
@@ -276,6 +298,14 @@ void Renderer::updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes) {
   }
 }
 
+void Renderer::updateDynamicObjects(shared_ptr<DynamicObject> obj) {
+  auto renderable = obj->makeRenderable();
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * renderable.vertices.size(),
+                  renderable.vertices.data());
+  verticesInDynamicObjects = renderable.vertices.size();
+}
+
 void Renderer::addAppCube(int index, glm::vec3 pos) {
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * index,
@@ -299,6 +329,13 @@ void Renderer::addLine(int index, Line line) {
                   (sizeof(glm::vec3)), &line.color);
   glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 2 * index + sizeof(glm::vec3)),
                   (sizeof(glm::vec3)), &line.color);
+}
+
+void Renderer::renderDynamicObjects() {
+  glBindVertexArray(DYNAMIC_OBJECT_VERTEX);
+  shader->setBool("isDynamicObject", true);
+  glDrawArrays(GL_TRIANGLES, 0, verticesInDynamicObjects);
+  shader->setBool("isDynamicObject", false);
 }
 
 void Renderer::drawAppDirect(X11App *app) {
@@ -430,6 +467,7 @@ void Renderer::render() {
   renderLookedAtFace();
   renderChunkMesh();
   renderApps();
+  renderDynamicObjects();
 }
 
 Camera *Renderer::getCamera() { return camera; }
