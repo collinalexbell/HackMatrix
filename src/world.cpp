@@ -31,7 +31,7 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   initLoader(minecraftFolder, texturePack);
   initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
-  dynamicObjects->addObject(make_shared<DynamicCube>(glm::vec3(0.0, 8.0, 0.0), glm::vec3(1.0,1.0, 1.0)));
+  dynamicObjects->addObject(make_shared<DynamicCube>(glm::vec3(0.0, 8.0, 0.0), glm::vec3(0.1,0.1, 0.1)));
 }
 
 void World::initLogger() {
@@ -1038,6 +1038,6 @@ void World::loadLatest() {
 void World::tick(){
   loadChunksIfNeccissary();
   if(dynamicObjects->damaged()) {
-    //renderer->updateDynamicObjects(dynamicObjects);
+    renderer->updateDynamicObjects(dynamicObjects);
   }
 }
