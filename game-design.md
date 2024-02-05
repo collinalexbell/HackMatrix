@@ -95,6 +95,9 @@ They will dislike how unpolished the game is and how uncohesive the coding probl
 Perhaps, instead of putting myself in a venue first, I should put myself inside the Tron matrix of pure abstract digital imaginings (*sigh*)
 
 What if I seperated the dynamic object space from the chunked environment space!!!
+### 20) Pleasure
+It gives them pleasure in understanding
+It may feel too much like work though, especially if it isn't multiplayer
 ## Idea
 Possible pitch ideas
 - Learn data structures
