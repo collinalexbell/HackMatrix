@@ -102,6 +102,9 @@ It may feel too much like work though, especially if it isn't multiplayer
 Theoretically, my game has goals and are the same as the player.
 The goal being to get good at programming, practice, have fun doing it, maybe show off.
 My game has yet to have any implented challenges though, so specifics are fuzzy
+### 22) Needs
+My game operates on the highest of Maslows needs. It doesn't fullfill basic needs.
+It could fulfil love to a degree if it is made into a multiplayer game.
 ## Idea
 Possible pitch ideas
 - Learn data structures
