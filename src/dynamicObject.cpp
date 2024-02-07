@@ -4,40 +4,56 @@ DynamicCube::DynamicCube(glm::vec3 position, glm::vec3 size)
   : position(position), size(size) {};
 
 Renderable DynamicCube::makeRenderable() {
-    Renderable renderable;
+  _damaged = false;
+  Renderable renderable;
 
-    // Half dimensions
-    float hx = size.x * 0.5f;
-    float hy = size.y * 0.5f;
-    float hz = size.z * 0.5f;
+  // Half dimensions
+  float hx = size.x * 0.5f;
+  float hy = size.y * 0.5f;
+  float hz = size.z * 0.5f;
 
-    // Vertex positions relative to the center
-    glm::vec3 vertices[] = {
-      {hx, hy, hz}, {-hx, hy, hz}, {-hx, -hy, hz}, {hx, -hy, hz}, // Front face
-      {hx, hy, -hz}, {-hx, hy, -hz}, {-hx, -hy, -hz}, {hx, -hy, -hz}, // Back face
-      {hx, hy, hz}, {hx, -hy, hz}, {hx, -hy, -hz}, {hx, hy, -hz}, // Right face
-      {-hx, hy, hz}, {-hx, -hy, hz}, {-hx, -hy, -hz}, {-hx, hy, -hz}, // Left face
-      {hx, hy, hz}, {hx, hy, -hz}, {-hx, hy, -hz}, {-hx, hy, hz}, // Top face
-      {hx, -hy, hz}, {hx, -hy, -hz}, {-hx, -hy, -hz}, {-hx, -hy, hz}  // Bottom face
-    };
+  // Vertex positions relative to the center
+  glm::vec3 vertices[] = {
+      {hx, hy, hz},    {-hx, hy, hz},
+      {-hx, -hy, hz},  {hx, -hy, hz}, // Front face
+      {hx, hy, -hz},   {-hx, hy, -hz},
+      {-hx, -hy, -hz}, {hx, -hy, -hz}, // Back face
+      {hx, hy, hz},    {hx, -hy, hz},
+      {hx, -hy, -hz},  {hx, hy, -hz}, // Right face
+      {-hx, hy, hz},   {-hx, -hy, hz},
+      {-hx, -hy, -hz}, {-hx, hy, -hz}, // Left face
+      {hx, hy, hz},    {hx, hy, -hz},
+      {-hx, hy, -hz},  {-hx, hy, hz}, // Top face
+      {hx, -hy, hz},   {hx, -hy, -hz},
+      {-hx, -hy, -hz}, {-hx, -hy, hz} // Bottom face
+  };
 
-    // Triangles (two per face)
-    int indices[] = {
-      0, 1, 2, 0, 2, 3, // Front
-      4, 7, 6, 4, 6, 5, // Back
-      8, 11, 10, 8, 10, 9, // Right
+  // Triangles (two per face)
+  int indices[] = {
+      0,  1,  2,  0,  2,  3,  // Front
+      4,  7,  6,  4,  6,  5,  // Back
+      8,  11, 10, 8,  10, 9,  // Right
       12, 13, 14, 12, 14, 15, // Left
       16, 19, 18, 16, 18, 17, // Top
       20, 21, 22, 20, 22, 23  // Bottom
-    };
+  };
 
-    // Fill vertices for each triangle
-    for (int i = 0; i < 36; i++) {
-      renderable.vertices.push_back(position + vertices[indices[i]]);
-    }
-
-    return renderable;
+  // Fill vertices for each triangle
+  for (int i = 0; i < 36; i++) {
+    renderable.vertices.push_back(position + vertices[indices[i]]);
   }
+
+  return renderable;
+}
+
+void DynamicCube::move(glm::vec3 addition) {
+  _damaged = true;
+  position = position + addition;
+}
+
+bool DynamicCube::damaged(){
+  return _damaged;
+}
 
 Renderable DynamicObjectSpace::makeRenderable() {
   _damaged = false;
@@ -59,5 +75,9 @@ void DynamicObjectSpace::addObject(shared_ptr<DynamicObject> obj) {
 }
 
 bool DynamicObjectSpace::damaged() {
-  return _damaged;
+  bool rv = _damaged;
+  for(auto element: objects) {
+    rv |= element->damaged();
+  }
+  return rv;
 }

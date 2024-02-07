@@ -44,6 +44,7 @@ enum Action {
 class World {
   shared_ptr<spdlog::logger> logger;
   shared_ptr<DynamicObjectSpace> dynamicObjects;
+  shared_ptr<DynamicCube> dynamicCube;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
   vector<Line> lines;
