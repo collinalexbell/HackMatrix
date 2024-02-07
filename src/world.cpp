@@ -31,7 +31,8 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   initLoader(minecraftFolder, texturePack);
   initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
-  dynamicObjects->addObject(make_shared<DynamicCube>(glm::vec3(0.0, 8.0, 0.0), glm::vec3(0.1,0.1, 0.1)));
+  dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f), glm::vec3(0.1f,0.1f, 0.1f));
+  dynamicObjects->addObject(dynamicCube);
 }
 
 void World::initLogger() {
@@ -1040,4 +1041,5 @@ void World::tick(){
   if(dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
   }
+  dynamicCube->move(glm::vec3(0.0f, 0.0f, 0.01f));
 }

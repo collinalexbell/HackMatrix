@@ -12,6 +12,7 @@ struct Renderable {
 class DynamicObject {
  public:
   virtual Renderable makeRenderable() = 0;
+  virtual bool damaged() = 0;
 };
 
 class DynamicObjectSpace: public DynamicObject {
@@ -20,13 +21,16 @@ class DynamicObjectSpace: public DynamicObject {
  public:
    void addObject(shared_ptr<DynamicObject> obj);
    Renderable makeRenderable() override;
-   bool damaged();
+   bool damaged() override;
 };
 
 class DynamicCube: public DynamicObject {
   glm::vec3 position;
   glm::vec3 size;
+  bool _damaged = true;
  public:
    DynamicCube(glm::vec3 position, glm::vec3 size);
    Renderable makeRenderable() override;
+   void move(glm::vec3 addition);
+   bool damaged() override;
 };
