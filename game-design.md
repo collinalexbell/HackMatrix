@@ -98,6 +98,10 @@ What if I seperated the dynamic object space from the chunked environment space!
 ### 20) Pleasure
 It gives them pleasure in understanding
 It may feel too much like work though, especially if it isn't multiplayer
+### 21) Flow
+Theoretically, my game has goals and are the same as the player.
+The goal being to get good at programming, practice, have fun doing it, maybe show off.
+My game has yet to have any implented challenges though, so specifics are fuzzy
 ## Idea
 Possible pitch ideas
 - Learn data structures
