@@ -695,10 +695,13 @@ void World::removeApp(X11App *app) {
                            return element.second == index;
                          });
 
-  directRenderApps.erase(directRenderIt);
-  for (auto appKV = directRenderApps.begin(); appKV != directRenderApps.end(); appKV++) {
-    if (appKV->second > index) {
-      appKV->second--;
+  if(directRenderIt != directRenderApps.end()) {
+    directRenderApps.erase(directRenderIt);
+    for (auto appKV = directRenderApps.begin(); appKV != directRenderApps.end();
+         appKV++) {
+      if (appKV->second > index) {
+        appKV->second--;
+      }
     }
   }
 
