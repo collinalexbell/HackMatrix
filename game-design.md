@@ -124,6 +124,19 @@ Players will care about the judgement because it will be connected to many of th
 The judgement will make the players want to improve, both in the game and in the real world (which presumably is one reason they are playing the game).
 ### 26) Funcitonal Space
 The space is continuous, in 3 dimensions, currently no boundaries, but will have building boudaries, many sub spaces connected like a city (maybe with magic portals as well).
+### 27) Time
+What determines the length of the gameplay activities?
+The modularity of the challenges. How chunked down the challenges are determines time quanta.
+Are players frustrated because the game ends to early, bored because it takes too long?
+If I have a plotline, I will probably end too early.
+If I don't have a plotline, the game may be near infinite, but the challenges themselves won't be. Obv I'll need a plotline of some kind.
+
+Should I set a game timelimit?
+That might be a good idea for speed runners. Would make the game like l33tc0de
+
+Would a hierarchy of time help structure my game?
+For sure. Writing code is all about time chunking.
+
 ## Idea
 Possible pitch ideas
 - Learn data structures
