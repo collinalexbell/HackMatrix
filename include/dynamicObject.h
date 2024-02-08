@@ -23,10 +23,11 @@ public:
 class DynamicObjectSpace: public DynamicObject {
   vector<shared_ptr<DynamicObject>> objects;
   bool _damaged = true;
- public:
-   void addObject(shared_ptr<DynamicObject> obj);
-   Renderable makeRenderable() override;
-   bool damaged() override;
+public:
+  void addObject(shared_ptr<DynamicObject> obj);
+  Renderable makeRenderable() override;
+  bool damaged() override;
+  shared_ptr<DynamicObject> getObjectById(int id);
 };
 
 class DynamicCube: public DynamicObject {
