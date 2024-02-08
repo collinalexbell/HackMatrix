@@ -6,6 +6,13 @@ enum MessageType {
   ADD_LINE = 2;
   ADD_CUBES = 3;
   MOVE = 4;
+  GET_IDS = 5;
+}
+
+message GetIds {}
+
+message ObjectIds {
+  repeated int32 ids = 1;
 }
 
 message Move {
@@ -56,5 +63,7 @@ message ApiRequest {
     ClearBox clearBox = 3;
     AddLine addLine = 4;
     AddCubes addCubes = 5;
+    Move move = 6;
+    GetIds getIds = 7;
   }
 }
