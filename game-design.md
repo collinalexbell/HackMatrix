@@ -105,6 +105,11 @@ My game has yet to have any implented challenges though, so specifics are fuzzy
 ### 22) Needs
 My game operates on the highest of Maslows needs. It doesn't fullfill basic needs.
 It could fulfil love to a degree if it is made into a multiplayer game.
+### 23) Motivation*
+Players will want to play my game because they can practice their code skills in a fun way.
+The most internal motivation is that players want to succeed in their career. The most external motivation is that players will be tired of "work" but still want to not be lazy in their free time.
+Some pleasure seeking motivations is that players will want to "enter the matrix" or be in "Tron"
+I think most of the motivations support each other. The lazy motivation may not be super conducive to actual learning though.
 ## Idea
 Possible pitch ideas
 - Learn data structures
@@ -191,6 +196,7 @@ Have no fear in this approach... just keep it up
 - Or to learn/practice data structures
 ## What I love about the game
 ### What do I love about v1?
+- Objects can be scripted in game
 - Matrix will eventually work on Vision Pro
 - Its venue is NYC
 - It will work with PCVR, so I can work in VR flawlessly
