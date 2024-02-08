@@ -1,4 +1,5 @@
 #include "dynamicObject.h"
+#include <algorithm>
 
 std::atomic<int> DynamicObject::nextId(0);
 
@@ -86,4 +87,14 @@ bool DynamicObjectSpace::damaged() {
     rv |= element->damaged();
   }
   return rv;
+}
+
+shared_ptr<DynamicObject> DynamicObjectSpace::getObjectById(int id) {
+  auto result = find_if(objects.begin(), objects.end(), [id](shared_ptr<DynamicObject> obj) -> bool {
+    return obj->id() == id;
+  });
+  if(result != objects.end()) {
+    return *result;
+  }
+  return NULL;
 }
