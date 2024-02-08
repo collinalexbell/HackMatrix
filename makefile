@@ -98,6 +98,20 @@ docs: game-design.md
 	pandoc -s game-design.md -o index.html
 	python -m http.server
 
+
+#######################
+######## Tests ########
+#######################
+
+test: build/testDynamicObject
+	./build/testDynamicObject
+
+build/catch.o: src/catch_amalgamated.cpp
+	g++ -std=c++20 $(FLAGS) -o build/catch.o -c src/catch_amalgamated.cpp $(INCLUDES)
+
+build/testDynamicObject: build/dynamicObject.o test/dynamicObject.cpp build/catch.o
+	g++ -std=c++20 $(FLAGS) -o build/testDynamicObject test/dynamicObject.cpp build/dynamicObject.o build/catch.o $(INCLUDES)
+
 #######################
 ######## Imgui ########
 #######################
