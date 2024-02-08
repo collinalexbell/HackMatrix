@@ -126,6 +126,14 @@ void Api::ProtobufCommandServer::poll(World *world) {
         api->releaseBatched();
         break;
       }
+      case MOVE: {
+        // I need to add the command to a dynamic objects queue that can
+        // then be processed on main thread.
+        break;
+      }
+      case GET_IDS: {
+        break;
+      }
       default:
         break;
       }
