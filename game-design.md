@@ -110,6 +110,12 @@ Players will want to play my game because they can practice their code skills in
 The most internal motivation is that players want to succeed in their career. The most external motivation is that players will be tired of "work" but still want to not be lazy in their free time.
 Some pleasure seeking motivations is that players will want to "enter the matrix" or be in "Tron"
 I think most of the motivations support each other. The lazy motivation may not be super conducive to actual learning though.
+### 24) Novelty
+Coding in game on a real IDE is novel
+The primary game mechanic is novel
+Minecraft is familiar, puzzle adventures are familiar
+The game's novelty is present not for novelty sake, so yes, the game will be good
+even once the novelty wears off
 ## Idea
 Possible pitch ideas
 - Learn data structures
