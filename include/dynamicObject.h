@@ -28,6 +28,7 @@ public:
   Renderable makeRenderable() override;
   bool damaged() override;
   shared_ptr<DynamicObject> getObjectById(int id);
+  vector<int> getObjectIds();
 };
 
 class DynamicCube: public DynamicObject {

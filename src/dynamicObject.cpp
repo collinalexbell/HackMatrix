@@ -98,3 +98,11 @@ shared_ptr<DynamicObject> DynamicObjectSpace::getObjectById(int id) {
   }
   return NULL;
 }
+
+vector<int> DynamicObjectSpace::getObjectIds() {
+  vector<int> rv;
+  for(auto object: objects) {
+    rv.push_back(object->id());
+  }
+  return rv;
+}
