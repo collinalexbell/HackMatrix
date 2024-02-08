@@ -116,6 +116,12 @@ The primary game mechanic is novel
 Minecraft is familiar, puzzle adventures are familiar
 The game's novelty is present not for novelty sake, so yes, the game will be good
 even once the novelty wears off
+### 25) Judgement
+My game judges the ability of their code to solve the problem.
+It communicates the judgement by the objects in the world solving the challenge and doing what they are supposed to.
+The players will feel the judgement is fair, because it is objective. Either the code solves the problem or doesn't. Some advanced players will feel that it is slightly unfair to them because they will want to use clean code and other players may want to use dirty code. I can impove fairness by building upon past code such that cleanliness matters.
+Players will care about the judgement because it will be connected to many of the indogenous values about the game.
+The judgement will make the players want to improve, both in the game and in the real world (which presumably is one reason they are playing the game).
 ## Idea
 Possible pitch ideas
 - Learn data structures
