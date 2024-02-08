@@ -122,6 +122,8 @@ It communicates the judgement by the objects in the world solving the challenge 
 The players will feel the judgement is fair, because it is objective. Either the code solves the problem or doesn't. Some advanced players will feel that it is slightly unfair to them because they will want to use clean code and other players may want to use dirty code. I can impove fairness by building upon past code such that cleanliness matters.
 Players will care about the judgement because it will be connected to many of the indogenous values about the game.
 The judgement will make the players want to improve, both in the game and in the real world (which presumably is one reason they are playing the game).
+### 26) Funcitonal Space
+The space is continuous, in 3 dimensions, currently no boundaries, but will have building boudaries, many sub spaces connected like a city (maybe with magic portals as well).
 ## Idea
 Possible pitch ideas
 - Learn data structures
