@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10protos/api.proto\"=\n\x07\x41\x64\x64\x43ube\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\x11\n\tblockType\x18\x04 \x01(\x05\"#\n\x08\x41\x64\x64\x43ubes\x12\x17\n\x05\x63ubes\x18\x01 \x03(\x0b\x32\x08.AddCube\"R\n\x08\x43learBox\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"d\n\x07\x41\x64\x64Line\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\x12\x11\n\tintensity\x18\x07 \x01(\x02\"\xab\x01\n\nApiRequest\x12\x1a\n\x04type\x18\x01 \x01(\x0e\x32\x0c.MessageType\x12\x1b\n\x07\x61\x64\x64\x43ube\x18\x02 \x01(\x0b\x32\x08.AddCubeH\x00\x12\x1d\n\x08\x63learBox\x18\x03 \x01(\x0b\x32\t.ClearBoxH\x00\x12\x1b\n\x07\x61\x64\x64Line\x18\x04 \x01(\x0b\x32\x08.AddLineH\x00\x12\x1d\n\x08\x61\x64\x64\x43ubes\x18\x05 \x01(\x0b\x32\t.AddCubesH\x00\x42\t\n\x07payload*G\n\x0bMessageType\x12\x0c\n\x08\x41\x44\x44_CUBE\x10\x00\x12\r\n\tCLEAR_BOX\x10\x01\x12\x0c\n\x08\x41\x44\x44_LINE\x10\x02\x12\r\n\tADD_CUBES\x10\x03\x62\x06proto3'
+  serialized_pb=b'\n\x10protos/api.proto\"U\n\x04Move\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\x12\x11\n\tblockType\x18\x05 \x01(\x05\"=\n\x07\x41\x64\x64\x43ube\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\x11\n\tblockType\x18\x04 \x01(\x05\"#\n\x08\x41\x64\x64\x43ubes\x12\x17\n\x05\x63ubes\x18\x01 \x03(\x0b\x32\x08.AddCube\"R\n\x08\x43learBox\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"d\n\x07\x41\x64\x64Line\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\x12\x11\n\tintensity\x18\x07 \x01(\x02\"\xab\x01\n\nApiRequest\x12\x1a\n\x04type\x18\x01 \x01(\x0e\x32\x0c.MessageType\x12\x1b\n\x07\x61\x64\x64\x43ube\x18\x02 \x01(\x0b\x32\x08.AddCubeH\x00\x12\x1d\n\x08\x63learBox\x18\x03 \x01(\x0b\x32\t.ClearBoxH\x00\x12\x1b\n\x07\x61\x64\x64Line\x18\x04 \x01(\x0b\x32\x08.AddLineH\x00\x12\x1d\n\x08\x61\x64\x64\x43ubes\x18\x05 \x01(\x0b\x32\t.AddCubesH\x00\x42\t\n\x07payload*Q\n\x0bMessageType\x12\x0c\n\x08\x41\x44\x44_CUBE\x10\x00\x12\r\n\tCLEAR_BOX\x10\x01\x12\x0c\n\x08\x41\x44\x44_LINE\x10\x02\x12\r\n\tADD_CUBES\x10\x03\x12\x08\n\x04MOVE\x10\x04\x62\x06proto3'
 )
 
 _MESSAGETYPE = _descriptor.EnumDescriptor(
@@ -50,11 +50,16 @@ _MESSAGETYPE = _descriptor.EnumDescriptor(
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='MOVE', index=4, number=4,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=480,
-  serialized_end=551,
+  serialized_start=567,
+  serialized_end=648,
 )
 _sym_db.RegisterEnumDescriptor(_MESSAGETYPE)
 
@@ -63,7 +68,68 @@ ADD_CUBE = 0
 CLEAR_BOX = 1
 ADD_LINE = 2
 ADD_CUBES = 3
+MOVE = 4
 
+
+
+_MOVE = _descriptor.Descriptor(
+  name='Move',
+  full_name='Move',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='id', full_name='Move.id', index=0,
+      number=1, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='xDelta', full_name='Move.xDelta', index=1,
+      number=2, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='yDelta', full_name='Move.yDelta', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='zDelta', full_name='Move.zDelta', index=3,
+      number=4, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='blockType', full_name='Move.blockType', index=4,
+      number=5, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=20,
+  serialized_end=105,
+)
 
 
 _ADDCUBE = _descriptor.Descriptor(
@@ -114,8 +180,8 @@ _ADDCUBE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=20,
-  serialized_end=81,
+  serialized_start=107,
+  serialized_end=168,
 )
 
 
@@ -146,8 +212,8 @@ _ADDCUBES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=83,
-  serialized_end=118,
+  serialized_start=170,
+  serialized_end=205,
 )
 
 
@@ -213,8 +279,8 @@ _CLEARBOX = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=120,
-  serialized_end=202,
+  serialized_start=207,
+  serialized_end=289,
 )
 
 
@@ -287,8 +353,8 @@ _ADDLINE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=204,
-  serialized_end=304,
+  serialized_start=291,
+  serialized_end=391,
 )
 
 
@@ -352,8 +418,8 @@ _APIREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=307,
-  serialized_end=478,
+  serialized_start=394,
+  serialized_end=565,
 )
 
 _ADDCUBES.fields_by_name['cubes'].message_type = _ADDCUBE
@@ -374,6 +440,7 @@ _APIREQUEST.fields_by_name['addLine'].containing_oneof = _APIREQUEST.oneofs_by_n
 _APIREQUEST.oneofs_by_name['payload'].fields.append(
   _APIREQUEST.fields_by_name['addCubes'])
 _APIREQUEST.fields_by_name['addCubes'].containing_oneof = _APIREQUEST.oneofs_by_name['payload']
+DESCRIPTOR.message_types_by_name['Move'] = _MOVE
 DESCRIPTOR.message_types_by_name['AddCube'] = _ADDCUBE
 DESCRIPTOR.message_types_by_name['AddCubes'] = _ADDCUBES
 DESCRIPTOR.message_types_by_name['ClearBox'] = _CLEARBOX
@@ -381,6 +448,13 @@ DESCRIPTOR.message_types_by_name['AddLine'] = _ADDLINE
 DESCRIPTOR.message_types_by_name['ApiRequest'] = _APIREQUEST
 DESCRIPTOR.enum_types_by_name['MessageType'] = _MESSAGETYPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+Move = _reflection.GeneratedProtocolMessageType('Move', (_message.Message,), {
+  'DESCRIPTOR' : _MOVE,
+  '__module__' : 'protos.api_pb2'
+  # @@protoc_insertion_point(class_scope:Move)
+  })
+_sym_db.RegisterMessage(Move)
 
 AddCube = _reflection.GeneratedProtocolMessageType('AddCube', (_message.Message,), {
   'DESCRIPTOR' : _ADDCUBE,

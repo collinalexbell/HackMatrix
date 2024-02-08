@@ -5,6 +5,15 @@ enum MessageType {
   CLEAR_BOX = 1;
   ADD_LINE = 2;
   ADD_CUBES = 3;
+  MOVE = 4;
+}
+
+message Move {
+  int32 id = 1;
+  float xDelta = 2;
+  float yDelta = 3;
+  float zDelta = 4;
+  int32 blockType = 5;
 }
 
 message AddCube {

@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
@@ -10,9 +11,13 @@ struct Renderable {
 };
 
 class DynamicObject {
- public:
+  int _id;
+  static std::atomic_int nextId;
+public:
+  DynamicObject() : _id(nextId.fetch_add(1)) {}
   virtual Renderable makeRenderable() = 0;
   virtual bool damaged() = 0;
+  int id();
 };
 
 class DynamicObjectSpace: public DynamicObject {

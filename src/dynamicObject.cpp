@@ -1,5 +1,11 @@
 #include "dynamicObject.h"
 
+std::atomic<int> DynamicObject::nextId(0);
+
+int DynamicObject::id() {
+  return _id;
+}
+
 DynamicCube::DynamicCube(glm::vec3 position, glm::vec3 size)
   : position(position), size(size) {};
 
