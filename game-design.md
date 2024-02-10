@@ -142,6 +142,12 @@ I have static and dynamic objects
 Objects can have any programmable attribute given the nature of the game
 The possible states are any state the level designer or player can think up
 Anything can trigger state changes
+### 29) Secrets
+Some puzzles will have solutions that only the game will know as being correct.
+There also may be some API surface that is unknown to the players.
+Players will know much of the API surface though.
+Few things will be known by only 1 player (although challenges can be randomized so solutions only apply to 1 player)
+Not sure if concealing or revealing more information will improve the experience
 ## Idea
 Possible pitch ideas
 - Learn data structures
