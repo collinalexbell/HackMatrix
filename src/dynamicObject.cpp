@@ -1,5 +1,6 @@
 #include "dynamicObject.h"
 #include <algorithm>
+#include <shared_mutex>
 
 std::atomic<int> DynamicObject::nextId(0);
 
@@ -80,7 +81,7 @@ bool DynamicCube::damaged(){
 Renderable DynamicObjectSpace::makeRenderable() {
   _damaged = false;
   Renderable combinedRenderable;
-
+  shared_lock<shared_mutex> lock(readWriteMutex);
   // Iterate over all dynamic objects and combine their renderables
   for (const auto &obj : objects) {
     Renderable objRenderable = obj->makeRenderable();
@@ -93,11 +94,13 @@ Renderable DynamicObjectSpace::makeRenderable() {
 }
 
 void DynamicObjectSpace::addObject(shared_ptr<DynamicObject> obj) {
+  unique_lock<shared_mutex> lock(readWriteMutex);
   objects.push_back(obj);
 }
 
 bool DynamicObjectSpace::damaged() {
   bool rv = _damaged;
+  shared_lock<shared_mutex> lock(readWriteMutex);
   for(auto element: objects) {
     rv |= element->damaged();
   }
@@ -105,6 +108,7 @@ bool DynamicObjectSpace::damaged() {
 }
 
 shared_ptr<DynamicObject> DynamicObjectSpace::getObjectById(int id) {
+  shared_lock<shared_mutex> lock(readWriteMutex);
   auto result = find_if(objects.begin(), objects.end(), [id](shared_ptr<DynamicObject> obj) -> bool {
     return obj->id() == id;
   });
@@ -116,6 +120,7 @@ shared_ptr<DynamicObject> DynamicObjectSpace::getObjectById(int id) {
 
 vector<int> DynamicObjectSpace::getObjectIds() {
   vector<int> rv;
+  shared_lock<shared_mutex> lock(readWriteMutex);
   for(auto object: objects) {
     rv.push_back(object->id());
   }
