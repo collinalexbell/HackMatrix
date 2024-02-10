@@ -133,7 +133,6 @@ void Api::ProtobufCommandServer::poll(World *world) {
         Move movement = apiRequest.move();
         auto id = movement.id();
         auto delta = glm::vec3(movement.xdelta(), movement.ydelta(), movement.zdelta());
-        // I think I want dynamic objects to follow the actor pattern
         break;
       }
       case GET_IDS: {

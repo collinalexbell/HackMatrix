@@ -8,7 +8,7 @@ int DynamicObject::id() {
 }
 
 DynamicCube::DynamicCube(glm::vec3 position, glm::vec3 size)
-  : position(position), size(size) {};
+  : _position(position), size(size) {};
 
 Renderable DynamicCube::makeRenderable() {
   _damaged = false;
@@ -45,6 +45,8 @@ Renderable DynamicCube::makeRenderable() {
       20, 21, 22, 20, 22, 23  // Bottom
   };
 
+  auto position = getPosition();
+
   // Fill vertices for each triangle
   for (int i = 0; i < 36; i++) {
     renderable.vertices.push_back(position + vertices[indices[i]]);
@@ -53,9 +55,22 @@ Renderable DynamicCube::makeRenderable() {
   return renderable;
 }
 
+glm::vec3 DynamicCube::getPosition() {
+  positionLock.lock();
+  auto rv = _position;
+  positionLock.unlock();
+  return rv;
+}
+
 void DynamicCube::move(glm::vec3 addition) {
   _damaged = true;
-  position = position + addition;
+  setPosition(getPosition() + addition);
+}
+
+void DynamicCube::setPosition(glm::vec3 newPos) {
+  positionLock.lock();
+  _position = newPos;
+  positionLock.unlock();
 }
 
 bool DynamicCube::damaged(){
