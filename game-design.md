@@ -148,6 +148,12 @@ There also may be some API surface that is unknown to the players.
 Players will know much of the API surface though.
 Few things will be known by only 1 player (although challenges can be randomized so solutions only apply to 1 player)
 Not sure if concealing or revealing more information will improve the experience
+### 30) Emergence
+How many verbs do my players have?
+How many objects can each verb act on?
+How many ways can players achieve their goals?
+How many subjects do the players control?
+How do side effects change constraints?
 ## Idea
 Possible pitch ideas
 - Learn data structures
