@@ -1,4 +1,5 @@
 #include "api.h"
+#include "glm/fwd.hpp"
 #include "logger.h"
 #include "world.h"
 
@@ -129,6 +130,10 @@ void Api::ProtobufCommandServer::poll(World *world) {
       case MOVE: {
         // I need to add the command to a dynamic objects queue that can
         // then be processed on main thread.
+        Move movement = apiRequest.move();
+        auto id = movement.id();
+        auto delta = glm::vec3(movement.xdelta(), movement.ydelta(), movement.zdelta());
+        // I think I want dynamic objects to follow the actor pattern
         break;
       }
       case GET_IDS: {
