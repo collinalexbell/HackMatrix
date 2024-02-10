@@ -234,6 +234,7 @@ Have no fear in this approach... just keep it up
 - Or to learn/practice data structures
 ## What I love about the game
 ### What do I love about v1?
+- The game will allow me to give love!
 - Objects can be scripted in game
 - Matrix will eventually work on Vision Pro
 - Its venue is NYC
