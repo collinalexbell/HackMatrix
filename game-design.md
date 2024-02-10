@@ -137,6 +137,11 @@ That might be a good idea for speed runners. Would make the game like l33tc0de
 Would a hierarchy of time help structure my game?
 For sure. Writing code is all about time chunking.
 
+### 28) State Machine
+I have static and dynamic objects
+Objects can have any programmable attribute given the nature of the game
+The possible states are any state the level designer or player can think up
+Anything can trigger state changes
 ## Idea
 Possible pitch ideas
 - Learn data structures
