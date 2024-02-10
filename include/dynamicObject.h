@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <memory>
+#include <mutex>
 
 using namespace std;
 
@@ -32,9 +33,12 @@ public:
 };
 
 class DynamicCube: public DynamicObject {
-  glm::vec3 position;
+  glm::vec3 _position;
   glm::vec3 size;
-  bool _damaged = true;
+  atomic_bool _damaged = true;
+  glm::vec3 getPosition();
+  void setPosition(glm::vec3 newPos);
+  mutex positionLock;
  public:
    DynamicCube(glm::vec3 position, glm::vec3 size);
    Renderable makeRenderable() override;
