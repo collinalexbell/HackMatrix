@@ -1,4 +1,5 @@
 #include "api.h"
+#include "dynamicObject.h"
 #include "glm/fwd.hpp"
 #include "logger.h"
 #include "world.h"
@@ -133,6 +134,10 @@ void Api::ProtobufCommandServer::poll(World *world) {
         Move movement = apiRequest.move();
         auto id = movement.id();
         auto delta = glm::vec3(movement.xdelta(), movement.ydelta(), movement.zdelta());
+        auto obj = world->dynamicObjects->getObjectById(id);
+        if(obj != NULL) {
+          obj->move(delta);
+        }
         break;
       }
       case GET_IDS: {

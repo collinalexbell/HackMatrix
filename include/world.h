@@ -43,7 +43,6 @@ enum Action {
 
 class World {
   shared_ptr<spdlog::logger> logger;
-  shared_ptr<DynamicObjectSpace> dynamicObjects;
   shared_ptr<DynamicCube> dynamicCube;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
@@ -80,7 +79,9 @@ class World {
   void logCoordinates(array<Coordinate, 2> c, string label);
   vector<pair<X11App*, int>> directRenderApps;
 
-public : void tick();
+public:
+  void tick();
+  shared_ptr<DynamicObjectSpace> dynamicObjects;
   vector<X11App*> getDirectRenderApps();
   const float CUBE_SIZE = 0.1;
   World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false);

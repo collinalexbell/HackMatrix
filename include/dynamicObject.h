@@ -1,9 +1,10 @@
 #pragma once
 #include <atomic>
 #include <glm/glm.hpp>
-#include <vector>
 #include <memory>
 #include <mutex>
+#include <vector>
+#include <shared_mutex>
 
 using namespace std;
 
@@ -18,18 +19,24 @@ public:
   DynamicObject() : _id(nextId.fetch_add(1)) {}
   virtual Renderable makeRenderable() = 0;
   virtual bool damaged() = 0;
+  virtual void move(glm::vec3) = 0;
   int id();
 };
 
 class DynamicObjectSpace: public DynamicObject {
   vector<shared_ptr<DynamicObject>> objects;
   bool _damaged = true;
+  shared_mutex readWriteMutex;
 public:
   void addObject(shared_ptr<DynamicObject> obj);
   Renderable makeRenderable() override;
   bool damaged() override;
+  void move(glm::vec3) override {
+    throw "DynamicObjectSpace.move() unimplemented";
+  }
   shared_ptr<DynamicObject> getObjectById(int id);
   vector<int> getObjectIds();
+
 };
 
 class DynamicCube: public DynamicObject {
@@ -42,6 +49,6 @@ class DynamicCube: public DynamicObject {
  public:
    DynamicCube(glm::vec3 position, glm::vec3 size);
    Renderable makeRenderable() override;
-   void move(glm::vec3 addition);
+   void move(glm::vec3 addition) override;
    bool damaged() override;
 };
