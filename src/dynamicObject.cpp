@@ -1,5 +1,6 @@
 #include "dynamicObject.h"
 #include <algorithm>
+#include <mutex>
 #include <shared_mutex>
 
 std::atomic<int> DynamicObject::nextId(0);
@@ -12,7 +13,7 @@ DynamicCube::DynamicCube(glm::vec3 position, glm::vec3 size)
   : _position(position), size(size) {};
 
 Renderable DynamicCube::makeRenderable() {
-  _damaged = false;
+  setDamaged(false);
   Renderable renderable;
 
   // Half dimensions
@@ -57,26 +58,30 @@ Renderable DynamicCube::makeRenderable() {
 }
 
 glm::vec3 DynamicCube::getPosition() {
-  positionLock.lock();
-  auto rv = _position;
-  positionLock.unlock();
-  return rv;
+  shared_lock<shared_mutex> lock(readWriteMutex);
+  return _position;
 }
 
 void DynamicCube::move(glm::vec3 addition) {
-  _damaged = true;
+  setDamaged(true);
   setPosition(getPosition() + addition);
 }
 
 void DynamicCube::setPosition(glm::vec3 newPos) {
-  positionLock.lock();
+  unique_lock<shared_mutex> lock(readWriteMutex);
   _position = newPos;
-  positionLock.unlock();
 }
 
 bool DynamicCube::damaged(){
+  shared_lock<shared_mutex> lock(readWriteMutex);
   return _damaged;
 }
+
+void DynamicCube::setDamaged(bool damaged) {
+  unique_lock<shared_mutex> lock(readWriteMutex);
+  _damaged = damaged;
+}
+
 
 Renderable DynamicObjectSpace::makeRenderable() {
   _damaged = false;

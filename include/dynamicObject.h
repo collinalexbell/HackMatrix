@@ -45,10 +45,11 @@ class DynamicCube: public DynamicObject {
   atomic_bool _damaged = true;
   glm::vec3 getPosition();
   void setPosition(glm::vec3 newPos);
-  mutex positionLock;
- public:
-   DynamicCube(glm::vec3 position, glm::vec3 size);
-   Renderable makeRenderable() override;
-   void move(glm::vec3 addition) override;
-   bool damaged() override;
+  shared_mutex readWriteMutex;
+public:
+  DynamicCube(glm::vec3 position, glm::vec3 size);
+  Renderable makeRenderable() override;
+  void move(glm::vec3 addition) override;
+  bool damaged() override;
+  void setDamaged(bool);
 };
