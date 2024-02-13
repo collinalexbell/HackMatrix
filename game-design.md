@@ -164,6 +164,15 @@ What are the basic actions of my game?
 What are the strategic actions?
 - High level functions that the user creates for themselves.
 - I suppose we could provide some high level strategic functions as well.
+### 32) Goals
+What is the ultimate goal of my game?
+Build people into better programmers who enjoy the art of software.
+
+Is that goal clear to players?
+It will be
+
+Are my goals concrete?
+No, but I can add achievements and scoreboard and such
 ## Idea
 Possible pitch ideas
 - Learn data structures
