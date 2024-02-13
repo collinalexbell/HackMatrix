@@ -154,6 +154,16 @@ How many objects can each verb act on?
 How many ways can players achieve their goals?
 How many subjects do the players control?
 How do side effects change constraints?
+### 31) Action
+What are the basic actions of my game?
+- Writing code
+- Running code
+- All the API function calls available in the library
+    - move()
+
+What are the strategic actions?
+- High level functions that the user creates for themselves.
+- I suppose we could provide some high level strategic functions as well.
 ## Idea
 Possible pitch ideas
 - Learn data structures
