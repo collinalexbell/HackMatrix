@@ -54,6 +54,9 @@ void Api::ProtobufCommandServer::poll(World *world) {
     zmq::message_t recv;
     zmq::recv_result_t result = socket.recv(recv);
 
+    zmq::message_t reply(5);
+    memcpy(reply.data(), "recv", 5);
+
     if (result >= 0) {
       ApiRequest apiRequest;
       apiRequest.ParseFromArray(recv.data(), recv.size());
@@ -141,15 +144,16 @@ void Api::ProtobufCommandServer::poll(World *world) {
         break;
       }
       case GET_IDS: {
+        world->dynamicObjects->getObjectIds();
+        string stringifiedIds;
+        reply = zmq::message_t(stringifiedIds.length());
+        memcpy(reply.data(), stringifiedIds.data(), stringifiedIds.length());
         break;
       }
       default:
         break;
       }
 
-      // Send a reply back to the client
-      zmq::message_t reply(5);
-      memcpy(reply.data(), "recv", 5);
       socket.send(reply, zmq::send_flags::none);
     }
   } catch (zmq::error_t &e) {}
