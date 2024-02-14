@@ -20,28 +20,16 @@
 #include <optional>
 #include "loader.h"
 #include "dynamicObject.h"
+#include "worldInterface.h"
 
 class Renderer;
-
-struct Line {
-  glm::vec3 points[2];
-  glm::vec3 color;
-};
 
 struct App {
   X11App* app;
   glm::vec3 position;
 };
 
-enum Action {
-  PLACE_CUBE,
-  REMOVE_CUBE,
-  SELECT_CUBE,
-  OPEN_SELECTION_CODE,
-  LOG_BLOCK_TYPE
-};
-
-class World {
+class World: public WorldInterface {
   shared_ptr<spdlog::logger> logger;
   shared_ptr<DynamicCube> dynamicCube;
   Renderer *renderer = NULL;
@@ -80,44 +68,44 @@ class World {
   vector<pair<X11App*, int>> directRenderApps;
 
 public:
-  void tick();
+  void tick() override;
   shared_ptr<DynamicObjectSpace> dynamicObjects;
-  vector<X11App*> getDirectRenderApps();
+  vector<X11App *> getDirectRenderApps() override;
   const float CUBE_SIZE = 0.1;
   World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false);
   ~World();
-  void attachRenderer(Renderer *renderer);
-  float getViewDistanceForWindowSize(X11App *app);
+  void attachRenderer(Renderer *renderer) override;
+  float getViewDistanceForWindowSize(X11App *app) override;
   Loader *loader;
 
-  X11App *getLookedAtApp();
-  Position getLookedAtCube();
-  const std::vector<glm::vec3> getAppCubes();
-  glm::vec3 getAppPosition(X11App* app);
+  X11App *getLookedAtApp() override;
+  Position getLookedAtCube() override;
+  const std::vector<glm::vec3> getAppCubes() override;
+  glm::vec3 getAppPosition(X11App *app) override;
 
-  void addCube(int x, int y, int z, int blockType);
-  void addLine(Line line);
-  void removeLine(Line line);
-  void addApp(glm::vec3, X11App* app);
-  void addApp(X11App* app);
-  void removeApp(X11App* app);
-  int getIndexOfApp(X11App* app);
+  void addCube(int x, int y, int z, int blockType) override;
+  void addLine(Line line) override;
+  void removeLine(Line line) override;
+  void addApp(glm::vec3, X11App *app) override;
+  void addApp(X11App *app) override;
+  void removeApp(X11App *app) override;
+  int getIndexOfApp(X11App *app) override;
 
-  void refreshRendererCubes();
-  void action(Action);
-  glm::vec3 getAppPosition(int appIndex);
-  vector<Line> getLines();
+  void refreshRendererCubes() override;
+  void action(Action) override;
+  vector<Line> getLines() override;
 
-  void save(string filename);
-  void load(string filename);
-  void loadRegion(Coordinate regionCoordinate);
-  void loadMinecraft();
-  void initLoader(string folderName, shared_ptr<blocks::TexturePack> texturePack);
-  void loadLatest();
+  void save(string filename) override;
+  void load(string filename) override;
+  void loadRegion(Coordinate regionCoordinate) override;
+  void loadMinecraft() override;
+  void initLoader(string folderName,
+                  shared_ptr<blocks::TexturePack> texturePack) override;
+  void loadLatest() override;
 
-  void mesh(bool realTime = true);
-  ChunkMesh meshSelectedCube(Position position);
-  shared_ptr<Chunk> getChunk(int chunkX, int chunkZ);
+  void mesh(bool realTime = true) override;
+  ChunkMesh meshSelectedCube(Position position) override;
+  shared_ptr<Chunk> getChunk(int chunkX, int chunkZ) override;
 };
 
 #endif
