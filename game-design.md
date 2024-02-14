@@ -173,6 +173,12 @@ It will be
 
 Are my goals concrete?
 No, but I can add achievements and scoreboard and such
+### 33) Rules
+Each mission will have their own seperate ruleset
+Of course, algorithmic rules are going to be unbreakable
+Language rules will be unbreakable
+The compiler enforces the rules
+Except for the missions, which will have code enforcement
 ## Idea
 Possible pitch ideas
 - Learn data structures
