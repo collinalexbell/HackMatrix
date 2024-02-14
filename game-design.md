@@ -179,6 +179,10 @@ Of course, algorithmic rules are going to be unbreakable
 Language rules will be unbreakable
 The compiler enforces the rules
 Except for the missions, which will have code enforcement
+### 34) Skill
+What skills are required:
+- Software eng
+- problem solving
 ## Idea
 Possible pitch ideas
 - Learn data structures
