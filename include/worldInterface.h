@@ -68,4 +68,5 @@ public:
   virtual void mesh(bool realTime = true) = 0;
   virtual ChunkMesh meshSelectedCube(Position position) = 0;
   virtual shared_ptr<Chunk> getChunk(int chunkX, int chunkZ) = 0;
+  virtual shared_ptr<DynamicObjectSpace> getDynamicObjects() = 0;
 };

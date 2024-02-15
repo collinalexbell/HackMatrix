@@ -17,7 +17,7 @@
 
 using namespace std;
 
-Api::Api(std::string bindAddress, World* world): world(world) {
+Api::Api(std::string bindAddress, WorldInterface* world): world(world) {
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
   commandServer = new ProtobufCommandServer(this, bindAddress, context);
@@ -32,7 +32,7 @@ CommandServer::CommandServer(Api* api, std::string bindAddress, zmq::context_t& 
   socket.bind (bindAddress);
 }
 
-void Api::requestWorldData(World* world, string serverAddr) {
+void Api::requestWorldData(WorldInterface* world, string serverAddr) {
   zmq::message_t reply;
   zmq::message_t request(5);
   zmq::context_t clientContext = zmq::context_t(2);
@@ -49,7 +49,7 @@ void Api::requestWorldData(World* world, string serverAddr) {
   }
 }
 
-void Api::ProtobufCommandServer::poll(World *world) {
+void Api::ProtobufCommandServer::poll(WorldInterface *world) {
   try {
     zmq::message_t recv;
     zmq::recv_result_t result = socket.recv(recv);
@@ -137,14 +137,14 @@ void Api::ProtobufCommandServer::poll(World *world) {
         Move movement = apiRequest.move();
         auto id = movement.id();
         auto delta = glm::vec3(movement.xdelta(), movement.ydelta(), movement.zdelta());
-        auto obj = world->dynamicObjects->getObjectById(id);
+        auto obj = world->getDynamicObjects()->getObjectById(id);
         if(obj != NULL) {
           obj->move(delta);
         }
         break;
       }
       case GET_IDS: {
-        world->dynamicObjects->getObjectIds();
+        world->getDynamicObjects()->getObjectIds();
         string stringifiedIds;
         reply = zmq::message_t(stringifiedIds.length());
         memcpy(reply.data(), stringifiedIds.data(), stringifiedIds.length());
@@ -159,7 +159,7 @@ void Api::ProtobufCommandServer::poll(World *world) {
   } catch (zmq::error_t &e) {}
 }
 
-void Api::TextCommandServer::poll(World *world) {
+void Api::TextCommandServer::poll(WorldInterface *world) {
   try {
     zmq::message_t request;
     zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);

@@ -20,7 +20,7 @@ protected:
 
 public:
   CommandServer(Api *api, std::string bindAddress, zmq::context_t &context);
-  virtual void poll(World *world) = 0;
+  virtual void poll(WorldInterface *world) = 0;
 };
 
 struct ApiCube {
@@ -34,16 +34,16 @@ class Api {
 
   class ProtobufCommandServer : public CommandServer {
     using CommandServer::CommandServer;
-    void poll(World *world) override;
+    void poll(WorldInterface *world) override;
   };
 
   class TextCommandServer : public CommandServer {
     using CommandServer::CommandServer;
-    void poll(World *world) override;
+    void poll(WorldInterface *world) override;
   };
 
   shared_ptr<spdlog::logger> logger;
-  World *world;
+  WorldInterface *world;
 
   zmq::context_t context;
   CommandServer *commandServer;
@@ -63,11 +63,11 @@ protected:
   void releaseBatched();
 
 public:
-  Api(std::string bindAddress, World* world);
+  Api(std::string bindAddress, WorldInterface* world);
   ~Api();
   void poll();
   void mutateWorld();
-  void requestWorldData(World*, string);
+  void requestWorldData(WorldInterface*, string);
 };
 
 #endif
