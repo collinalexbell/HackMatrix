@@ -6,12 +6,13 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 # add -p for profiling with gprof
 FLAGS = -g -O3
 LOADER_FLAGS = -march=native -funroll-loops
-ALL_OBJECTS = build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c -lglfw -lGL -lpthread -Iinclude -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib
+ALL_OBJECTS = build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c -Iinclude
+LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread
 
 all: matrix trampoline build/diagnosis
 
 matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o
-	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(INCLUDES)
+	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -105,18 +106,23 @@ docs: game-design.md
 ######## Tests ########
 #######################
 
-test: build/testDynamicObject build/testApi
-	./build/testDynamicObject
-	./build/testApi
+BUILD_OBJECTS_FOR_TEST = build/api.o build/dynamicObject.o build/logger.o src/api.pb.cc
+TEST_OBJECTS = build/testApi.o build/testDynamicObject.o
+
+test: $(TEST_OBJECTS) $(BUILD_OBJECTS_FOR_TEST)
+	g++ -std=c++20 $(FLAGS) -o test $(TEST_OBJECTS) $(BUILD_OBJECTS_FOR_TEST) /usr/src/gtest/src/gtest_main.cc /usr/src/gtest/src/gtest-all.cc -I /usr/src/gtest $(INCLUDES) -L /usr/local/lib $(LIBS)
+
 
 build/catch.o: src/catch_amalgamated.cpp include/catch_amalgamated.hpp
 	g++ -std=c++20 $(FLAGS) -o build/catch.o -c src/catch_amalgamated.cpp $(INCLUDES)
 
-build/testDynamicObject: build/dynamicObject.o test/dynamicObject.cpp build/catch.o
-	g++ -std=c++20 $(FLAGS) -o build/testDynamicObject test/dynamicObject.cpp build/dynamicObject.o build/catch.o $(INCLUDES)
+build/testDynamicObject.o: build/dynamicObject.o tests/dynamicObject.cpp include/dynamicObject.h
+	g++ -std=c++20 $(FLAGS) -o build/testDynamicObject.o -c tests/dynamicObject.cpp $(INCLUDES)
 
-build/testApi: build/api.o test/api.cpp build/catch.o include/api.h
-	g++ -std=c++20 $(FLAGS) -o build/testApi test/api.cpp build/catch.o $(ALL_OBJECTS) $(INCLUDES)
+build/testApi.o: build/api.o tests/api.cpp include/api.h
+	g++ -std=c++20 $(FLAGS) -o build/testApi.o -c tests/api.cpp $(INCLUDES)
+
+
 
 
 
