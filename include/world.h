@@ -66,10 +66,10 @@ class World: public WorldInterface {
   void initPreloadedChunks();
   void logCoordinates(array<Coordinate, 2> c, string label);
   vector<pair<X11App*, int>> directRenderApps;
+  shared_ptr<DynamicObjectSpace> dynamicObjects;
 
 public:
   void tick() override;
-  shared_ptr<DynamicObjectSpace> dynamicObjects;
   vector<X11App *> getDirectRenderApps() override;
   const float CUBE_SIZE = 0.1;
   World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false);
@@ -106,6 +106,9 @@ public:
   void mesh(bool realTime = true) override;
   ChunkMesh meshSelectedCube(Position position) override;
   shared_ptr<Chunk> getChunk(int chunkX, int chunkZ) override;
+  shared_ptr<DynamicObjectSpace> getDynamicObjects() override {
+    return dynamicObjects;
+  };
 };
 
 #endif
