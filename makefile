@@ -109,7 +109,7 @@ test: build/testDynamicObject build/testApi
 	./build/testDynamicObject
 	./build/testApi
 
-build/catch.o: src/catch_amalgamated.cpp
+build/catch.o: src/catch_amalgamated.cpp include/catch_amalgamated.hpp
 	g++ -std=c++20 $(FLAGS) -o build/catch.o -c src/catch_amalgamated.cpp $(INCLUDES)
 
 build/testDynamicObject: build/dynamicObject.o test/dynamicObject.cpp build/catch.o
