@@ -183,6 +183,9 @@ Except for the missions, which will have code enforcement
 What skills are required:
 - Software eng
 - problem solving
+### 35) Expected Value
+There isn't much randomness to this game.
+It is all algorthimic playing.
 ## Idea
 Possible pitch ideas
 - Learn data structures
