@@ -186,6 +186,9 @@ What skills are required:
 ### 35) Expected Value
 There isn't much randomness to this game.
 It is all algorthimic playing.
+### 36) Chance
+My game currently does not have randomness.
+I literally haven't used a random number generator at all.
 ## Idea
 Possible pitch ideas
 - Learn data structures
