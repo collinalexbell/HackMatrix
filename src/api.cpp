@@ -145,7 +145,7 @@ void Api::ProtobufCommandServer::poll(WorldInterface *world) {
       }
       case GET_IDS: {
         world->getDynamicObjects()->getObjectIds();
-        string stringifiedIds;
+        string stringifiedIds = "foo1";
         reply = zmq::message_t(stringifiedIds.length());
         memcpy(reply.data(), stringifiedIds.data(), stringifiedIds.length());
         break;

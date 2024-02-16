@@ -4,13 +4,14 @@
 #include "blocks.h"
 #include "dynamicObject.h"
 #include "worldInterface.h"
+#include <gtest/gtest.h>
 #include <zmq/zmq.hpp>
-
+#undef Status
+#include "protos/api.pb.h"
 
 using namespace fakeit;
 
 TEST(API, getIds) {
-  //World* world = mockWorld();
   auto space = make_shared<DynamicObjectSpace>();
   space->addObject(make_shared<DynamicCube>(glm::vec3(0,0,0), glm::vec3(0,0,0)));
   Mock<WorldInterface> world;
@@ -19,5 +20,29 @@ TEST(API, getIds) {
   auto context = zmq::context_t(2);
   auto socket = zmq::socket_t(context, zmq::socket_type::req);
   socket.connect("tcp://localhost:1234");
-  ASSERT_TRUE(true);
+  ApiRequest request;
+  request.set_type(MessageType::GET_IDS);
+  request.mutable_getids();
+
+  // Serialize the message to a string
+  std::string serializedMessage;
+  if (!request.SerializeToString(&serializedMessage)) {
+    throw "failed to serialize message";
+  }
+
+  // Create a ZMQ message from the serialized string
+  zmq::message_t zmqMessage(serializedMessage.size());
+  memcpy(zmqMessage.data(), serializedMessage.data(), serializedMessage.size());
+
+  // Send the message over ZMQ
+  socket.send(zmqMessage, zmq::send_flags::none);
+  // Optionally, receive a reply if expected
+  zmq::message_t reply;
+  auto result = socket.recv(reply, zmq::recv_flags::none);
+  if (result) {
+    std::string replyContent(static_cast<char *>(reply.data()), reply.size());
+    ASSERT_EQ("foo", replyContent);
+  } else {
+    throw "should have result";
+  }
 }
