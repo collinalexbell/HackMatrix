@@ -189,6 +189,9 @@ It is all algorthimic playing.
 ### 36) Chance
 My game currently does not have randomness.
 I literally haven't used a random number generator at all.
+### 37) Fairness
+The game right now is symmetrical, but it might be interesting to do game scaling
+so that players who are advanced don't have to do a boring intro and players who are beginers aren't overwhelmed at the beginning
 ## Idea
 Possible pitch ideas
 - Learn data structures
