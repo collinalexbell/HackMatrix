@@ -144,10 +144,14 @@ void Api::ProtobufCommandServer::poll(WorldInterface *world) {
         break;
       }
       case GET_IDS: {
-        world->getDynamicObjects()->getObjectIds();
-        string stringifiedIds = "foo1";
-        reply = zmq::message_t(stringifiedIds.length());
-        memcpy(reply.data(), stringifiedIds.data(), stringifiedIds.length());
+        auto ids = world->getDynamicObjects()->getObjectIds();
+        std::string stringifiedIds;
+        ObjectIds idsBuffer;
+        for(auto id: ids) {
+          idsBuffer.add_ids(id);
+        }
+        idsBuffer.SerializeToString(&stringifiedIds);
+        reply = zmq::message_t(stringifiedIds.begin(), stringifiedIds.end());
         break;
       }
       default:
