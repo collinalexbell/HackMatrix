@@ -12,6 +12,9 @@
 
 using namespace fakeit;
 
+TEST(API, move) {
+}
+
 TEST(API, getIds) {
   auto space = make_shared<DynamicObjectSpace>();
   space->addObject(make_shared<DynamicCube>(glm::vec3(0,0,0), glm::vec3(0,0,0)));
