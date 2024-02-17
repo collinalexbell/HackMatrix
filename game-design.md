@@ -197,6 +197,8 @@ The lense of challenge seems like the lens of problem solving
 except difficulties are evaluated.
 ### 39) Choices
 I don't know what choices the user will make besides what code to write.
+### 40) Triangularity
+Give a low risk low reward, high risk high reward option
 ## Idea
 Possible pitch ideas
 - Learn data structures
