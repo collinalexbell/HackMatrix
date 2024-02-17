@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10protos/api.proto\"\x08\n\x06GetIds\"\x18\n\tObjectIds\x12\x0b\n\x03ids\x18\x01 \x03(\x05\"U\n\x04Move\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\x12\x11\n\tblockType\x18\x05 \x01(\x05\"=\n\x07\x41\x64\x64\x43ube\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\x11\n\tblockType\x18\x04 \x01(\x05\"#\n\x08\x41\x64\x64\x43ubes\x12\x17\n\x05\x63ubes\x18\x01 \x03(\x0b\x32\x08.AddCube\"R\n\x08\x43learBox\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"d\n\x07\x41\x64\x64Line\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\x12\x11\n\tintensity\x18\x07 \x01(\x02\"\xdd\x01\n\nApiRequest\x12\x1a\n\x04type\x18\x01 \x01(\x0e\x32\x0c.MessageType\x12\x1b\n\x07\x61\x64\x64\x43ube\x18\x02 \x01(\x0b\x32\x08.AddCubeH\x00\x12\x1d\n\x08\x63learBox\x18\x03 \x01(\x0b\x32\t.ClearBoxH\x00\x12\x1b\n\x07\x61\x64\x64Line\x18\x04 \x01(\x0b\x32\x08.AddLineH\x00\x12\x1d\n\x08\x61\x64\x64\x43ubes\x18\x05 \x01(\x0b\x32\t.AddCubesH\x00\x12\x15\n\x04move\x18\x06 \x01(\x0b\x32\x05.MoveH\x00\x12\x19\n\x06getIds\x18\x07 \x01(\x0b\x32\x07.GetIdsH\x00\x42\t\n\x07payload*^\n\x0bMessageType\x12\x0c\n\x08\x41\x44\x44_CUBE\x10\x00\x12\r\n\tCLEAR_BOX\x10\x01\x12\x0c\n\x08\x41\x44\x44_LINE\x10\x02\x12\r\n\tADD_CUBES\x10\x03\x12\x08\n\x04MOVE\x10\x04\x12\x0b\n\x07GET_IDS\x10\x05\x62\x06proto3'
+  serialized_pb=b'\n\x10protos/api.proto\"\x08\n\x06GetIds\"\x18\n\tObjectIds\x12\x0b\n\x03ids\x18\x01 \x03(\x05\"B\n\x04Move\x12\n\n\x02id\x18\x01 \x01(\x05\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\"=\n\x07\x41\x64\x64\x43ube\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\x12\x11\n\tblockType\x18\x04 \x01(\x05\"#\n\x08\x41\x64\x64\x43ubes\x12\x17\n\x05\x63ubes\x18\x01 \x03(\x0b\x32\x08.AddCube\"R\n\x08\x43learBox\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\"d\n\x07\x41\x64\x64Line\x12\n\n\x02x1\x18\x01 \x01(\x02\x12\n\n\x02y1\x18\x02 \x01(\x02\x12\n\n\x02z1\x18\x03 \x01(\x02\x12\n\n\x02x2\x18\x04 \x01(\x02\x12\n\n\x02y2\x18\x05 \x01(\x02\x12\n\n\x02z2\x18\x06 \x01(\x02\x12\x11\n\tintensity\x18\x07 \x01(\x02\"\xdd\x01\n\nApiRequest\x12\x1a\n\x04type\x18\x01 \x01(\x0e\x32\x0c.MessageType\x12\x1b\n\x07\x61\x64\x64\x43ube\x18\x02 \x01(\x0b\x32\x08.AddCubeH\x00\x12\x1d\n\x08\x63learBox\x18\x03 \x01(\x0b\x32\t.ClearBoxH\x00\x12\x1b\n\x07\x61\x64\x64Line\x18\x04 \x01(\x0b\x32\x08.AddLineH\x00\x12\x1d\n\x08\x61\x64\x64\x43ubes\x18\x05 \x01(\x0b\x32\t.AddCubesH\x00\x12\x15\n\x04move\x18\x06 \x01(\x0b\x32\x05.MoveH\x00\x12\x19\n\x06getIds\x18\x07 \x01(\x0b\x32\x07.GetIdsH\x00\x42\t\n\x07payload*^\n\x0bMessageType\x12\x0c\n\x08\x41\x44\x44_CUBE\x10\x00\x12\r\n\tCLEAR_BOX\x10\x01\x12\x0c\n\x08\x41\x44\x44_LINE\x10\x02\x12\r\n\tADD_CUBES\x10\x03\x12\x08\n\x04MOVE\x10\x04\x12\x0b\n\x07GET_IDS\x10\x05\x62\x06proto3'
 )
 
 _MESSAGETYPE = _descriptor.EnumDescriptor(
@@ -63,8 +63,8 @@ _MESSAGETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=653,
-  serialized_end=747,
+  serialized_start=634,
+  serialized_end=728,
 )
 _sym_db.RegisterEnumDescriptor(_MESSAGETYPE)
 
@@ -171,13 +171,6 @@ _MOVE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='blockType', full_name='Move.blockType', index=4,
-      number=5, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -191,7 +184,7 @@ _MOVE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=56,
-  serialized_end=141,
+  serialized_end=122,
 )
 
 
@@ -243,8 +236,8 @@ _ADDCUBE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=143,
-  serialized_end=204,
+  serialized_start=124,
+  serialized_end=185,
 )
 
 
@@ -275,8 +268,8 @@ _ADDCUBES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=206,
-  serialized_end=241,
+  serialized_start=187,
+  serialized_end=222,
 )
 
 
@@ -342,8 +335,8 @@ _CLEARBOX = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=243,
-  serialized_end=325,
+  serialized_start=224,
+  serialized_end=306,
 )
 
 
@@ -416,8 +409,8 @@ _ADDLINE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=327,
-  serialized_end=427,
+  serialized_start=308,
+  serialized_end=408,
 )
 
 
@@ -495,8 +488,8 @@ _APIREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=430,
-  serialized_end=651,
+  serialized_start=411,
+  serialized_end=632,
 )
 
 _ADDCUBES.fields_by_name['cubes'].message_type = _ADDCUBE
