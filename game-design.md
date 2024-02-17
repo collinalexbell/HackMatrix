@@ -195,6 +195,8 @@ so that players who are advanced don't have to do a boring intro and players who
 ### 38) Challenge
 The lense of challenge seems like the lens of problem solving
 except difficulties are evaluated.
+### 39) Choices
+I don't know what choices the user will make besides what code to write.
 ## Idea
 Possible pitch ideas
 - Learn data structures
