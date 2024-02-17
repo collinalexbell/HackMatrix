@@ -20,6 +20,7 @@ public:
   virtual Renderable makeRenderable() = 0;
   virtual bool damaged() = 0;
   virtual void move(glm::vec3) = 0;
+  virtual glm::vec3 getPosition() {return glm::vec3(0,0,0);};
   int id();
 };
 
@@ -36,14 +37,12 @@ public:
   }
   shared_ptr<DynamicObject> getObjectById(int id);
   vector<int> getObjectIds();
-
 };
 
 class DynamicCube: public DynamicObject {
   glm::vec3 _position;
   glm::vec3 size;
   atomic_bool _damaged = true;
-  glm::vec3 getPosition();
   void setPosition(glm::vec3 newPos);
   shared_mutex readWriteMutex;
 public:
@@ -52,4 +51,5 @@ public:
   void move(glm::vec3 addition) override;
   bool damaged() override;
   void setDamaged(bool);
+  glm::vec3 getPosition() override;
 };
