@@ -199,6 +199,9 @@ except difficulties are evaluated.
 I don't know what choices the user will make besides what code to write.
 ### 40) Triangularity
 Give a low risk low reward, high risk high reward option
+### 41) Skill vs Chance
+My game is a serious game. The players are here to be judged. Coding is tedious, but is important and so the game is meant to prime their brains to find enjoyment from it.
+I could add randomness to some of the challenges to make them more fun.
 ## Idea
 Possible pitch ideas
 - Learn data structures
