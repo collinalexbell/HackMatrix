@@ -34,16 +34,33 @@ zmq::message_t sendRequest(ApiRequest request, zmq::socket_t &socket) {
   return reply;
 }
 
+auto testContext = zmq::context_t(2);
+
+struct TestClientServer {
+  unique_ptr<Api> server;
+  unique_ptr<zmq::socket_t> client;
+};
+
+TestClientServer initClientServer(shared_ptr<Mock<WorldInterface>> world, unsigned int port) {
+  stringstream serverString;
+  stringstream clientString;
+  serverString << "tcp://*:" << port;
+  clientString << "tcp://localhost:" << port;
+  TestClientServer rv = TestClientServer {
+    make_unique<Api>(serverString.str(), &world->get()),
+    make_unique<zmq::socket_t>(testContext, zmq::socket_type::req)
+  };
+  rv.client->connect(clientString.str());
+  return rv;
+}
+
 TEST(API, move) {
   auto space = make_shared<DynamicObjectSpace>();
   auto obj = make_shared<DynamicCube>(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0));
   space->addObject(obj);
-  Mock<WorldInterface> world;
-  Api api("tcp://*:1235", &world.get());
-  When(Method(world, getDynamicObjects)).AlwaysReturn(space);
-  auto context = zmq::context_t(2);
-  auto socket = zmq::socket_t(context, zmq::socket_type::req);
-  socket.connect("tcp://localhost:1235");
+  auto world = make_shared<Mock<WorldInterface>>();
+  When(Method(*world, getDynamicObjects)).AlwaysReturn(space);
+  TestClientServer clientSever = initClientServer(world, 1235);
   ApiRequest request;
   auto move = request.mutable_move();
   move->set_id(obj->id());
@@ -51,7 +68,7 @@ TEST(API, move) {
   move->set_ydelta(1.0);
   move->set_zdelta(1.0);
   request.set_type(MessageType::MOVE);
-  auto reply = sendRequest(request, socket);
+  auto reply = sendRequest(request, *clientSever.client);
   ASSERT_LT(obj->getPosition().x - 1.0, 0.01);
   ASSERT_LT(obj->getPosition().y - 1.0, 0.01);
   ASSERT_LT(obj->getPosition().z - 1.0, 0.01);
@@ -61,17 +78,14 @@ TEST(API, getIds) {
   auto space = make_shared<DynamicObjectSpace>();
   space->addObject(make_shared<DynamicCube>(glm::vec3(0,0,0), glm::vec3(0,0,0)));
   auto expectedIds = space->getObjectIds();
-  Mock<WorldInterface> world;
-  When(Method(world, getDynamicObjects)).AlwaysReturn(space);
-  Api api("tcp://*:1234", &world.get());
-  auto context = zmq::context_t(2);
-  auto socket = zmq::socket_t(context, zmq::socket_type::req);
-  socket.connect("tcp://localhost:1234");
+  auto world = make_shared<Mock<WorldInterface>>();
+  When(Method(*world, getDynamicObjects)).AlwaysReturn(space);
+  auto clientServer = initClientServer(world, 1234);
   ApiRequest request;
   request.set_type(MessageType::GET_IDS);
   request.mutable_getids();
 
-  auto reply = sendRequest(request, socket);
+  auto reply = sendRequest(request, *clientServer.client);
 
   ObjectIds ids;
 
