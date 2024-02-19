@@ -869,7 +869,7 @@ ChunkMesh World::meshSelectedCube(Position position) {
 }
 
 shared_ptr<DynamicObject> World::getLookedAtDynamicObject() {
-  return dynamicObjects;
+  return dynamicObjects->getLookedAtObject(camera->position, camera->front);
 }
 
 void World::cubeAction(Action toTake) {

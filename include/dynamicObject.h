@@ -37,6 +37,7 @@ public:
   }
   shared_ptr<DynamicObject> getObjectById(int id);
   vector<int> getObjectIds();
+  shared_ptr<DynamicObject> getLookedAtObject(glm::vec3 position, glm::vec3 direction);
 };
 
 class DynamicCube: public DynamicObject {
