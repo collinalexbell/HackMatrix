@@ -206,6 +206,8 @@ I could add randomness to some of the challenges to make them more fun.
 The primary game mechanic, being coding, is primarily head oriented.
 I could include VIM games to make muscle memory be a factor
 I could also make traveling be a component to give players and intellectual break
+### 43) Competition
+Unless I add multiplayer, there will be no competition
 ## Idea
 Possible pitch ideas
 - Learn data structures
