@@ -67,6 +67,8 @@ class World: public WorldInterface {
   void logCoordinates(array<Coordinate, 2> c, string label);
   vector<pair<X11App*, int>> directRenderApps;
   shared_ptr<DynamicObjectSpace> dynamicObjects;
+  void cubeAction(Action toTake);
+  void dynamicObjectAction(Action toTake);
 
 public:
   void tick() override;
@@ -102,7 +104,7 @@ public:
   void initLoader(string folderName,
                   shared_ptr<blocks::TexturePack> texturePack) override;
   void loadLatest() override;
-
+  shared_ptr<DynamicObject> getLookedAtDynamicObject();
   void mesh(bool realTime = true) override;
   ChunkMesh meshSelectedCube(Position position) override;
   shared_ptr<Chunk> getChunk(int chunkX, int chunkZ) override;

@@ -868,8 +868,12 @@ ChunkMesh World::meshSelectedCube(Position position) {
   return ChunkMesh{};
 }
 
-void World::action(Action toTake) {
-  Position lookingAt = getLookedAtCube();
+shared_ptr<DynamicObject> World::getLookedAtDynamicObject() {
+  return dynamicObjects;
+}
+
+void World::cubeAction(Action toTake) {
+Position lookingAt = getLookedAtCube();
   if(lookingAt.valid) {
     auto lookedAt = getCube(lookingAt.x, lookingAt.y, lookingAt.z);
     if(toTake == PLACE_CUBE) {
@@ -887,9 +891,7 @@ void World::action(Action toTake) {
     if(toTake == SELECT_CUBE) {
       lookedAt->toggleSelect();
     }
-    if(toTake == OPEN_SELECTION_CODE) {
-      logger->info("open_selection_code");
-    }
+
     if(toTake == LOG_BLOCK_TYPE) {
       auto pos = translateToWorldPosition(lookingAt.x, lookingAt.y, lookingAt.z);
       auto chunk = getChunk(pos.chunkX, pos.chunkZ);
@@ -902,6 +904,20 @@ void World::action(Action toTake) {
       }
     }
   }
+}
+
+void World::dynamicObjectAction(Action toTake) {
+  auto dynamicObject = getLookedAtDynamicObject();
+  if (dynamicObject != NULL) {
+    if (toTake == OPEN_SELECTION_CODE) {
+      logger->info("open_selection_code");
+    }
+  }
+}
+
+void World::action(Action toTake) {
+  cubeAction(toTake);
+  dynamicObjectAction(toTake);
 }
 
 int World::getIndexOfApp(X11App *app) {
