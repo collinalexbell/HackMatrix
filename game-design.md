@@ -202,6 +202,10 @@ Give a low risk low reward, high risk high reward option
 ### 41) Skill vs Chance
 My game is a serious game. The players are here to be judged. Coding is tedious, but is important and so the game is meant to prime their brains to find enjoyment from it.
 I could add randomness to some of the challenges to make them more fun.
+### 42) Head and Hands
+The primary game mechanic, being coding, is primarily head oriented.
+I could include VIM games to make muscle memory be a factor
+I could also make traveling be a component to give players and intellectual break
 ## Idea
 Possible pitch ideas
 - Learn data structures
