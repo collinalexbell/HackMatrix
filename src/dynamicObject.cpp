@@ -131,3 +131,7 @@ vector<int> DynamicObjectSpace::getObjectIds() {
   }
   return rv;
 }
+
+shared_ptr<DynamicObject> DynamicObjectSpace::getLookedAtObject(glm::vec3 position, glm::vec3 direction) {
+  return NULL;
+}
