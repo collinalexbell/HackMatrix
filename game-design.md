@@ -208,6 +208,8 @@ I could include VIM games to make muscle memory be a factor
 I could also make traveling be a component to give players and intellectual break
 ### 43) Competition
 Unless I add multiplayer, there will be no competition
+### 44) Cooperation
+There will be no cooperation if there is no multiplayer
 ## Idea
 Possible pitch ideas
 - Learn data structures
