@@ -11,7 +11,7 @@
 #include <sstream>
 #include <thread>
 
-#define OBS false
+#define OBS true
 
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;

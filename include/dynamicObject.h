@@ -24,7 +24,7 @@ public:
   int id();
 };
 
-struct Intersection {
+struct DynamicObjectIntersection {
   float distance;
   shared_ptr<DynamicObject> object;
   glm::vec3 point;
@@ -44,7 +44,7 @@ public:
   shared_ptr<DynamicObject> getObjectById(int id);
   vector<int> getObjectIds();
   shared_ptr<DynamicObject> getLookedAtObject(glm::vec3 position, glm::vec3 direction);
-  vector<Intersection> findIntersections(glm::vec3 position, glm::vec3 direction);
+  vector<DynamicObjectIntersection> findIntersections(glm::vec3 position, glm::vec3 direction);
 };
 
 class DynamicCube: public DynamicObject {
