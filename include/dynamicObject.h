@@ -24,6 +24,12 @@ public:
   int id();
 };
 
+struct Intersection {
+  float distance;
+  shared_ptr<DynamicObject> object;
+  glm::vec3 point;
+};
+
 class DynamicObjectSpace: public DynamicObject {
   vector<shared_ptr<DynamicObject>> objects;
   bool _damaged = true;
@@ -38,6 +44,7 @@ public:
   shared_ptr<DynamicObject> getObjectById(int id);
   vector<int> getObjectIds();
   shared_ptr<DynamicObject> getLookedAtObject(glm::vec3 position, glm::vec3 direction);
+  vector<Intersection> findIntersections(glm::vec3 position, glm::vec3 direction);
 };
 
 class DynamicCube: public DynamicObject {
