@@ -11,7 +11,9 @@
 #include <sstream>
 #include <thread>
 
-#define OBS true
+#define OBS false
+#define EDGE false
+#define TERM false
 
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;
@@ -41,10 +43,14 @@ void WM::createAndRegisterApps(char **envp) {
   logger->info("enter createAndRegisterApps()");
 
   forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
+  if(EDGE) {
   forkOrFindApp("/usr/bin/microsoft-edge", "msedge", "Microsoft-edge",
                 microsoftEdge, envp);
+  }
+  if(TERM) {
   forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
                 envp);
+  }
   if(OBS) {
     forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   }
@@ -94,9 +100,13 @@ void WM::captureInput() {
 }
 
 void WM::addAppsToWorld() {
-  world->addApp(terminator);
   world->addApp(emacs);
-  world->addApp(microsoftEdge);
+  if(TERM) {
+    world->addApp(terminator);
+  }
+  if(EDGE) {
+    world->addApp(microsoftEdge);
+  }
   if(OBS) {
     world->addApp(obs);
   }
@@ -138,7 +148,13 @@ void WM::onDestroyNotify(XDestroyWindowEvent event) {
 void WM::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-  vector<X11App*> appsWithHotKeys = {emacs, microsoftEdge, terminator};
+  vector<X11App*> appsWithHotKeys = {emacs};
+  if(EDGE) {
+    appsWithHotKeys.push_back(microsoftEdge);
+  }
+  if(TERM) {
+    appsWithHotKeys.push_back(terminator);
+  }
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
