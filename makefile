@@ -106,8 +106,8 @@ docs: game-design.md
 ######## Tests ########
 #######################
 
-BUILD_OBJECTS_FOR_TEST = build/api.o build/dynamicObject.o build/logger.o src/api.pb.cc
-TEST_OBJECTS = build/testApi.o build/testDynamicObject.o
+BUILD_OBJECTS_FOR_TEST = build/api.o build/dynamicObject.o build/logger.o src/api.pb.cc build/chunk.o build/mesher.o build/cube.o
+TEST_OBJECTS = build/testApi.o build/testDynamicObject.o build/testChunk.o
 
 test: FLAGS+=-O0
 test: $(TEST_OBJECTS) $(BUILD_OBJECTS_FOR_TEST)
@@ -119,7 +119,8 @@ build/testDynamicObject.o: build/dynamicObject.o tests/dynamicObject.cpp include
 build/testApi.o: build/api.o tests/api.cpp include/api.h
 	g++ -std=c++20 $(FLAGS) -o build/testApi.o -c tests/api.cpp $(INCLUDES)
 
-
+build/testChunk.o: build/chunk.o tests/chunk.cpp include/chunk.h include/mesher.h include/cube.h
+	g++ -std=c++20 $(FLAGS) -o build/testChunk.o -c tests/chunk.cpp $(INCLUDES)
 
 
 
