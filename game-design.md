@@ -1,4 +1,17 @@
-# HackMatrix or Hackers or Codeblocks or City of Cybernetics
+# Matrix
+## Goal: Launch a Kickstarter worth $150,000 on March 11th, 2024
+## Schedule
+### Feb 21 - Feb 25 meditation & imagination
+### Feb 27 - Mar 07 build
+### Mar 08 - Mar 08 submit
+### Mar 11 - Mar 11 launch
+## Self Contract: $150,000 exists in my venmo that I can spend freely, April 11th, signed: Collin Bell
+## Questions
+### Why would enough people be interested in Matrix for its Kickstarter to get $150,000 in pledges?
+### What qualities and features would such a valuable product have?
+### How can I develop matrix with such qualities and features, given the time, energy, and resources I have at my disposal?
+
+
 ## Lenses
 ### 1) Emotion
 - Intensity
