@@ -8,7 +8,13 @@
 ## Self Contract: $150,000 exists in my venmo that I can spend freely, April 11th, signed: Collin Bell
 ## Questions
 ### Why would enough people be interested in Matrix for its Kickstarter to get $150,000 in pledges?
+- It will deepen people's love of code
+- It will fill them with awe for computing
+- It will connect them to other cyberneticians
+- It will inspire them to become great builders
+- It will show them God's light
 ### What qualities and features would such a valuable product have?
+- Multiplayer
 ### How can I develop matrix with such qualities and features, given the time, energy, and resources I have at my disposal?
 
 
