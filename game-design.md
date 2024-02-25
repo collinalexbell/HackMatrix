@@ -17,12 +17,16 @@
 - Multiplayer
 - HackLogos (REPL for game menu, missions, etc. I may want to make it in python because of the ascii library)
 - Story/Plot
-- NPCs (what if most of them are daemons running inside of terminals!!!)
+- NPCs (what if some of them are daemons running inside of terminals!!! all of them are hackable)
 - Linux native windows movable throughout the space
 - Daemons (log in, interact with their code, etc)
     - Simple (simple input/output)
     - Medium (advanced algorithms)
     - Complex (nerual networks)
+
+    Examples:
+        - Gravity daemon
+        - Door daemon (Maxwells daemon)
 ### How can I develop matrix with such qualities and features, given the time, energy, and resources I have at my disposal?
 
 ## ===============
