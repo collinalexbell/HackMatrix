@@ -15,6 +15,10 @@
 - It will show them God's light
 ### What qualities and features would such a valuable product have?
 - Multiplayer
+- HackLogos (REPL for game menu, missions, etc. I may want to make it in python because of the ascii library)
+- Story/Plot
+- NPCs (what if most of them are daemons running inside of terminals!!!)
+- Linux native windows movable throughout the space
 ### How can I develop matrix with such qualities and features, given the time, energy, and resources I have at my disposal?
 
 ## ===============
