@@ -1,4 +1,4 @@
-# Matrix
+# Maxwell's Matrix
 ## Goal: Launch a Kickstarter worth $150,000 on March 11th, 2024
 ## Schedule
 ### Feb 21 - Feb 25 meditation & imagination
@@ -16,7 +16,8 @@
 ### What qualities and features would such a valuable product have?
 - Multiplayer
 - HackLogos (REPL for game menu, missions, etc. I may want to make it in python because of the ascii library)
-- Story/Plot
+- Story/Plot:
+    Maxwell built a world for his daemon to control and stubled upon something fundamental about the universe
 - NPCs (what if some of them are daemons running inside of terminals!!! all of them are hackable)
 - Linux native windows movable throughout the space
 - Daemons (log in, interact with their code, etc)
