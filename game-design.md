@@ -17,7 +17,7 @@
 - Multiplayer (3)
 - HackLogos (REPL for game menu, missions, etc. I may want to make it in python because of the ascii library) (2,1)
 - Story/Plot (5):
-    Maxwell built a world for his daemon to control and stubled upon something fundamental about the universe (5)
+    Maxwell built a world for his daemon to control and stumbled upon something fundamental about the universe (5)
     Maybe quantum physics can solve the maxwell's daemon problem (5)
 - NPCs (what if some of them are daemons running inside of terminals!!! all of them are hackable) (1,2,5)
 - Linux native windows movable throughout the space (1,2,4)
@@ -29,6 +29,7 @@
     Examples:
         - Gravity daemon
         - Door daemon (Maxwells daemon)
+- Aesthetics (unknown adjective) (1,2,3,4,5)
 ### How can I develop matrix with such qualities and features, given the time, energy, and resources I have at my disposal?
 
 ## ===============
