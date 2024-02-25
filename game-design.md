@@ -19,6 +19,10 @@
 - Story/Plot
 - NPCs (what if most of them are daemons running inside of terminals!!!)
 - Linux native windows movable throughout the space
+- Daemons (log in, interact with their code, etc)
+    - Simple (simple input/output)
+    - Medium (advanced algorithms)
+    - Complex (nerual networks)
 ### How can I develop matrix with such qualities and features, given the time, energy, and resources I have at my disposal?
 
 ## ===============
