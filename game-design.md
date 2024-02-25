@@ -18,6 +18,7 @@
 - HackLogos (REPL for game menu, missions, etc. I may want to make it in python because of the ascii library)
 - Story/Plot:
     Maxwell built a world for his daemon to control and stubled upon something fundamental about the universe
+    Maybe quantum physics can solve the maxwell's daemon problem
 - NPCs (what if some of them are daemons running inside of terminals!!! all of them are hackable)
 - Linux native windows movable throughout the space
 - Daemons (log in, interact with their code, etc)
