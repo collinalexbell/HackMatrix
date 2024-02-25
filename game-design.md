@@ -8,20 +8,20 @@
 ## Self Contract: $150,000 exists in my venmo that I can spend freely, April 11th, signed: Collin Bell
 ## Questions
 ### Why would enough people be interested in Matrix for its Kickstarter to get $150,000 in pledges?
-- It will deepen people's love of code
-- It will fill them with awe for computing
-- It will connect them to other cyberneticians
-- It will inspire them to become great builders
-- It will show them God's light
+1) It will deepen people's love of code
+2) It will fill them with awe for computing
+3) It will connect them to other cyberneticians
+4) It will inspire them to become great builders
+5) It will show them God's light
 ### What qualities and features would such a valuable product have?
-- Multiplayer
-- HackLogos (REPL for game menu, missions, etc. I may want to make it in python because of the ascii library)
-- Story/Plot:
-    Maxwell built a world for his daemon to control and stubled upon something fundamental about the universe
-    Maybe quantum physics can solve the maxwell's daemon problem
-- NPCs (what if some of them are daemons running inside of terminals!!! all of them are hackable)
-- Linux native windows movable throughout the space
-- Daemons (log in, interact with their code, etc)
+- Multiplayer (3)
+- HackLogos (REPL for game menu, missions, etc. I may want to make it in python because of the ascii library) (2,1)
+- Story/Plot (5):
+    Maxwell built a world for his daemon to control and stubled upon something fundamental about the universe (5)
+    Maybe quantum physics can solve the maxwell's daemon problem (5)
+- NPCs (what if some of them are daemons running inside of terminals!!! all of them are hackable) (1,2,5)
+- Linux native windows movable throughout the space (1,2,4)
+- Daemons (log in, interact with their code, etc) (1,2,4,5)
     - Simple (simple input/output)
     - Medium (advanced algorithms)
     - Complex (nerual networks)
