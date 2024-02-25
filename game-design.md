@@ -30,6 +30,11 @@
         - Gravity daemon
         - Door daemon (Maxwells daemon)
 - Aesthetics (unknown adjective) (1,2,3,4,5)
+  - Beautiful
+  - Simple
+  - Cybernetic
+  - Classic
+
 ### How can I develop matrix with such qualities and features, given the time, energy, and resources I have at my disposal?
 
 ## ===============
