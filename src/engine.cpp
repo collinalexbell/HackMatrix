@@ -1,3 +1,4 @@
+#include "logger.h"
 #include <memory>
 #define GLFW_EXPOSE_NATIVE_X11
 #include "engine.h"
@@ -20,8 +21,11 @@ void Engine::registerCursorCallback() {
 }
 
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
+  loggerVector = make_shared<LoggerVector>();
+  auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
+  loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
+  logger = make_shared<spdlog::logger>("engine", loggerSink);
   initialize();
-  logger = make_shared<spdlog::logger>("engine", fileSink);
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();
@@ -57,7 +61,7 @@ void Engine::initialize(){
   auto texturePack = blocks::initializeBasicPack();
   wm = new WM(glfwGetX11Window(window));
   camera = new Camera();
-  world = new World(camera, texturePack, "/home/collin/midtown/", true);
+  world = new World(camera, texturePack, "/home/collin/midtown/", true, loggerSink);
   api = new Api("tcp://*:3333", world);
   renderer = new Renderer(camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
@@ -89,7 +93,20 @@ void Engine::renderImGui(double &fps, int frameIndex, const vector<double> &fram
       fps = 1.0 / fps;
   }
   ImGui::Begin("HackMatrix");
-  ImGui::Text("%f fps", fps);
+  vector<string> debugMessages = loggerVector->fetch();
+  if (ImGui::BeginTabBar("Developer Menu")) {
+    if (ImGui::BeginTabItem("FPS")) {
+      ImGui::Text("%f fps", fps);
+      ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Debug Log")) {
+      for (const auto &msg : debugMessages) {
+        ImGui::TextWrapped("%s", msg.c_str());
+      }
+      ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar(); // Close the tab bar
+  }
   ImGui::End();
   ImGui::Render();
 }
@@ -123,4 +140,3 @@ void Engine::loop() {
     throw;
   }
 }
-
