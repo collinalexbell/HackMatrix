@@ -13,6 +13,7 @@
 #include <mutex>
 #include <octree/octree.h>
 #include "logger.h"
+#include <spdlog/common.h>
 #include <unordered_map>
 #include <vector>
 #include <queue>
@@ -61,7 +62,7 @@ class World: public WorldInterface {
   ChunkIndex middleIndex;
   void initChunks();
   void initAppPositions();
-  void initLogger();
+  void initLogger(spdlog::sink_ptr loggerSink);
   void loadChunksIfNeccissary();
   void initPreloadedChunks();
   void logCoordinates(array<Coordinate, 2> c, string label);
@@ -74,7 +75,7 @@ public:
   void tick() override;
   vector<X11App *> getDirectRenderApps() override;
   const float CUBE_SIZE = 0.1;
-  World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false);
+  World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false, spdlog::sink_ptr loggerSink = fileSink);
   ~World();
   void attachRenderer(Renderer *renderer) override;
   float getViewDistanceForWindowSize(X11App *app) override;
