@@ -8,11 +8,12 @@
 
 #include <GLFW/glfw3.h>
 #include <memory>
+#include <spdlog/common.h>
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
 class Engine {
-
+  shared_ptr<LoggerVector> loggerVector;
   World *world;
   Api *api;
   Renderer *renderer;
@@ -21,6 +22,7 @@ class Engine {
   WM *wm;
   GLFWwindow *window;
   std::shared_ptr<spdlog::logger> logger;
+  spdlog::sink_ptr loggerSink;
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
   void initImGui();

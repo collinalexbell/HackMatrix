@@ -25,8 +25,9 @@
 
 using namespace std;
 
-World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug) : camera(camera) {
-  initLogger();
+World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug, spdlog::sink_ptr loggerSink) : camera(camera) {
+  initLogger(loggerSink);
+  logger->debug("Hello World!");
   initAppPositions();
   initLoader(minecraftFolder, texturePack);
   initChunks();
@@ -35,8 +36,8 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   dynamicObjects->addObject(dynamicCube);
 }
 
-void World::initLogger() {
-  logger = make_shared<spdlog::logger>("World", fileSink);
+void World::initLogger(spdlog::sink_ptr loggerSink) {
+  logger = make_shared<spdlog::logger>("World", loggerSink);
   logger->set_level(spdlog::level::debug);
 }
 
