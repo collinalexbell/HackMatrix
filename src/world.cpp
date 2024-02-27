@@ -646,6 +646,9 @@ void World::addApp(X11App* app) {
       availableAppPositions.pop();
     }
   } else {
+    stringstream ss;
+    ss << "adding accessory app of size:" << app->width << "x" << app->height;
+    logger->debug(ss.str());
     /*
     int index = appCubes.size();
     directRenderApps.push_back(make_pair(app, index));
