@@ -8,6 +8,7 @@
 #include <atomic>
 #include <map>
 #include <memory>
+#include <spdlog/common.h>
 #include <thread>
 
 class Controls;
@@ -47,7 +48,7 @@ public:
   void passthroughInput();
   void captureInput();
   void createAndRegisterApps(char **envp);
-  WM(Window);
+  WM(Window, spdlog::sink_ptr);
   ~WM();
   void focusApp(X11App *app);
   void attachWorld(World *world) {this->world = world;}

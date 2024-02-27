@@ -1,6 +1,7 @@
 #include "wm.h"
 #include "app.h"
 #include <X11/X.h>
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -13,7 +14,7 @@
 
 #define OBS false
 #define EDGE true
-#define TERM false
+#define TERM true
 
 int APP_WIDTH = 1920 * .85;
 int APP_HEIGHT = 1920 * .85 * .54;
@@ -222,6 +223,19 @@ void WM::handleSubstructure() {
     case KeyPress:
       onHotkeyPress(e.xkey);
       break;
+    case ClientMessage: {
+      logger->debug("ClientMessage");
+        if (e.xclient.message_type ==
+            XInternAtom(display, "XdndEnter", False)) {
+          logger->debug("XdndEnter");
+        } else if (e.xclient.message_type ==
+                  XInternAtom(display, "XdndPosition", False)) {
+          logger->debug("XdndPosition");
+        } else if (e.xclient.message_type ==
+                  XInternAtom(display, "XdndDrop", False)) {
+          logger->debug("XdndDrop");
+        }
+      }
     }
   }
 }
@@ -271,39 +285,45 @@ void WM::registerControls(Controls *controls) {
   this->controls = controls;
 }
 
-WM::WM(Window matrix): matrix(matrix) {
-  logger = make_shared<spdlog::logger>("wm", fileSink);
-  logger->set_level(spdlog::level::info);
-  logger->flush_on(spdlog::level::info);
-  logger->info("WM()");
-  display = XOpenDisplay(NULL);
-  screen = XDefaultScreen(display);
-  X11App::initAppClass(display, screen);
-  Window root = RootWindow(display, screen);
-  XCompositeRedirectSubwindows(display, RootWindow(display, screen),
-                               CompositeRedirectAutomatic);
+WM::WM(Window matrix, spdlog::sink_ptr loggerSink):
+      matrix(matrix) {
+        logger = make_shared<spdlog::logger>("wm", loggerSink);
+        logger->set_level(spdlog::level::debug);
+        logger->flush_on(spdlog::level::info);
+        logger->debug("WM()");
+        display = XOpenDisplay(NULL);
+        screen = XDefaultScreen(display);
+        X11App::initAppClass(display, screen);
+        Window root = RootWindow(display, screen);
+        XCompositeRedirectSubwindows(display, RootWindow(display, screen),
+                                     CompositeRedirectAutomatic);
 
-  overlay = XCompositeGetOverlayWindow(display, root);
-  XReparentWindow(display, matrix, overlay, 0, 0);
+        overlay = XCompositeGetOverlayWindow(display, root);
+        XReparentWindow(display, matrix, overlay, 0, 0);
 
-  XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
+        XFixesSelectCursorInput(display, overlay,
+                                XFixesDisplayCursorNotifyMask);
 
-  XSelectInput(display, root,
-               SubstructureRedirectMask | SubstructureNotifyMask);
+        XSelectInput(display, root,
+                     EnterWindowMask | SubstructureRedirectMask |
+                         SubstructureNotifyMask);
 
+        Atom XdndSelectionAtom = XInternAtom(display, "XdndSelection", False);
+        XSetSelectionOwner(display, overlay, matrix, CurrentTime);
 
-  for(int i = 0; i<10; i++) {
-    KeyCode code = XKeysymToKeycode(display, XK_0+i);
-    XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
-  }
-  XSync(display, false);
-  XFlush(display);
+        for (int i = 0; i < 10; i++) {
+          KeyCode code = XKeysymToKeycode(display, XK_0 + i);
+          XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync,
+                   GrabModeAsync);
+        }
+        XSync(display, false);
+        XFlush(display);
 
-  passthroughInput();
-  allow_input_passthrough(overlay);
-  substructureThread = thread(&WM::handleSubstructure, this);
-  substructureThread.detach();
-}
+        passthroughInput();
+        allow_input_passthrough(overlay);
+        substructureThread = thread(&WM::handleSubstructure, this);
+        substructureThread.detach();
+      }
 
 WM::~WM() {
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
