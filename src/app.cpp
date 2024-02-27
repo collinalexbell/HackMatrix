@@ -170,7 +170,9 @@ X11App* X11App::byName(string windowName, Display *display, int screen,
   id.type = NAME;
   id.strId = windowName;
   rv->fetchInfo(id);
-  rv->resize(width, height);
+  if(!rv->isAccessory()) {
+    rv->resize(width, height);
+  }
   return rv;
 }
 
@@ -181,7 +183,9 @@ X11App* X11App::byClass(string windowClass, Display *display, int screen,
   id.type = CLASS;
   id.strId = windowClass;
   rv->fetchInfo(id);
-  rv->resize(width, height);
+  if (!rv->isAccessory()) {
+    rv->resize(width, height);
+  }
   return rv;
 }
 
@@ -191,7 +195,9 @@ X11App* X11App::byWindow(Window window, Display *display, int screen, int width,
   id.type = WINDOW;
   id.win = window;
   rv->fetchInfo(id);
-  rv->resize(width, height);
+  if (!rv->isAccessory()) {
+    rv->resize(width, height);
+  }
   return rv;
 }
 

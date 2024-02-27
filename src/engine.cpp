@@ -59,7 +59,7 @@ void Engine::initImGui() {
 
 void Engine::initialize(){
   auto texturePack = blocks::initializeBasicPack();
-  wm = new WM(glfwGetX11Window(window));
+  wm = new WM(glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(camera, texturePack, "/home/collin/midtown/", true, loggerSink);
   api = new Api("tcp://*:3333", world);
