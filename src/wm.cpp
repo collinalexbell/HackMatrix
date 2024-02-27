@@ -12,7 +12,7 @@
 #include <thread>
 
 #define OBS false
-#define EDGE false
+#define EDGE true
 #define TERM false
 
 int APP_WIDTH = 1920 * .85;
