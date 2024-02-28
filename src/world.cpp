@@ -646,13 +646,21 @@ void World::addApp(X11App* app) {
       availableAppPositions.pop();
     }
   } else {
+    if(app->width > 30) {
     stringstream ss;
     ss << "accessory app of size: " << app->width << "x" << app->height;
     logger->debug(ss.str());
     int index = apps.size();
     directRenderApps.push_back(make_pair(app, index));
     apps.push_back(app);
-    renderer->registerApp(app, index);
+    try {
+      renderer->registerApp(app, index);
+    } catch(...) {
+      logger->info("accessory app failed to register texture");
+      apps.pop_back();
+      directRenderApps.pop_back();
+    }
+    }
   }
 }
 
