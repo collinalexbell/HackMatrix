@@ -21,6 +21,7 @@ class WM {
   Controls *controls = NULL;
   int screen;
   X11App *emacs = NULL;
+  X11App *magicaVoxel = NULL;
   X11App *microsoftEdge = NULL;
   X11App *obs = NULL;
   X11App *terminator = NULL;
@@ -34,7 +35,7 @@ class WM {
   vector<X11App*> appsToAdd;
   vector<X11App*> appsToRemove;
   void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
-                     char **envp);
+                     char **envp, string args = "");
   std::thread substructureThread;
   void onDestroyNotify(XDestroyWindowEvent);
   void onMapRequest(XMapRequestEvent);
