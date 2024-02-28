@@ -16,8 +16,6 @@
 #define EDGE true
 #define TERM true
 
-int APP_WIDTH = 1920 * .85;
-int APP_HEIGHT = 1920 * .85 * .54;
 void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app, char **envp) {
   char *line;
   std::size_t len = 0;
@@ -113,13 +111,14 @@ void WM::addAppsToWorld() {
   }
 }
 
-void WM::createApp(Window window) {
+X11App* WM::createApp(Window window, unsigned int width, unsigned int height) {
     X11App *app =
-        X11App::byWindow(window, display, screen, APP_WIDTH, APP_HEIGHT);
+      X11App::byWindow(window, display, screen, width, height);
     renderLoopMutex.lock();
     appsToAdd.push_back(app);
     renderLoopMutex.unlock();
     dynamicApps[window] = app;
+    return app;
 }
 
 void WM::onMapRequest(XMapRequestEvent event) {
@@ -188,7 +187,13 @@ void WM::handleSubstructure() {
       logger->info("CreateNotify event");
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
       if(e.xcreatewindow.override_redirect == True) {
-        createApp(e.xcreatewindow.window);
+        auto app = createApp(e.xcreatewindow.window, e.xcreatewindow.width, e.xcreatewindow.height);
+        //app->positionNotify(e.xcreatewindow.x, e.xcreatewindow.y);
+        stringstream ss;
+        ss << "CreateNotify event: position: ";
+        ss << attrs.x << ",";
+        ss << attrs.y;
+        logger->debug(ss.str());
       }
       logger->flush();
       break;
@@ -202,18 +207,14 @@ void WM::handleSubstructure() {
       logger->flush();
       break;
     case ConfigureNotify:
-      logger->info("ConfigureNotify event");
-      eventInfo <<
-        "width: " <<
-        e.xconfigure.width <<
-        ", height: " <<
-        e.xconfigure.height;
-
-      logger->info(eventInfo.str());
-      logger->flush();
+      eventInfo << "ConfigureNotify event: position:" <<
+        e.xconfigure.x << "," << e.xconfigure.y;
+      logger->debug(eventInfo.str());
       break;
     case ConfigureRequest: {
-      logger->info("ConfigureRequest event");
+      eventInfo << "ConfigureRequest event: position:" << e.xconfigure.x << ","
+                << e.xconfigure.y;
+      logger->debug(eventInfo.str());
       break;
     }
     case MapRequest:
