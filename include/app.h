@@ -35,6 +35,8 @@ class X11App {
   int textureId = -1;
   atomic_bool focused = false;
   X11App(Display *display, int screen);
+  int x;
+  int y;
 
 public:
   static X11App *byName(string windowName, Display *display, int screen,
@@ -48,6 +50,8 @@ public:
 
   int width;
   int height;
+
+  void positionNotify(int x, int y);
   void appTexture();
   void attachTexture(int textureUnit, int textureId);
   void focus(Window matrix);
@@ -57,6 +61,7 @@ public:
   bool isFocused();
   bool isAccessory();
   Window getWindow();
+  array<int, 2> getPosition();
 };
 
 #endif

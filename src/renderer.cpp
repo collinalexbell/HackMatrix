@@ -344,6 +344,7 @@ void Renderer::drawAppDirect(X11App *app) {
   int screenHeight = 1080;
   int appWidth = app->width;
   int appHeight = app->height;
+  auto pos = app->getPosition();
   if (index >= 0) {
     glBlitNamedFramebuffer(frameBuffers[index], 0,
                            // src x1, src y1 (flip)
@@ -352,10 +353,17 @@ void Renderer::drawAppDirect(X11App *app) {
                            appWidth, 0,
 
                            // dest x1,y1,x2,y2
+                           /*
                            (screenWidth - appWidth) / 2,
                            (screenHeight - appHeight) / 2,
                            appWidth + (screenWidth - appWidth) / 2,
                            appHeight + (screenHeight - appHeight) / 2,
+                           */
+                           pos[0],
+                           pos[1],
+                           pos[0] + appWidth,
+                           pos[1] + appHeight,
+
 
                            GL_COLOR_BUFFER_BIT, GL_NEAREST);
   }
@@ -444,9 +452,9 @@ void Renderer::renderApps() {
     drawAppDirect(app);
   }
 
-  vector<X11App*> directRenders = world->getDirectRenderApps();
-  for(auto directApps: directRenders) {
-    drawAppDirect(directApps);
+  vector<X11App *> directRenders = world->getDirectRenderApps();
+  for (auto directApp : directRenders) {
+    drawAppDirect(directApp);
   }
 
   shader->setBool("isApp", false);

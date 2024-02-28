@@ -647,14 +647,12 @@ void World::addApp(X11App* app) {
     }
   } else {
     stringstream ss;
-    ss << "adding accessory app of size:" << app->width << "x" << app->height;
+    ss << "accessory app of size: " << app->width << "x" << app->height;
     logger->debug(ss.str());
-    /*
-    int index = appCubes.size();
+    int index = apps.size();
     directRenderApps.push_back(make_pair(app, index));
     apps.push_back(app);
     renderer->registerApp(app, index);
-    */
   }
 }
 
@@ -680,17 +678,22 @@ void World::removeApp(X11App *app) {
     return;
   }
 
+
+  apps.erase(apps.begin() + index);
+
   auto it =
       std::find_if(appCubes.begin(), appCubes.end(),
                    [index](const std::pair<glm::vec3, int> &element) {
                      return element.second == index;
                    });
 
-  appCubes.erase(it);
-  apps.erase(apps.begin() + index);
-  for(auto appKV = appCubes.begin(); appKV != appCubes.end(); appKV++) {
-    if(appKV->second > index){
-      appKV->second--;
+
+  if(it != appCubes.end()) {
+    appCubes.erase(it);
+    for(auto appKV = appCubes.begin(); appKV != appCubes.end(); appKV++) {
+      if(appKV->second > index){
+        appKV->second--;
+      }
     }
   }
 
