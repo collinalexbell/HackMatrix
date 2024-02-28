@@ -247,7 +247,7 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
 }
 
 void Renderer::initAppTextures() {
-  for (int index = 0; index < 7; index++) {
+  for (int index = 0; index < 20; index++) {
     int textureN = 31 - index;
     int textureUnit = GL_TEXTURE0 + textureN;
     string textureName = "app" + to_string(index);
