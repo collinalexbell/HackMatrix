@@ -188,7 +188,7 @@ void WM::handleSubstructure() {
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
       if(e.xcreatewindow.override_redirect == True) {
         auto app = createApp(e.xcreatewindow.window, e.xcreatewindow.width, e.xcreatewindow.height);
-        app->positionNotify(e.xcreatewindow.x, e.xcreatewindow.y);
+        //app->positionNotify(e.xcreatewindow.x, e.xcreatewindow.y);
         stringstream ss;
         ss << "CreateNotify event: position: ";
         ss << attrs.x << ",";
@@ -207,17 +207,14 @@ void WM::handleSubstructure() {
       logger->flush();
       break;
     case ConfigureNotify:
-      logger->info("ConfigureNotify event");
-      eventInfo <<
-        "width: " <<
-        e.xconfigure.width <<
-        ", height: " <<
-        e.xconfigure.height;
-      logger->info(eventInfo.str());
-      logger->flush();
+      eventInfo << "ConfigureNotify event: position:" <<
+        e.xconfigure.x << "," << e.xconfigure.y;
+      logger->debug(eventInfo.str());
       break;
     case ConfigureRequest: {
-      logger->info("ConfigureRequest event");
+      eventInfo << "ConfigureRequest event: position:" << e.xconfigure.x << ","
+                << e.xconfigure.y;
+      logger->debug(eventInfo.str());
       break;
     }
     case MapRequest:

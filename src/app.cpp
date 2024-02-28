@@ -291,6 +291,25 @@ void X11App::appTexture() {
 float SCREEN_WIDTH = 1920;
 float SCREEN_HEIGHT = 1080;
 
+void getAbsoluteMousePosition(Display *display, int *x_out, int *y_out) {
+  Window root_window = DefaultRootWindow(display);
+  Window returned_root, returned_child;
+  int root_x, root_y, win_x, win_y;
+  unsigned int mask;
+
+  Bool result =
+      XQueryPointer(display, root_window, &returned_root, &returned_child,
+                    &root_x, &root_y, &win_x, &win_y, &mask);
+
+  if (result == True) {
+    *x_out = win_x;
+    *y_out = win_y;
+  } else {
+    *x_out = 0;
+    *y_out = 0;
+  }
+}
+
 void X11App::resize(int width, int height) {
   this->width = width;
   this->height = height;
@@ -299,8 +318,10 @@ void X11App::resize(int width, int height) {
     y = (SCREEN_HEIGHT - height) / 2;
     XMoveResizeWindow(display, appWindow, x, y, width, height);
   } else {
-    auto curPos = getWindowRootPosition(display, appWindow);
-    XResizeWindow(display, appWindow, width, height);
+    getAbsoluteMousePosition(display, &x, &y);
+    XMoveResizeWindow(display, appWindow, x,y, width, height);
+    y = SCREEN_HEIGHT - y;
+    y -= height;
   }
   XFlush(display);
   XSync(display, false);
