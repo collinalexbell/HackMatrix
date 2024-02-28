@@ -46,6 +46,42 @@ const int pixmap_config[] = {
     GLX_ALPHA_SIZE, 0,
     0};
 
+std::vector<int> getWindowRootPosition(Display* display, Window window) {
+    Window root_return, parent_return, *children_return;
+    unsigned int num_children_return;
+    int x_root = 0;
+    int y_root = 0;
+
+    // Start with the given window
+    Window currentWindow = window;
+
+    // Traverse up the hierarchy until we reach the root window 
+    while (currentWindow != 0) {
+        int x_child, y_child;
+
+        // Get the position of the current window relative to its parent
+        XTranslateCoordinates(display, currentWindow, DefaultRootWindow(display),
+                              0, 0, &x_child, &y_child, &window);
+
+        x_root += x_child;
+        y_root += y_child;
+
+        // Move up to the parent window
+        XQueryTree(display, currentWindow, &root_return, &parent_return, 
+                   &children_return, &num_children_return);
+
+        // Free the children list (if any)
+        if (children_return) { 
+            XFree(children_return);
+        }
+
+        currentWindow = parent_return;
+    }
+
+    // Return the final coordinates relative to the root window
+    return {x_root, y_root};
+}
+
 void traverseWindowTree(Display* display, Window win, std::function<void(Display*, Window)> func) {
   func(display, win);
 
@@ -170,9 +206,7 @@ X11App* X11App::byName(string windowName, Display *display, int screen,
   id.type = NAME;
   id.strId = windowName;
   rv->fetchInfo(id);
-  if(!rv->isAccessory()) {
-    rv->resize(width, height);
-  }
+  rv->resize(width, height);
   return rv;
 }
 
@@ -183,9 +217,7 @@ X11App* X11App::byClass(string windowClass, Display *display, int screen,
   id.type = CLASS;
   id.strId = windowClass;
   rv->fetchInfo(id);
-  if (!rv->isAccessory()) {
-    rv->resize(width, height);
-  }
+  rv->resize(width, height);
   return rv;
 }
 
@@ -195,9 +227,7 @@ X11App* X11App::byWindow(Window window, Display *display, int screen, int width,
   id.type = WINDOW;
   id.win = window;
   rv->fetchInfo(id);
-  if (!rv->isAccessory()) {
-    rv->resize(width, height);
-  }
+  rv->resize(width, height);
   return rv;
 }
 
@@ -264,9 +294,14 @@ float SCREEN_HEIGHT = 1080;
 void X11App::resize(int width, int height) {
   this->width = width;
   this->height = height;
-  int x = (SCREEN_WIDTH - width) / 2;
-  int y = (SCREEN_HEIGHT - height) / 2;
-      XMoveResizeWindow(display, appWindow, x, y, width, height);
+  if(!isAccessory()) {
+    x = (SCREEN_WIDTH - width) / 2;
+    y = (SCREEN_HEIGHT - height) / 2;
+    XMoveResizeWindow(display, appWindow, x, y, width, height);
+  } else {
+    auto curPos = getWindowRootPosition(display, appWindow);
+    XResizeWindow(display, appWindow, width, height);
+  }
   XFlush(display);
   XSync(display, false);
   if(textureId != -1) {
@@ -276,6 +311,16 @@ void X11App::resize(int width, int height) {
 
 Window X11App::getWindow() {
   return appWindow;
+}
+
+void X11App::positionNotify(int x, int y) {
+  this->x = x;
+  this->y = y;
+  XMoveWindow(display, appWindow, x, y);
+}
+
+array<int, 2> X11App::getPosition() {
+  return {x,y};
 }
 
 void X11App::attachTexture(int textureUnit, int textureId) {
