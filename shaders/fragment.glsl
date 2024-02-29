@@ -86,8 +86,8 @@ void main()
   } else if(isDynamicObject) {
     FragColor = vec4(0.5, 0.5, 0.5, 1.0);
   } else if (isModel) {
-    //FragColor = texture(texture_diffuse1, TexCoord);
-    FragColor = vec4(0.9, 0.3, 0.3, 1.0);
+    FragColor = texture(texture_diffuse1, TexCoord);
+    //FragColor = vec4(0.9, 0.3, 0.3, 1.0);
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
 	}
