@@ -35,7 +35,7 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   dynamicObjects = make_shared<DynamicObjectSpace>();
   dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f), glm::vec3(0.1f,0.1f, 0.1f));
   dynamicObjects->addObject(dynamicCube);
-  const char *const_model_name = "/home/collin/matrix/vox/backpack/backpack.obj";
+  const char *const_model_name = "/home/collin/matrix/vox/hacker.fbx";
   char *modifiable_model_name = new char[strlen(const_model_name) + 1];
   strcpy(modifiable_model_name, const_model_name);
   npc = make_shared<Model>(modifiable_model_name);
