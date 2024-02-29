@@ -15,21 +15,28 @@
 #define OBS false
 #define EDGE true
 #define TERM true
+#define MAGICA true
 
-void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app, char **envp) {
+void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app, char **envp, string args) {
   char *line;
   std::size_t len = 0;
-  FILE *pidPipe = popen(string("pidof -x " + pidOf).c_str(), "r");
+  FILE *pidPipe = popen(string("pgrep " + pidOf).c_str(), "r");
   if (getline(&line, &len, pidPipe) == -1) {
     int pid = fork();
     if (pid == 0) {
       setsid();
+      if(args != "") {
+        execle(cmd.c_str(), cmd.c_str(), args.c_str(), NULL, envp);
+      }
       execle(cmd.c_str(), cmd.c_str(), NULL, envp);
       exit(0);
     }
     if (className == "obs") {
       sleep(30);
-    } else {
+    } else if(className == "magicavoxel.exe") {
+      sleep(6);
+    }
+    else {
       sleep(4);
     }
   }
@@ -42,6 +49,10 @@ void WM::createAndRegisterApps(char **envp) {
   logger->info("enter createAndRegisterApps()");
 
   forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
+  if(MAGICA) {
+    forkOrFindApp("/usr/bin/wine", "MagicaVoxel.exe", "magicavoxel.exe",
+                  magicaVoxel, envp, "/home/collin/magicavoxel/MagicaVoxel.exe");
+  }
   if(EDGE) {
   forkOrFindApp("/usr/bin/microsoft-edge", "msedge", "Microsoft-edge",
                 microsoftEdge, envp);
@@ -100,6 +111,9 @@ void WM::captureInput() {
 
 void WM::addAppsToWorld() {
   world->addApp(emacs);
+  if(MAGICA) {
+    world->addApp(magicaVoxel);
+  }
   if(TERM) {
     world->addApp(terminator);
   }
