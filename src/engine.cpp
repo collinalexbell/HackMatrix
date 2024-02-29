@@ -1,8 +1,10 @@
 #include "logger.h"
 #include <memory>
+#include <spdlog/common.h>
 #define GLFW_EXPOSE_NATIVE_X11
 #include "engine.h"
 #include "blocks.h"
+#include "assets.h"
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
@@ -25,6 +27,7 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
   logger = make_shared<spdlog::logger>("engine", loggerSink);
+  logger->set_level(spdlog::level::debug);
   initialize();
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
@@ -58,6 +61,12 @@ void Engine::initImGui() {
 }
 
 void Engine::initialize(){
+  auto meshes = loadFbx("/home/collin/matrix/vox/hacker.fbx");
+  if(meshes != NULL) {
+    logger->debug("meshes loaded");
+  } else {
+    logger->debug("meshes failed to load");
+  }
   auto texturePack = blocks::initializeBasicPack();
   wm = new WM(glfwGetX11Window(window), loggerSink);
   camera = new Camera();

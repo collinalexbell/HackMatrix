@@ -5,13 +5,13 @@ PROTO_H_FILES = $(patsubst %.proto, %.pb.h, $(PROTO_FILES))
 INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 # add -p for profiling with gprof
 LOADER_FLAGS = -march=native -funroll-loops
-ALL_OBJECTS = build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c -Iinclude
-LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread
+ALL_OBJECTS = build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c -Iinclude
+LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp
 
 all: FLAGS+=-O3 -g
 all: matrix trampoline build/diagnosis
 
-matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o
+matrix: build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
@@ -56,7 +56,7 @@ build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h include/
 build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 $(FLAGS) -o build/logger.o -c src/logger.cpp $(INCLUDES)
 
-build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h
+build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h include/assets.h
 	g++ -std=c++20 $(FLAGS) -o build/engine.o -c src/engine.cpp $(INCLUDES)
 
 build/cube.o: src/cube.cpp include/cube.h
@@ -80,6 +80,8 @@ build/blocks.o: src/blocks.cpp include/blocks.h
 build/dynamicObject.o: src/dynamicObject.cpp include/dynamicObject.h
 	g++ -std=c++20 $(FLAGS) -o build/dynamicObject.o -c src/dynamicObject.cpp $(INCLUDES)
 
+build/assets.o: src/assets.cpp include/assets.h
+	g++ -std=c++20 $(FLAGS) -o build/assets.o -c src/assets.cpp $(INCLUDES)
 
 include/protos/api.pb.h src/api.pb.cc: $(PROTO_FILES)
 	protoc --cpp_out=./ protos/api.proto

@@ -52,6 +52,7 @@ void World::initAppPositions() {
   availableAppPositions.push(glm::vec3(7.4+xOffset, 9.5+yOffset, z));
   availableAppPositions.push(glm::vec3(4.7+xOffset, 10.25+yOffset, z));
   availableAppPositions.push(glm::vec3(7.4+xOffset, 10.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(7.4 + xOffset, 11 + yOffset, z));
 }
 
 void World::initChunks() {
