@@ -1,0 +1,29 @@
+<lush cave, with glowing lights or torches. (looks like LOTR gate to the mines of moria) a mage stands at the entrance ready to greet: “Greetings. To enter the HackMatrix, you must place that key into the gate and turn it. However, the key is magical and can only be moved by one of these magical artifacts <chest opens up, revealing 3 crystals> you may choose an artifact to keep, but choose wisely, for while they all have the same power, they each require a unique type of will to use their magic.” <moves player to the artifact, arrows to select the artifact with game hints as text> <when a crystal is selected, it glows and rays of light shoot out of it, revealing an IDE that flickers to life above the crystal> <ides are: vim, emacs, vscode>
+
+VIM: ”This artifact is vim + terminator. It is a simple, yet powerful, used by some of the oldest and wisest of code mages”
+
+Emacs: “This artifact is emacs. It is an extensive, deep, and highly customizable, used by unique code mages who love the power of LISP”
+
+VSCode: “This artifact is VSCode: It is popular amongst code mages for its highly integrated magical design”
+
+<Chooses…>
+
+”Excellent Choice… now let me tell you how to use it. Lets walk over to the magical key.”
+
+ <mage walks over>
+
+Now, look at the key and press “r” to energize your artifact and couple it with the key.
+
+<player walks over presses r>
+
+<artifact lights up and starts absorbing light from the key>
+<the light flows through the crystal artifact and flickers on the IDE>
+<code comments describing the key are shown>
+
+“Excellent. Now, read through the keys code and write what it asks you to implement. You will need to first move the key the correct distance and then turn the key clockwise by 90 degrees. They key’s magic is written in Python, but don’t worry. After you enter the HackMatrix, magic will reveal itself in any language you chose, for now just work with the magical language of Python”
+
+<after the key is moved and turned properly, the magical gate lights up (a la LOTR)>
+<the gate opens, revealing a magical glowing fountain>
+<the mage walk in stands near the fountian>
+
+“Now you will look into the decision pool at the base of the fountian to choose you preferred magical language”
