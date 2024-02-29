@@ -56,7 +56,7 @@ vec4 floor( vec2 fragCoord ) {
 }
 
 vec4 colorFromTexture(sampler2D tex, vec2 coord) {
-	return texture(tex, TexCoord * vec2(1,-1));
+	return texture(tex, coord * vec2(1,-1));
 }
 
 void main()
