@@ -15,6 +15,7 @@ public:
 private:
   // model data
   vector<Mesh> meshes;
+  vector<MeshTexture> textures_loaded;
   string directory;
 
   void loadModel(string path);
