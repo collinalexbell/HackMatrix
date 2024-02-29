@@ -7,20 +7,17 @@ flat in int IsLookedAt;
 flat in int Selection;
 
 uniform sampler2DArray allBlocks;
-uniform sampler2D texture_diffuse1;
 uniform sampler2D app0;
 uniform sampler2D app1;
 uniform sampler2D app2;
 uniform sampler2D app3;
 uniform sampler2D app4;
-uniform sampler2D app5;
-uniform sampler2D app6;
+uniform sampler2D app5; uniform sampler2D app6;
 uniform bool isApp;
 uniform bool isLine;
 uniform bool appSelected;
 uniform bool isMesh;
 uniform bool isDynamicObject;
-uniform bool isModel;
 uniform int totalBlockTypes;
 uniform float time;
 
@@ -86,9 +83,7 @@ void main()
 		FragColor = vec4(lineColor, lineColor.r);
   } else if(isDynamicObject) {
     FragColor = vec4(0.5, 0.5, 0.5, 1.0);
-	} else if(isModel) {
-    FragColor = texture(texture_diffuse1, TexCoord);
-  } else {
+	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
 	}
 	if(Selection == 1) {
