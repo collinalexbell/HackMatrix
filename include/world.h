@@ -37,6 +37,7 @@ class World: public WorldInterface {
   Renderer *renderer = NULL;
   Camera *camera = NULL;
   shared_ptr<Model> npc;
+  shared_ptr<Model> backpack;
   vector<Line> lines;
   unordered_map<glm::vec3, int> appCubes;
   vector<X11App*> apps;

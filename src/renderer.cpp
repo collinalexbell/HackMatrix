@@ -474,8 +474,14 @@ void Renderer::renderModels() {
   shader->setBool("isModel", true);
   unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-  for(auto model: models) {
-    model->Draw(*shader);
+  int i = 0;
+  for(auto m: models) {
+    if(i>0) {
+      auto model2 = glm::translate(model, glm::vec3(0,5,0));
+      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    }
+    m->Draw(*shader);
+    i++;
   }
   shader->setBool("isModel", false);
 }
