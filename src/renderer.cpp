@@ -1,3 +1,4 @@
+#include "glm/ext/matrix_transform.hpp"
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
@@ -243,7 +244,8 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
   projection =
       glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
-  model = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
+  model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1)), glm::vec3(0.0,60.0,0.0));
+  meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
   appModel = glm::mat4(1.0f);
 }
 
@@ -259,8 +261,8 @@ void Renderer::initAppTextures() {
 }
 
 void Renderer::updateTransformMatrices() {
-  unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+  unsigned int modelLoc = glGetUniformLocation(shader->ID, "meshModel");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meshModel));
 
   unsigned int appModelLoc = glGetUniformLocation(shader->ID, "appModel");
   glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
@@ -470,6 +472,8 @@ void Renderer::renderLines() {
 
 void Renderer::renderModels() {
   shader->setBool("isModel", true);
+  unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
   for(auto model: models) {
     model->Draw(*shader);
   }

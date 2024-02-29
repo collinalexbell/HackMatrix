@@ -56,6 +56,7 @@ class Renderer {
   void initAppTextures();
   glm::mat4 trans;
   glm::mat4 model;
+  glm::mat4 meshModel;
   glm::mat4 appModel;
   glm::mat4 view;
   glm::mat4 orthographicMatrix;
