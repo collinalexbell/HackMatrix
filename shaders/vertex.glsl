@@ -3,8 +3,10 @@ layout (location = 0) in vec3 position;
 layout (location = 0) in vec3 vertexPositionInModel;
 layout (location = 1) in vec3 lineInstanceColor;
 layout (location = 1) in vec2 texCoord;
+layout (location = 1) in vec3 modelNormal;
 layout (location = 2) in vec3 modelOffset;
 layout (location = 2) in int selection;
+layout (location = 2) in vec2 modelTexCoord;
 layout (location = 3) in int blockType;
 
 out vec2 TexCoord;
@@ -22,6 +24,7 @@ uniform bool isLine;
 uniform bool isMesh;
 uniform bool isLookedAt;
 uniform bool isDynamicObject;
+uniform bool isModel;
 uniform int lookedAtBlockType;
 
 void main()
@@ -43,6 +46,9 @@ void main()
       Selection = selection;
     }
     TexCoord = texCoord;
+  } else if(isModel) {
+    TexCoord = modelTexCoord;
+    gl_Position = projection * view * vec4(position, 1.0);
   }
 
   IsLookedAt = 0;
