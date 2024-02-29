@@ -230,6 +230,7 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   shader->setBool("lookedAtValid", false);
   shader->setBool("isLookedAt", false);
   shader->setBool("isMesh", false);
+  shader->setBool("isModel", false);
 
   if(isWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
@@ -467,6 +468,14 @@ void Renderer::renderLines() {
   shader->setBool("isLine", false);
 }
 
+void Renderer::renderModels() {
+  shader->setBool("isModel", true);
+  for(auto model: models) {
+    model->Draw(*shader);
+  }
+  shader->setBool("isModel", false);
+}
+
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->tick();
@@ -476,6 +485,7 @@ void Renderer::render() {
   renderChunkMesh();
   renderApps();
   renderDynamicObjects();
+  renderModels();
 }
 
 Camera *Renderer::getCamera() { return camera; }
@@ -511,4 +521,8 @@ Renderer::~Renderer() {
   for (auto &t : textures) {
     delete t.second;
   }
+}
+
+void Renderer::addModel(shared_ptr<Model> model) {
+  models.push_back(model);
 }
