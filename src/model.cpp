@@ -54,22 +54,23 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
     vector.z = mesh->mVertices[i].z;
     vertex.Position = vector;
 
-    vector.x = mesh->mNormals[i].x;
-    vector.y = mesh->mNormals[i].y;
-    vector.z = mesh->mNormals[i].z;
+    vector.x = 0;
+    vector.y = 0;
+    vector.z = 0;
     vertex.Normal = vector;
 
-    if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-    {
-      glm::vec2 vec;
-      vec.x = mesh->mTextureCoords[0][i].x;
-      vec.y = mesh->mTextureCoords[0][i].y;
-      vertex.TexCoords = vec;
-    } else
-      vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+    if (mesh->HasVertexColors(0)) { // Using the first color set (index 0)
+      glm::vec4 color;
+      color.r = mesh->mColors[0][i].r;
+      color.g = mesh->mColors[0][i].g;
+      color.b = mesh->mColors[0][i].b;
+      color.a = mesh->mColors[0][i].a;
+      vertex.Color = color;
+    }
 
     vertices.push_back(vertex);
   }
+
   // process indices
   for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
     aiFace face = mesh->mFaces[i];
@@ -77,16 +78,6 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
       indices.push_back(face.mIndices[j]);
   }
 
-  // process material
-  if (mesh->mMaterialIndex >= 0) {
-    aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-    vector<MeshTexture> diffuseMaps = loadMaterialTextures(
-        material, aiTextureType_DIFFUSE, "texture_diffuse");
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-    vector<MeshTexture> specularMaps = loadMaterialTextures(
-        material, aiTextureType_SPECULAR, "texture_specular");
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-  }
   return Mesh(vertices, indices, textures);
 }
 

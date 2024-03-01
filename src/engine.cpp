@@ -61,12 +61,6 @@ void Engine::initImGui() {
 }
 
 void Engine::initialize(){
-  auto meshes = loadFbx("/home/collin/matrix/vox/hacker.fbx");
-  if(meshes != NULL) {
-    logger->debug("meshes loaded");
-  } else {
-    logger->debug("meshes failed to load");
-  }
   auto texturePack = blocks::initializeBasicPack();
   wm = new WM(glfwGetX11Window(window), loggerSink);
   camera = new Camera();
