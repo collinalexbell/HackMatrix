@@ -2,12 +2,12 @@
 out vec4 FragColor;
 in vec2 TexCoord;
 in vec3 lineColor;
+in vec4 ModelColor;
 flat in int BlockType;
 flat in int IsLookedAt;
 flat in int Selection;
 
 uniform sampler2DArray allBlocks;
-uniform sampler2D texture_diffuse1;
 uniform sampler2D app0;
 uniform sampler2D app1;
 uniform sampler2D app2;
@@ -86,8 +86,8 @@ void main()
   } else if(isDynamicObject) {
     FragColor = vec4(0.5, 0.5, 0.5, 1.0);
   } else if (isModel) {
-    FragColor = texture(texture_diffuse1, TexCoord);
-    //FragColor = vec4(0.9, 0.3, 0.3, 1.0);
+    //FragColor = texture(texture_diffuse1, TexCoord);
+    FragColor = ModelColor;
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
 	}

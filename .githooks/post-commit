@@ -1,3 +1,4 @@
 #!/bin/bash
 
 cp matrix _matrix
+cp vox/*.vox ~/backup_assets

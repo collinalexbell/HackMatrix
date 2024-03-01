@@ -49,5 +49,4 @@ index.html
 secrets/*
 analysis.txt
 
-vox/backpack/
-vox/**/*.png
+vox/*
