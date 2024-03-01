@@ -4,6 +4,7 @@
 #include "chunk.h"
 #include "cube.h"
 #include "dynamicObject.h"
+#include "model.h"
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
@@ -55,6 +56,7 @@ class Renderer {
   void initAppTextures();
   glm::mat4 trans;
   glm::mat4 model;
+  glm::mat4 meshModel;
   glm::mat4 appModel;
   glm::mat4 view;
   glm::mat4 orthographicMatrix;
@@ -68,6 +70,7 @@ class Renderer {
   float lastFrame = 0.0f; // Time of last frame
 
   vector<unsigned int> frameBuffers;
+  vector<shared_ptr<Model>> models;
   void drawAppDirect(X11App* app);
   void updateShaderUniforms();
   void renderChunkMesh();
@@ -75,6 +78,7 @@ class Renderer {
   void renderLines();
   void renderLookedAtFace();
   void renderDynamicObjects();
+  void renderModels();
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
 
@@ -99,6 +103,7 @@ public:
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
   void addLine(int index, Line line);
   void addAppCube(int index, glm::vec3 pos);
+  void addModel(shared_ptr<Model> model);
   void registerApp(X11App* app, int index);
   void deregisterApp(int index);
   void reloadChunk();

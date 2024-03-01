@@ -48,3 +48,6 @@ index.html
 **/*.osm
 secrets/*
 analysis.txt
+
+vox/backpack/
+vox/**/*.png
