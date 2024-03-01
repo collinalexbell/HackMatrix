@@ -1,5 +1,6 @@
 #include "model.h"
 #include <assimp/Importer.hpp>
+#include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <iostream>
@@ -92,7 +93,9 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
 vector<MeshTexture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
                                      string typeName) {
   vector<MeshTexture> textures;
+  cout << "loading material textures" << endl;
   for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
+    cout << "loading texture " << i << endl;
     aiString str;
     mat->GetTexture(type, i, &str);
     bool skip = false;
@@ -125,8 +128,9 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
     unsigned char *data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+    stbi_set_flip_vertically_on_load(true);
     if (data)
     {
         GLenum format;

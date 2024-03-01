@@ -244,7 +244,10 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
   projection =
       glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
-  model = glm::translate(glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1)), glm::vec3(0.0,60.0,0.0));
+  model = glm::mat4(1.0f);
+  model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1)) ;
+  model = glm::translate(model , glm::vec3(0.0, 60.0, 0.0));
+  model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
   meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
   appModel = glm::mat4(1.0f);
 }
@@ -476,10 +479,6 @@ void Renderer::renderModels() {
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
   int i = 0;
   for(auto m: models) {
-    if(i>0) {
-      auto model2 = glm::translate(model, glm::vec3(0,5,0));
-      glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    }
     m->Draw(*shader);
     i++;
   }
