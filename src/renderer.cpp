@@ -1,3 +1,4 @@
+#include "glm/ext/matrix_transform.hpp"
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
@@ -230,6 +231,7 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   shader->setBool("lookedAtValid", false);
   shader->setBool("isLookedAt", false);
   shader->setBool("isMesh", false);
+  shader->setBool("isModel", false);
 
   if(isWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
@@ -242,7 +244,11 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
   projection =
       glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
-  model = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
+  model = glm::mat4(1.0f);
+  model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1)) ;
+  model = glm::translate(model , glm::vec3(0.0, 60.0, 0.0));
+  model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+  meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
   appModel = glm::mat4(1.0f);
 }
 
@@ -258,8 +264,8 @@ void Renderer::initAppTextures() {
 }
 
 void Renderer::updateTransformMatrices() {
-  unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+  unsigned int modelLoc = glGetUniformLocation(shader->ID, "meshModel");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meshModel));
 
   unsigned int appModelLoc = glGetUniformLocation(shader->ID, "appModel");
   glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
@@ -467,6 +473,18 @@ void Renderer::renderLines() {
   shader->setBool("isLine", false);
 }
 
+void Renderer::renderModels() {
+  shader->setBool("isModel", true);
+  unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
+  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+  int i = 0;
+  for(auto m: models) {
+    m->Draw(*shader);
+    i++;
+  }
+  shader->setBool("isModel", false);
+}
+
 void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->tick();
@@ -476,6 +494,7 @@ void Renderer::render() {
   renderChunkMesh();
   renderApps();
   renderDynamicObjects();
+  renderModels();
 }
 
 Camera *Renderer::getCamera() { return camera; }
@@ -511,4 +530,8 @@ Renderer::~Renderer() {
   for (auto &t : textures) {
     delete t.second;
   }
+}
+
+void Renderer::addModel(shared_ptr<Model> model) {
+  models.push_back(model);
 }
