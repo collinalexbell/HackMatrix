@@ -30,8 +30,8 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   initLogger(loggerSink);
   logger->debug("Hello World!");
   initAppPositions();
-  initLoader(minecraftFolder, texturePack);
-  initChunks();
+  //initLoader(minecraftFolder, texturePack);
+  //initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
   dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f), glm::vec3(0.1f,0.1f, 0.1f));
   dynamicObjects->addObject(dynamicCube);
@@ -41,12 +41,10 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   strcpy(modifiable_model_name, const_model_name);
   npc = make_shared<Model>(modifiable_model_name);
 
-  /*
-  const char *const_backpack_name = "/home/collin/matrix/vox/backpack/backpack.obj";
-  char *modifiable_backpack_name = new char[strlen(const_backpack_name) + 1];
-  strcpy(modifiable_backpack_name, const_backpack_name);
-  backpack = make_shared<Model>(modifiable_backpack_name);
-  */
+  const char *const_cave_name = "/home/collin/matrix/vox/cave.ply";
+  char *modifiable_cave_name = new char[strlen(const_cave_name) + 1];
+  strcpy(modifiable_cave_name, const_cave_name);
+  cave = make_shared<Model>(modifiable_cave_name);
 }
 
 void World::initLogger(spdlog::sink_ptr loggerSink) {
@@ -56,16 +54,16 @@ void World::initLogger(spdlog::sink_ptr loggerSink) {
 
 void World::initAppPositions() {
   float z = 0.3;
-  float xOffset = 2;
-  float yOffset = -3;
-  availableAppPositions.push(glm::vec3(5.0+xOffset, 9.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(6.2+xOffset, 9.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(6.2+xOffset, 10.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(6.2+xOffset, 11.00+yOffset, z));
-  availableAppPositions.push(glm::vec3(7.4+xOffset, 9.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(4.7+xOffset, 10.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(7.4+xOffset, 10.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(7.4 + xOffset, 11 + yOffset, z));
+  float xOffset = -1.2;
+  float yOffset = -2.4;
+  availableAppPositions.push(glm::vec3(0.0+xOffset, 9.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(1.2+xOffset, 9.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(1.2+xOffset, 10.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(1.2+xOffset, 11.00+yOffset, z));
+  availableAppPositions.push(glm::vec3(2.4+xOffset, 9.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(0+xOffset, 10.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(2.4+xOffset, 10.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(2.4 + xOffset, 11 + yOffset, z));
 }
 
 void World::initChunks() {
@@ -741,7 +739,7 @@ void World::removeApp(X11App *app) {
 void World::attachRenderer(Renderer* renderer){
   this->renderer = renderer;
   this->renderer->addModel(npc);
-  //this->renderer->addModel(backpack);
+  this->renderer->addModel(cave);
   refreshRendererCubes();
 }
 
@@ -1087,7 +1085,7 @@ void World::loadLatest() {
 }
 
 void World::tick(){
-  loadChunksIfNeccissary();
+  //loadChunksIfNeccissary();
   if(dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
   }
