@@ -172,5 +172,5 @@ Model::Model(string path, glm::vec3 pos) : pos(pos) {
 
   glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);
   glm::mat4 transposedInverse = glm::transpose(inverseModelMatrix);
-  glm::mat3 normalMatrix = glm::mat3(transposedInverse);
+  normalMatrix = glm::mat3(transposedInverse);
 }
