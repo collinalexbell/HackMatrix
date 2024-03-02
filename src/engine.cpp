@@ -77,7 +77,7 @@ void Engine::wire() {
   wm->attachWorld(world);
   wm->addAppsToWorld();
   //world->loadLatest();
-  world->loadMinecraft();
+  //world->loadMinecraft();
 }
 
 void Engine::renderImGui(double &fps, int frameIndex, const vector<double> &frameTimes) {
