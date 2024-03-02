@@ -9,9 +9,11 @@ unsigned int TextureFromFile(const char *path, const string &directory,
 
 class Model {
 public:
-  Model(string path, glm::vec3 pos): pos(pos) { loadModel(path); }
+  Model(string path, glm::vec3 pos);
   void Draw(Shader &shader);
   glm::vec3 pos;
+  glm::mat4 modelMatrix;
+  glm::mat3 normalMatrix;
 
 private:
   // model data

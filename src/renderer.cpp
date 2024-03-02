@@ -205,6 +205,7 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   glDepthFunc(GL_LESS);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_MULTISAMPLE);
   genGlResources();
   fillBuffers();
   setupVertexAttributePointers();
@@ -244,10 +245,6 @@ Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack>
   view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
   projection =
       glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
-  model = glm::mat4(1.0f);
-  model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1)) ;
-  model = glm::translate(model , glm::vec3(0.0, 60.0, 0.0));
-  //model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
   meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
   appModel = glm::mat4(1.0f);
 }
@@ -475,14 +472,24 @@ void Renderer::renderLines() {
 
 void Renderer::renderModels() {
   shader->setBool("isModel", true);
+  shader->setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
+  shader->setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
+  shader->setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+  shader->setFloat("material.shininess", 32.0f);
+  shader->setVec3("lightPos", glm::vec3(-0.6, 0.6, 0));
+  shader->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+  shader->setVec3("viewPos", camera->position);
   int i = 0;
+  shader->setBool("isLight", false);
   for(auto m: models) {
-    auto modelTransform = glm::translate(model, m->pos);
-    shader->setMatrix4("model", modelTransform);
-    unsigned int modelLoc = glGetUniformLocation(shader->ID, "model");
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(modelTransform));
+    if(i == 2) {
+      shader->setBool("isLight", true);
+    }
+    shader->setMatrix3("normalMatrix", m->normalMatrix);
+    shader->setMatrix4("model", m->modelMatrix);
 
     m->Draw(*shader);
+    shader->setBool("isLight", false);
     i++;
   }
   shader->setBool("isModel", false);

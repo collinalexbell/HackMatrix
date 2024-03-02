@@ -1,8 +1,10 @@
 #version 330 core
 out vec4 FragColor;
 in vec2 TexCoord;
+in vec3 FragPos;
 in vec3 lineColor;
 in vec4 ModelColor;
+in vec3 Normal;
 flat in int BlockType;
 flat in int IsLookedAt;
 flat in int Selection;
@@ -21,8 +23,21 @@ uniform bool isLine;
 uniform bool appSelected;
 uniform bool isMesh;
 uniform bool isDynamicObject;
+uniform bool isLight;
 uniform int totalBlockTypes;
 uniform float time;
+uniform vec3 lightPos;
+uniform vec3 lightColor;
+uniform vec3 viewPos;
+
+struct Material {
+  vec3 ambient;
+  vec3 diffuse;
+  vec3 specular;
+  float shininess;
+};
+
+uniform Material material;
 
 vec3 palette( float t ) {
 	vec3 a = vec3(0.5, 0.5, 0.5);
@@ -87,8 +102,30 @@ void main()
   } else if(isDynamicObject) {
     FragColor = vec4(0.5, 0.5, 0.5, 1.0);
   } else if (isModel) {
-    FragColor = texture(texture_diffuse1, TexCoord);
-    //FragColor = vec4(0.5, 0.3, 0.3, 1.0);
+
+    if(isLight) {
+      FragColor = vec4(lightColor, 1.0);
+    } else {
+      // ambient
+      float ambientStrength = 0.2;
+      vec3 ambient = ambientStrength * lightColor;
+
+      // diffuse
+      vec3 norm = normalize(Normal);
+      vec3 lightDir = normalize(lightPos - FragPos);
+
+      float diff = max(dot(norm, lightDir), 0.0);
+      vec3 diffuse = diff * lightColor;
+
+      float specularStrength = 0.5;
+      float shininess = 32;
+      vec3 viewDir = normalize(viewPos - FragPos);
+      vec3 reflectDir = reflect(-lightDir, norm);
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+      vec3 specular = specularStrength * spec * lightColor;
+
+      FragColor = vec4(ambient + diffuse + specular, 1.0) * texture(texture_diffuse1, TexCoord);
+    }
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
 	}
