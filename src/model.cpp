@@ -163,12 +163,12 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
     return textureID;
 }
 
-Model::Model(string path, glm::vec3 pos) : pos(pos) {
+Model::Model(string path, glm::vec3 pos, float scale) : pos(pos) {
   loadModel(path);
 
   modelMatrix = glm::mat4(1.0f);
   modelMatrix = glm::translate(modelMatrix, pos);
-  modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 0.1, 0.1));
+  modelMatrix = glm::scale(modelMatrix, glm::vec3(scale, scale, scale));
 
   glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);
   glm::mat4 transposedInverse = glm::transpose(inverseModelMatrix);

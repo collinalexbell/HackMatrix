@@ -9,7 +9,7 @@ unsigned int TextureFromFile(const char *path, const string &directory,
 
 class Model {
 public:
-  Model(string path, glm::vec3 pos);
+  Model(string path, glm::vec3 pos, float scale);
   void Draw(Shader &shader);
   glm::vec3 pos;
   glm::mat4 modelMatrix;
