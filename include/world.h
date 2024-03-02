@@ -36,8 +36,7 @@ class World: public WorldInterface {
   shared_ptr<DynamicCube> dynamicCube;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
-  shared_ptr<Model> npc;
-  shared_ptr<Model> cave;
+  vector<shared_ptr<Model>> models;
   vector<Line> lines;
   unordered_map<glm::vec3, int> appCubes;
   vector<X11App*> apps;
