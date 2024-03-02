@@ -37,11 +37,11 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   dynamicObjects->addObject(dynamicCube);
 
   models.push_back(make_shared<Model>("/home/collin/matrix/vox/hacker.obj",
-                                      glm::vec3(0, 0.1, -1.0)));
+                                      glm::vec3(0, 0.2, -1.0), 0.1));
   models.push_back(make_shared<Model>("/home/collin/matrix/vox/cave.obj",
-                                      glm::vec3(0, 0, 0)));
+                                      glm::vec3(0, 0, 0), 0.4));
   models.push_back(make_shared<Model>("/home/collin/matrix/vox/light.obj",
-                                      glm::vec3(-0.6, 1.5, 0)));
+                                      glm::vec3(-0.6, 1.5, 0), 0.1));
 }
 
 void World::initLogger(spdlog::sink_ptr loggerSink) {
