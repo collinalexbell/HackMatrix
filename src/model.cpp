@@ -6,6 +6,8 @@
 #include <iostream>
 #include "stb/stb_image.h"
 
+#include "glm/ext/matrix_transform.hpp"
+
 using namespace std;
 
 void Model::Draw(Shader &shader) {
@@ -159,4 +161,16 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
     }
 
     return textureID;
+}
+
+Model::Model(string path, glm::vec3 pos) : pos(pos) {
+  loadModel(path);
+
+  modelMatrix = glm::mat4(1.0f);
+  modelMatrix = glm::translate(modelMatrix, pos);
+  modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1, 0.1, 0.1));
+
+  glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);
+  glm::mat4 transposedInverse = glm::transpose(inverseModelMatrix);
+  glm::mat3 normalMatrix = glm::mat3(transposedInverse);
 }

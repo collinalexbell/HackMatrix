@@ -5,11 +5,14 @@ layout (location = 1) in vec3 lineInstanceColor;
 layout (location = 1) in vec2 texCoord;
 layout (location = 2) in vec3 modelOffset;
 layout (location = 2) in int selection;
+layout (location = 2) in vec3 normal;
 layout (location = 3) in int blockType;
 
 out vec2 TexCoord;
 out vec3 lineColor;
 out vec4 ModelColor;
+out vec3 Normal;
+out vec3 FragPos;
 flat out int BlockType;
 flat out int IsLookedAt;
 flat out int Selection;
@@ -19,6 +22,7 @@ uniform mat4 appModel;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat3 normalMatrix;
 uniform bool isApp;
 uniform bool isLine;
 uniform bool isMesh;
@@ -48,7 +52,9 @@ void main()
     TexCoord = texCoord;
   } else if(isModel) {
     gl_Position = projection * view * model * vec4(position, 1.0);
+    FragPos = vec3(model * vec4(position, 1.0));
     TexCoord = texCoord;
+    Normal = normal;
   }
 
   IsLookedAt = 0;
