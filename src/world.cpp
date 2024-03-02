@@ -37,11 +37,11 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   dynamicObjects->addObject(dynamicCube);
 
   models.push_back(make_shared<Model>("/home/collin/matrix/vox/hacker.obj",
-                                      glm::vec3(0, 1.0, 0)));
+                                      glm::vec3(0, 0.1, -1.0)));
   models.push_back(make_shared<Model>("/home/collin/matrix/vox/cave.obj",
                                       glm::vec3(0, 0, 0)));
   models.push_back(make_shared<Model>("/home/collin/matrix/vox/light.obj",
-                                      glm::vec3(-6.0, 6.0, 0)));
+                                      glm::vec3(-0.6, 1.5, 0)));
 }
 
 void World::initLogger(spdlog::sink_ptr loggerSink) {
@@ -53,14 +53,14 @@ void World::initAppPositions() {
   float z = 0.3;
   float xOffset = -1.2;
   float yOffset = -2.4;
-  availableAppPositions.push(glm::vec3(0.0+xOffset, 9.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(1.2+xOffset, 9.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(1.2+xOffset, 10.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(1.2+xOffset, 11.00+yOffset, z));
-  availableAppPositions.push(glm::vec3(2.4+xOffset, 9.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(0+xOffset, 10.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(2.4+xOffset, 10.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(2.4 + xOffset, 11 + yOffset, z));
+  availableAppPositions.push(glm::vec3(0.0+xOffset, 3.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(1.2+xOffset, 3.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(1.2+xOffset, 4.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(1.2+xOffset, 5.00+yOffset, z));
+  availableAppPositions.push(glm::vec3(2.4+xOffset, 3.5+yOffset, z));
+  availableAppPositions.push(glm::vec3(0+xOffset, 4.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(2.4+xOffset, 4.25+yOffset, z));
+  availableAppPositions.push(glm::vec3(2.4 + xOffset, 7 + yOffset, z));
 }
 
 void World::initChunks() {
