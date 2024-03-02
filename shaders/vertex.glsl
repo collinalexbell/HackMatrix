@@ -4,7 +4,6 @@ layout (location = 0) in vec3 vertexPositionInModel;
 layout (location = 1) in vec3 lineInstanceColor;
 layout (location = 1) in vec2 texCoord;
 layout (location = 2) in vec3 modelOffset;
-layout (location = 2) in vec4 modelColor;
 layout (location = 2) in int selection;
 layout (location = 3) in int blockType;
 
@@ -49,7 +48,7 @@ void main()
     TexCoord = texCoord;
   } else if(isModel) {
     gl_Position = projection * view * model * vec4(position, 1.0);
-    ModelColor = modelColor;
+    TexCoord = texCoord;
   }
 
   IsLookedAt = 0;
