@@ -7,13 +7,21 @@
 unsigned int TextureFromFile(const char *path, const string &directory,
                              bool gamma = false);
 
-class Model {
-public:
-  Model(string path, glm::vec3 pos, float scale);
-  void Draw(Shader &shader);
+struct Light {
+  glm::vec3 color;
+};
+
+struct Positionable {
+  Positionable(glm::vec3 pos, float scale);
   glm::vec3 pos;
   glm::mat4 modelMatrix;
   glm::mat3 normalMatrix;
+};
+
+class Model {
+public:
+  Model(string path);
+  void Draw(Shader &shader);
 
 private:
   // model data

@@ -5,6 +5,7 @@
 #include "renderer.h"
 #include "wm.h"
 #include "world.h"
+#include "entity.h"
 
 #include <GLFW/glfw3.h>
 #include <memory>
@@ -22,6 +23,7 @@ class Engine {
   WM *wm;
   GLFWwindow *window;
   std::shared_ptr<spdlog::logger> logger;
+  std::shared_ptr<EntityRegistry> registry;
   spdlog::sink_ptr loggerSink;
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
