@@ -1,5 +1,7 @@
 #include "entity.h"
 #include "logger.h"
+#include "model.h"
+#include "persister.h"
 #include <memory>
 #include <spdlog/common.h>
 #define GLFW_EXPOSE_NATIVE_X11
@@ -25,12 +27,17 @@ void Engine::registerCursorCallback() {
 
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   registry = make_shared<EntityRegistry>();
+  shared_ptr<SQLPersister> postionablePersister = make_shared<PositionablePersister>(registry);
+  registry->addPersister(postionablePersister);
+  registry->createTablesIfNeeded();
+
   loggerVector = make_shared<LoggerVector>();
   auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
   logger = make_shared<spdlog::logger>("engine", loggerSink);
   logger->set_level(spdlog::level::debug);
   initialize();
+  registry->saveAll();
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();
