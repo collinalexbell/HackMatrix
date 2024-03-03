@@ -34,12 +34,19 @@ void EntityRegistry::save(entt::entity e) {
 
 
 void EntityRegistry::loadAll() {
+  SQLite::Statement query(db, "SELECT * FROM Entity");
+  while (query.executeStep()) {
+    int entityId = query.getColumn(0).getInt();
+    entt::entity newEntity = create();
+    emplace<Persistable>(newEntity, entityId);
+  }
   for (auto persister : persisters) {
     persister->loadAll();
   }
 }
 
 void EntityRegistry::load(entt::entity e) {
+  // this is useless
   for (auto persister : persisters) {
     persister->load(e);
   }

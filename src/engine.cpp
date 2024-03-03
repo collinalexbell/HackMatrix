@@ -29,7 +29,13 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   registry = make_shared<EntityRegistry>();
   shared_ptr<SQLPersister> postionablePersister = make_shared<PositionablePersister>(registry);
   registry->addPersister(postionablePersister);
+  shared_ptr<SQLPersister> modelPersister = make_shared<ModelPersister>(registry);
+  registry->addPersister(modelPersister);
+  shared_ptr<SQLPersister> lightPersister =
+      make_shared<LightPersister>(registry);
+  registry->addPersister(lightPersister);
   registry->createTablesIfNeeded();
+  registry->loadAll();
 
   loggerVector = make_shared<LoggerVector>();
   auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
@@ -37,7 +43,8 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   logger = make_shared<spdlog::logger>("engine", loggerSink);
   logger->set_level(spdlog::level::debug);
   initialize();
-  registry->saveAll();
+  // WARNING: need to fix this to do updates, not always insert
+  //registry->saveAll();
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();

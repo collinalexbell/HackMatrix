@@ -14,6 +14,7 @@ struct Light {
 };
 
 class LightPersister: public SQLPersisterImpl {
+public:
   LightPersister(std::shared_ptr<EntityRegistry> registry)
       : SQLPersisterImpl(registry){};
   void createTablesIfNeeded() override;
@@ -44,6 +45,7 @@ public:
 
 class Model {
 public:
+  string path;
   Model(string path);
   void Draw(Shader &shader);
 

@@ -164,7 +164,7 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
     return textureID;
 }
 
-Model::Model(string path) {
+Model::Model(string path): path(path) {
   loadModel(path);
 }
 
@@ -245,7 +245,7 @@ void PositionablePersister::loadAll() {
 
     // Cache query data
     std::unordered_map<int, std::array<float, 4>> positionDataCache;
-    SQLite::Statement query(db, "SELECT id, pos_x, pos_y, pos_z, scale FROM Positionable");
+    SQLite::Statement query(db, "SELECT entity_id, pos_x, pos_y, pos_z, scale FROM Positionable");
 
     while (query.executeStep()) {
       int dbId = query.getColumn(0).getInt();
@@ -266,4 +266,179 @@ void PositionablePersister::loadAll() {
             registry->emplace<Positionable>(entity, glm::vec3(x, y, z), scale);
         }
     }
+}
+
+void ModelPersister::saveAll() {
+  auto view = registry->view<Persistable, Model>();
+  SQLite::Database &db = registry->getDatabase();
+
+  // Assuming you have a 'Model' table with 'entity_id' and 'path' columns
+  SQLite::Statement query(db,
+                          "INSERT INTO Model (entity_id, path) VALUES (?, ?)");
+
+  db.exec("BEGIN TRANSACTION"); // Initiate transaction
+
+  for (auto [entity, persist, model] : view.each()) {
+    query.bind(1, persist.entityId);
+    query.bind(2, model.path);
+    query.exec();
+    query.reset();
+  }
+
+  db.exec("COMMIT"); // Commit changes
+}
+
+void ModelPersister::createTablesIfNeeded() {
+  SQLite::Database &db = registry->getDatabase();
+  db.exec("CREATE TABLE IF NOT EXISTS Model ("
+          "id INTEGER PRIMARY KEY, "
+          "entity_id INTEGER, path TEXT, "
+          "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ");
+}
+
+
+void ModelPersister::loadAll() {
+    auto view = registry->view<Persistable>();
+    SQLite::Database& db = registry->getDatabase();
+
+    // Cache query data
+    std::unordered_map<int, std::string> modelDataCache; 
+    SQLite::Statement query(db, "SELECT entity_id, path FROM Model");
+
+    while (query.executeStep()) {
+        int dbId = query.getColumn(0).getInt();  
+        std::string path = query.getColumn(1).getText(); 
+        modelDataCache[dbId] = path; 
+    }
+
+    // Iterate and load (assuming you have a mechanism to load Models from paths)
+    view.each([&modelDataCache, this](auto entity, auto& persistable) {
+        auto it = modelDataCache.find(persistable.entityId);
+        if (it != modelDataCache.end()) {
+            std::string& path = it->second; 
+            std::unique_ptr<Model> model = make_unique<Model>(path);
+            if (model) {
+                registry->emplace<Model>(entity, std::move(*model)); 
+            }
+        }
+    });
+}
+
+void ModelPersister::load(entt::entity entity) {
+  auto &persistable = registry->get<Persistable>(entity);
+  SQLite::Database &db = registry->getDatabase();
+
+  SQLite::Statement query(db, "SELECT path FROM Model WHERE entity_id = ?");
+  query.bind(1, persistable.entityId);
+
+  if (query.executeStep()) {
+    std::string path = query.getColumn(0).getText();
+
+    std::unique_ptr<Model> model = make_unique<Model>(path);
+    if (model) {
+      registry->emplace<Model>(entity, std::move(*model));
+    } else {
+      // Log or handle model loading error
+    }
+  }
+}
+
+void ModelPersister::save(entt::entity entity) {
+  auto &model = registry->get<Model>(entity);
+  auto &persistable = registry->get<Persistable>(entity);
+  SQLite::Database &db = registry->getDatabase();
+
+  SQLite::Statement query(db,
+                          "INSERT INTO Model (entity_id, path) VALUES (?, ?)");
+  query.bind(1, persistable.entityId);
+  query.bind(2, model.path);
+  query.exec();
+}
+
+void LightPersister::createTablesIfNeeded() {
+  SQLite::Database &db = registry->getDatabase();
+  db.exec("CREATE TABLE IF NOT EXISTS Light ("
+          "id INTEGER PRIMARY KEY, "
+          "entity_id INTEGER, color_r REAL, color_g REAL, color_b REAL, "
+          "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ");
+}
+
+void LightPersister::loadAll() {
+  auto view = registry->view<Persistable>();
+  SQLite::Database &db = registry->getDatabase();
+
+  // Cache query data
+  std::unordered_map<int, glm::vec3> lightDataCache;
+  SQLite::Statement query(
+      db, "SELECT entity_id, color_r, color_g, color_b FROM Light");
+
+  while (query.executeStep()) {
+    int entityId = query.getColumn(0).getInt();
+    float r = query.getColumn(1).getDouble();
+    float g = query.getColumn(2).getDouble();
+    float b = query.getColumn(3).getDouble();
+
+    lightDataCache[entityId] = glm::vec3(r, g, b);
+  }
+
+  // Iterate and emplace
+  view.each([&lightDataCache, this](auto entity, auto &persistable) {
+    auto it = lightDataCache.find(persistable.entityId);
+    if (it != lightDataCache.end()) {
+      auto &color = it->second;
+      registry->emplace<Light>(entity, color);
+    }
+  });
+}
+
+void LightPersister::saveAll() {
+  auto view = registry->view<Persistable, Light>();
+  SQLite::Database &db = registry->getDatabase();
+
+  SQLite::Statement query(db, "INSERT INTO Light (entity_id, color_r, color_g, "
+                              "color_b) VALUES (?, ?, ?, ?)");
+
+  db.exec("BEGIN TRANSACTION");
+
+  for (auto [entity, persist, light] : view.each()) {
+    query.bind(1, persist.entityId);
+    query.bind(2, light.color.x);
+    query.bind(3, light.color.y);
+    query.bind(4, light.color.z);
+    query.exec();
+    query.reset();
+  }
+
+  db.exec("COMMIT");
+}
+
+void LightPersister::save(entt::entity entity) {
+  auto &light = registry->get<Light>(entity);
+  auto &persistable = registry->get<Persistable>(entity);
+  SQLite::Database &db = registry->getDatabase();
+
+  SQLite::Statement query(db, "INSERT INTO Light (entity_id, color_r, color_g, "
+                              "color_b) VALUES (?, ?, ?, ?)");
+  query.bind(1, persistable.entityId);
+  query.bind(2, light.color.x);
+  query.bind(3, light.color.y);
+  query.bind(4, light.color.z);
+  query.exec();
+}
+
+void LightPersister::load(entt::entity entity) {
+  auto &persistable = registry->get<Persistable>(entity);
+  SQLite::Database &db = registry->getDatabase();
+
+  SQLite::Statement query(
+      db, "SELECT color_r, color_g, color_b FROM Light WHERE entity_id = ?");
+  query.bind(1, persistable.entityId);
+
+  if (query.executeStep()) {
+    float r = query.getColumn(0).getDouble();
+    float g = query.getColumn(1).getDouble();
+    float b = query.getColumn(2).getDouble();
+
+    registry->emplace<Light>(entity, glm::vec3(r, g, b));
+  }
 }
