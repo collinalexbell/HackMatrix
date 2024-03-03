@@ -180,8 +180,7 @@ Positionable::Positionable(glm::vec3 pos, float scale): pos(pos), scale(scale) {
 
 void PositionablePersister::createTablesIfNeeded() {
   registry->getDatabase().exec("CREATE TABLE IF NOT EXISTS Positionable ("
-                               "id INTEGER PRIMARY KEY, "
-                               "entity_id INTEGER, "
+                               "entity_id INTEGER PRIMARY KEY, "
                                "pos_x REAL, pos_y REAL, pos_z REAL, scale REAL, "
                                "FOREIGN KEY(entity_id) REFERENCES Entity(id))");
 }
@@ -190,7 +189,7 @@ void PositionablePersister::save(entt::entity entity) {
   auto &pos = registry->get<Positionable>(entity);
   auto &persistable = registry->get<Persistable>(entity);
   auto &db = registry->getDatabase();
-  SQLite::Statement query(db, "INSERT INTO Positionable (entity_id, pos_x, pos_y, "
+  SQLite::Statement query(db, "INSERT OR REPLACE INTO Positionable (entity_id, pos_x, pos_y, "
                               "pos_z, scale) VALUES (?, ?, ?, ?, ?)");
   query.bind(1, persistable.entityId);
   query.bind(2, pos.pos.x);
@@ -204,7 +203,7 @@ void PositionablePersister::saveAll() {
   auto view = registry->view<Persistable, Positionable>();
 
   SQLite::Database &db = registry->getDatabase(); // Get database reference
-  SQLite::Statement query(db, "INSERT INTO Positionable (entity_id, pos_x, "
+  SQLite::Statement query(db, "INSERT OR REPLACE INTO Positionable (entity_id, pos_x, "
                               "pos_y, pos_z, scale) VALUES (?, ?, ?, ?, ?)");
 
   // Use a transaction for efficiency
@@ -274,7 +273,7 @@ void ModelPersister::saveAll() {
 
   // Assuming you have a 'Model' table with 'entity_id' and 'path' columns
   SQLite::Statement query(db,
-                          "INSERT INTO Model (entity_id, path) VALUES (?, ?)");
+                          "INSERT OR REPLACE INTO Model (entity_id, path) VALUES (?, ?)");
 
   db.exec("BEGIN TRANSACTION"); // Initiate transaction
 
@@ -291,8 +290,8 @@ void ModelPersister::saveAll() {
 void ModelPersister::createTablesIfNeeded() {
   SQLite::Database &db = registry->getDatabase();
   db.exec("CREATE TABLE IF NOT EXISTS Model ("
-          "id INTEGER PRIMARY KEY, "
-          "entity_id INTEGER, path TEXT, "
+          "entity_id INTEGER PRIMARY KEY, "
+          "path TEXT, "
           "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ");
 }
 
@@ -349,7 +348,7 @@ void ModelPersister::save(entt::entity entity) {
   SQLite::Database &db = registry->getDatabase();
 
   SQLite::Statement query(db,
-                          "INSERT INTO Model (entity_id, path) VALUES (?, ?)");
+                          "INSERT OR REPLACE INTO Model (entity_id, path) VALUES (?, ?)");
   query.bind(1, persistable.entityId);
   query.bind(2, model.path);
   query.exec();
@@ -358,8 +357,8 @@ void ModelPersister::save(entt::entity entity) {
 void LightPersister::createTablesIfNeeded() {
   SQLite::Database &db = registry->getDatabase();
   db.exec("CREATE TABLE IF NOT EXISTS Light ("
-          "id INTEGER PRIMARY KEY, "
-          "entity_id INTEGER, color_r REAL, color_g REAL, color_b REAL, "
+          "entity_id INTEGER PRIMARY KEY, "
+          "color_r REAL, color_g REAL, color_b REAL, "
           "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ");
 }
 
@@ -395,7 +394,7 @@ void LightPersister::saveAll() {
   auto view = registry->view<Persistable, Light>();
   SQLite::Database &db = registry->getDatabase();
 
-  SQLite::Statement query(db, "INSERT INTO Light (entity_id, color_r, color_g, "
+  SQLite::Statement query(db, "INSERT OR REPLACE INTO Light (entity_id, color_r, color_g, "
                               "color_b) VALUES (?, ?, ?, ?)");
 
   db.exec("BEGIN TRANSACTION");
@@ -417,7 +416,7 @@ void LightPersister::save(entt::entity entity) {
   auto &persistable = registry->get<Persistable>(entity);
   SQLite::Database &db = registry->getDatabase();
 
-  SQLite::Statement query(db, "INSERT INTO Light (entity_id, color_r, color_g, "
+  SQLite::Statement query(db, "INSERT OR REPLACE INTO Light (entity_id, color_r, color_g, "
                               "color_b) VALUES (?, ?, ?, ?)");
   query.bind(1, persistable.entityId);
   query.bind(2, light.color.x);

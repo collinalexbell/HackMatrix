@@ -44,7 +44,6 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   logger->set_level(spdlog::level::debug);
   initialize();
   // WARNING: need to fix this to do updates, not always insert
-  //registry->saveAll();
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();
@@ -53,6 +52,9 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   }
 
 Engine::~Engine() {
+  // may want to remove this because it might be slow on shutdown
+  // when trying to get fast dev time
+  registry->saveAll();
   delete controls;
   delete renderer;
   delete world;

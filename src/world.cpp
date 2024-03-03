@@ -36,7 +36,7 @@ World::World(shared_ptr<EntityRegistry> registry, Camera *camera, shared_ptr<blo
   dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f), glm::vec3(0.1f,0.1f, 0.1f));
   dynamicObjects->addObject(dynamicCube);
 
-  /*
+  /* Shows how to init entity and components. Will need to do this with imgui
   auto npc = registry->createPersistent();
   registry->emplace<Model>(npc, "/home/collin/matrix/vox/hacker.obj");
   registry->emplace<Positionable>(npc, glm::vec3(0, 0.2, -1.0), 0.1);
