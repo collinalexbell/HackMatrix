@@ -1,5 +1,7 @@
 #include "entity.h"
 #include "logger.h"
+#include "model.h"
+#include "persister.h"
 #include <memory>
 #include <spdlog/common.h>
 #define GLFW_EXPOSE_NATIVE_X11
@@ -25,12 +27,23 @@ void Engine::registerCursorCallback() {
 
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   registry = make_shared<EntityRegistry>();
+  shared_ptr<SQLPersister> postionablePersister = make_shared<PositionablePersister>(registry);
+  registry->addPersister(postionablePersister);
+  shared_ptr<SQLPersister> modelPersister = make_shared<ModelPersister>(registry);
+  registry->addPersister(modelPersister);
+  shared_ptr<SQLPersister> lightPersister =
+      make_shared<LightPersister>(registry);
+  registry->addPersister(lightPersister);
+  registry->createTablesIfNeeded();
+  registry->loadAll();
+
   loggerVector = make_shared<LoggerVector>();
   auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
   logger = make_shared<spdlog::logger>("engine", loggerSink);
   logger->set_level(spdlog::level::debug);
   initialize();
+  // WARNING: need to fix this to do updates, not always insert
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();
@@ -39,6 +52,9 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   }
 
 Engine::~Engine() {
+  // may want to remove this because it might be slow on shutdown
+  // when trying to get fast dev time
+  registry->saveAll();
   delete controls;
   delete renderer;
   delete world;
