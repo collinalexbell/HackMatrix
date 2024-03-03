@@ -11,8 +11,6 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
@@ -42,19 +40,17 @@ void Engine::setupRegistry() {
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   setupRegistry();
   registry->loadAll();
-  loggerVector = make_shared<LoggerVector>();
-  auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
+  engineGui = make_shared<EngineGui>(window);
+  auto imGuiSink = make_shared<ImGuiSink>(engineGui->getLoggerVector());
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
   logger = make_shared<spdlog::logger>("engine", loggerSink);
   logger->set_level(spdlog::level::debug);
   initialize();
-  // WARNING: need to fix this to do updates, not always insert
   wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();
   registerCursorCallback();
-  initImGui();
-  }
+}
 
 Engine::~Engine() {
   // may want to remove this because it might be slow on shutdown
@@ -66,21 +62,6 @@ Engine::~Engine() {
   delete camera;
   //delete wm;
   delete api;
-}
-
-void Engine::initImGui() {
-  // Setup Dear ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-  io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-
-  // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init();
 }
 
 void Engine::initialize(){
@@ -103,40 +84,6 @@ void Engine::wire() {
   //world->loadMinecraft();
 }
 
-void Engine::renderImGui(double &fps, int frameIndex, const vector<double> &frameTimes) {
-  ImGui_ImplOpenGL3_NewFrame();
-  ImGui_ImplGlfw_NewFrame();
-  ImGui::NewFrame();
-  // ImGui::ShowDemoWindow();
-  // ImGui::SetNextWindowSize(ImVec2(120, 5));
-  if (frameIndex == 0) {
-    fps = 0;
-    for (int i = 0; i < 20; i++) {
-      fps = fps + frameTimes[i];
-    }
-    fps /= 20.0;
-    if (fps > 0)
-      fps = 1.0 / fps;
-  }
-  ImGui::Begin("HackMatrix");
-  vector<string> debugMessages = loggerVector->fetch();
-  if (ImGui::BeginTabBar("Developer Menu")) {
-    if (ImGui::BeginTabItem("FPS")) {
-      ImGui::Text("%f fps", fps);
-      ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Debug Log")) {
-      for (const auto &msg : debugMessages) {
-        ImGui::TextWrapped("%s", msg.c_str());
-      }
-      ImGui::EndTabItem();
-    }
-    ImGui::EndTabBar(); // Close the tab bar
-  }
-  ImGui::End();
-  ImGui::Render();
-}
-
 void Engine::loop() {
   vector<double> frameTimes(20, 0);
   double frameStart;
@@ -146,7 +93,7 @@ void Engine::loop() {
     while (!glfwWindowShouldClose(window)) {
       glfwPollEvents();
 
-      renderImGui(fps, frameIndex, frameTimes);
+      engineGui->render(fps, frameIndex, frameTimes);
       frameStart = glfwGetTime();
       world->tick();
       renderer->render();

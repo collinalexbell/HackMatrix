@@ -6,6 +6,7 @@
 #include "wm.h"
 #include "world.h"
 #include "entity.h"
+#include "engineGui.h"
 
 #include <GLFW/glfw3.h>
 #include <memory>
@@ -14,7 +15,6 @@
 void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
 class Engine {
-  shared_ptr<LoggerVector> loggerVector;
   World *world;
   Api *api;
   Renderer *renderer;
@@ -24,11 +24,10 @@ class Engine {
   GLFWwindow *window;
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
+  std::shared_ptr<EngineGui> engineGui;
   spdlog::sink_ptr loggerSink;
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
-  void initImGui();
-  void renderImGui(double &fps, int frameIndex, const vector<double> &frameTimes);
   void setupRegistry();
 
 public:
