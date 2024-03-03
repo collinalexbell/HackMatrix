@@ -37,16 +37,16 @@ World::World(shared_ptr<EntityRegistry> registry, Camera *camera, shared_ptr<blo
   dynamicObjects->addObject(dynamicCube);
 
   auto npc = registry->create();
-  registry->emplace<Model>(npc, "/home/collin/matrix/vox/hacker.obj",
-                           glm::vec3(0, 0.2, -1.0), 0.1);
+  registry->emplace<Model>(npc, "/home/collin/matrix/vox/hacker.obj");
+  registry->emplace<Positionable>(npc, glm::vec3(0, 0.2, -1.0), 0.1);
 
   auto cave = registry->create();
-  registry->emplace<Model>(cave, "/home/collin/matrix/vox/cave.obj",
-                          glm::vec3(0, 0, 0), 0.4);
+  registry->emplace<Model>(cave, "/home/collin/matrix/vox/cave.obj");
+  registry->emplace<Positionable>(cave, glm::vec3(0, 0, 0), 0.4);
 
   auto light = registry->create();
-  registry->emplace<Model>(light, "/home/collin/matrix/vox/light.obj",
-                           glm::vec3(-0.6, 1.5, 0), 0.1);
+  registry->emplace<Model>(light, "/home/collin/matrix/vox/light.obj");
+  registry->emplace<Positionable>(light, glm::vec3(-0.6, 1.5, 0), 0.1);
   registry->emplace<Light>(light, glm::vec3(1.0,1.0,1.0));
 }
 

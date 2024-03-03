@@ -163,9 +163,11 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
     return textureID;
 }
 
-Model::Model(string path, glm::vec3 pos, float scale) : pos(pos) {
+Model::Model(string path) {
   loadModel(path);
+}
 
+Positionable::Positionable(glm::vec3 pos, float scale): pos(pos) {
   modelMatrix = glm::mat4(1.0f);
   modelMatrix = glm::translate(modelMatrix, pos);
   modelMatrix = glm::scale(modelMatrix, glm::vec3(scale, scale, scale));
