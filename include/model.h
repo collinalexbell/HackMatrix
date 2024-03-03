@@ -16,7 +16,7 @@ struct Light {
 class LightPersister: public SQLPersisterImpl {
 public:
   LightPersister(std::shared_ptr<EntityRegistry> registry)
-      : SQLPersisterImpl(registry){};
+    : SQLPersisterImpl("Light", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;
@@ -35,7 +35,7 @@ struct Positionable {
 class PositionablePersister : public SQLPersisterImpl {
 public:
   PositionablePersister(std::shared_ptr<EntityRegistry> registry)
-      : SQLPersisterImpl(registry){};
+    : SQLPersisterImpl("Positionable", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;
@@ -65,7 +65,7 @@ private:
 class ModelPersister : public SQLPersisterImpl {
 public:
   ModelPersister(std::shared_ptr<EntityRegistry> registry):
-    SQLPersisterImpl(registry){};
+    SQLPersisterImpl("Model", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;

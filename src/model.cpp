@@ -4,6 +4,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <iostream>
+#include <sstream>
 #include "persister.h"
 #include "stb/stb_image.h"
 
@@ -179,18 +180,23 @@ Positionable::Positionable(glm::vec3 pos, float scale): pos(pos), scale(scale) {
 }
 
 void PositionablePersister::createTablesIfNeeded() {
-  registry->getDatabase().exec("CREATE TABLE IF NOT EXISTS Positionable ("
-                               "entity_id INTEGER PRIMARY KEY, "
-                               "pos_x REAL, pos_y REAL, pos_z REAL, scale REAL, "
-                               "FOREIGN KEY(entity_id) REFERENCES Entity(id))");
+  stringstream queryStream;
+  queryStream << "CREATE TABLE IF NOT EXISTS " << entityName << " ("
+              << "entity_id INTEGER PRIMARY KEY, "
+              << "pos_x REAL, pos_y REAL, pos_z REAL, scale REAL, "
+              << "FOREIGN KEY(entity_id) REFERENCES Entity(id))";
+  registry->getDatabase().exec(queryStream.str());
 }
 
 void PositionablePersister::save(entt::entity entity) {
   auto &pos = registry->get<Positionable>(entity);
   auto &persistable = registry->get<Persistable>(entity);
   auto &db = registry->getDatabase();
-  SQLite::Statement query(db, "INSERT OR REPLACE INTO Positionable (entity_id, pos_x, pos_y, "
-                              "pos_z, scale) VALUES (?, ?, ?, ?, ?)");
+  stringstream queryStream;
+  queryStream << "INSERT OR REPLACE INTO " << entityName
+              << " (entity_id, pos_x, pos_y, pos_z, scale)"
+              << " VALUES (?, ?, ?, ?, ?)";
+  SQLite::Statement query(db, queryStream.str());
   query.bind(1, persistable.entityId);
   query.bind(2, pos.pos.x);
   query.bind(3, pos.pos.y);
@@ -203,9 +209,12 @@ void PositionablePersister::saveAll() {
   auto view = registry->view<Persistable, Positionable>();
 
   SQLite::Database &db = registry->getDatabase(); // Get database reference
-  SQLite::Statement query(db, "INSERT OR REPLACE INTO Positionable (entity_id, pos_x, "
-                              "pos_y, pos_z, scale) VALUES (?, ?, ?, ?, ?)");
 
+  stringstream queryStream;
+  queryStream << "INSERT OR REPLACE INTO " << entityName
+              << " (entity_id, pos_x, pos_y, pos_z, scale)"
+              << " VALUES (?, ?, ?, ?, ?)";
+    SQLite::Statement query(db, queryStream.str());
   // Use a transaction for efficiency
   db.exec("BEGIN TRANSACTION");
 
@@ -224,8 +233,11 @@ void PositionablePersister::saveAll() {
 
 void PositionablePersister::load(entt::entity entity) {
   auto peristable = registry->get<Persistable>(entity);
-  SQLite::Statement query(
-      registry->getDatabase(), "SELECT pos_x, pos_y, pos_z, scale FROM Light WHERE entity_id = ?");
+  std::stringstream queryStream;
+  queryStream << "SELECT pos_x, pos_y, pos_z, scale FROM "
+              << entityName
+              << " WHERE entity_id = ?";
+  SQLite::Statement query(registry->getDatabase(), queryStream.str());
   query.bind(1, peristable.entityId);
 
   if (query.executeStep()) {
@@ -244,8 +256,11 @@ void PositionablePersister::loadAll() {
 
     // Cache query data
     std::unordered_map<int, std::array<float, 4>> positionDataCache;
-    SQLite::Statement query(db, "SELECT entity_id, pos_x, pos_y, pos_z, scale FROM Positionable");
 
+    std::stringstream queryStream;
+    queryStream << "SELECT entity_id, pos_x, pos_y, pos_z, scale FROM "
+                << entityName;
+    SQLite::Statement query(db, queryStream.str());
     while (query.executeStep()) {
       int dbId = query.getColumn(0).getInt();
       float x = query.getColumn(1).getDouble(); // Temporary variables
@@ -272,8 +287,10 @@ void ModelPersister::saveAll() {
   SQLite::Database &db = registry->getDatabase();
 
   // Assuming you have a 'Model' table with 'entity_id' and 'path' columns
-  SQLite::Statement query(db,
-                          "INSERT OR REPLACE INTO Model (entity_id, path) VALUES (?, ?)");
+  std::stringstream queryStream;
+  queryStream << "INSERT OR REPLACE INTO " << entityName
+              << " (entity_id, path) VALUES (?, ?)";
+  SQLite::Statement query(db, queryStream.str());
 
   db.exec("BEGIN TRANSACTION"); // Initiate transaction
 
@@ -289,10 +306,12 @@ void ModelPersister::saveAll() {
 
 void ModelPersister::createTablesIfNeeded() {
   SQLite::Database &db = registry->getDatabase();
-  db.exec("CREATE TABLE IF NOT EXISTS Model ("
-          "entity_id INTEGER PRIMARY KEY, "
-          "path TEXT, "
-          "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ");
+  std::stringstream queryStream;
+  queryStream << "CREATE TABLE IF NOT EXISTS " << entityName << " ("
+              << "entity_id INTEGER PRIMARY KEY, "
+              << "path TEXT, "
+              << "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ";
+  db.exec(queryStream.str());
 }
 
 
@@ -301,13 +320,15 @@ void ModelPersister::loadAll() {
     SQLite::Database& db = registry->getDatabase();
 
     // Cache query data
-    std::unordered_map<int, std::string> modelDataCache; 
-    SQLite::Statement query(db, "SELECT entity_id, path FROM Model");
+    std::unordered_map<int, std::string> modelDataCache;
+    std::stringstream queryStream;
+    queryStream << "SELECT entity_id, path FROM " << entityName;
+    SQLite::Statement query(db, queryStream.str());
 
     while (query.executeStep()) {
-        int dbId = query.getColumn(0).getInt();  
-        std::string path = query.getColumn(1).getText(); 
-        modelDataCache[dbId] = path; 
+        int dbId = query.getColumn(0).getInt();
+        std::string path = query.getColumn(1).getText();
+        modelDataCache[dbId] = path;
     }
 
     // Iterate and load (assuming you have a mechanism to load Models from paths)
@@ -327,7 +348,9 @@ void ModelPersister::load(entt::entity entity) {
   auto &persistable = registry->get<Persistable>(entity);
   SQLite::Database &db = registry->getDatabase();
 
-  SQLite::Statement query(db, "SELECT path FROM Model WHERE entity_id = ?");
+  std::stringstream queryStream;
+  queryStream << "SELECT path FROM " << entityName << " WHERE entity_id = ?";
+  SQLite::Statement query(db, queryStream.str());
   query.bind(1, persistable.entityId);
 
   if (query.executeStep()) {
@@ -347,8 +370,10 @@ void ModelPersister::save(entt::entity entity) {
   auto &persistable = registry->get<Persistable>(entity);
   SQLite::Database &db = registry->getDatabase();
 
-  SQLite::Statement query(db,
-                          "INSERT OR REPLACE INTO Model (entity_id, path) VALUES (?, ?)");
+  std::stringstream queryStream;
+  queryStream << "INSERT OR REPLACE INTO " << entityName
+              << " (entity_id, path) VALUES (?, ?)";
+  SQLite::Statement query(db, queryStream.str());
   query.bind(1, persistable.entityId);
   query.bind(2, model.path);
   query.exec();
@@ -356,10 +381,12 @@ void ModelPersister::save(entt::entity entity) {
 
 void LightPersister::createTablesIfNeeded() {
   SQLite::Database &db = registry->getDatabase();
-  db.exec("CREATE TABLE IF NOT EXISTS Light ("
-          "entity_id INTEGER PRIMARY KEY, "
-          "color_r REAL, color_g REAL, color_b REAL, "
-          "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ");
+  std::stringstream createTableStream;
+  createTableStream << "CREATE TABLE IF NOT EXISTS " << entityName << " ("
+                    << "entity_id INTEGER PRIMARY KEY, "
+                    << "color_r REAL, color_g REAL, color_b REAL, "
+                    << "FOREIGN KEY(entity_id) REFERENCES Entity(id)) ";
+  db.exec(createTableStream.str());
 }
 
 void LightPersister::loadAll() {
@@ -368,8 +395,9 @@ void LightPersister::loadAll() {
 
   // Cache query data
   std::unordered_map<int, glm::vec3> lightDataCache;
-  SQLite::Statement query(
-      db, "SELECT entity_id, color_r, color_g, color_b FROM Light");
+  stringstream queryStream;
+  queryStream << "SELECT entity_id, color_r, color_g, color_b FROM " << entityName;
+  SQLite::Statement query(db, queryStream.str());
 
   while (query.executeStep()) {
     int entityId = query.getColumn(0).getInt();
@@ -393,9 +421,10 @@ void LightPersister::loadAll() {
 void LightPersister::saveAll() {
   auto view = registry->view<Persistable, Light>();
   SQLite::Database &db = registry->getDatabase();
-
-  SQLite::Statement query(db, "INSERT OR REPLACE INTO Light (entity_id, color_r, color_g, "
-                              "color_b) VALUES (?, ?, ?, ?)");
+  stringstream queryStream;
+  queryStream << "INSERT OR REPLACE INTO " << entityName
+              << " (entity_id, color_r, color_g, color_b) VALUES (?, ?, ?, ?)";
+  SQLite::Statement query(db, queryStream.str());
 
   db.exec("BEGIN TRANSACTION");
 
@@ -416,8 +445,10 @@ void LightPersister::save(entt::entity entity) {
   auto &persistable = registry->get<Persistable>(entity);
   SQLite::Database &db = registry->getDatabase();
 
-  SQLite::Statement query(db, "INSERT OR REPLACE INTO Light (entity_id, color_r, color_g, "
-                              "color_b) VALUES (?, ?, ?, ?)");
+  stringstream queryStream;
+  queryStream << "INSERT OR REPLACE INTO " << entityName
+             << " (entity_id, color_r, color_g, color_b) VALUES (?, ?, ?, ?)";
+  SQLite::Statement query(db, queryStream.str());
   query.bind(1, persistable.entityId);
   query.bind(2, light.color.x);
   query.bind(3, light.color.y);
@@ -429,8 +460,10 @@ void LightPersister::load(entt::entity entity) {
   auto &persistable = registry->get<Persistable>(entity);
   SQLite::Database &db = registry->getDatabase();
 
-  SQLite::Statement query(
-      db, "SELECT color_r, color_g, color_b FROM Light WHERE entity_id = ?");
+  stringstream queryStream;
+  queryStream << "INSERT OR REPLACE INTO " << entityName
+              << " (entity_id, color_r, color_g, color_b) VALUES (?, ?, ?, ?)";
+  SQLite::Statement query(db, queryStream.str());
   query.bind(1, persistable.entityId);
 
   if (query.executeStep()) {

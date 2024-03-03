@@ -482,11 +482,17 @@ void Renderer::renderModels() {
   auto modelView = registry->view<Positionable, Model>();
   auto lightView = registry->view<Light>();
 
-  auto lightEntity = lightView.front();
-  auto lightPositionable = modelView.get<Positionable>(lightEntity);
-  auto light = lightView.get<Light>(lightEntity);
-  shader->setVec3("lightPos", lightPositionable.pos);
-  shader->setVec3("lightColor", light.color);
+  if(!lightView.empty()) {
+    auto lightEntity = lightView.front();
+    auto lightPositionable = modelView.get<Positionable>(lightEntity);
+    auto light = lightView.get<Light>(lightEntity);
+    shader->setVec3("lightPos", lightPositionable.pos);
+    shader->setVec3("lightColor", light.color);
+  } else {
+    shader->setVec3("lightPos", glm::vec3(0,0,0));
+    shader->setVec3("lightColor", glm::vec3(0.5,0.5,0.5));
+  }
+    
 
   for(auto entity: modelView) {
     auto m = modelView.get<Model>(entity);

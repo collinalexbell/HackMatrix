@@ -79,6 +79,9 @@ void EngineGui::renderComponentPanel() {
   for (auto [entity, persistable] : view.each()) {
     ImGui::Text("Entity ID: %s", std::to_string(persistable.entityId).c_str());
     bool &showComponentOptions = componentOptionsState[entity];
+    if (ImGui::Button("- Delete Entity")) {
+      registry->depersist(entity);
+    }
     if (ImGui::Button("+ Add Component")) {
       showComponentOptions = true; // Show the options on button press
     }

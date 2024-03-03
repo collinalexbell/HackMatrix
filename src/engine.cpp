@@ -26,13 +26,13 @@ void Engine::registerCursorCallback() {
 void Engine::setupRegistry() {
   registry = make_shared<EntityRegistry>();
   shared_ptr<SQLPersister> postionablePersister =
-      make_shared<PositionablePersister>(registry);
+    make_shared<PositionablePersister>(registry);
   registry->addPersister(postionablePersister);
   shared_ptr<SQLPersister> modelPersister =
-      make_shared<ModelPersister>(registry);
+    make_shared<ModelPersister>(registry);
   registry->addPersister(modelPersister);
   shared_ptr<SQLPersister> lightPersister =
-      make_shared<LightPersister>(registry);
+    make_shared<LightPersister>(registry);
   registry->addPersister(lightPersister);
   registry->createTablesIfNeeded();
 }

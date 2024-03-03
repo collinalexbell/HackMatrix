@@ -13,7 +13,7 @@ public:
   EntityRegistry();
   SQLite::Database &getDatabase();
   void addPersister(std::shared_ptr<SQLPersister>);
-
+  void depersist(entt::entity) override;
   entt::entity createPersistent();
   void createTablesIfNeeded() override;
   void saveAll() override;
