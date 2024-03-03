@@ -40,8 +40,8 @@ void Engine::setupRegistry() {
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   setupRegistry();
   registry->loadAll();
-  engineGui = make_shared<EngineGui>(window);
-  auto imGuiSink = make_shared<ImGuiSink>(engineGui->getLoggerVector());
+  auto loggerVector = make_shared<LoggerVector>();
+  auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
   logger = make_shared<spdlog::logger>("engine", loggerSink);
   logger->set_level(spdlog::level::debug);
@@ -50,6 +50,8 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   glfwFocusWindow(window);
   wire();
   registerCursorCallback();
+  // Has to be be created after the cursorCallback because gui wraps the callback
+  engineGui = make_shared<EngineGui>(window, registry, loggerVector);
 }
 
 Engine::~Engine() {
