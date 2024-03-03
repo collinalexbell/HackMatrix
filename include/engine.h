@@ -29,6 +29,7 @@ class Engine {
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
   void initImGui();
   void renderImGui(double &fps, int frameIndex, const vector<double> &frameTimes);
+  void setupRegistry();
 
 public:
   Engine(GLFWwindow* window, char** envp);
