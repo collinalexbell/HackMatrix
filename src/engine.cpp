@@ -25,18 +25,23 @@ void Engine::registerCursorCallback() {
   glfwSetCursorPosCallback(window, mouseCallback);
 }
 
-Engine::Engine(GLFWwindow* window, char** envp): window(window) {
+void Engine::setupRegistry() {
   registry = make_shared<EntityRegistry>();
-  shared_ptr<SQLPersister> postionablePersister = make_shared<PositionablePersister>(registry);
+  shared_ptr<SQLPersister> postionablePersister =
+      make_shared<PositionablePersister>(registry);
   registry->addPersister(postionablePersister);
-  shared_ptr<SQLPersister> modelPersister = make_shared<ModelPersister>(registry);
+  shared_ptr<SQLPersister> modelPersister =
+      make_shared<ModelPersister>(registry);
   registry->addPersister(modelPersister);
   shared_ptr<SQLPersister> lightPersister =
       make_shared<LightPersister>(registry);
   registry->addPersister(lightPersister);
   registry->createTablesIfNeeded();
-  registry->loadAll();
+}
 
+Engine::Engine(GLFWwindow* window, char** envp): window(window) {
+  setupRegistry();
+  registry->loadAll();
   loggerVector = make_shared<LoggerVector>();
   auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
