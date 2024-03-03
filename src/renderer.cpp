@@ -192,8 +192,9 @@ void Renderer::toggleWireframe() {
   }
 }
 
-Renderer::Renderer(Camera *camera, World *world, shared_ptr<blocks::TexturePack> texturePack):
-  texturePack(texturePack)
+Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *world, shared_ptr<blocks::TexturePack> texturePack):
+  texturePack(texturePack),
+  registry(registry)
 {
   this->camera = camera;
   this->world = world;
@@ -476,21 +477,27 @@ void Renderer::renderModels() {
   shader->setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
   shader->setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
   shader->setFloat("material.shininess", 32.0f);
-  shader->setVec3("lightPos", glm::vec3(-0.6, 0.6, 0));
-  shader->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
   shader->setVec3("viewPos", camera->position);
-  int i = 0;
   shader->setBool("isLight", false);
-  for(auto m: models) {
-    if(i == 2) {
+  auto modelView = registry->view<Model>();
+  auto lightView = registry->view<Light>();
+
+  auto lightEntity = lightView.front();
+  auto lightModel = modelView.get<Model>(lightEntity);
+  auto light = lightView.get<Light>(lightEntity);
+  shader->setVec3("lightPos", lightModel.pos);
+  shader->setVec3("lightColor", light.color);
+
+  for(auto entity: modelView) {
+    auto m = modelView.get<Model>(entity);
+    if(registry->all_of<Light>(entity)) {
       shader->setBool("isLight", true);
     }
-    shader->setMatrix3("normalMatrix", m->normalMatrix);
-    shader->setMatrix4("model", m->modelMatrix);
+    shader->setMatrix3("normalMatrix", m.normalMatrix);
+    shader->setMatrix4("model", m.modelMatrix);
 
-    m->Draw(*shader);
+    m.Draw(*shader);
     shader->setBool("isLight", false);
-    i++;
   }
   shader->setBool("isModel", false);
 }
@@ -542,6 +549,3 @@ Renderer::~Renderer() {
   }
 }
 
-void Renderer::addModel(shared_ptr<Model> model) {
-  models.push_back(model);
-}

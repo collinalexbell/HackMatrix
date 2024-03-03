@@ -12,6 +12,7 @@
 #include <memory>
 #include <mutex>
 #include <octree/octree.h>
+#include "entity.h"
 #include "logger.h"
 #include <spdlog/common.h>
 #include <unordered_map>
@@ -34,9 +35,9 @@ struct App {
 class World: public WorldInterface {
   shared_ptr<spdlog::logger> logger;
   shared_ptr<DynamicCube> dynamicCube;
+  shared_ptr<EntityRegistry> registry;
   Renderer *renderer = NULL;
   Camera *camera = NULL;
-  vector<shared_ptr<Model>> models;
   vector<Line> lines;
   unordered_map<glm::vec3, int> appCubes;
   vector<X11App*> apps;
@@ -77,7 +78,7 @@ public:
   void tick() override;
   vector<X11App *> getDirectRenderApps() override;
   const float CUBE_SIZE = 0.1;
-  World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false, spdlog::sink_ptr loggerSink = fileSink);
+  World(shared_ptr<EntityRegistry>, Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false, spdlog::sink_ptr loggerSink = fileSink);
   ~World();
   void attachRenderer(Renderer *renderer) override;
   float getViewDistanceForWindowSize(X11App *app) override;

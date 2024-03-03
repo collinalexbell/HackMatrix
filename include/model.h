@@ -7,6 +7,10 @@
 unsigned int TextureFromFile(const char *path, const string &directory,
                              bool gamma = false);
 
+struct Light {
+  glm::vec3 color;
+};
+
 class Model {
 public:
   Model(string path, glm::vec3 pos, float scale);

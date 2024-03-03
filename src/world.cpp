@@ -26,7 +26,7 @@
 
 using namespace std;
 
-World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug, spdlog::sink_ptr loggerSink) : camera(camera) {
+World::World(shared_ptr<EntityRegistry> registry, Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug, spdlog::sink_ptr loggerSink) : registry(registry), camera(camera) {
   initLogger(loggerSink);
   logger->debug("Hello World!");
   initAppPositions();
@@ -36,12 +36,18 @@ World::World(Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string
   dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f), glm::vec3(0.1f,0.1f, 0.1f));
   dynamicObjects->addObject(dynamicCube);
 
-  models.push_back(make_shared<Model>("/home/collin/matrix/vox/hacker.obj",
-                                      glm::vec3(0, 0.2, -1.0), 0.1));
-  models.push_back(make_shared<Model>("/home/collin/matrix/vox/cave.obj",
-                                      glm::vec3(0, 0, 0), 0.4));
-  models.push_back(make_shared<Model>("/home/collin/matrix/vox/light.obj",
-                                      glm::vec3(-0.6, 1.5, 0), 0.1));
+  auto npc = registry->create();
+  registry->emplace<Model>(npc, "/home/collin/matrix/vox/hacker.obj",
+                           glm::vec3(0, 0.2, -1.0), 0.1);
+
+  auto cave = registry->create();
+  registry->emplace<Model>(cave, "/home/collin/matrix/vox/cave.obj",
+                          glm::vec3(0, 0, 0), 0.4);
+
+  auto light = registry->create();
+  registry->emplace<Model>(light, "/home/collin/matrix/vox/light.obj",
+                           glm::vec3(-0.6, 1.5, 0), 0.1);
+  registry->emplace<Light>(light, glm::vec3(1.0,1.0,1.0));
 }
 
 void World::initLogger(spdlog::sink_ptr loggerSink) {
@@ -735,9 +741,6 @@ void World::removeApp(X11App *app) {
 
 void World::attachRenderer(Renderer* renderer){
   this->renderer = renderer;
-  for(auto model: models) {
-    this->renderer->addModel(model);
-  }
   refreshRendererCubes();
 }
 

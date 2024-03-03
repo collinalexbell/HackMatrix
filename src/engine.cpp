@@ -1,3 +1,4 @@
+#include "entity.h"
 #include "logger.h"
 #include <memory>
 #include <spdlog/common.h>
@@ -23,6 +24,7 @@ void Engine::registerCursorCallback() {
 }
 
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
+  registry = make_shared<EntityRegistry>();
   loggerVector = make_shared<LoggerVector>();
   auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
@@ -64,9 +66,9 @@ void Engine::initialize(){
   auto texturePack = blocks::initializeBasicPack();
   wm = new WM(glfwGetX11Window(window), loggerSink);
   camera = new Camera();
-  world = new World(camera, texturePack, "/home/collin/midtown/", true, loggerSink);
+  world = new World(registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
   api = new Api("tcp://*:3333", world);
-  renderer = new Renderer(camera, world, texturePack);
+  renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
   wm->registerControls(controls);
 }
