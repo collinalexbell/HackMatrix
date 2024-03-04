@@ -175,6 +175,8 @@ void EngineGui::renderEntities() {
   // Hashmap Declaration
   static std::unordered_map<entt::entity, bool> componentOptionsState;
   for (auto [entity, persistable] : view.each()) {
+    ImGui::Spacing();
+    ImGui::Spacing();
     ImGui::Text("Entity ID: %s", std::to_string(persistable.entityId).c_str());
     bool &showAddComponentPanel = componentOptionsState[entity];
     if (ImGui::Button("- Delete Entity")) {
@@ -189,8 +191,6 @@ void EngineGui::renderEntities() {
     }
 
     renderComponentPanel(entity);
-    ImGui::Spacing();
-    ImGui::Spacing();
   }
 }
 
