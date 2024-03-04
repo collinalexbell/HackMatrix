@@ -14,11 +14,13 @@ class EngineGui {
   GLFWwindow *window;
   shared_ptr<EntityRegistry> registry;
   shared_ptr<LoggerVector> loggerVector;
+  void addComponentPanel(entt::entity, bool&);
+  void renderComponentPanel(entt::entity);
+  void renderEntities();
+
 public:
   EngineGui(GLFWwindow* window, shared_ptr<EntityRegistry> registry, shared_ptr<LoggerVector>);
   void render(double&, int, vector<double>&);
   shared_ptr<LoggerVector> getLoggerVector();
-  void renderEntityList();
   void createNewEntity();
-  void renderComponentPanel();
 };

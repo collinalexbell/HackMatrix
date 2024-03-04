@@ -169,14 +169,17 @@ Model::Model(string path): path(path) {
   loadModel(path);
 }
 
-Positionable::Positionable(glm::vec3 pos, float scale): pos(pos), scale(scale) {
+void Positionable::update() {
   modelMatrix = glm::mat4(1.0f);
   modelMatrix = glm::translate(modelMatrix, pos);
   modelMatrix = glm::scale(modelMatrix, glm::vec3(scale, scale, scale));
-
   glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);
   glm::mat4 transposedInverse = glm::transpose(inverseModelMatrix);
   normalMatrix = glm::mat3(transposedInverse);
+}
+
+Positionable::Positionable(glm::vec3 pos, float scale): pos(pos), scale(scale) {
+  update();
 }
 
 void PositionablePersister::createTablesIfNeeded() {
@@ -282,6 +285,10 @@ void PositionablePersister::loadAll() {
     }
 }
 
+void PositionablePersister::depersistIfGone(entt::entity entity) {
+  depersistIfGoneTyped<Positionable>(entity);
+}
+
 void ModelPersister::saveAll() {
   auto view = registry->view<Persistable, Model>();
   SQLite::Database &db = registry->getDatabase();
@@ -379,6 +386,10 @@ void ModelPersister::save(entt::entity entity) {
   query.exec();
 }
 
+void ModelPersister::depersistIfGone(entt::entity entity) {
+  depersistIfGoneTyped<Model>(entity);
+}
+
 void LightPersister::createTablesIfNeeded() {
   SQLite::Database &db = registry->getDatabase();
   std::stringstream createTableStream;
@@ -473,4 +484,8 @@ void LightPersister::load(entt::entity entity) {
 
     registry->emplace<Light>(entity, glm::vec3(r, g, b));
   }
+}
+
+void LightPersister::depersistIfGone(entt::entity entity) {
+  depersistIfGoneTyped<Light>(entity);
 }

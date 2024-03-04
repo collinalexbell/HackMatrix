@@ -1,4 +1,4 @@
-#include "persister.h"
+#include "SQLPersisterImpl.h"
 #include "entity.h"
 
 
@@ -12,3 +12,6 @@ void SQLPersisterImpl::depersist(entt::entity entity) {
     query.exec();
   } catch(...) { /*nothing to delete*/}
 }
+
+
+

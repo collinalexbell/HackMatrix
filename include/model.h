@@ -1,6 +1,6 @@
 #pragma once
 #include "mesh.h"
-#include "persister.h"
+#include "SQLPersisterImpl.h"
 #include "shader.h"
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
@@ -22,12 +22,14 @@ public:
   void save(entt::entity) override;
   void loadAll() override;
   void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
 };
 
 struct Positionable {
   Positionable(glm::vec3 pos, float scale);
   glm::vec3 pos;
   float scale;
+  void update();
   glm::mat4 modelMatrix;
   glm::mat3 normalMatrix;
 };
@@ -41,6 +43,7 @@ public:
   void save(entt::entity) override;
   void loadAll() override;
   void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
 };
 
 class Model {
@@ -71,4 +74,5 @@ public:
   void save(entt::entity) override;
   void loadAll() override;
   void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
 };

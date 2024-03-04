@@ -75,3 +75,4 @@ void EntityRegistry::depersist(entt::entity entity) {
   query.exec();
   destroy(entity);
 }
+
