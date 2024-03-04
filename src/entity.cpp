@@ -64,3 +64,15 @@ entt::entity EntityRegistry::createPersistent() {
   emplace<Persistable>(rv, id);
   return rv;
 }
+
+void EntityRegistry::depersist(entt::entity entity) {
+  auto &persistable = get<Persistable>(entity);
+  for(auto persister: persisters) {
+    persister->depersist(entity);
+  }
+  SQLite::Statement query(db, "DELETE FROM Entity WHERE id = ?");
+  query.bind(1, persistable.entityId);
+  query.exec();
+  destroy(entity);
+}
+

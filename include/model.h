@@ -1,6 +1,6 @@
 #pragma once
 #include "mesh.h"
-#include "persister.h"
+#include "SQLPersisterImpl.h"
 #include "shader.h"
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
@@ -16,18 +16,20 @@ struct Light {
 class LightPersister: public SQLPersisterImpl {
 public:
   LightPersister(std::shared_ptr<EntityRegistry> registry)
-      : SQLPersisterImpl(registry){};
+    : SQLPersisterImpl("Light", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;
   void loadAll() override;
   void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
 };
 
 struct Positionable {
   Positionable(glm::vec3 pos, float scale);
   glm::vec3 pos;
   float scale;
+  void update();
   glm::mat4 modelMatrix;
   glm::mat3 normalMatrix;
 };
@@ -35,12 +37,13 @@ struct Positionable {
 class PositionablePersister : public SQLPersisterImpl {
 public:
   PositionablePersister(std::shared_ptr<EntityRegistry> registry)
-      : SQLPersisterImpl(registry){};
+    : SQLPersisterImpl("Positionable", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;
   void loadAll() override;
   void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
 };
 
 class Model {
@@ -65,10 +68,11 @@ private:
 class ModelPersister : public SQLPersisterImpl {
 public:
   ModelPersister(std::shared_ptr<EntityRegistry> registry):
-    SQLPersisterImpl(registry){};
+    SQLPersisterImpl("Model", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;
   void loadAll() override;
   void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
 };

@@ -6,18 +6,25 @@
 #include <vector>
 #include <memory>
 
-class EntityRegistry : public entt::registry, public SQLPersister {
+class EntityRegistry : public entt::registry {
   SQLite::Database db;
   std::vector<std::shared_ptr<SQLPersister>> persisters;
 public:
   EntityRegistry();
   SQLite::Database &getDatabase();
   void addPersister(std::shared_ptr<SQLPersister>);
-
+  void depersist(entt::entity);
   entt::entity createPersistent();
-  void createTablesIfNeeded() override;
-  void saveAll() override;
-  void save(entt::entity) override;
-  void loadAll() override;
-  void load(entt::entity) override;
+  void createTablesIfNeeded();
+  void saveAll();
+  void save(entt::entity);
+  void loadAll();
+  void load(entt::entity);
+  template <typename T>
+  void removePersistent(entt::entity entity) {
+    remove<T>(entity);
+    for (auto persister : persisters) {
+      persister->depersistIfGone(entity);
+    }
+  };
 };
