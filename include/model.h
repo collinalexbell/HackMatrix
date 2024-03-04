@@ -26,8 +26,9 @@ public:
 };
 
 struct Positionable {
-  Positionable(glm::vec3 pos, float scale);
+  Positionable(glm::vec3 pos, glm::vec3 rotate, float scale);
   glm::vec3 pos;
+  glm::vec3 rotate;
   float scale;
   void update();
   glm::mat4 modelMatrix;
