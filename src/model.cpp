@@ -5,6 +5,7 @@
 #include <assimp/scene.h>
 #include <iostream>
 #include <sstream>
+#include "glm/trigonometric.hpp"
 #include "persister.h"
 #include "stb/stb_image.h"
 
@@ -172,13 +173,16 @@ Model::Model(string path): path(path) {
 void Positionable::update() {
   modelMatrix = glm::mat4(1.0f);
   modelMatrix = glm::translate(modelMatrix, pos);
+  modelMatrix = glm::rotate(modelMatrix, glm::radians(rotate.z), glm::vec3(0,0,1));
+  modelMatrix = glm::rotate(modelMatrix, glm::radians(rotate.y), glm::vec3(0,1,0));
+  modelMatrix = glm::rotate(modelMatrix, glm::radians(rotate.x), glm::vec3(1,0,0));
   modelMatrix = glm::scale(modelMatrix, glm::vec3(scale, scale, scale));
   glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);
   glm::mat4 transposedInverse = glm::transpose(inverseModelMatrix);
   normalMatrix = glm::mat3(transposedInverse);
 }
 
-Positionable::Positionable(glm::vec3 pos, float scale): pos(pos), scale(scale) {
+Positionable::Positionable(glm::vec3 pos, glm::vec3 rotate, float scale): pos(pos), scale(scale), rotate(rotate) {
   update();
 }
 
@@ -187,6 +191,7 @@ void PositionablePersister::createTablesIfNeeded() {
   queryStream << "CREATE TABLE IF NOT EXISTS " << entityName << " ("
               << "entity_id INTEGER PRIMARY KEY, "
               << "pos_x REAL, pos_y REAL, pos_z REAL, scale REAL, "
+              << "rot_x REAL, rot_y REAL, rot_z REAL, "
               << "FOREIGN KEY(entity_id) REFERENCES Entity(id))";
   registry->getDatabase().exec(queryStream.str());
 }
@@ -197,14 +202,17 @@ void PositionablePersister::save(entt::entity entity) {
   auto &db = registry->getDatabase();
   stringstream queryStream;
   queryStream << "INSERT OR REPLACE INTO " << entityName
-              << " (entity_id, pos_x, pos_y, pos_z, scale)"
-              << " VALUES (?, ?, ?, ?, ?)";
+              << " (entity_id, pos_x, pos_y, pos_z, rot_x, rot_y, rot_z, scale)"
+              << " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
   SQLite::Statement query(db, queryStream.str());
   query.bind(1, persistable.entityId);
   query.bind(2, pos.pos.x);
   query.bind(3, pos.pos.y);
   query.bind(4, pos.pos.z);
-  query.bind(5, pos.scale);
+  query.bind(5, pos.rotate.x);
+  query.bind(6, pos.rotate.y);
+  query.bind(7, pos.rotate.z);
+  query.bind(8, pos.scale);
   query.exec();
 }
 
@@ -215,8 +223,8 @@ void PositionablePersister::saveAll() {
 
   stringstream queryStream;
   queryStream << "INSERT OR REPLACE INTO " << entityName
-              << " (entity_id, pos_x, pos_y, pos_z, scale)"
-              << " VALUES (?, ?, ?, ?, ?)";
+              << " (entity_id, pos_x, pos_y, pos_z, rot_x, rot_y, rot_z, scale)"
+              << " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     SQLite::Statement query(db, queryStream.str());
   // Use a transaction for efficiency
   db.exec("BEGIN TRANSACTION");
@@ -226,7 +234,10 @@ void PositionablePersister::saveAll() {
     query.bind(2, positionable.pos.x);
     query.bind(3, positionable.pos.y);
     query.bind(4, positionable.pos.z);
-    query.bind(5, positionable.scale);
+    query.bind(5, positionable.rotate.x);
+    query.bind(6, positionable.rotate.y);
+    query.bind(7, positionable.rotate.z);
+    query.bind(8, positionable.scale);
     query.exec();
     query.reset(); // Important for reusing the prepared statement
   }
@@ -237,7 +248,7 @@ void PositionablePersister::saveAll() {
 void PositionablePersister::load(entt::entity entity) {
   auto peristable = registry->get<Persistable>(entity);
   std::stringstream queryStream;
-  queryStream << "SELECT pos_x, pos_y, pos_z, scale FROM "
+  queryStream << "SELECT pos_x, pos_y, pos_z, rot_x, rot_y, rot_z, scale FROM "
               << entityName
               << " WHERE entity_id = ?";
   SQLite::Statement query(registry->getDatabase(), queryStream.str());
@@ -247,9 +258,12 @@ void PositionablePersister::load(entt::entity entity) {
     float x = query.getColumn(0).getDouble();
     float y = query.getColumn(1).getDouble();
     float z = query.getColumn(2).getDouble();
-    float scale = query.getColumn(3).getDouble();
+    float rotx = query.getColumn(3).getDouble();
+    float roty = query.getColumn(4).getDouble();
+    float rotz = query.getColumn(5).getDouble();
+    float scale = query.getColumn(6).getDouble();
 
-    registry->emplace<Positionable>(entity, glm::vec3(x, y, z), scale);
+    registry->emplace<Positionable>(entity, glm::vec3(x, y, z), glm::vec3(rotx, roty, rotz), scale);
   }
 }
 
@@ -258,20 +272,23 @@ void PositionablePersister::loadAll() {
     SQLite::Database& db = registry->getDatabase();
 
     // Cache query data
-    std::unordered_map<int, std::array<float, 4>> positionDataCache;
+    std::unordered_map<int, std::array<float, 7>> positionDataCache;
 
     std::stringstream queryStream;
-    queryStream << "SELECT entity_id, pos_x, pos_y, pos_z, scale FROM "
+    queryStream << "SELECT entity_id, pos_x, pos_y, pos_z, rot_x, rot_y, rot_z, scale FROM "
                 << entityName;
     SQLite::Statement query(db, queryStream.str());
     while (query.executeStep()) {
       int dbId = query.getColumn(0).getInt();
-      float x = query.getColumn(1).getDouble(); // Temporary variables
+      float x = query.getColumn(1).getDouble();
       float y = query.getColumn(2).getDouble();
       float z = query.getColumn(3).getDouble();
-      float scale = query.getColumn(4).getDouble();
+      float rotx = query.getColumn(4).getDouble();
+      float roty = query.getColumn(5).getDouble();
+      float rotz = query.getColumn(6).getDouble();
+      float scale = query.getColumn(7).getDouble();
 
-      std::array<float, 4> data = {x, y, z, scale}; // Using temporaries
+      std::array<float, 7> data = {x, y, z, rotx, roty, rotz, scale}; // Using temporaries
       positionDataCache[dbId] = data;
     }
 
@@ -279,8 +296,8 @@ void PositionablePersister::loadAll() {
     for(auto [entity, persistable]: view.each()) {
         auto it = positionDataCache.find(persistable.entityId);
         if (it != positionDataCache.end()) {
-            auto& [x, y, z, scale] = it->second;
-            registry->emplace<Positionable>(entity, glm::vec3(x, y, z), scale);
+          auto& [x, y, z, rotx, roty, rotz, scale] = it->second;
+          registry->emplace<Positionable>(entity, glm::vec3(x, y, z), glm::vec3(rotx, roty, rotz), scale);
         }
     }
 }

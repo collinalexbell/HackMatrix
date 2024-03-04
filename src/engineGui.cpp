@@ -98,18 +98,20 @@ void EngineGui::addComponentPanel(entt::entity entity,
     }
   } else if (selectedComponentType == POSITIONABLE_TYPE) {
     static glm::vec3 position = glm::vec3(0.0f);
+    static glm::vec3 rotation = glm::vec3(0.0f);
     static float scale = 1.0f;
 
     ImGui::InputFloat3("Position", (float *)&position);
+    ImGui::InputFloat3("Rotation", (float *)&rotation);
     ImGui::InputFloat("Scale", &scale);
 
     if (ImGui::Button("Add Positionable Component")) {
-      registry->emplace<Positionable>(entity, position, scale);
+      registry->emplace<Positionable>(entity, position, rotation, scale);
       showAddComponentPanel = false;
     }
   } else if (selectedComponentType == MODEL_TYPE) {
     static char modelPath[128] = "";
-    ImGui::InputText("Model Path", modelPath, IM_ARRAYSIZE(modelPath));
+    ImGui::InputText("Model Path##New", modelPath, IM_ARRAYSIZE(modelPath));
 
     if (ImGui::Button("Add Model Component")) {
       registry->emplace<Model>(entity, modelPath);
@@ -135,12 +137,15 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     auto &positionable = registry->get<Positionable>(entity);
 
     auto copiedPos = positionable.pos;
+    auto copiedRotate = positionable.rotate;
     auto copiedScale = positionable.scale;
 
     ImGui::Text("Positioner Component:");
     ImGui::BeginGroup();
     ImGui::InputFloat3(("Position##" + to_string((int)entity)).c_str(),
                        (float *)&positionable.pos);
+    ImGui::InputFloat3(("Rotation##" + to_string((int)entity)).c_str(),
+                       (float *)&positionable.rotate);
     ImGui::InputFloat(("Scale##" + to_string((int)entity)).c_str(),
                       &positionable.scale);
     if (ImGui::Button(
@@ -150,7 +155,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::EndGroup();
     ImGui::Spacing();
 
-    if(copiedPos != positionable.pos || copiedScale != positionable.scale) {
+    if(copiedPos != positionable.pos || copiedScale != positionable.scale || copiedRotate != positionable.rotate) {
       positionable.update();
     }
   }
@@ -160,7 +165,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     strcpy(modelPath, model.path.c_str());
     ImGui::Text("Model Component:");
     ImGui::BeginGroup();
-    ImGui::InputText("Model Path", modelPath, IM_ARRAYSIZE(modelPath));
+    ImGui::InputText(("Model Path##" + to_string((int)entity)).c_str(), modelPath,
+                     IM_ARRAYSIZE(modelPath));
     if (ImGui::Button(
             ("Delete Component##Model" + to_string((int)entity)).c_str())) {
       registry->removePersistent<Model>(entity);
