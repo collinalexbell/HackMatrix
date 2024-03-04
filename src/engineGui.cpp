@@ -189,6 +189,8 @@ void EngineGui::renderEntities() {
     }
 
     renderComponentPanel(entity);
+    ImGui::Spacing();
+    ImGui::Spacing();
   }
 }
 
