@@ -19,7 +19,7 @@ void systems::openDoor(std::shared_ptr<EntityRegistry> registry, entt::entity en
 void systems::closeDoor(std::shared_ptr<EntityRegistry> registry, entt::entity entity) {
   auto &door = registry->get<Door>(entity);
   if(door.state == OPEN) {
-    auto movement = door.openMovement;
+    auto movement = door.closeMovement;
     movement.onFinish = [registry, entity]() -> void {
       auto &door = registry->get<Door>(entity);
       door.state = CLOSED;
