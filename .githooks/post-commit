@@ -2,3 +2,4 @@
 
 cp matrix _matrix
 cp vox/*.vox ~/backup_assets
+cp db/matrix.db ~/backup_assets

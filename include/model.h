@@ -33,6 +33,8 @@ struct Positionable {
   void update();
   glm::mat4 modelMatrix;
   glm::mat3 normalMatrix;
+  bool damaged = false;
+  void damage();
 };
 
 class PositionablePersister : public SQLPersisterImpl {

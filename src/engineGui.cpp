@@ -1,4 +1,6 @@
 #include "engineGui.h"
+#include "components/RotateMovement.h"
+#include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
 #include "logger.h"
 #include "persister.h"
@@ -82,10 +84,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int LIGHT_TYPE = 0;
   static int POSITIONABLE_TYPE = 1; // Adjusted indexes
   static int MODEL_TYPE = 2;
+  static int ROTATE_MOVEMENT_TYPE = 3;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0");
+               "Light\0Positionable\0Model\0RotateMovement\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -115,6 +118,19 @@ void EngineGui::addComponentPanel(entt::entity entity,
 
     if (ImGui::Button("Add Model Component")) {
       registry->emplace<Model>(entity, modelPath);
+      showAddComponentPanel = false;
+    }
+  } else if (selectedComponentType == ROTATE_MOVEMENT_TYPE) {
+    static float degreesToRotate = 0;
+    static float degreesPerSecond = 0;
+    static glm::vec3 axis = glm::vec3(0.0f);
+    ImGui::InputFloat("Degrees", &degreesToRotate);
+    ImGui::InputFloat("Degrees/s", &degreesPerSecond);
+    ImGui::InputFloat3("Rotation Axis", glm::value_ptr(axis));
+
+    if (ImGui::Button("Add RotateMovement Component")) {
+      registry->emplace<RotateMovement>
+        (entity, degreesToRotate, degreesPerSecond, axis);
       showAddComponentPanel = false;
     }
   }
@@ -174,6 +190,20 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::EndGroup();
     ImGui::Spacing();
   }
+  if(registry->any_of<RotateMovement>(entity)) {
+    // not a reference, because I'm just displaying text
+    auto rotateMovement = registry->get<RotateMovement>(entity);
+    ImGui::Text("RotateMovement Component");
+    ImGui::Text("Degrees: %f", rotateMovement.degrees);
+    ImGui::Text("Degrees/s: %f", rotateMovement.degreesPerSecond);
+    auto axis = rotateMovement.axis;
+    ImGui::Text("Axis: (%f, %f, %f)", axis.x, axis.y, axis.z);
+    if (ImGui::Button(
+            ("Delete Component##RotateMovement" + to_string((int)entity)).c_str())) {
+      registry->remove<RotateMovement>(entity);
+    }
+    ImGui::Spacing();
+  }
 }
 
 void EngineGui::renderEntities() {
@@ -188,7 +218,7 @@ void EngineGui::renderEntities() {
     if (ImGui::Button("- Delete Entity")) {
       registry->depersist(entity);
     }
-    if (ImGui::Button("+ Add Component")) {
+    if (ImGui::Button(("+ Add Component##" + to_string((int)entity)).c_str())) {
       showAddComponentPanel = true; // Show the options on button press
     }
 
