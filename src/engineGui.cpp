@@ -238,6 +238,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
   if(registry->any_of<Door>(entity)) {
     auto &door = registry->get<Door>(entity);
 
+    ImGui::Text("Door Component");
     ImGui::Text("Open RotateMovement");
     ImGui::InputDouble(("Degrees##toOpen" + to_string((int)entity)).c_str(),
                        &door.openMovement.degrees);
@@ -284,11 +285,15 @@ void EngineGui::renderEntities() {
     if (ImGui::Button("- Delete Entity")) {
       registry->depersist(entity);
     }
-    if (ImGui::Button(("+ Add Component##" + to_string((int)entity)).c_str())) {
-      showAddComponentPanel = true; // Show the options on button press
+    if(!showAddComponentPanel) {
+      if (ImGui::Button(("+ Add Component##" + to_string((int)entity)).c_str())) {
+        showAddComponentPanel = true; // Show the options on button press
+      }
     }
-
     if (showAddComponentPanel) { // Only display the combo and fields if active
+      if((ImGui::Button(("Go Back##" + to_string((int)entity)).c_str()))) {
+        showAddComponentPanel = false;
+      }
       addComponentPanel(entity, showAddComponentPanel);
     }
 
