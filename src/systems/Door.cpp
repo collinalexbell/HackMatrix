@@ -63,3 +63,5 @@ void systems::DoorPersister::loadAll() {
 
 void systems::DoorPersister::load(entt::entity) {
 }
+
+void systems::DoorPersister::depersistIfGone(entt::entity) {}

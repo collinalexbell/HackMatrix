@@ -12,6 +12,7 @@ namespace systems {
   void closeDoor(std::shared_ptr<EntityRegistry> , entt::entity);
 
   class DoorPersister : public SQLPersisterImpl {
+  public:
     DoorPersister(std::shared_ptr<EntityRegistry> registry)
         : SQLPersisterImpl("Door", registry){};
     void createTablesIfNeeded() override;
@@ -19,5 +20,6 @@ namespace systems {
     void save(entt::entity) override;
     void loadAll() override;
     void load(entt::entity) override;
+    void depersistIfGone(entt::entity) override;
   };
 };

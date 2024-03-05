@@ -10,6 +10,7 @@
 #include "assets.h"
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
+#include "systems/Door.h"
 
 #include "imgui/imgui_impl_opengl3.h"
 
@@ -25,15 +26,23 @@ void Engine::registerCursorCallback() {
 
 void Engine::setupRegistry() {
   registry = make_shared<EntityRegistry>();
+
   shared_ptr<SQLPersister> postionablePersister =
     make_shared<PositionablePersister>(registry);
   registry->addPersister(postionablePersister);
+
   shared_ptr<SQLPersister> modelPersister =
     make_shared<ModelPersister>(registry);
   registry->addPersister(modelPersister);
+
   shared_ptr<SQLPersister> lightPersister =
     make_shared<LightPersister>(registry);
   registry->addPersister(lightPersister);
+
+  shared_ptr<SQLPersister> doorPersister =
+    make_shared<systems::DoorPersister>(registry);
+  registry->addPersister(doorPersister);
+
   registry->createTablesIfNeeded();
 }
 
