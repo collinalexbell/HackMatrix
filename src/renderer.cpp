@@ -228,6 +228,9 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
 
+  shader->setVec3("lightPos", glm::vec3(0, 0, 0));
+  shader->setVec3("lightColor", glm::vec3(0.5, 0.5, 0.5));
+
   initAppTextures();
 
   shader->setBool("lookedAtValid", false);
@@ -478,8 +481,6 @@ void Renderer::renderModels() {
   auto modelView = registry->view<Positionable, Model>();
   auto lightView = registry->view<Light,Positionable>();
 
-  shader->setVec3("lightPos", glm::vec3(0, 0, 0));
-  shader->setVec3("lightColor", glm::vec3(0.5, 0.5, 0.5));
 
   entt::entity lightEntity;
   bool hasLight = false;
