@@ -1,15 +1,15 @@
-     100 files     105 text files.
-classified 105 filesDuplicate file check 105 files (104 known unique)Unique:      100 files                                               105 unique files.                              
+     100 files     108 text files.
+classified 108 filesDuplicate file check 108 files (107 known unique)Unique:      100 files                                               108 unique files.                              
 Counting:  100      11 files ignored.
 
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-C/C++ Header                    49          19127          37035          61675
-C++                             39           3099           1298          15913
+C/C++ Header                    51          19131          37035          61697
+C++                             40           3102           1298          15936
 C                                5           1231            455          10284
 Python                           7             76             37            311
 JavaScript                       3             43             11            160
 -------------------------------------------------------------------------------
-SUM:                           103          23576          38836          88343
+SUM:                           106          23583          38836          88388
 -------------------------------------------------------------------------------
