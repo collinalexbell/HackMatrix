@@ -23,6 +23,7 @@
 #include "utility.h"
 #include <csignal>
 #include "memory.h"
+#include "systems/ApplyRotation.h"
 
 using namespace std;
 
@@ -1089,6 +1090,13 @@ void World::loadLatest() {
 
 void World::tick(){
   //loadChunksIfNeccissary();
+  systems::applyRotation(registry);
+  auto view = registry->view<Positionable>();
+  for(auto [entity, positionable]: view.each()) {
+    if(positionable.damaged) {
+      positionable.update();
+    }
+  }
   if(dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
   }
