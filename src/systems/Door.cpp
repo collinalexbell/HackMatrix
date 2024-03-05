@@ -212,18 +212,23 @@ void systems::DoorPersister::load(entt::entity) {
 void systems::DoorPersister::depersistIfGone(entt::entity entity) {
   auto persistable = registry->get<Persistable>(entity);
   auto &db = registry->getDatabase();
-  SQLite::Statement query(db, "SELECT open_movement_id, close_movement_id FROM Door where entity_id = ?");
-  query.bind(1, persistable.entityId);
-  query.exec();
-  int64_t open_movement_id = query.getColumn(0).getInt64();
-  int64_t close_movment_id = query.getColumn(1).getInt64();
+  try {
+    SQLite::Statement query(db, "SELECT open_movement_id, close_movement_id "
+                                "FROM Door where entity_id = ?");
+    query.bind(1, persistable.entityId);
+    query.executeStep();
+    int64_t open_movement_id = query.getColumn(0).getInt64();
+    int64_t close_movment_id = query.getColumn(1).getInt64();
 
-  SQLite::Statement deleteQuery(db, "DELETE FROM RotateMovement WHERE id = ?");
-  deleteQuery.bind(1, open_movement_id);
-  deleteQuery.exec();
-  deleteQuery.reset();
-  deleteQuery.bind(1, close_movment_id);
-  deleteQuery.exec();
+    SQLite::Statement deleteQuery(db,
+                                  "DELETE FROM RotateMovement WHERE id = ?");
+    deleteQuery.bind(1, open_movement_id);
+    deleteQuery.exec();
+    deleteQuery.reset();
+    deleteQuery.bind(1, close_movment_id);
+    deleteQuery.exec();
 
-  depersistIfGoneTyped<DoorPersister>(entity);
+    depersistIfGoneTyped<DoorPersister>(entity);
+  } catch (...) {
+  }
 }
