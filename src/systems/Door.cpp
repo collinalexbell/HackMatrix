@@ -29,6 +29,27 @@ void systems::closeDoor(std::shared_ptr<EntityRegistry> registry, entt::entity e
 
 
 void systems::DoorPersister::createTablesIfNeeded() {
+  SQLite::Database &db = registry->getDatabase();
+
+  db.exec("CREATE TABLE IF NOT EXISTS RotateMovement ( "
+          "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+          "axis_x REAL, "
+          "axis_y REAL, "
+          "axis_z REAL, "
+          "degrees REAL, "
+          "degrees_per_second REAL "
+          ")");
+
+  db.exec("CREATE TABLE IF NOT EXISTS Door ( "
+          "id INTEGER PRIMARY KEY, "
+          "entity_id INTEGER, "
+          "open_movement_id INTEGER, "
+          "close_movement_id INTEGER, "
+          "state INTEGER, "
+          "FOREIGN KEY (entity_id) REFERENCES Entity(id), "
+          "FOREIGN KEY (open_movement_id) REFERENCES RotateMovement(id), "
+          "FOREIGN KEY (close_movement_id) REFERENCES RotateMovement(id) "
+          ")");
 }
 
 void systems::DoorPersister::saveAll() {
