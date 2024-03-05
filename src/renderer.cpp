@@ -228,6 +228,9 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
 
+  shader->setVec3("lightPos", glm::vec3(0, 0, 0));
+  shader->setVec3("lightColor", glm::vec3(0.5, 0.5, 0.5));
+
   initAppTextures();
 
   shader->setBool("lookedAtValid", false);
@@ -473,31 +476,24 @@ void Renderer::renderLines() {
 
 void Renderer::renderModels() {
   shader->setBool("isModel", true);
-  shader->setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
-  shader->setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
-  shader->setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-  shader->setFloat("material.shininess", 32.0f);
   shader->setVec3("viewPos", camera->position);
   shader->setBool("isLight", false);
   auto modelView = registry->view<Positionable, Model>();
-  auto lightView = registry->view<Light>();
+  auto lightView = registry->view<Light,Positionable>();
 
-  if(!lightView.empty()) {
-    auto lightEntity = lightView.front();
-    auto lightPositionable = modelView.get<Positionable>(lightEntity);
-    auto light = lightView.get<Light>(lightEntity);
-    shader->setVec3("lightPos", lightPositionable.pos);
+
+  entt::entity lightEntity;
+  bool hasLight = false;
+
+  for(auto [entity, light, positionable]: lightView.each()) {
+    shader->setVec3("lightPos", positionable.pos);
     shader->setVec3("lightColor", light.color);
-  } else {
-    shader->setVec3("lightPos", glm::vec3(0,0,0));
-    shader->setVec3("lightColor", glm::vec3(0.5,0.5,0.5));
+    lightEntity = entity;
+    hasLight = true;
   }
-    
 
-  for(auto entity: modelView) {
-    auto m = modelView.get<Model>(entity);
-    auto p = modelView.get<Positionable>(entity);
-    if(registry->all_of<Light>(entity)) {
+  for(auto [entity, p, m]: modelView.each()) {
+    if(hasLight && lightEntity == entity) {
       shader->setBool("isLight", true);
     }
     shader->setMatrix3("normalMatrix", p.normalMatrix);

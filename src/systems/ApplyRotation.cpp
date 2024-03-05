@@ -29,6 +29,9 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
     positionable.rotate = positionable.rotate + (rotateMovement.axis * glm::vec3(degreesToRotate));
 
     if (fabs(rotateMovement.degrees) < MIN_ROTATION) { // Account for negatives
+      if(rotateMovement.onFinish.has_value()) {
+        (*rotateMovement.onFinish)();
+      }
       registry->remove<RotateMovement>(entity);
     }
     positionable.damage();

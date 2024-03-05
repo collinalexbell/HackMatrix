@@ -1,4 +1,5 @@
 #include "engineGui.h"
+#include "components/Door.h"
 #include "components/RotateMovement.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
@@ -7,6 +8,7 @@
 #include "string"
 #include <string>
 #include "entity.h"
+#include "systems/Door.h"
 
 #include <glm/glm.hpp>
 
@@ -85,10 +87,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int POSITIONABLE_TYPE = 1; // Adjusted indexes
   static int MODEL_TYPE = 2;
   static int ROTATE_MOVEMENT_TYPE = 3;
+  static int DOOR_TYPE = 4;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0");
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -131,6 +134,34 @@ void EngineGui::addComponentPanel(entt::entity entity,
     if (ImGui::Button("Add RotateMovement Component")) {
       registry->emplace<RotateMovement>
         (entity, degreesToRotate, degreesPerSecond, axis);
+      showAddComponentPanel = false;
+    }
+  } else if(selectedComponentType == DOOR_TYPE) {
+    static float openDegreesToRotate = 0;
+    static float openDegreesPerSecond = 0;
+    static float closeDegreesToRotate = 0;
+    static float closeDegreesPerSecond = 0;
+    static glm::vec3 openAxis = glm::vec3(0.0f);
+    static glm::vec3 closeAxis = glm::vec3(0.0f);
+    static DoorState doorState;
+
+    ImGui::Text("Open RotateMovement");
+    ImGui::InputFloat("Degrees##toOpen", &openDegreesToRotate);
+    ImGui::InputFloat("Degrees/s##toOpen", &openDegreesPerSecond);
+    ImGui::InputFloat3("Rotation Axis##toOpen", glm::value_ptr(openAxis));
+
+    ImGui::Text("Closed RotateMovement");
+    ImGui::InputFloat("Degrees##toClose", &closeDegreesToRotate);
+    ImGui::InputFloat("Degrees/s##toClose", &closeDegreesPerSecond);
+    ImGui::InputFloat3("Rotation Axis##toClose", glm::value_ptr(closeAxis));
+
+    ImGui::RadioButton("Open",  (int*) &doorState, (int)DoorState::OPEN);
+    ImGui::RadioButton("Closed", (int*) &doorState, (int)DoorState::CLOSED);
+
+    if (ImGui::Button("Add Door Component")) {
+      auto open = RotateMovement{openDegreesToRotate, openDegreesPerSecond, openAxis};
+      auto close = RotateMovement{closeDegreesToRotate, closeDegreesPerSecond, closeAxis};
+      registry->emplace<Door>(entity, open, close, doorState);
       showAddComponentPanel = false;
     }
   }
@@ -204,6 +235,42 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     }
     ImGui::Spacing();
   }
+  if(registry->any_of<Door>(entity)) {
+    auto &door = registry->get<Door>(entity);
+
+    ImGui::Text("Door Component");
+    ImGui::Text("Open RotateMovement");
+    ImGui::InputDouble(("Degrees##toOpen" + to_string((int)entity)).c_str(),
+                       &door.openMovement.degrees);
+    ImGui::InputDouble(("Degrees/s##toOpen" + to_string((int)entity)).c_str(),
+                       &door.openMovement.degreesPerSecond);
+    ImGui::InputFloat3(("Rotation Axis##toOpen" + to_string((int)entity)).c_str(),
+        glm::value_ptr(door.openMovement.axis));
+
+    ImGui::Text("Close RotateMovement");
+    ImGui::InputDouble(("Degrees##toClose" + to_string((int)entity)).c_str(),
+                       &door.closeMovement.degrees);
+    ImGui::InputDouble(("Degrees/s##toClose" + to_string((int)entity)).c_str(),
+                       &door.closeMovement.degreesPerSecond);
+    ImGui::InputFloat3(("Rotation Axis##toClose" + to_string((int)entity)).c_str(),
+        glm::value_ptr(door.closeMovement.axis));
+
+    ImGui::RadioButton(("Open" + to_string((int)entity)).c_str(), (int *)&door.state,
+                       (int)DoorState::OPEN);
+    ImGui::RadioButton(("Closed" + to_string((int)entity)).c_str(), (int *)&door.state,
+                       (int)DoorState::CLOSED);
+
+    if (ImGui::Button(("Open Door" + to_string((int)entity)).c_str())) {
+      systems::openDoor(registry, entity);
+    }
+    if (ImGui::Button(("Close Door" + to_string((int)entity)).c_str())) {
+      systems::closeDoor(registry, entity);
+    }
+    if (ImGui::Button(("Delete Component##Door" + to_string((int)entity))
+                .c_str())) {registry->removePersistent<Door>(entity);
+    }
+    ImGui::Spacing();
+  }
 }
 
 void EngineGui::renderEntities() {
@@ -218,11 +285,15 @@ void EngineGui::renderEntities() {
     if (ImGui::Button("- Delete Entity")) {
       registry->depersist(entity);
     }
-    if (ImGui::Button(("+ Add Component##" + to_string((int)entity)).c_str())) {
-      showAddComponentPanel = true; // Show the options on button press
+    if(!showAddComponentPanel) {
+      if (ImGui::Button(("+ Add Component##" + to_string((int)entity)).c_str())) {
+        showAddComponentPanel = true; // Show the options on button press
+      }
     }
-
     if (showAddComponentPanel) { // Only display the combo and fields if active
+      if((ImGui::Button(("Go Back##" + to_string((int)entity)).c_str()))) {
+        showAddComponentPanel = false;
+      }
       addComponentPanel(entity, showAddComponentPanel);
     }
 
