@@ -26,3 +26,19 @@ void systems::closeDoor(std::shared_ptr<EntityRegistry> registry, entt::entity e
     door.state = CLOSING;
   }
 }
+
+
+void systems::DoorPersister::createTablesIfNeeded() {
+}
+
+void systems::DoorPersister::saveAll() {
+}
+
+void systems::DoorPersister::save(entt::entity) {
+}
+
+void systems::DoorPersister::loadAll() {
+}
+
+void systems::DoorPersister::load(entt::entity) {
+}

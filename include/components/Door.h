@@ -10,3 +10,4 @@ struct Door {
   RotateMovement closeMovement;
   DoorState state;
 };
+
