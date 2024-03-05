@@ -180,6 +180,11 @@ void Positionable::update() {
   glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);
   glm::mat4 transposedInverse = glm::transpose(inverseModelMatrix);
   normalMatrix = glm::mat3(transposedInverse);
+  damaged = false;
+}
+
+void Positionable::damage() {
+  damaged = true;
 }
 
 Positionable::Positionable(glm::vec3 pos, glm::vec3 rotate, float scale): pos(pos), scale(scale), rotate(rotate) {

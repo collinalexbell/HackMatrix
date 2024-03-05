@@ -7,14 +7,14 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
+ALL_OBJECTS = build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
 
 
 all: FLAGS+=-O3 -g
 all: matrix trampoline build/diagnosis
 
-matrix: build/persister.o build/engineGui.o build/entity.o build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o $(SQLITE_OBJECTS)
+matrix: build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o $(SQLITE_OBJECTS)
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
@@ -38,7 +38,7 @@ build/shader.o: src/shader.cpp include/shader.h
 build/texture.o: src/texture.cpp include/texture.h
 	g++  -std=c++20 $(FLAGS) -o build/texture.o -c src/texture.cpp $(INCLUDES)
 
-build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h include/loader.h include/utility.h include/dynamicObject.h include/renderer.h include/worldInterface.h include/model.h
+build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h include/loader.h include/utility.h include/dynamicObject.h include/renderer.h include/worldInterface.h include/model.h include/systems/ApplyRotation.h
 	g++ -std=c++20 -g $(FLAGS) -o build/world.o -c src/world.cpp $(INCLUDES)
 
 build/camera.o: src/camera.cpp include/camera.h
@@ -66,7 +66,10 @@ build/cube.o: src/cube.cpp include/cube.h
 	g++ -std=c++20 $(FLAGS) -o build/cube.o -c src/cube.cpp $(INCLUDES)
 
 build/chunk.o: src/chunk.cpp include/chunk.h include/mesher.h
-	g++ -std=c++20 $(FLAGS) -o build/chunk.o -c src/chunk.cpp $(INCLUDES) build/mesher.o: src/mesher.cpp include/mesher.h g++ -std=c++20 $(FLAGS) -o build/mesher.o -c src/mesher.cpp $(INCLUDES)
+	g++ -std=c++20 $(FLAGS) -o build/chunk.o -c src/chunk.cpp $(INCLUDES)
+
+build/mesher.o: src/mesher.cpp include/mesher.h
+	g++ -std=c++20 $(FLAGS) -o build/mesher.o -c src/mesher.cpp $(INCLUDES)
 
 build/loader.o: src/loader.cpp include/loader.h include/utility.h
 	g++ -std=c++20 $(FLAGS) -o build/loader.o -c src/loader.cpp $(INCLUDES)
@@ -92,11 +95,14 @@ build/mesh.o: src/mesh.cpp include/mesh.h
 build/entity.o: src/entity.cpp include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/entity.o -c src/entity.cpp $(INCLUDES)
 
-build/engineGui.o: src/engineGui.cpp include/engineGui.h
+build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h
 	g++ -std=c++20 $(FLAGS) -o build/engineGui.o -c src/engineGui.cpp $(INCLUDES)
 
 build/persister.o: src/persister.cpp include/persister.h
 	g++ -std=c++20 $(FLAGS) -o build/persister.o -c src/persister.cpp $(INCLUDES)
+
+build/systems/ApplyRotation.o: src/systems/ApplyRotation.cpp include/systems/ApplyRotation.h include/components/RotateMovement.h
+	g++ -std=c++20 $(FLAGS) -o build/systems/ApplyRotation.o -c src/systems/ApplyRotation.cpp $(INCLUDES)
 
 
 # SQLite build logic
