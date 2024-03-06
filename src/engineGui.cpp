@@ -107,15 +107,17 @@ void EngineGui::addComponentPanel(entt::entity entity,
     }
   } else if (selectedComponentType == POSITIONABLE_TYPE) {
     static glm::vec3 position = glm::vec3(0.0f);
+    static glm::vec3 origin = glm::vec3(0.0f);
     static glm::vec3 rotation = glm::vec3(0.0f);
     static float scale = 1.0f;
 
     ImGui::InputFloat3("Position", (float *)&position);
+    ImGui::InputFloat3("Origin", (float *)&origin);
     ImGui::InputFloat3("Rotation", (float *)&rotation);
     ImGui::InputFloat("Scale", &scale);
 
     if (ImGui::Button("Add Positionable Component")) {
-      registry->emplace<Positionable>(entity, position, rotation, scale);
+      registry->emplace<Positionable>(entity, position, origin, rotation, scale);
       showAddComponentPanel = false;
     }
   } else if (selectedComponentType == MODEL_TYPE) {
@@ -218,6 +220,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     auto &positionable = registry->get<Positionable>(entity);
 
     auto copiedPos = positionable.pos;
+    auto copiedOrigin = positionable.origin;
     auto copiedRotate = positionable.rotate;
     auto copiedScale = positionable.scale;
 
@@ -225,6 +228,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::BeginGroup();
     ImGui::InputFloat3(("Position##" + to_string((int)entity)).c_str(),
                        (float *)&positionable.pos);
+    ImGui::InputFloat3(("Origin##" + to_string((int)entity)).c_str(),
+                       (float *)&positionable.origin);
     ImGui::InputFloat3(("Rotation##" + to_string((int)entity)).c_str(),
                        (float *)&positionable.rotate);
     ImGui::InputFloat(("Scale##" + to_string((int)entity)).c_str(),
@@ -236,7 +241,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::EndGroup();
     ImGui::Spacing();
 
-    if(copiedPos != positionable.pos || copiedScale != positionable.scale || copiedRotate != positionable.rotate) {
+    if(copiedPos != positionable.pos || positionable.origin != copiedOrigin || copiedScale != positionable.scale || copiedRotate != positionable.rotate) {
       positionable.update();
     }
   }
