@@ -1,5 +1,6 @@
 #include "engineGui.h"
 #include "components/Door.h"
+#include "components/Key.h"
 #include "components/RotateMovement.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
@@ -9,6 +10,7 @@
 #include <string>
 #include "entity.h"
 #include "systems/Door.h"
+#include "systems/KeyAndLock.h"
 
 #include <glm/glm.hpp>
 
@@ -88,10 +90,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int MODEL_TYPE = 2;
   static int ROTATE_MOVEMENT_TYPE = 3;
   static int DOOR_TYPE = 4;
+  static int KEY_TYPE = 5;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0Door\0");
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -162,6 +165,37 @@ void EngineGui::addComponentPanel(entt::entity entity,
       auto open = RotateMovement{openDegreesToRotate, openDegreesPerSecond, openAxis};
       auto close = RotateMovement{closeDegreesToRotate, closeDegreesPerSecond, closeAxis};
       registry->emplace<Door>(entity, open, close, doorState);
+      showAddComponentPanel = false;
+    }
+  } else if(selectedComponentType == KEY_TYPE) {
+    static float turnDegreesToRotate = 0;
+    static float turnDegreesPerSecond = 0;
+    static float unturnDegreesToRotate = 0;
+    static float unturnDegreesPerSecond = 0;
+    static glm::vec3 turnAxis = glm::vec3(0.0f);
+    static glm::vec3 unturnAxis = glm::vec3(0.0f);
+    static TurnState turnState;
+    static int lockable = 0;
+
+    ImGui::InputInt("Lockable entity ID", &lockable);
+
+    ImGui::Text("Turn RotateMovement");
+    ImGui::InputFloat("Degrees##toTurn", &turnDegreesToRotate);
+    ImGui::InputFloat("Degrees/s##toTurn", &turnDegreesPerSecond);
+    ImGui::InputFloat3("Rotation Axis##toTurn", glm::value_ptr(turnAxis));
+
+    ImGui::Text("Unturnd RotateMovement");
+    ImGui::InputFloat("Degrees##toUnturn", &unturnDegreesToRotate);
+    ImGui::InputFloat("Degrees/s##toUnturn", &unturnDegreesPerSecond);
+    ImGui::InputFloat3("Rotation Axis##toUnturn", glm::value_ptr(unturnAxis));
+
+    ImGui::RadioButton("Turned",  (int*) &turnState, (int)TurnState::TURNED);
+    ImGui::RadioButton("Unturned", (int*) &turnState, (int)TurnState::UNTURNED);
+
+    if (ImGui::Button("Add Turn Component")) {
+      auto turn = RotateMovement{turnDegreesToRotate, turnDegreesPerSecond, turnAxis};
+      auto unturn = RotateMovement{unturnDegreesToRotate, unturnDegreesPerSecond, unturnAxis};
+      registry->emplace<Key>(entity, (entt::entity)lockable, turnState, turn, unturn);
       showAddComponentPanel = false;
     }
   }
@@ -268,6 +302,42 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     }
     if (ImGui::Button(("Delete Component##Door" + to_string((int)entity))
                 .c_str())) {registry->removePersistent<Door>(entity);
+    }
+    ImGui::Spacing();
+  }
+  if(registry->any_of<Key>(entity)) {
+    auto &key = registry->get<Key>(entity);
+
+    ImGui::Text("Key Component");
+    ImGui::Text("Open RotateMovement##Key");
+    ImGui::InputDouble(("Degrees##toTurn" + to_string((int)entity)).c_str(),
+                       &key.turnMovement.degrees);
+    ImGui::InputDouble(("Degrees/s##toTurn" + to_string((int)entity)).c_str(),
+                       &key.turnMovement.degreesPerSecond);
+    ImGui::InputFloat3(("Rotation Axis##toTurn" + to_string((int)entity)).c_str(),
+        glm::value_ptr(key.turnMovement.axis));
+
+    ImGui::Text("Close RotateMovement");
+    ImGui::InputDouble(("Degrees##toUnturn" + to_string((int)entity)).c_str(),
+                       &key.unturnMovement.degrees);
+    ImGui::InputDouble(("Degrees/s##toUnturn" + to_string((int)entity)).c_str(),
+                       &key.unturnMovement.degreesPerSecond);
+    ImGui::InputFloat3(("Rotation Axis##toUnturn" + to_string((int)entity)).c_str(),
+        glm::value_ptr(key.unturnMovement.axis));
+
+    ImGui::RadioButton(("Turned" + to_string((int)entity)).c_str(), (int *)&key.state,
+                       (int)TurnState::TURNED);
+    ImGui::RadioButton(("Unturned" + to_string((int)entity)).c_str(), (int *)&key.state,
+                       (int)TurnState::UNTURNED);
+
+    if (ImGui::Button(("Turn Key" + to_string((int)entity)).c_str())) {
+      systems::turnKey(registry, entity);
+    }
+    if (ImGui::Button(("Unturn Key" + to_string((int)entity)).c_str())) {
+      systems::unturnKey(registry, entity);
+    }
+    if (ImGui::Button(("Delete Component##Key" + to_string((int)entity))
+                .c_str())) {registry->removePersistent<Key>(entity);
     }
     ImGui::Spacing();
   }

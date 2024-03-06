@@ -4,7 +4,7 @@
 #include <entt.hpp>
 
 enum TurnState {
-  TURNED, TURNING, UNTURNED, UNTURINING
+  TURNED, TURNING, UNTURNED, UNTURNING
 };
 
 struct Key {
