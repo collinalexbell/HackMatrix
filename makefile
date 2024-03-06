@@ -101,7 +101,7 @@ build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/Rota
 build/persister.o: src/persister.cpp include/persister.h
 	g++ -std=c++20 $(FLAGS) -o build/persister.o -c src/persister.cpp $(INCLUDES)
 
-build/systems/ApplyRotation.o: src/systems/ApplyRotation.cpp include/systems/ApplyRotation.h include/components/RotateMovement.h include/components/model.h
+build/systems/ApplyRotation.o: src/systems/ApplyRotation.cpp include/systems/ApplyRotation.h include/components/RotateMovement.h include/model.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/ApplyRotation.o -c src/systems/ApplyRotation.cpp $(INCLUDES)
 
 build/systems/Door.o: src/systems/Door.cpp include/systems/Door.h include/components/Door.h include/entity.h

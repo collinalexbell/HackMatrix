@@ -15,18 +15,22 @@ void KeyPersister::createTablesIfNeeded() {
           ")");
   */
 
-  db.exec("CREATE TABLE IF NOT EXISTS  ( "
-          "id INTEGER PRIMARY KEY, "
-          "entity_id INTEGER, "
-          "lockable_id INTEGER"
-          "turn_movement_id INTEGER, "
-          "unturn_movement_id INTEGER, "
-          "state INTEGER, "
-          "FOREIGN KEY (entity_id) REFERENCES Entity(id), "
-          "FOREIGN KEY (lockable_id) REFERENCES Entity(id), "
-          "FOREIGN KEY (turn_movement_id) REFERENCES RotateMovement(id), "
-          "FOREIGN KEY (unturn_movement_id) REFERENCES RotateMovement(id) "
-          ")");
+  std::stringstream create;
+
+  create << "CREATE TABLE IF NOT EXISTS "
+         << entityName << " ( "
+         << "id INTEGER PRIMARY KEY, "
+         << "entity_id INTEGER, "
+         << "lockable_id INTEGER,"
+         << "turn_movement_id INTEGER, "
+         << "unturn_movement_id INTEGER, "
+         << "state INTEGER, "
+         << "FOREIGN KEY (entity_id) REFERENCES Entity(id), "
+         << "FOREIGN KEY (lockable_id) REFERENCES Entity(id), "
+         << "FOREIGN KEY (turn_movement_id) REFERENCES RotateMovement(id), "
+         <<"FOREIGN KEY (unturn_movement_id) REFERENCES RotateMovement(id) "
+         <<")";
+  db.exec(create.str());
 }
 
 void updateKey(SQLite::Database &db, int entityId,  TurnState state, entt::entity lockable) {
@@ -121,3 +125,27 @@ void KeyPersister::loadAll() {
     }
 }
 void KeyPersister::load(entt::entity){};
+
+void KeyPersister::depersistIfGone(entt::entity entity) {
+  auto persistable = registry->get<Persistable>(entity);
+  auto &db = registry->getDatabase();
+  try {
+    SQLite::Statement query(db, "SELECT open_movement_id, close_movement_id "
+                                "FROM Door where entity_id = ?");
+    query.bind(1, persistable.entityId);
+    query.executeStep();
+    int64_t turn_movement_id = query.getColumn(0).getInt64();
+    int64_t unturn_movment_id = query.getColumn(1).getInt64();
+
+    SQLite::Statement deleteQuery(db,
+                                  "DELETE FROM RotateMovement WHERE id = ?");
+    deleteQuery.bind(1, turn_movement_id);
+    deleteQuery.exec();
+    deleteQuery.reset();
+    deleteQuery.bind(1, unturn_movment_id);
+    deleteQuery.exec();
+
+    depersistIfGoneTyped<KeyPersister>(entity);
+  } catch (...) {
+  }
+}

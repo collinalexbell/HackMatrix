@@ -23,4 +23,5 @@ class KeyPersister: public SQLPersisterImpl {
   void save(entt::entity) override;
   void loadAll() override;
   void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
 };

@@ -299,10 +299,10 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::RadioButton(("Closed" + to_string((int)entity)).c_str(), (int *)&door.state,
                        (int)DoorState::CLOSED);
 
-    if (ImGui::Button(("Open Door" + to_string((int)entity)).c_str())) {
+    if (ImGui::Button(("Open Door##" + to_string((int)entity)).c_str())) {
       systems::openDoor(registry, entity);
     }
-    if (ImGui::Button(("Close Door" + to_string((int)entity)).c_str())) {
+    if (ImGui::Button(("Close Door##" + to_string((int)entity)).c_str())) {
       systems::closeDoor(registry, entity);
     }
     if (ImGui::Button(("Delete Component##Door" + to_string((int)entity))
@@ -335,10 +335,10 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::RadioButton(("Unturned" + to_string((int)entity)).c_str(), (int *)&key.state,
                        (int)TurnState::UNTURNED);
 
-    if (ImGui::Button(("Turn Key" + to_string((int)entity)).c_str())) {
+    if (ImGui::Button(("Turn Key##" + to_string((int)entity)).c_str())) {
       systems::turnKey(registry, entity);
     }
-    if (ImGui::Button(("Unturn Key" + to_string((int)entity)).c_str())) {
+    if (ImGui::Button(("Unturn Key##" + to_string((int)entity)).c_str())) {
       systems::unturnKey(registry, entity);
     }
     if (ImGui::Button(("Delete Component##Key" + to_string((int)entity))
