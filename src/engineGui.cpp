@@ -2,6 +2,7 @@
 #include "components/Door.h"
 #include "components/Key.h"
 #include "components/Lock.h"
+#include "components/Parent.h"
 #include "components/RotateMovement.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
@@ -93,10 +94,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int DOOR_TYPE = 4;
   static int KEY_TYPE = 5;
   static int LOCK_TYPE = 6;
+  static int PARENT_TYPE = 7;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0");
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -215,6 +217,23 @@ void EngineGui::addComponentPanel(entt::entity entity,
 
     if (ImGui::Button("Add Lock Component")) {
       registry->emplace<Lock>(entity, lockPosition, lockTolerance, lockState);
+      showAddComponentPanel = false;
+    }
+  } else if(selectedComponentType == PARENT_TYPE) {
+    static vector<int> childrenIds;
+    for (int i = 0; i < childrenIds.size(); i++) {
+      ImGui::InputInt(("Children ID##" + std::to_string(i)).c_str(),
+                      &childrenIds[i]);
+    }
+    if (ImGui::Button("+ Add Another Child")) {
+      childrenIds.push_back(0);
+    }
+    if (childrenIds.size() > 0 && ImGui::Button("+ Remove Child")) {
+      childrenIds.pop_back();
+    }
+    if(ImGui::Button("Add Parent Component")) {
+      registry->emplace<Parent>(entity, childrenIds);
+      childrenIds = vector<int>();
       showAddComponentPanel = false;
     }
   }
@@ -390,6 +409,20 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     }
     ImGui::EndGroup();
     ImGui::Spacing();
+  }
+  if(registry->any_of<Parent>(entity)) {
+    auto &parent = registry->get<Parent>(entity);
+    ImGui::Text("Parent Component:");
+    for(int i = 0; i < parent.childrenIds.size(); i++) {
+      ImGui::InputInt(("Child Id##" + to_string(i) + to_string((int)entity)).c_str(),
+                      &parent.childrenIds[i]);
+    }
+    if (ImGui::Button(("- Remove Child##" + to_string((int)entity)).c_str())) {
+      parent.childrenIds.pop_back();
+    }
+    if (ImGui::Button(("+ Add Child##" + to_string((int)entity)).c_str())) {
+      parent.childrenIds.push_back(0);
+    }
   }
 }
 
