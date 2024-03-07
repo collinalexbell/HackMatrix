@@ -1,6 +1,7 @@
 #include "engineGui.h"
 #include "components/Door.h"
 #include "components/Key.h"
+#include "components/Lock.h"
 #include "components/RotateMovement.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
@@ -91,10 +92,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int ROTATE_MOVEMENT_TYPE = 3;
   static int DOOR_TYPE = 4;
   static int KEY_TYPE = 5;
+  static int LOCK_TYPE = 6;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0");
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -198,6 +200,21 @@ void EngineGui::addComponentPanel(entt::entity entity,
       auto turn = RotateMovement{turnDegreesToRotate, turnDegreesPerSecond, turnAxis};
       auto unturn = RotateMovement{unturnDegreesToRotate, unturnDegreesPerSecond, unturnAxis};
       registry->emplace<Key>(entity, (entt::entity)lockable, turnState, turn, unturn);
+      showAddComponentPanel = false;
+    }
+  } else if (selectedComponentType == LOCK_TYPE) {
+    static glm::vec3 lockPosition = glm::vec3(0.0f);
+    static glm::vec3 lockTolerance = glm::vec3(0.0f);
+    static LockState lockState;
+
+    ImGui::InputFloat3("Position", (float *)&lockPosition);
+    ImGui::InputFloat3("Tolerance", (float *)&lockTolerance);
+
+    ImGui::RadioButton("Locked", (int *)&lockState, (int)LockState::LOCKED);
+    ImGui::RadioButton("Unlocked", (int *)&lockState, (int)LockState::UNLOCKED);
+
+    if (ImGui::Button("Add Lock Component")) {
+      registry->emplace<Lock>(entity, lockPosition, lockTolerance, lockState);
       showAddComponentPanel = false;
     }
   }
@@ -330,9 +347,9 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::InputFloat3(("Rotation Axis##toUnturn" + to_string((int)entity)).c_str(),
         glm::value_ptr(key.unturnMovement.axis));
 
-    ImGui::RadioButton(("Turned" + to_string((int)entity)).c_str(), (int *)&key.state,
+    ImGui::RadioButton(("Turned##" + to_string((int)entity)).c_str(), (int *)&key.state,
                        (int)TurnState::TURNED);
-    ImGui::RadioButton(("Unturned" + to_string((int)entity)).c_str(), (int *)&key.state,
+    ImGui::RadioButton(("Unturned##" + to_string((int)entity)).c_str(), (int *)&key.state,
                        (int)TurnState::UNTURNED);
 
     if (ImGui::Button(("Turn Key##" + to_string((int)entity)).c_str())) {
@@ -344,6 +361,33 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     if (ImGui::Button(("Delete Component##Key" + to_string((int)entity))
                 .c_str())) {registry->removePersistent<Key>(entity);
     }
+    ImGui::Spacing();
+  }
+  if(registry->any_of<Lock>(entity)) {
+    auto &lock = registry->get<Lock>(entity);
+
+    ImGui::Text("Positioner Component:");
+    ImGui::BeginGroup();
+    ImGui::InputFloat3(("Position##Lock" + to_string((int)entity)).c_str(),
+                       (float *)&lock.position);
+    ImGui::InputFloat3(("Tolerance##Lock" + to_string((int)entity)).c_str(),
+                       (float *)&lock.tolerance);
+    ImGui::RadioButton(("Locked##" + to_string((int)entity)).c_str(),
+                       (int *)&lock.state, (int)LockState::LOCKED);
+    ImGui::RadioButton(("Unlocked##" + to_string((int)entity)).c_str(),
+                       (int *)&lock.state, (int)LockState::UNLOCKED);
+    if (ImGui::Button(("Lock##" + to_string((int)entity)).c_str())) {
+      //lock
+    }
+    if (ImGui::Button(("Unlock##" + to_string((int)entity)).c_str())) {
+      //unlock
+    }
+
+    if (ImGui::Button(
+            ("Delete Component##Positioner" + to_string((int)entity)).c_str())) {
+      registry->removePersistent<Positionable>(entity);
+    }
+    ImGui::EndGroup();
     ImGui::Spacing();
   }
 }
