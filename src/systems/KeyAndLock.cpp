@@ -13,7 +13,7 @@ void systems::turnKey(std::shared_ptr<EntityRegistry> registry, entt::entity ent
       key.state = TURNED;
       auto lockView = registry->view<Persistable, Lock, Positionable>();
       for(auto [entity, persistable, lock, positionable]: lockView.each()) {
-        if(persistable.entityId == (int)key.lockable) {
+        if(persistable.entityId == key.lockable) {
           auto distances = (lock.position + positionable.pos) - keyPos.pos;
           if (lock.state == LOCKED &&
               distances.x <= lock.tolerance.x &&
@@ -34,8 +34,20 @@ void systems::unturnKey(std::shared_ptr<EntityRegistry> registry, entt::entity e
   if (key.state == TURNED) {
     auto movement = key.unturnMovement;
     movement.onFinish = [registry, entity]() -> void {
-      auto &door = registry->get<Key>(entity);
-      door.state = UNTURNED;
+      auto [key, keyPos] = registry->get<Key, Positionable>(entity);
+      key.state = UNTURNED;
+      auto lockView = registry->view<Persistable, Lock, Positionable>();
+      for (auto [entity, persistable, lock, positionable] : lockView.each()) {
+        if (persistable.entityId == key.lockable) {
+          auto distances = (lock.position + positionable.pos) - keyPos.pos;
+          if (lock.state == UNLOCKED && distances.x <= lock.tolerance.x &&
+              distances.y <= lock.tolerance.y &&
+              distances.z <= lock.tolerance.z) {
+            lock.state = LOCKED;
+            systems::closeDoor(registry, entity);
+          }
+        }
+      }
     };
     registry->emplace<RotateMovement>(entity, movement);
     key.state = UNTURNING;
