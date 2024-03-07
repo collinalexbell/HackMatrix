@@ -62,6 +62,7 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
               rotatedPosition + positionable.pos;
 
           childPositionable.rotate += degreesToRotate;
+          childPositionable.damage();
         }
       }
     }
