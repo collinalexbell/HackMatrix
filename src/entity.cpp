@@ -62,11 +62,13 @@ entt::entity EntityRegistry::createPersistent() {
   int64_t id = db.getLastInsertRowid();
   auto rv = this->create();
   emplace<Persistable>(rv, id);
+  entityLocator[id] = rv;
   return rv;
 }
 
 void EntityRegistry::depersist(entt::entity entity) {
   auto &persistable = get<Persistable>(entity);
+  entityLocator.erase(persistable.entityId);
   for(auto persister: persisters) {
     persister->depersist(entity);
   }
@@ -76,3 +78,10 @@ void EntityRegistry::depersist(entt::entity entity) {
   destroy(entity);
 }
 
+std::optional<entt::entity> EntityRegistry::locateEntity(int entityIdForDB) {
+  if (entityLocator.contains(entityIdForDB)) {
+    return std::optional(entityLocator[entityIdForDB]);
+  } else {
+    return std::nullopt;
+  }
+}

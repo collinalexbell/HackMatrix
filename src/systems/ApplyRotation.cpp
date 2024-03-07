@@ -1,6 +1,8 @@
 #include "systems/ApplyRotation.h"
 #include "components/RotateMovement.h"
+#include "glm/gtx/transform.hpp"
 #include "model.h"
+#include "components/Parent.h"
 #include <GLFW/glfw3.h>
 
 double MIN_ROTATION = 0.0001;
@@ -35,6 +37,34 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
       registry->remove<RotateMovement>(entity);
     }
     positionable.damage();
+
+    auto parent = registry->try_get<Parent>(entity);
+    if (parent != NULL) {
+      for (auto childId : parent->childrenIds) {
+        auto childEntityOpt = registry->locateEntity(childId);
+        if(childEntityOpt.has_value()) {
+          auto childEntity = childEntityOpt.value();
+
+          auto &childPositionable = registry->get<Positionable>(childEntity);
+
+          // Calculate child's position relative to parent
+          glm::vec3 relativePosition =
+              childPositionable.pos - positionable.pos;
+
+          // Rotate the relative position vector
+          auto rotationMatrix = glm::rotate(glm::radians((float)degreesToRotate),
+                                            rotateMovement.axis);
+
+          glm::vec3 rotatedPosition = rotationMatrix * glm::vec4(relativePosition, 1.0f);
+
+          // Calculate child's new world position
+          childPositionable.pos =
+              rotatedPosition + positionable.pos;
+
+          childPositionable.rotate += degreesToRotate;
+        }
+      }
+    }
   }
   lastRotated = curTime;
 }

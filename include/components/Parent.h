@@ -1,8 +1,9 @@
 #pragma once
 #include "SQLPersisterImpl.h"
+#include <vector>
 
 struct Parent {
-  int parent_entity_id;
+  std::vector<int> childrenIds;
 };
 
 class ParentPersister: public SQLPersisterImpl {
