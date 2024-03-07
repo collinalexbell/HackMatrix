@@ -33,13 +33,13 @@ void KeyPersister::createTablesIfNeeded() {
   db.exec(create.str());
 }
 
-void updateKey(SQLite::Database &db, int entityId,  TurnState state, entt::entity lockable) {
+void updateKey(SQLite::Database &db, int entityId,  TurnState state, int lockable) {
   SQLite::Statement updateKey(db, "UPDATE Key SET "
                                    "state = ?, lockable_id = ? "
                                    "WHERE entity_id = ?");
 
   updateKey.bind(1, (int)state);
-  updateKey.bind(2, (int)lockable);
+  updateKey.bind(2, lockable);
   updateKey.bind(3, entityId);
 
   updateKey.exec();
@@ -47,7 +47,7 @@ void updateKey(SQLite::Database &db, int entityId,  TurnState state, entt::entit
 
 void insertKey(SQLite::Database &db, int entityId,
                int turnMovementId, int unturnMovementId,
-               TurnState state, entt::entity lockableId) {
+               TurnState state, int lockableId) {
   std::stringstream insertKeyQuery;
   insertKeyQuery << "INSERT INTO Key (entity_id, turn_movement_id, "
                      "unturn_movement_id, state, lockable_id) "
@@ -59,7 +59,7 @@ void insertKey(SQLite::Database &db, int entityId,
   insertKeyStmt.bind(3, unturnMovementId);
   insertKeyStmt.bind(4, static_cast<int>(state));
   // what is static_cast again?
-  insertKeyStmt.bind(5, static_cast<int>(lockableId));
+  insertKeyStmt.bind(5, lockableId);
 
   insertKeyStmt.exec();
 }
@@ -108,11 +108,11 @@ void KeyPersister::loadAll() {
         int turnMovementId = query.getColumn(1).getInt();
         int unturnMovementId = query.getColumn(2).getInt();
         TurnState state = static_cast<TurnState>(query.getColumn(3).getInt());
-        int lockableId = query.getColumn(3).getInt();
+        int lockableId = query.getColumn(4).getInt();
 
         auto turnMovement = getMovementData(db, turnMovementId);
         auto unturnMovement = getMovementData(db, unturnMovementId);
-        auto pair = std::pair(entityId, Key{(entt::entity)lockableId, state, turnMovement, unturnMovement});
+        auto pair = std::pair(entityId, Key{lockableId, state, turnMovement, unturnMovement});
         keyDataCache.insert(pair);
     }
 

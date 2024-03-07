@@ -8,7 +8,7 @@ enum TurnState {
 };
 
 struct Key {
-  entt::entity lockable;
+  int lockable;
   TurnState state;
   RotateMovement turnMovement;
   RotateMovement unturnMovement;

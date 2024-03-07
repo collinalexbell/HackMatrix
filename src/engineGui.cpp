@@ -199,7 +199,7 @@ void EngineGui::addComponentPanel(entt::entity entity,
     if (ImGui::Button("Add Turn Component")) {
       auto turn = RotateMovement{turnDegreesToRotate, turnDegreesPerSecond, turnAxis};
       auto unturn = RotateMovement{unturnDegreesToRotate, unturnDegreesPerSecond, unturnAxis};
-      registry->emplace<Key>(entity, (entt::entity)lockable, turnState, turn, unturn);
+      registry->emplace<Key>(entity, lockable, turnState, turn, unturn);
       showAddComponentPanel = false;
     }
   } else if (selectedComponentType == LOCK_TYPE) {
@@ -331,6 +331,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     auto &key = registry->get<Key>(entity);
 
     ImGui::Text("Key Component");
+    ImGui::InputInt(("Lockable##" + to_string((int)entity)).c_str(), &key.lockable);
     ImGui::Text("Open RotateMovement##Key");
     ImGui::InputDouble(("Degrees##toTurn" + to_string((int)entity)).c_str(),
                        &key.turnMovement.degrees);
