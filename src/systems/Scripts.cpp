@@ -22,7 +22,7 @@ namespace systems {
     auto &scriptable = registry->get<Scriptable>(entity);
     std::cout << "fileenum" << scriptable.language << std::endl;
     std::cout << "ext:" << scriptable.getExtension() << std::endl;
-    std::thread t([entity, &scriptable]() -> void {
+    std::thread t([registry, entity, &scriptable]() -> void {
 
       std::filesystem::path scriptsDir = "./scripts";
       std::string filename =
@@ -47,6 +47,10 @@ namespace systems {
         std::cerr << "Error: Unable to read the edited script" << std::endl;
       }
       std::filesystem::remove(filePath);
+
+      // This isn't thread safe, be careful how this is done.
+      // Maybe make a save<Scriptable>
+      //registry->save(entity);
     });
     t.detach();
   }

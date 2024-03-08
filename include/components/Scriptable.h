@@ -24,7 +24,7 @@ class Scriptable {
 class ScriptablePersister: public SQLPersisterImpl {
  public:
   ScriptablePersister(std::shared_ptr<EntityRegistry> registry):
-      SQLPersisterImpl("Entity", registry){};
+      SQLPersisterImpl("Scriptable", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;
