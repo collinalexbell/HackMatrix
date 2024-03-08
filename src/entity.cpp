@@ -39,6 +39,7 @@ void EntityRegistry::loadAll() {
     int entityId = query.getColumn(0).getInt();
     entt::entity newEntity = create();
     emplace<Persistable>(newEntity, entityId);
+    entityLocator[entityId] = newEntity;
   }
   for (auto persister : persisters) {
     persister->loadAll();
