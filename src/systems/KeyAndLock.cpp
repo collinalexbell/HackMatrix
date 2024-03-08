@@ -14,6 +14,10 @@ void systems::turnKey(std::shared_ptr<EntityRegistry> registry, entt::entity ent
       auto lockView = registry->view<Persistable, Lock, Positionable>();
       for(auto [entity, persistable, lock, positionable]: lockView.each()) {
         if(persistable.entityId == key.lockable) {
+
+          // The lock.position may need to be rotated since it is local
+          // and positionable.pos is global
+
           auto distances = (lock.position + positionable.pos) - keyPos.pos;
           if (lock.state == LOCKED &&
               distances.x <= lock.tolerance.x &&
@@ -39,6 +43,8 @@ void systems::unturnKey(std::shared_ptr<EntityRegistry> registry, entt::entity e
       auto lockView = registry->view<Persistable, Lock, Positionable>();
       for (auto [entity, persistable, lock, positionable] : lockView.each()) {
         if (persistable.entityId == key.lockable) {
+          // The lock.position may need to be rotated since it is local
+          // and positionable.pos is global
           auto distances = (lock.position + positionable.pos) - keyPos.pos;
           if (lock.state == UNLOCKED && distances.x <= lock.tolerance.x &&
               distances.y <= lock.tolerance.y &&
