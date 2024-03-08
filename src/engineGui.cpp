@@ -4,15 +4,18 @@
 #include "components/Lock.h"
 #include "components/Parent.h"
 #include "components/RotateMovement.h"
+#include "components/Scriptable.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
 #include "logger.h"
 #include "persister.h"
 #include "string"
+#include <functional>
 #include <string>
 #include "entity.h"
 #include "systems/Door.h"
 #include "systems/KeyAndLock.h"
+#include "systems/Scripts.h"
 
 #include <glm/glm.hpp>
 
@@ -95,10 +98,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int KEY_TYPE = 5;
   static int LOCK_TYPE = 6;
   static int PARENT_TYPE = 7;
+  static int SCRIPTABLE_TYPE = 8;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0");
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0Scriptable\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -236,7 +240,25 @@ void EngineGui::addComponentPanel(entt::entity entity,
       childrenIds = vector<int>();
       showAddComponentPanel = false;
     }
+  } else if(selectedComponentType == SCRIPTABLE_TYPE) {
+    static ScriptLanguage scriptLanguage;
+    ImGui::RadioButton("C++", (int *)&scriptLanguage, (int)CPP);
+    ImGui::RadioButton("Javascript", (int *)&scriptLanguage, (int)JAVASCRIPT);
+    ImGui::RadioButton("Python", (int *)&scriptLanguage, (int)PYTHON);
+
+    if (ImGui::Button("Add Scriptable Component")) {
+      registry->emplace<Scriptable>(entity,"", scriptLanguage);
+      showAddComponentPanel = false;
+    }
   }
+}
+
+function<string(string)> makeLabeler(entt::entity entity) {
+  return [entity](string name) -> string {
+    stringstream rv;
+    rv << name << "##" << to_string((int) entity);
+    return rv.str();
+  };
 }
 
 void EngineGui::renderComponentPanel(entt::entity entity) {
@@ -404,8 +426,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     }
 
     if (ImGui::Button(
-            ("Delete Component##Positioner" + to_string((int)entity)).c_str())) {
-      registry->removePersistent<Positionable>(entity);
+            ("Delete Component##Lock" + to_string((int)entity)).c_str())) {
+      registry->removePersistent<Lock>(entity);
     }
     ImGui::EndGroup();
     ImGui::Spacing();
@@ -422,6 +444,29 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     }
     if (ImGui::Button(("+ Add Child##" + to_string((int)entity)).c_str())) {
       parent.childrenIds.push_back(0);
+    }
+    if (ImGui::Button(("Delete Component##Parent" + to_string((int)entity))
+                          .c_str())) {
+      registry->removePersistent<Positionable>(entity);
+    }
+    ImGui::Spacing();
+  }
+  if(registry->any_of<Scriptable>(entity)) {
+    auto &scriptable = registry->get<Scriptable>(entity);
+
+    auto label = makeLabeler(entity);
+
+    ImGui::RadioButton(label("C++").c_str(),
+                       (int *)&scriptable.language, (int)CPP);
+    ImGui::RadioButton(label("Javascript").c_str(),
+                       (int *)&scriptable.language, (int)JAVASCRIPT);
+    ImGui::RadioButton(label("Python").c_str(),
+                       (int *)&scriptable.language, (int)PYTHON);
+    if (ImGui::Button(label("Edit Script").c_str())) {
+      systems::editScript(registry, entity);
+    }
+    if (ImGui::Button(label("Delete Component##Scriptable").c_str())) {
+      registry->removePersistent<Scriptable>(entity);
     }
   }
 }
