@@ -33,7 +33,7 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
     glm::quat rotation = glm::angleAxis(glm::radians((float)degreesToRotate),
                                         rotateMovement.axis);
     glm::quat curQuat(glm::radians(positionable.rotate));
-    auto newQuat = rotation * curQuat;
+    auto newQuat = curQuat * rotation;
     positionable.rotate = glm::degrees(glm::eulerAngles(newQuat));
 
     if (fabs(rotateMovement.degrees) < MIN_ROTATION) { // Account for negatives
