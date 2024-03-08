@@ -1,4 +1,5 @@
 #pragma once
+#include "SQLPersisterImpl.h"
 #include "string"
 #include <mutex>
 
@@ -19,3 +20,16 @@ class Scriptable {
   void damage();
   void update();
 };
+
+class ScriptablePersister: public SQLPersisterImpl {
+ public:
+  ScriptablePersister(std::shared_ptr<EntityRegistry> registry):
+      SQLPersisterImpl("Entity", registry){};
+  void createTablesIfNeeded() override;
+  void saveAll() override;
+  void save(entt::entity) override;
+  void loadAll() override;
+  void load(entt::entity) override;
+  void depersistIfGone(entt::entity) override;
+};
+
