@@ -5,11 +5,13 @@
 #include <assimp/scene.h>
 #include <iostream>
 #include <sstream>
+#include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/trigonometric.hpp"
 #include "persister.h"
 #include "stb/stb_image.h"
 
 #include "glm/ext/matrix_transform.hpp"
+#include <glm/gtc/quaternion.hpp>
 
 using namespace std;
 
@@ -173,9 +175,11 @@ Model::Model(string path): path(path) {
 void Positionable::update() {
   modelMatrix = glm::mat4(1.0f);
   modelMatrix = glm::translate(modelMatrix, pos);
-  modelMatrix = glm::rotate(modelMatrix, glm::radians(rotate.z), glm::vec3(0,0,1));
-  modelMatrix = glm::rotate(modelMatrix, glm::radians(rotate.y), glm::vec3(0,1,0));
-  modelMatrix = glm::rotate(modelMatrix, glm::radians(rotate.x), glm::vec3(1,0,0));
+
+  // Create individual rotation quaternions
+  glm::quat finalRotation = glm::quat(glm::radians(rotate));
+
+  modelMatrix = modelMatrix * glm::mat4_cast(finalRotation);
   modelMatrix = glm::translate(modelMatrix, origin * glm::vec3(-1));
   modelMatrix = glm::scale(modelMatrix, glm::vec3(scale, scale, scale));
   glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);

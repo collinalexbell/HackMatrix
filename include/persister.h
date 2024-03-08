@@ -19,13 +19,13 @@ class SQLPersister {
 };
 
 /* easy copy and paste
-Constructor("Entity", std::shared_ptr<EntityRegistry> registry):
-    SQLPersisterImpl(registry){};
+Constructor(std::shared_ptr<EntityRegistry> registry):
+    SQLPersisterImpl("Entity", registry){};
 void createTablesIfNeeded() override;
 void saveAll() override;
 void save(entt::entity) override;
 void loadAll() override;
 void load(entt::entity) override;
-
+void depersistIfGone(entt::entity) override;
 
  */

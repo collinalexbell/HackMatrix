@@ -5,10 +5,13 @@
 #include "persister.h"
 #include <vector>
 #include <memory>
+#include <optional>
 
 class EntityRegistry : public entt::registry {
   SQLite::Database db;
   std::vector<std::shared_ptr<SQLPersister>> persisters;
+  std::map<int, entt::entity> entityLocator;
+
 public:
   EntityRegistry();
   SQLite::Database &getDatabase();
@@ -27,4 +30,6 @@ public:
       persister->depersistIfGone(entity);
     }
   };
+
+  std::optional<entt::entity> locateEntity(int entityIdForDB);
 };
