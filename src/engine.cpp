@@ -1,5 +1,6 @@
 #include "components/Key.h"
 #include "components/Lock.h"
+#include "components/Parent.h"
 #include "entity.h"
 #include "logger.h"
 #include "model.h"
@@ -52,6 +53,10 @@ void Engine::setupRegistry() {
   shared_ptr<SQLPersister> lockPersister =
     make_shared<LockPersister>(registry);
   registry->addPersister(lockPersister);
+
+  shared_ptr<SQLPersister> parentPersister =
+    make_shared<ParentPersister>(registry);
+  registry->addPersister(parentPersister);
 
   registry->createTablesIfNeeded();
 }

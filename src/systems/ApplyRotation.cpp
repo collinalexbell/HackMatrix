@@ -1,7 +1,11 @@
 #include "systems/ApplyRotation.h"
 #include "components/RotateMovement.h"
+#include "glm/ext/quaternion_trigonometric.hpp"
+#include "glm/gtx/transform.hpp"
 #include "model.h"
+#include "components/Parent.h"
 #include <GLFW/glfw3.h>
+#include <glm/gtc/quaternion.hpp>
 
 double MIN_ROTATION = 0.0001;
 void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
@@ -26,7 +30,11 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
 
     rotateMovement.degrees -= degreesToRotate;
 
-    positionable.rotate = positionable.rotate + (rotateMovement.axis * glm::vec3(degreesToRotate));
+    glm::quat rotation = glm::angleAxis(glm::radians((float)degreesToRotate),
+                                        rotateMovement.axis);
+    glm::quat curQuat(glm::radians(positionable.rotate));
+    auto newQuat = curQuat * rotation;
+    positionable.rotate = glm::degrees(glm::eulerAngles(newQuat));
 
     if (fabs(rotateMovement.degrees) < MIN_ROTATION) { // Account for negatives
       if(rotateMovement.onFinish.has_value()) {
@@ -35,6 +43,35 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
       registry->remove<RotateMovement>(entity);
     }
     positionable.damage();
+
+    auto parent = registry->try_get<Parent>(entity);
+    if (parent != NULL) {
+      for (auto childId : parent->childrenIds) {
+        auto childEntityOpt = registry->locateEntity(childId);
+        if(childEntityOpt.has_value()) {
+          auto childEntity = childEntityOpt.value();
+
+          auto &childPositionable = registry->get<Positionable>(childEntity);
+
+          // Calculate child's position relative to parent
+          glm::vec3 relativePosition =
+              childPositionable.pos - positionable.pos;
+          auto rotationMatrix = glm::rotate(glm::radians((float)degreesToRotate),
+                                            rotateMovement.axis);
+          glm::vec3 rotatedPosition = rotationMatrix * glm::vec4(relativePosition, 1.0f);
+
+          // Calculate child's new world position
+          childPositionable.pos =
+              rotatedPosition + positionable.pos;
+
+          glm::quat childQuat(glm::radians(childPositionable.rotate));
+          auto newChildQuat = rotation * childQuat;
+          childPositionable.rotate = glm::degrees(glm::eulerAngles(newChildQuat));
+
+          childPositionable.damage();
+        }
+      }
+    }
   }
   lastRotated = curTime;
 }
