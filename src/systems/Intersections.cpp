@@ -6,6 +6,6 @@ namespace systems {
                                        entt::entity entity) {
     glm::vec3 center;
     float radius;
-    registry->emplace<BoundingSphere>(entity, center, radius);
+    registry->emplace_or_replace<BoundingSphere>(entity, center, radius);
   }
 }
