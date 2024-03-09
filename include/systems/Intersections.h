@@ -4,5 +4,5 @@
 #include <memory>
 
 namespace systems {
-  BoundingSphere emplaceBoundingSphere(std::shared_ptr<EntityRegistry>, entt::entity);
+  void emplaceBoundingSphere(std::shared_ptr<EntityRegistry>, entt::entity);
 }
