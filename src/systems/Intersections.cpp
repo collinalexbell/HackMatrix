@@ -1,11 +1,16 @@
 
 #include "systems/Intersections.h"
+#include "model.h"
+
 
 namespace systems {
   void emplaceBoundingSphere(std::shared_ptr<EntityRegistry> registry,
                                        entt::entity entity) {
-    glm::vec3 center;
-    float radius;
-    registry->emplace_or_replace<BoundingSphere>(entity, center, radius);
+    auto [model, positionable] = registry->get<Model, Positionable>(entity);
+
+    auto boundingSphere = model.getBoundingSphere();
+    registry->emplace_or_replace<BoundingSphere>(entity,
+                                                 boundingSphere.center,
+                                                 boundingSphere.radius);
   }
 }

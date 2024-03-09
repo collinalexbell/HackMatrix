@@ -59,7 +59,7 @@ build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h include/
 build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 $(FLAGS) -o build/logger.o -c src/logger.cpp $(INCLUDES)
 
-build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h include/assets.h include/entity.h
+build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h include/assets.h include/entity.h include/model.h
 	g++ -std=c++20 $(FLAGS) -o build/engine.o -c src/engine.cpp $(INCLUDES)
 
 build/cube.o: src/cube.cpp include/cube.h
@@ -95,7 +95,7 @@ build/mesh.o: src/mesh.cpp include/mesh.h
 build/entity.o: src/entity.cpp include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/entity.o -c src/entity.cpp $(INCLUDES)
 
-build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h
+build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h
 	g++ -std=c++20 $(FLAGS) -o build/engineGui.o -c src/engineGui.cpp $(INCLUDES)
 
 build/persister.o: src/persister.cpp include/persister.h
@@ -130,7 +130,7 @@ build/systems/Scripts.o: src/systems/Scripts.cpp include/systems/Scripts.h inclu
 	g++ -std=c++20 $(FLAGS) -o build/systems/Scripts.o -c src/systems/Scripts.cpp $(INCLUDES)
 
 
-build/systems/Intersections.o: src/systems/Intersections.cpp include/systems/Intersections.h include/components/BoundingSphere.h include/entity.h
+build/systems/Intersections.o: src/systems/Intersections.cpp include/systems/Intersections.h include/components/BoundingSphere.h include/entity.h include/model.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/Intersections.o -c src/systems/Intersections.cpp $(INCLUDES)
 
 

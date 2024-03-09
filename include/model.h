@@ -1,4 +1,5 @@
 #pragma once
+#include "components/BoundingSphere.h"
 #include "mesh.h"
 #include "SQLPersisterImpl.h"
 #include "shader.h"
@@ -56,12 +57,15 @@ public:
   Model(string path);
   void Draw(Shader &shader);
 
+  BoundingSphere getBoundingSphere();
+
 private:
   // model data
   vector<Mesh> meshes;
   vector<MeshTexture> textures_loaded;
   string directory;
 
+  vector<Vertex> getAllVertices();
   void loadModel(string path);
   void processNode(aiNode *node, const aiScene *scene);
   Mesh processMesh(aiMesh *mesh, const aiScene *scene);

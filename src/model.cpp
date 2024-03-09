@@ -5,6 +5,7 @@
 #include <assimp/scene.h>
 #include <iostream>
 #include <sstream>
+#include "components/BoundingSphere.h"
 #include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/trigonometric.hpp"
 #include "persister.h"
@@ -97,6 +98,17 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene) {
   return Mesh(vertices, indices, textures);
 }
 
+vector<Vertex> Model::getAllVertices() {
+  vector<Vertex> allVertices;
+
+  for (const Mesh &mesh : meshes) {
+    allVertices.insert(allVertices.end(), mesh.vertices.begin(),
+                       mesh.vertices.end());
+  }
+
+  return allVertices;
+}
+
 vector<MeshTexture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type,
                                      string typeName) {
   vector<MeshTexture> textures;
@@ -123,6 +135,35 @@ vector<MeshTexture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType t
     }
   }
   return textures;
+}
+
+BoundingSphere Model::getBoundingSphere() {
+  auto vertices = getAllVertices();
+  if (vertices.empty()) {
+    // Handle the case of an empty mesh
+    return BoundingSphere{glm::vec3(0.0f), 0.0f};
+  }
+
+  // 1. Find bounding box (same as before):
+  glm::vec3 minBounds(std::numeric_limits<float>::max());
+  glm::vec3 maxBounds(-std::numeric_limits<float>::max());
+
+  for (const Vertex &vertex : vertices) {
+    minBounds = glm::min(minBounds, vertex.Position);
+    maxBounds = glm::max(maxBounds, vertex.Position);
+  }
+
+  // 2. Calculate center:
+  glm::vec3 center = (minBounds + maxBounds) * 0.5f;
+
+  // 3. Find the radius:
+  float radius = 0.0f;
+  for (const Vertex &vertex : vertices) {
+    float distance = glm::distance(vertex.Position, center);
+    radius = std::max(radius, distance);
+  }
+
+  return BoundingSphere{center, radius};
 }
 
 
