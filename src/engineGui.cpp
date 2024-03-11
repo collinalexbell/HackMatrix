@@ -16,6 +16,7 @@
 #include "systems/Door.h"
 #include "systems/KeyAndLock.h"
 #include "systems/Scripts.h"
+#include "systems/Update.h"
 
 #include <glm/glm.hpp>
 
@@ -300,7 +301,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::Spacing();
 
     if(copiedPos != positionable.pos || positionable.origin != copiedOrigin || copiedScale != positionable.scale || copiedRotate != positionable.rotate) {
-      positionable.update();
+      systems::update(registry, entity);
     }
   }
   if(registry->any_of<Model>(entity)) {
