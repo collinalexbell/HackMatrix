@@ -146,17 +146,18 @@ void WM::onMapRequest(XMapRequestEvent event) {
     ss << "window created: " << event.window << " " << name;
     logger->info(ss.str());
     logger->flush();
-    createApp(event.window);
-
-    auto t = thread([this]() -> void {
-      usleep(0.5 * 1000000);
-      XSelectInput(display, matrix, 0);
-      Window root = DefaultRootWindow(display);
-      XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
-      XSync(display, False);
-      XFlush(display);
-    });
-    t.detach();
+    auto app = createApp(event.window);
+    if(!app->isAccessory()) {
+      auto t = thread([this]() -> void {
+        usleep(0.5 * 1000000);
+        XSelectInput(display, matrix, 0);
+        Window root = DefaultRootWindow(display);
+        XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
+        XSync(display, False);
+        XFlush(display);
+      });
+      t.detach();
+    }
   }
 }
 
@@ -297,7 +298,7 @@ void WM::mutateWorld() {
     try {
       world->addApp(*it);
       //if(!(*it)->isAccessory()) {
-        (*it)->unfocus(matrix);
+      //(*it)->unfocus(matrix);
         //}
     } catch(exception &e) {
       logger->error(e.what());
