@@ -1,6 +1,7 @@
 #include "world.h"
 #include "app.h"
 #include "chunk.h"
+#include "components/BoundingSphere.h"
 #include "coreStructs.h"
 #include "enkimi.h"
 #include "glm/geometric.hpp"
@@ -20,6 +21,9 @@
 #include <octree/octree.h>
 #include <sstream>
 #include <vector>
+#include "systems/Intersections.h"
+#include "systems/Scripts.h"
+#include "systems/Update.h"
 #include "utility.h"
 #include <csignal>
 #include "memory.h"
@@ -940,10 +944,20 @@ Position lookingAt = getLookedAtCube();
 }
 
 void World::dynamicObjectAction(Action toTake) {
-  auto dynamicObject = getLookedAtDynamicObject();
-  if (dynamicObject != NULL) {
-    if (toTake == OPEN_SELECTION_CODE) {
-      logger->info("open_selection_code");
+  if (toTake == OPEN_SELECTION_CODE) {
+    logger->debug("edit code");
+    auto view = registry->view<BoundingSphere, Scriptable>();
+    for(auto [entity, boundingSphere, _scriptable]: view.each()) {
+      stringstream debug;
+      debug << "pos:" << camera->position.x << ", " << camera->position.y << ", " << camera->position.z;
+      logger->debug(debug.str());
+      if(systems::intersect(boundingSphere,
+                            camera->position,
+                            camera->front,
+                            10.0)) {
+        logger->debug("true");
+        systems::editScript(registry, entity);
+      }
     }
   }
 }
@@ -1094,7 +1108,7 @@ void World::tick(){
   auto view = registry->view<Positionable>();
   for(auto [entity, positionable]: view.each()) {
     if(positionable.damaged) {
-      positionable.update();
+      systems::update(registry, entity);
     }
   }
   if(dynamicObjects->damaged()) {
