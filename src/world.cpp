@@ -1,6 +1,7 @@
 #include "world.h"
 #include "app.h"
 #include "chunk.h"
+#include "components/BoundingSphere.h"
 #include "coreStructs.h"
 #include "enkimi.h"
 #include "glm/geometric.hpp"
@@ -20,6 +21,8 @@
 #include <octree/octree.h>
 #include <sstream>
 #include <vector>
+#include "systems/Intersections.h"
+#include "systems/Scripts.h"
 #include "systems/Update.h"
 #include "utility.h"
 #include <csignal>
@@ -941,10 +944,17 @@ Position lookingAt = getLookedAtCube();
 }
 
 void World::dynamicObjectAction(Action toTake) {
-  auto dynamicObject = getLookedAtDynamicObject();
-  if (dynamicObject != NULL) {
-    if (toTake == OPEN_SELECTION_CODE) {
-      logger->info("open_selection_code");
+  if (toTake == OPEN_SELECTION_CODE) {
+    logger->debug("edit code");
+    auto view = registry->view<BoundingSphere, Scriptable>();
+    for(auto [entity, boundingSphere, _scriptable]: view.each()) {
+      logger->debug("checking scriptable");
+      if(systems::intersect(boundingSphere,
+                            camera->position,
+                            camera->front,
+                            4.0)) {
+        systems::editScript(registry, entity);
+      }
     }
   }
 }
