@@ -6,6 +6,7 @@
 #include "logger.h"
 #include "model.h"
 #include "persister.h"
+#include "systems/Derivative.h"
 #include <memory>
 #include <spdlog/common.h>
 #define GLFW_EXPOSE_NATIVE_X11
@@ -69,6 +70,7 @@ void Engine::setupRegistry() {
 Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   setupRegistry();
   registry->loadAll();
+  systems::createDerivativeComponents(registry);
   auto loggerVector = make_shared<LoggerVector>();
   auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
   loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);

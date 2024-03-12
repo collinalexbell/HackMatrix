@@ -7,14 +7,14 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
+ALL_OBJECTS = build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
 
 
 all: FLAGS+=-O3 -g
 all: matrix trampoline build/diagnosis
 
-matrix: build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o $(SQLITE_OBJECTS)
+matrix: build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o $(SQLITE_OBJECTS)
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
@@ -59,7 +59,7 @@ build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h include/
 build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 $(FLAGS) -o build/logger.o -c src/logger.cpp $(INCLUDES)
 
-build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h include/assets.h include/entity.h include/model.h
+build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h include/assets.h include/entity.h include/model.h include/systems/Derivative.h
 	g++ -std=c++20 $(FLAGS) -o build/engine.o -c src/engine.cpp $(INCLUDES)
 
 build/cube.o: src/cube.cpp include/cube.h
@@ -95,7 +95,7 @@ build/mesh.o: src/mesh.cpp include/mesh.h
 build/entity.o: src/entity.cpp include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/entity.o -c src/entity.cpp $(INCLUDES)
 
-build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h
+build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h include/systems/Update.h
 	g++ -std=c++20 $(FLAGS) -o build/engineGui.o -c src/engineGui.cpp $(INCLUDES)
 
 build/persister.o: src/persister.cpp include/persister.h
@@ -136,7 +136,8 @@ build/systems/Intersections.o: src/systems/Intersections.cpp include/systems/Int
 build/systems/Update.o: src/systems/Update.cpp include/systems/Update.h include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/Update.o -c src/systems/Update.cpp $(INCLUDES)
 
-
+build/systems/Derivative.o: src/systems/Derivative.cpp include/systems/Intersections.h include/entity.h include/model.h include/components/Scriptable.h
+	g++ -std=c++20 $(FLAGS) -o build/systems/Derivative.o -c src/systems/Derivative.cpp $(INCLUDES)
 
 # SQLite build logic
 build/%.o: src/sqlite/%.cpp

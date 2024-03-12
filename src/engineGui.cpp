@@ -14,6 +14,7 @@
 #include <string>
 #include "entity.h"
 #include "systems/Door.h"
+#include "systems/Intersections.h"
 #include "systems/KeyAndLock.h"
 #include "systems/Scripts.h"
 #include "systems/Update.h"
@@ -249,6 +250,7 @@ void EngineGui::addComponentPanel(entt::entity entity,
 
     if (ImGui::Button("Add Scriptable Component")) {
       registry->emplace<Scriptable>(entity,"", scriptLanguage);
+      systems::emplaceBoundingSphere(registry, entity);
       showAddComponentPanel = false;
     }
   }
