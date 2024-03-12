@@ -11,6 +11,7 @@
 #include <spdlog/common.h>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 
 #define OBS false
 #define EDGE true
@@ -141,12 +142,19 @@ void WM::onMapRequest(XMapRequestEvent event) {
   string sName(name);
   bool alreadyRegistered = dynamicApps.count(event.window);
   if (!alreadyRegistered && !sName.ends_with("one")) {
-    createApp(event.window);
+    stringstream ss;
+    ss << "window created: " << event.window << " " << name;
+    logger->info(ss.str());
+    logger->flush();
+    auto app = createApp(event.window);
+    if(!app->isAccessory()) {
+      auto t = thread([this, app, event]() -> void {
+        usleep(0.4 * 1000000);
+        app->unfocus(matrix);
+      });
+      t.detach();
+    }
   }
-  stringstream ss;
-  ss << "window created: " << event.window << " "<< name;
-  logger->info(ss.str());
-  logger->flush();
 }
 
 void WM::onDestroyNotify(XDestroyWindowEvent event) {
@@ -216,21 +224,6 @@ void WM::handleSubstructure() {
       logger->flush();
       onDestroyNotify(e.xdestroywindow);
       break;
-    case ReparentNotify:
-      logger->info("ReparentNotify event");
-      logger->flush();
-      break;
-    case ConfigureNotify:
-      eventInfo << "ConfigureNotify event: position:" <<
-        e.xconfigure.x << "," << e.xconfigure.y;
-      logger->debug(eventInfo.str());
-      break;
-    case ConfigureRequest: {
-      eventInfo << "ConfigureRequest event: position:" << e.xconfigure.x << ","
-                << e.xconfigure.y;
-      logger->debug(eventInfo.str());
-      break;
-    }
     case MapRequest:
       logger->info("MapRequest event");
       onMapRequest(e.xmaprequest);
@@ -238,19 +231,6 @@ void WM::handleSubstructure() {
     case KeyPress:
       onHotkeyPress(e.xkey);
       break;
-    case ClientMessage: {
-      logger->debug("ClientMessage");
-        if (e.xclient.message_type ==
-            XInternAtom(display, "XdndEnter", False)) {
-          logger->debug("XdndEnter");
-        } else if (e.xclient.message_type ==
-                  XInternAtom(display, "XdndPosition", False)) {
-          logger->debug("XdndPosition");
-        } else if (e.xclient.message_type ==
-                  XInternAtom(display, "XdndDrop", False)) {
-          logger->debug("XdndDrop");
-        }
-      }
     }
   }
 }
@@ -260,6 +240,9 @@ void WM::mutateWorld() {
   for(auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
       world->addApp(*it);
+      //if(!(*it)->isAccessory()) {
+      //(*it)->unfocus(matrix);
+        //}
     } catch(exception &e) {
       logger->error(e.what());
       logger->flush();
@@ -321,7 +304,9 @@ WM::WM(Window matrix, spdlog::sink_ptr loggerSink):
 
         XSelectInput(display, root,
                      EnterWindowMask | SubstructureRedirectMask |
-                         SubstructureNotifyMask);
+                     SubstructureNotifyMask | FocusChangeMask | LeaveWindowMask | EnterWindowMask);
+
+        XSelectInput(display, matrix, FocusChangeMask | LeaveWindowMask);
 
         Atom XdndSelectionAtom = XInternAtom(display, "XdndSelection", False);
         XSetSelectionOwner(display, overlay, matrix, CurrentTime);
