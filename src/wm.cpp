@@ -148,13 +148,9 @@ void WM::onMapRequest(XMapRequestEvent event) {
     logger->flush();
     auto app = createApp(event.window);
     if(!app->isAccessory()) {
-      auto t = thread([this]() -> void {
+      auto t = thread([this, app]() -> void {
         usleep(0.5 * 1000000);
-        XSelectInput(display, matrix, 0);
-        Window root = DefaultRootWindow(display);
-        XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
-        XSync(display, False);
-        XFlush(display);
+        app->unfocus(matrix);
       });
       t.detach();
     }
