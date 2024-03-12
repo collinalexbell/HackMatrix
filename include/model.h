@@ -57,7 +57,7 @@ public:
   Model(string path);
   void Draw(Shader &shader);
 
-  BoundingSphere getBoundingSphere();
+  BoundingSphere getBoundingSphere(float scale);
 
 private:
   // model data

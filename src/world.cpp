@@ -948,11 +948,14 @@ void World::dynamicObjectAction(Action toTake) {
     logger->debug("edit code");
     auto view = registry->view<BoundingSphere, Scriptable>();
     for(auto [entity, boundingSphere, _scriptable]: view.each()) {
-      logger->debug("checking scriptable");
+      stringstream debug;
+      debug << "pos:" << camera->position.x << ", " << camera->position.y << ", " << camera->position.z;
+      logger->debug(debug.str());
       if(systems::intersect(boundingSphere,
                             camera->position,
                             camera->front,
-                            4.0)) {
+                            10.0)) {
+        logger->debug("true");
         systems::editScript(registry, entity);
       }
     }

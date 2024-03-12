@@ -8,9 +8,8 @@ namespace systems {
                                        entt::entity entity) {
     auto [model, positionable] = registry->get<Model, Positionable>(entity);
 
-    auto boundingSphere = model.getBoundingSphere();
-    boundingSphere.center += positionable.pos;
-    boundingSphere.radius *= positionable.scale;
+    auto boundingSphere = model.getBoundingSphere(positionable.scale);
+    boundingSphere.center += positionable.pos - positionable.origin;
     registry->emplace_or_replace<BoundingSphere>(entity,
                                                  boundingSphere.center,
                                                  boundingSphere.radius);
