@@ -10,6 +10,7 @@ namespace systems {
 
     auto boundingSphere = model.getBoundingSphere();
     boundingSphere.center += positionable.pos;
+    boundingSphere.radius *= positionable.scale;
     registry->emplace_or_replace<BoundingSphere>(entity,
                                                  boundingSphere.center,
                                                  boundingSphere.radius);

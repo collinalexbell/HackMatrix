@@ -1,4 +1,5 @@
 #include "engineGui.h"
+#include "components/BoundingSphere.h"
 #include "components/Door.h"
 #include "components/Key.h"
 #include "components/Lock.h"
@@ -455,6 +456,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::Spacing();
   }
   if(registry->any_of<Scriptable>(entity)) {
+    ImGui::Text("Scriptable Component:");
     auto &scriptable = registry->get<Scriptable>(entity);
 
     auto label = makeLabeler(entity);
@@ -471,6 +473,20 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     if (ImGui::Button(label("Delete Component##Scriptable").c_str())) {
       registry->removePersistent<Scriptable>(entity);
     }
+    ImGui::Spacing();
+  }
+
+  if (registry->any_of<BoundingSphere>(entity)) {
+    ImGui::Text("Bounding Sphere Component:");
+    auto boundingSphere = registry->get<BoundingSphere>(entity);
+
+    auto label = makeLabeler(entity);
+    ImGui::Text("Center: (%f, %f, %f)",
+                boundingSphere.center.x,
+                boundingSphere.center.y,
+                boundingSphere.center.z);
+    ImGui::Text("Radius: %f", boundingSphere.radius);
+    ImGui::Spacing();
   }
 }
 
