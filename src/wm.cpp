@@ -141,12 +141,12 @@ void WM::onMapRequest(XMapRequestEvent event) {
   string sName(name);
   bool alreadyRegistered = dynamicApps.count(event.window);
   if (!alreadyRegistered && !sName.ends_with("one")) {
+    stringstream ss;
+    ss << "window created: " << event.window << " " << name;
+    logger->info(ss.str());
+    logger->flush();
     createApp(event.window);
   }
-  stringstream ss;
-  ss << "window created: " << event.window << " "<< name;
-  logger->info(ss.str());
-  logger->flush();
 }
 
 void WM::onDestroyNotify(XDestroyWindowEvent event) {
