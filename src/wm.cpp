@@ -11,6 +11,7 @@
 #include <spdlog/common.h>
 #include <sstream>
 #include <thread>
+#include <unistd.h>
 
 #define OBS false
 #define EDGE true
@@ -146,6 +147,16 @@ void WM::onMapRequest(XMapRequestEvent event) {
     logger->info(ss.str());
     logger->flush();
     createApp(event.window);
+
+    auto t = thread([this]() -> void {
+      usleep(0.5 * 1000000);
+      XSelectInput(display, matrix, 0);
+      Window root = DefaultRootWindow(display);
+      XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
+      XSync(display, False);
+      XFlush(display);
+    });
+    t.detach();
   }
 }
 
@@ -250,7 +261,32 @@ void WM::handleSubstructure() {
                   XInternAtom(display, "XdndDrop", False)) {
           logger->debug("XdndDrop");
         }
+        break;
       }
+    case FocusIn: {
+      stringstream focusS;
+      focusS << "FocusIn: " << e.xfocus.detail;
+      logger->debug(focusS.str());
+      logger->flush();
+      break;
+    }
+    case FocusOut: {
+      stringstream focusS;
+      focusS << "FocusOut: " << e.xfocus.detail;
+      logger->debug(focusS.str());
+      logger->flush();
+      break;
+    }
+    case LeaveNotify: {
+      logger->debug("leaving window");
+      logger->flush();
+      break;
+    }
+    case EnterNotify: {
+      logger->debug("entering window");
+      logger->flush();
+      break;
+    }
     }
   }
 }
@@ -260,6 +296,9 @@ void WM::mutateWorld() {
   for(auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
       world->addApp(*it);
+      //if(!(*it)->isAccessory()) {
+        (*it)->unfocus(matrix);
+        //}
     } catch(exception &e) {
       logger->error(e.what());
       logger->flush();
@@ -321,7 +360,7 @@ WM::WM(Window matrix, spdlog::sink_ptr loggerSink):
 
         XSelectInput(display, root,
                      EnterWindowMask | SubstructureRedirectMask |
-                         SubstructureNotifyMask);
+                     SubstructureNotifyMask | FocusChangeMask | LeaveWindowMask | EnterWindowMask);
 
         Atom XdndSelectionAtom = XInternAtom(display, "XdndSelection", False);
         XSetSelectionOwner(display, overlay, matrix, CurrentTime);
