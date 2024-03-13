@@ -62,102 +62,13 @@ void Api::ProtobufCommandServer::poll(WorldInterface *world) {
       apiRequest.ParseFromArray(recv.data(), recv.size());
 
       switch (apiRequest.type()) {
-      case ADD_CUBE: {
-        const AddCube &cubeToAdd = apiRequest.addcube();
-        api->grabBatched();
-        auto batchedCubes = api->getBatchedCubes();
-        batchedCubes->push(ApiCube{cubeToAdd.x(), cubeToAdd.y(), cubeToAdd.z(),
-                                   cubeToAdd.blocktype()});
-        api->releaseBatched();
+      case MOVE:
         break;
-      }
-      case CLEAR_BOX: {
-        const ClearBox &boxToClear = apiRequest.clearbox();
-        api->grabBatched();
-        auto batchedCubes = api->getBatchedCubes();
-
-        bool x1Smaller = boxToClear.x1() < boxToClear.x2();
-        float x1 = x1Smaller ? boxToClear.x1() : boxToClear.x2();
-        float x2 = x1Smaller ? boxToClear.x2() : boxToClear.x1();
-
-        bool y1Smaller = boxToClear.y1() < boxToClear.y2();
-        float y1 = y1Smaller ? boxToClear.y1() : boxToClear.y2();
-        float y2 = y1Smaller ? boxToClear.y2() : boxToClear.y1();
-
-        bool z1Smaller = boxToClear.z1() < boxToClear.z2();
-        float z1 = z1Smaller ? boxToClear.z1() : boxToClear.z2();
-        float z2 = z1Smaller ? boxToClear.z2() : boxToClear.z1();
-
-        stringstream boxString;
-        boxString << "clearBox: " << x1 << ", " << y1 << ", " << z1 << ", "
-                  << x2 << ", " << y2 << ", " << z2 << endl;
-
-        logger->critical(boxString.str());
-        logger->flush();
-        for (int x = x1; x <= x2; x++) {
-          for (int y = y1; y <= y2; y++) {
-            for (int z = z1; z <= z2; z++) {
-              glm::vec3 pos(x, y, z);
-              batchedCubes->push(ApiCube{(float)x, (float)y, (float)z, -1});
-            }
-          }
-        }
-        api->releaseBatched();
+      case TURN_KEY:
         break;
-      }
-      case ADD_LINE: {
-        const AddLine &lineToAdd = apiRequest.addline();
-        api->grabBatched();
-        auto batchedLines = api->getBatchedLines();
-        glm::vec3 pos1(lineToAdd.x1(), lineToAdd.y1(), lineToAdd.z1());
-        glm::vec3 pos2(lineToAdd.x2(), lineToAdd.y2(), lineToAdd.z2());
-        float intensity = lineToAdd.intensity();
-        glm::vec3 color(intensity, intensity, intensity);
-        batchedLines->push(Line{{pos1, pos2}, color});
-        api->releaseBatched();
-        break;
-      }
-      case ADD_CUBES: {
-        const AddCubes &cubesToAdd = apiRequest.addcubes();
-        auto cubes = cubesToAdd.cubes();
-        logger->debug("adding " + to_string(cubes.size()) + "cubes");
-        api->grabBatched();
-        auto batchedCubes = api->getBatchedCubes();
-        for (int i = 0; i < cubes.size(); i++) {
-          glm::vec3 pos(cubes[i].x(), cubes[i].y(), cubes[i].z());
-          batchedCubes->push(ApiCube{cubes[i].x(), cubes[i].y(), cubes[i].z(),
-                                     cubes[i].blocktype()});
-        }
-        api->releaseBatched();
-        break;
-      }
-      case MOVE: {
-        // I need to add the command to a dynamic objects queue that can
-        // then be processed on main thread.
-        Move movement = apiRequest.move();
-        auto id = movement.id();
-        auto delta = glm::vec3(movement.xdelta(), movement.ydelta(), movement.zdelta());
-        auto obj = world->getDynamicObjects()->getObjectById(id);
-        if(obj != NULL) {
-          obj->move(delta);
-        }
-        break;
-      }
-      case GET_IDS: {
-        auto ids = world->getDynamicObjects()->getObjectIds();
-        std::string stringifiedIds;
-        ObjectIds idsBuffer;
-        for(auto id: ids) {
-          idsBuffer.add_ids(id);
-        }
-        idsBuffer.SerializeToString(&stringifiedIds);
-        reply = zmq::message_t(stringifiedIds.begin(), stringifiedIds.end());
-        break;
-      }
       default:
         break;
       }
-
       socket.send(reply, zmq::send_flags::none);
     }
   } catch (zmq::error_t &e) {}
