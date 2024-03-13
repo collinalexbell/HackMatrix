@@ -6,6 +6,7 @@
 #include <thread>
 #include <zmq/zmq.hpp>
 #include <string>
+#include "protos/api.pb.h"
 #include "world.h"
 #include "logger.h"
 
@@ -30,14 +31,18 @@ struct ApiCube {
   int blockType;
 };
 
+struct BatchedRequest {
+  static int nextId;
+  BatchedRequest(ApiRequest request): request(request) {
+    id = nextId++;
+  }
+  int64_t id;
+  ApiRequest request;
+};
+
 class Api {
 
   class ProtobufCommandServer : public CommandServer {
-    using CommandServer::CommandServer;
-    void poll(WorldInterface *world) override;
-  };
-
-  class TextCommandServer : public CommandServer {
     using CommandServer::CommandServer;
     void poll(WorldInterface *world) override;
   };
@@ -48,8 +53,7 @@ class Api {
   zmq::context_t context;
   CommandServer *commandServer;
 
-  queue<ApiCube> batchedCubes;
-  queue<Line> batchedLines;
+  queue<BatchedRequest> batchedRequests;
 
   mutex renderMutex;
   thread offRenderThread;
@@ -58,8 +62,7 @@ class Api {
 
 protected:
   void grabBatched();
-  queue<ApiCube> *getBatchedCubes();
-  queue<Line> *getBatchedLines();
+  queue<BatchedRequest>* getBatchedRequests();
   void releaseBatched();
 
 public:
@@ -67,7 +70,6 @@ public:
   ~Api();
   void poll();
   void mutateWorld();
-  void requestWorldData(WorldInterface*, string);
 };
 
 #endif

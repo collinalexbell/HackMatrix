@@ -17,6 +17,8 @@
 
 using namespace std;
 
+int BatchedRequest::nextId = 0;
+
 Api::Api(std::string bindAddress, WorldInterface* world): world(world) {
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
@@ -32,23 +34,6 @@ CommandServer::CommandServer(Api* api, std::string bindAddress, zmq::context_t& 
   socket.bind (bindAddress);
 }
 
-void Api::requestWorldData(WorldInterface* world, string serverAddr) {
-  zmq::message_t reply;
-  zmq::message_t request(5);
-  zmq::context_t clientContext = zmq::context_t(2);
-  zmq::socket_t clientSocket = zmq::socket_t(clientContext, zmq::socket_type::req);
-  try {
-    clientSocket.connect(serverAddr);
-    memcpy (request.data (), "init", 5);
-    auto err = clientSocket.send(request, zmq::send_flags::dontwait);
-    if(err != -1) {
-      zmq::recv_result_t result = clientSocket.recv(reply, zmq::recv_flags::dontwait);
-    }
-  } catch(...) {
-    logger->critical("couldn't connect to the init server");
-  }
-}
-
 void Api::ProtobufCommandServer::poll(WorldInterface *world) {
   try {
     zmq::message_t recv;
@@ -61,52 +46,16 @@ void Api::ProtobufCommandServer::poll(WorldInterface *world) {
       ApiRequest apiRequest;
       apiRequest.ParseFromArray(recv.data(), recv.size());
 
-      switch (apiRequest.type()) {
-      case MOVE:
-        break;
-      case TURN_KEY:
-        break;
-      default:
-        break;
-      }
+      api->grabBatched();
+      auto batchedRequests = api->getBatchedRequests();
+      auto request = BatchedRequest(apiRequest);
+      batchedRequests->push(request);
+      api->releaseBatched();
+
+
       socket.send(reply, zmq::send_flags::none);
     }
   } catch (zmq::error_t &e) {}
-}
-
-void Api::TextCommandServer::poll(WorldInterface *world) {
-  try {
-    zmq::message_t request;
-    zmq::recv_result_t result = socket.recv(request, zmq::recv_flags::dontwait);
-    if (result >= 0) {
-      std::string data(static_cast<char *>(request.data()), request.size());
-
-      std::istringstream iss(data);
-
-      while (!iss.eof()) {
-        api->grabBatched();
-        auto cubesToAdd = api->getBatchedCubes();
-        std::string command;
-        int type;
-        int x, y, z;
-        iss >> command >> x >> y >> z >> type;
-
-        stringstream ss;
-        ss << command << "," << x << "," << y << "," << z << endl;
-
-        if (command == "c") {
-          glm::vec3 pos(x, y, z);
-          cubesToAdd->push(ApiCube{(float)x,(float)y,(float)z,type});
-        }
-        api->releaseBatched();
-      }
-
-      //  Send reply back to client
-      zmq::message_t reply(5);
-      memcpy(reply.data(), "recv", 5);
-      socket.send(reply, zmq::send_flags::none);
-    }
-  } catch(zmq::error_t& e) {}
 }
 
 void Api::poll() {
@@ -120,26 +69,13 @@ void Api::poll() {
 void Api::mutateWorld() {
   long time = glfwGetTime();
   long target = time + 0.005;
-  bool hasMeshChange = false;
   grabBatched();
-  stringstream logStream;
-  for (; time <= target && batchedCubes.size() != 0; time = glfwGetTime()) {
-    ApiCube c = batchedCubes.front();
-    world->addCube(c.x, c.y, c.z, c.blockType);
-    batchedCubes.pop();
-    hasMeshChange = true;
-  }
-  time = glfwGetTime();
-  target = time + 0.10;
-  for (; time <= target && batchedLines.size() != 0; time = glfwGetTime()) {
-    Line l = batchedLines.front();
-    world->addLine(l);
-    batchedLines.pop();
+  auto batchedRequests = getBatchedRequests();
+  for (; time <= target && batchedRequests->size() != 0; time = glfwGetTime()) {
+    // Handle a request
+    batchedRequests->pop();
   }
   releaseBatched();
-  if(hasMeshChange) {
-    world->mesh();
-  }
 }
 
 void Api::grabBatched() {
@@ -148,12 +84,8 @@ void Api::grabBatched() {
 
 void Api::releaseBatched() { renderMutex.unlock(); }
 
-queue<ApiCube> *Api::getBatchedCubes(){
-  return &batchedCubes;
-}
-
-queue<Line> *Api::getBatchedLines() {
-  return &batchedLines;
+queue<BatchedRequest> *Api::getBatchedRequests() {
+  return &batchedRequests;
 }
 
 Api::~Api() {
