@@ -1,68 +1,31 @@
 syntax = "proto3";
 
 enum MessageType {
-  ADD_CUBE = 0;
-  CLEAR_BOX = 1;
-  ADD_LINE = 2;
-  ADD_CUBES = 3;
-  MOVE = 4;
-  GET_IDS = 5;
-}
-
-message GetIds {}
-
-message ObjectIds {
-  repeated int32 ids = 1;
+  MOVE = 0;
+  TURN_KEY = 1;
 }
 
 message Move {
-  int32 id = 1;
   float xDelta = 2;
   float yDelta = 3;
   float zDelta = 4;
 }
 
-message AddCube {
-  float x = 1;
-  float y = 2;
-  float z = 3;
-  int32 blockType = 4;
-}
-
-message AddCubes {
-  repeated AddCube cubes = 1;
-}
-
-message ClearBox {
-  float x1 = 1;
-  float y1 = 2;
-  float z1 = 3;
-
-  float x2 = 4;
-  float y2 = 5;
-  float z2 = 6;
-}
-
-message AddLine {
-  float x1 = 1;
-  float y1 = 2;
-  float z1 = 3;
-
-  float x2 = 4;
-  float y2 = 5;
-  float z2 = 6;
-
-  float intensity = 7;
+message TurnKey {
+  bool on = 2;
 }
 
 message ApiRequest {
-  MessageType type = 1;
+  int64 entityId = 1;
+  MessageType type = 2;
   oneof payload {
-    AddCube addCube = 2;
-    ClearBox clearBox = 3;
-    AddLine addLine = 4;
-    AddCubes addCubes = 5;
-    Move move = 6;
-    GetIds getIds = 7;
+    Move move = 3;
+    TurnKey turnKey = 4;
   }
 }
+
+message ApiRequestResponse {
+  int64 requestId = 1;
+}
+
+

@@ -102,7 +102,7 @@ void Engine::initialize(){
   wm = new WM(glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
-  api = new Api("tcp://*:3333", world);
+  api = new Api("tcp://*:3333", registry);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
   wm->registerControls(controls);
@@ -130,7 +130,7 @@ void Engine::loop() {
       frameStart = glfwGetTime();
       world->tick();
       renderer->render();
-      api->mutateWorld();
+      api->mutateEntities();
       wm->mutateWorld();
       controls->poll(window, camera, world);
 
