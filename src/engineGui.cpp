@@ -498,6 +498,7 @@ void EngineGui::renderEntities() {
     ImGui::Spacing();
     ImGui::Spacing();
     ImGui::Text("Entity ID: %s", std::to_string(persistable.entityId).c_str());
+    ImGui::Text("Raw Entity ID: %s", std::to_string((int)entity).c_str());
     bool &showAddComponentPanel = componentOptionsState[entity];
     if (ImGui::Button("- Delete Entity")) {
       registry->depersist(entity);

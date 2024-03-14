@@ -147,9 +147,9 @@ void WM::onMapRequest(XMapRequestEvent event) {
     logger->info(ss.str());
     logger->flush();
     auto app = createApp(event.window);
-    if(!app->isAccessory()) {
+    if(!app->isAccessory() && currentlyFocusedApp == NULL) {
       auto t = thread([this, app, event]() -> void {
-        usleep(0.4 * 1000000);
+        usleep(0.5 * 1000000);
         app->unfocus(matrix);
       });
       t.detach();

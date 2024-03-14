@@ -6,6 +6,8 @@
 #include <thread>
 #include <zmq/zmq.hpp>
 #include <string>
+#include "entity.h"
+#include "protos/api.pb.h"
 #include "world.h"
 #include "logger.h"
 
@@ -20,7 +22,7 @@ protected:
 
 public:
   CommandServer(Api *api, std::string bindAddress, zmq::context_t &context);
-  virtual void poll(WorldInterface *world) = 0;
+  virtual void poll() = 0;
 };
 
 struct ApiCube {
@@ -30,26 +32,29 @@ struct ApiCube {
   int blockType;
 };
 
+struct BatchedRequest {
+  static int nextId;
+  BatchedRequest(ApiRequest request): request(request) {
+    id = nextId++;
+  }
+  int64_t id;
+  ApiRequest request;
+};
+
 class Api {
 
   class ProtobufCommandServer : public CommandServer {
     using CommandServer::CommandServer;
-    void poll(WorldInterface *world) override;
-  };
-
-  class TextCommandServer : public CommandServer {
-    using CommandServer::CommandServer;
-    void poll(WorldInterface *world) override;
+    void poll() override;
   };
 
   shared_ptr<spdlog::logger> logger;
-  WorldInterface *world;
+  shared_ptr<EntityRegistry> registry;
 
   zmq::context_t context;
   CommandServer *commandServer;
 
-  queue<ApiCube> batchedCubes;
-  queue<Line> batchedLines;
+  queue<BatchedRequest> batchedRequests;
 
   mutex renderMutex;
   thread offRenderThread;
@@ -58,16 +63,15 @@ class Api {
 
 protected:
   void grabBatched();
-  queue<ApiCube> *getBatchedCubes();
-  queue<Line> *getBatchedLines();
+  queue<BatchedRequest>* getBatchedRequests();
   void releaseBatched();
+  void processBatchedRequest(BatchedRequest);
 
 public:
-  Api(std::string bindAddress, WorldInterface* world);
+  Api(std::string bindAddress, shared_ptr<EntityRegistry>);
   ~Api();
   void poll();
-  void mutateWorld();
-  void requestWorldData(WorldInterface*, string);
+  void mutateEntities();
 };
 
 #endif
