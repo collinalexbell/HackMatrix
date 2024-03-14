@@ -21,6 +21,7 @@
 #include <octree/octree.h>
 #include <sstream>
 #include <vector>
+#include "systems/ApplyTranslation.h"
 #include "systems/Intersections.h"
 #include "systems/Scripts.h"
 #include "systems/Update.h"
@@ -1105,6 +1106,7 @@ void World::loadLatest() {
 void World::tick(){
   //loadChunksIfNeccissary();
   systems::applyRotation(registry);
+  systems::applyTranslations(registry);
   auto view = registry->view<Positionable>();
   for(auto [entity, positionable]: view.each()) {
     if(positionable.damaged) {

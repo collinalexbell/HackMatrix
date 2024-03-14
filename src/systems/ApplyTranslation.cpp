@@ -17,9 +17,11 @@ void systems::applyTranslations(std::shared_ptr<EntityRegistry> registry) {
 
   auto toRotate = registry->view<Positionable, TranslateMovement>();
   for (auto [entity, positionable, translateMovement] : toRotate.each()) {
-    auto delta =
-      translateMovement.delta *
-      glm::vec3(translateMovement.unitsPerSecond * (curTime - lastTranslated));
+
+    glm::vec3 direction = glm::normalize(translateMovement.delta);
+    float distance =
+        translateMovement.unitsPerSecond * (curTime - lastTranslated);
+    glm::vec3 delta = direction * distance;
 
     // Ensure degrees are always positive for 'min' calculation
     delta = glm::abs(delta);
