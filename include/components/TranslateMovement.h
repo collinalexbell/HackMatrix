@@ -14,7 +14,3 @@ TranslateMovement(glm::vec3 delta, double unitsPerSecond)
   double unitsPerSecond;
   std::optional<std::function<void()>> onFinish;
 };
-
-TranslateMovement getMovementData(SQLite::Database &db, int movementId);
-int insertMovement(SQLite::Database &db, const TranslateMovement &movement);
-void updateMovement(SQLite::Database &db, int movementId, const TranslateMovement &movement);
