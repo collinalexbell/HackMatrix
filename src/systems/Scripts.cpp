@@ -5,6 +5,7 @@
 #include <mutex>
 #include <thread>
 
+#include "components/Scriptable.h"
 #include "systems/Scripts.h"
 #include "entity.h"
 
@@ -46,6 +47,12 @@ namespace systems {
         // Handle error: Could not open the file
         std::cerr << "Error: Unable to read the edited script" << std::endl;
       }
+
+      if (scriptable.language == PYTHON) {
+        std::string runCommand = "python " + filePath.string();
+        auto result = system(runCommand.c_str());
+      }
+
       std::filesystem::remove(filePath);
 
       // This isn't thread safe, be careful how this is done.

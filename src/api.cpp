@@ -2,13 +2,14 @@
 #include "dynamicObject.h"
 #include "glm/fwd.hpp"
 #include "logger.h"
-#include "world.h"
+#include "systems/KeyAndLock.h"
 
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <spdlog/common.h>
 #include <sstream>
 #include <string>
 #include <zmq/zmq.hpp>
@@ -19,9 +20,10 @@ using namespace std;
 
 int BatchedRequest::nextId = 0;
 
-Api::Api(std::string bindAddress, WorldInterface* world): world(world) {
+Api::Api(std::string bindAddress, shared_ptr<EntityRegistry> registry): registry(registry) {
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
+  logger->set_level(spdlog::level::debug);
   commandServer = new ProtobufCommandServer(this, bindAddress, context);
   offRenderThread = thread(&Api::poll, this);
 }
@@ -34,13 +36,11 @@ CommandServer::CommandServer(Api* api, std::string bindAddress, zmq::context_t& 
   socket.bind (bindAddress);
 }
 
-void Api::ProtobufCommandServer::poll(WorldInterface *world) {
+void Api::ProtobufCommandServer::poll() {
   try {
     zmq::message_t recv;
     zmq::recv_result_t result = socket.recv(recv);
 
-    zmq::message_t reply(5);
-    memcpy(reply.data(), "recv", 5);
 
     if (result >= 0) {
       ApiRequest apiRequest;
@@ -52,6 +52,17 @@ void Api::ProtobufCommandServer::poll(WorldInterface *world) {
       batchedRequests->push(request);
       api->releaseBatched();
 
+      ApiRequestResponse response;
+      response.set_requestid(request.id);
+
+      // Serialize the protocol buffer object to a byte array
+      std::string serializedResponse;
+      response.SerializeToString(&serializedResponse);
+
+      // Create a zmq::message_t object from the serialized data
+      zmq::message_t reply(serializedResponse.size());
+      memcpy(reply.data(), serializedResponse.c_str(),
+             serializedResponse.size());
 
       socket.send(reply, zmq::send_flags::none);
     }
@@ -61,18 +72,37 @@ void Api::ProtobufCommandServer::poll(WorldInterface *world) {
 void Api::poll() {
   while (continuePolling) {
     if (commandServer != NULL) {
-      commandServer->poll(world);
+      commandServer->poll();
     }
   }
 }
 
-void Api::mutateWorld() {
+void Api::processBatchedRequest(BatchedRequest batchedRequest) {
+  auto entityId = (entt::entity)batchedRequest.request.entityid();
+  switch(batchedRequest.request.type()) {
+  case MOVE:
+    break;
+  case TURN_KEY: {
+    auto turnKey = batchedRequest.request.turnkey();
+    if (turnKey.on()) {
+      systems::turnKey(registry, entityId);
+    } else {
+      systems::unturnKey(registry, entityId);
+    }
+    break;
+  }
+  default:
+    break;
+  }
+}
+
+void Api::mutateEntities() {
   long time = glfwGetTime();
   long target = time + 0.005;
   grabBatched();
   auto batchedRequests = getBatchedRequests();
   for (; time <= target && batchedRequests->size() != 0; time = glfwGetTime()) {
-    // Handle a request
+    processBatchedRequest(batchedRequests->front());
     batchedRequests->pop();
   }
   releaseBatched();

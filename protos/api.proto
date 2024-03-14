@@ -6,23 +6,26 @@ enum MessageType {
 }
 
 message Move {
-  int64 id = 1;
   float xDelta = 2;
   float yDelta = 3;
   float zDelta = 4;
 }
 
 message TurnKey {
-  int64 id = 1;
   bool on = 2;
 }
 
 message ApiRequest {
-  MessageType type = 1;
+  int64 entityId = 1;
+  MessageType type = 2;
   oneof payload {
-    Move move = 2;
-    TurnKey turnKey = 3;
+    Move move = 3;
+    TurnKey turnKey = 4;
   }
+}
+
+message ApiRequestResponse {
+  int64 requestId = 1;
 }
 
 

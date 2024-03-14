@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10protos/api.proto\"B\n\x04Move\x12\n\n\x02id\x18\x01 \x01(\x03\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\"!\n\x07TurnKey\x12\n\n\x02id\x18\x01 \x01(\x03\x12\n\n\x02on\x18\x02 \x01(\x08\"g\n\nApiRequest\x12\x1a\n\x04type\x18\x01 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x02 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x03 \x01(\x0b\x32\x08.TurnKeyH\x00\x42\t\n\x07payload*%\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x62\x06proto3'
+  serialized_pb=b'\n\x10protos/api.proto\"6\n\x04Move\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\"\x15\n\x07TurnKey\x12\n\n\x02on\x18\x02 \x01(\x08\"y\n\nApiRequest\x12\x10\n\x08\x65ntityId\x18\x01 \x01(\x03\x12\x1a\n\x04type\x18\x02 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x03 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x04 \x01(\x0b\x32\x08.TurnKeyH\x00\x42\t\n\x07payload\"\'\n\x12\x41piRequestResponse\x12\x11\n\trequestId\x18\x01 \x01(\x03*%\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x62\x06proto3'
 )
 
 _MESSAGETYPE = _descriptor.EnumDescriptor(
@@ -43,8 +43,8 @@ _MESSAGETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=228,
-  serialized_end=265,
+  serialized_start=263,
+  serialized_end=300,
 )
 _sym_db.RegisterEnumDescriptor(_MESSAGETYPE)
 
@@ -63,28 +63,21 @@ _MOVE = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='Move.id', index=0,
-      number=1, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='xDelta', full_name='Move.xDelta', index=1,
+      name='xDelta', full_name='Move.xDelta', index=0,
       number=2, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='yDelta', full_name='Move.yDelta', index=2,
+      name='yDelta', full_name='Move.yDelta', index=1,
       number=3, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='zDelta', full_name='Move.zDelta', index=3,
+      name='zDelta', full_name='Move.zDelta', index=2,
       number=4, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
@@ -103,7 +96,7 @@ _MOVE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=20,
-  serialized_end=86,
+  serialized_end=74,
 )
 
 
@@ -116,14 +109,7 @@ _TURNKEY = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='id', full_name='TurnKey.id', index=0,
-      number=1, type=3, cpp_type=2, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='on', full_name='TurnKey.on', index=1,
+      name='on', full_name='TurnKey.on', index=0,
       number=2, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
@@ -141,8 +127,8 @@ _TURNKEY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=88,
-  serialized_end=121,
+  serialized_start=76,
+  serialized_end=97,
 )
 
 
@@ -155,22 +141,29 @@ _APIREQUEST = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='type', full_name='ApiRequest.type', index=0,
-      number=1, type=14, cpp_type=8, label=1,
+      name='entityId', full_name='ApiRequest.entityId', index=0,
+      number=1, type=3, cpp_type=2, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='move', full_name='ApiRequest.move', index=1,
-      number=2, type=11, cpp_type=10, label=1,
+      name='type', full_name='ApiRequest.type', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='move', full_name='ApiRequest.move', index=2,
+      number=3, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='turnKey', full_name='ApiRequest.turnKey', index=2,
-      number=3, type=11, cpp_type=10, label=1,
+      name='turnKey', full_name='ApiRequest.turnKey', index=3,
+      number=4, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -192,8 +185,40 @@ _APIREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=123,
-  serialized_end=226,
+  serialized_start=99,
+  serialized_end=220,
+)
+
+
+_APIREQUESTRESPONSE = _descriptor.Descriptor(
+  name='ApiRequestResponse',
+  full_name='ApiRequestResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='requestId', full_name='ApiRequestResponse.requestId', index=0,
+      number=1, type=3, cpp_type=2, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=222,
+  serialized_end=261,
 )
 
 _APIREQUEST.fields_by_name['type'].enum_type = _MESSAGETYPE
@@ -208,6 +233,7 @@ _APIREQUEST.fields_by_name['turnKey'].containing_oneof = _APIREQUEST.oneofs_by_n
 DESCRIPTOR.message_types_by_name['Move'] = _MOVE
 DESCRIPTOR.message_types_by_name['TurnKey'] = _TURNKEY
 DESCRIPTOR.message_types_by_name['ApiRequest'] = _APIREQUEST
+DESCRIPTOR.message_types_by_name['ApiRequestResponse'] = _APIREQUESTRESPONSE
 DESCRIPTOR.enum_types_by_name['MessageType'] = _MESSAGETYPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -231,6 +257,13 @@ ApiRequest = _reflection.GeneratedProtocolMessageType('ApiRequest', (_message.Me
   # @@protoc_insertion_point(class_scope:ApiRequest)
   })
 _sym_db.RegisterMessage(ApiRequest)
+
+ApiRequestResponse = _reflection.GeneratedProtocolMessageType('ApiRequestResponse', (_message.Message,), {
+  'DESCRIPTOR' : _APIREQUESTRESPONSE,
+  '__module__' : 'protos.api_pb2'
+  # @@protoc_insertion_point(class_scope:ApiRequestResponse)
+  })
+_sym_db.RegisterMessage(ApiRequestResponse)
 
 
 # @@protoc_insertion_point(module_scope)

@@ -6,6 +6,7 @@
 #include <thread>
 #include <zmq/zmq.hpp>
 #include <string>
+#include "entity.h"
 #include "protos/api.pb.h"
 #include "world.h"
 #include "logger.h"
@@ -21,7 +22,7 @@ protected:
 
 public:
   CommandServer(Api *api, std::string bindAddress, zmq::context_t &context);
-  virtual void poll(WorldInterface *world) = 0;
+  virtual void poll() = 0;
 };
 
 struct ApiCube {
@@ -44,11 +45,11 @@ class Api {
 
   class ProtobufCommandServer : public CommandServer {
     using CommandServer::CommandServer;
-    void poll(WorldInterface *world) override;
+    void poll() override;
   };
 
   shared_ptr<spdlog::logger> logger;
-  WorldInterface *world;
+  shared_ptr<EntityRegistry> registry;
 
   zmq::context_t context;
   CommandServer *commandServer;
@@ -64,12 +65,13 @@ protected:
   void grabBatched();
   queue<BatchedRequest>* getBatchedRequests();
   void releaseBatched();
+  void processBatchedRequest(BatchedRequest);
 
 public:
-  Api(std::string bindAddress, WorldInterface* world);
+  Api(std::string bindAddress, shared_ptr<EntityRegistry>);
   ~Api();
   void poll();
-  void mutateWorld();
+  void mutateEntities();
 };
 
 #endif
