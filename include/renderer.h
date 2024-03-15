@@ -12,6 +12,7 @@
 #include "camera.h"
 #include "app.h"
 #include "logger.h"
+#include "WindowManager/Space.h"
 #include <map>
 #include <memory>
 #include <vector>
@@ -63,6 +64,7 @@ class Renderer {
   void updateTransformMatrices();
   Camera* camera = NULL;
   World* world = NULL;
+  shared_ptr<WindowManager::Space> windowManagerSpace;
 
   unsigned int emacsID;
 
@@ -109,6 +111,7 @@ public:
   void screenshot();
   void toggleMeshing();
   void toggleWireframe();
+  void wireWindowManagerSpace(shared_ptr<WindowManager::Space>);
 
   glm::mat4 projection;
 };

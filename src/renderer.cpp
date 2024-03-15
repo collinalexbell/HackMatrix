@@ -346,7 +346,7 @@ void Renderer::renderDynamicObjects() {
 }
 
 void Renderer::drawAppDirect(X11App *app) {
-  int index = world->getIndexOfApp(app);
+  int index = windowManagerSpace->getIndexOfApp(app);
   int screenWidth = 1920;
   int screenHeight = 1080;
   int appWidth = app->width;
@@ -443,7 +443,7 @@ void Renderer::renderChunkMesh() {
 }
 
 void Renderer::renderApps() {
-  X11App *app = world->getLookedAtApp();
+  X11App *app = windowManagerSpace->getLookedAtApp();
   if (app != NULL) {
     shader->setBool("appSelected", app->isFocused());
   } else {
@@ -453,13 +453,13 @@ void Renderer::renderApps() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDisable(GL_CULL_FACE);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, world->getAppCubes().size());
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, windowManagerSpace->getAppCubes().size());
 
   if (app != NULL && app->isFocused()) {
     drawAppDirect(app);
   }
 
-  vector<X11App *> directRenders = world->getDirectRenderApps();
+  vector<X11App *> directRenders = windowManagerSpace->getDirectRenderApps();
   for (auto directApp : directRenders) {
     drawAppDirect(directApp);
   }
@@ -543,6 +543,10 @@ void Renderer::deregisterApp(int index) {
 void Renderer::toggleMeshing() {
   logger->debug("toggleMeshing");
   logger->flush();
+}
+
+void Renderer::wireWindowManagerSpace(shared_ptr<WindowManager::Space> windowManagerSpace) {
+  this->windowManagerSpace = windowManagerSpace;
 }
 
 Renderer::~Renderer() {

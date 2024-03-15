@@ -179,8 +179,8 @@ void Controls::moveTo(glm::vec3 pos, float secs) {
 
 void Controls::goToApp(X11App* app) {
   wm->passthroughInput();
-  float deltaZ = world->getViewDistanceForWindowSize(app);
-  glm::vec3 targetPosition = world->getAppPosition(app);
+  float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
+  glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
   targetPosition.z = targetPosition.z + deltaZ;
   glm::vec3 front = glm::vec3(0, 0, -1);
   float moveSeconds = 0.25;
@@ -195,7 +195,7 @@ void Controls::goToApp(X11App* app) {
 }
 
 void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera) {
-  X11App *app = world->getLookedAtApp();
+  X11App *app = windowManagerSpace->getLookedAtApp();
   if(app != NULL) {
     int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
     if( rKeyPressed && debounce(lastKeyPressTime)) {
@@ -239,5 +239,10 @@ void Controls::handleToggleFocus(GLFWwindow* window) {
       }
     }
   }
+}
+
+void Controls::wireWindowManager
+    (shared_ptr<WindowManager::Space> windowManagerSpace) {
+  this->windowManagerSpace = windowManagerSpace;
 }
 
