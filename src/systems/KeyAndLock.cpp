@@ -19,7 +19,7 @@ void systems::turnKey(std::shared_ptr<EntityRegistry> registry, entt::entity ent
             // The lock.position may need to be rotated since it is local
             // and positionable.pos is global
 
-            auto distances = (lock.position + positionable.pos) - keyPos.pos;
+            auto distances = glm::abs((lock.position + positionable.pos) - keyPos.pos);
             if (lock.state == LOCKED &&
                 distances.x <= lock.tolerance.x &&
                 distances.y <= lock.tolerance.y &&

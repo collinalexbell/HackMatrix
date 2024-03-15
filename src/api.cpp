@@ -3,6 +3,7 @@
 #include "glm/fwd.hpp"
 #include "logger.h"
 #include "systems/KeyAndLock.h"
+#include "systems/Move.h"
 
 #include <GLFW/glfw3.h>
 #include <cstdlib>
@@ -80,8 +81,13 @@ void Api::poll() {
 void Api::processBatchedRequest(BatchedRequest batchedRequest) {
   auto entityId = (entt::entity)batchedRequest.request.entityid();
   switch(batchedRequest.request.type()) {
-  case MOVE:
+  case MOVE: {
+    auto move = batchedRequest.request.move();
+    systems::translate(registry, entityId,
+                       glm::vec3(move.xdelta(), move.ydelta(), move.zdelta()),
+                       move.unitspersecond());
     break;
+  }
   case TURN_KEY: {
     auto turnKey = batchedRequest.request.turnkey();
     if (turnKey.on()) {

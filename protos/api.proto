@@ -9,6 +9,7 @@ message Move {
   float xDelta = 2;
   float yDelta = 3;
   float zDelta = 4;
+  float unitsPerSecond = 5;
 }
 
 message TurnKey {

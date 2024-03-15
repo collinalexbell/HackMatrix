@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10protos/api.proto\"6\n\x04Move\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\"\x15\n\x07TurnKey\x12\n\n\x02on\x18\x02 \x01(\x08\"y\n\nApiRequest\x12\x10\n\x08\x65ntityId\x18\x01 \x01(\x03\x12\x1a\n\x04type\x18\x02 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x03 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x04 \x01(\x0b\x32\x08.TurnKeyH\x00\x42\t\n\x07payload\"\'\n\x12\x41piRequestResponse\x12\x11\n\trequestId\x18\x01 \x01(\x03*%\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x62\x06proto3'
+  serialized_pb=b'\n\x10protos/api.proto\"N\n\x04Move\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\x12\x16\n\x0eunitsPerSecond\x18\x05 \x01(\x02\"\x15\n\x07TurnKey\x12\n\n\x02on\x18\x02 \x01(\x08\"y\n\nApiRequest\x12\x10\n\x08\x65ntityId\x18\x01 \x01(\x03\x12\x1a\n\x04type\x18\x02 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x03 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x04 \x01(\x0b\x32\x08.TurnKeyH\x00\x42\t\n\x07payload\"\'\n\x12\x41piRequestResponse\x12\x11\n\trequestId\x18\x01 \x01(\x03*%\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x62\x06proto3'
 )
 
 _MESSAGETYPE = _descriptor.EnumDescriptor(
@@ -43,8 +43,8 @@ _MESSAGETYPE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=263,
-  serialized_end=300,
+  serialized_start=287,
+  serialized_end=324,
 )
 _sym_db.RegisterEnumDescriptor(_MESSAGETYPE)
 
@@ -83,6 +83,13 @@ _MOVE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='unitsPerSecond', full_name='Move.unitsPerSecond', index=3,
+      number=5, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -96,7 +103,7 @@ _MOVE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=20,
-  serialized_end=74,
+  serialized_end=98,
 )
 
 
@@ -127,8 +134,8 @@ _TURNKEY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=76,
-  serialized_end=97,
+  serialized_start=100,
+  serialized_end=121,
 )
 
 
@@ -185,8 +192,8 @@ _APIREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=99,
-  serialized_end=220,
+  serialized_start=123,
+  serialized_end=244,
 )
 
 
@@ -217,8 +224,8 @@ _APIREQUESTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=222,
-  serialized_end=261,
+  serialized_start=246,
+  serialized_end=285,
 )
 
 _APIREQUEST.fields_by_name['type'].enum_type = _MESSAGETYPE
