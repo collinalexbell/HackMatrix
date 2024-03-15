@@ -32,7 +32,6 @@ class World;
 class Renderer {
   shared_ptr<blocks::TexturePack> texturePack;
   unsigned int APP_VBO;
-  unsigned int APP_INSTANCE;
   unsigned int APP_VAO;
 
   unsigned int LINE_VBO;
@@ -60,7 +59,6 @@ class Renderer {
   void initAppTextures();
   glm::mat4 trans;
   glm::mat4 meshModel;
-  glm::mat4 appModel;
   glm::mat4 view;
   glm::mat4 orthographicMatrix;
   void updateTransformMatrices();
@@ -108,7 +106,6 @@ public:
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
   void addLine(int index, Line line);
-  void addAppCube(int bufferIndex, int appIndex, glm::vec3 pos);
   void registerApp(X11App* app);
   void deregisterApp(int index);
   void reloadChunk();

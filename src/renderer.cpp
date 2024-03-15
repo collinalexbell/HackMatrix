@@ -47,7 +47,6 @@ void Renderer::genDynamicObjectResources() {
 
 void Renderer::genGlResources() {
   glGenVertexArrays(1, &APP_VAO);
-  glGenBuffers(1, &APP_INSTANCE);
   glGenBuffers(1, &APP_VBO);
 
   glGenVertexArrays(1, &LINE_VAO);
@@ -104,19 +103,6 @@ void Renderer::setupVertexAttributePointers() {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
-  // instance coord attribute
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
-                        (3 * sizeof(float)) + (1 * sizeof(int)), (void *)0);
-  glEnableVertexAttribArray(2);
-  glVertexAttribDivisor(2, 1);
-
-  // instance app number attribute
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glVertexAttribIPointer(3, 1, GL_INT, (3 * sizeof(float)) + (1 * sizeof(int)),
-                         (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(3);
-  glVertexAttribDivisor(3, 1);
 
   // line
   glBindVertexArray(LINE_VAO);
@@ -146,10 +132,7 @@ void Renderer::fillDynamicObjectBuffers() {
 }
 
 void Renderer::fillBuffers() {
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20,
-               (void *)0, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
 
 
@@ -253,7 +236,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   projection =
       glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
   meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
-  appModel = glm::mat4(1.0f);
 }
 
 void Renderer::initAppTextures() {
@@ -271,8 +253,6 @@ void Renderer::updateTransformMatrices() {
   unsigned int modelLoc = glGetUniformLocation(shader->ID, "meshModel");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meshModel));
 
-  unsigned int appModelLoc = glGetUniformLocation(shader->ID, "appModel");
-  glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
   unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -314,15 +294,6 @@ void Renderer::updateDynamicObjects(shared_ptr<DynamicObject> obj) {
   glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * renderable.vertices.size(),
                   renderable.vertices.data());
   verticesInDynamicObjects = renderable.vertices.size();
-}
-
-void Renderer::addAppCube(int bufferIndex, int appIndex, glm::vec3 pos) {
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * bufferIndex,
-                  sizeof(glm::vec3), &pos);
-  glBufferSubData(GL_ARRAY_BUFFER,
-                  sizeof(glm::vec3) * (bufferIndex + 1) + sizeof(int) * bufferIndex,
-                  sizeof(int), &appIndex);
 }
 
 void Renderer::addLine(int index, Line line) {
@@ -452,8 +423,12 @@ void Renderer::renderApps() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDisable(GL_CULL_FACE);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6,
-                        windowManagerSpace->getNumPositionableApps());
+  auto positionableApps = registry->view<X11App, Positionable>();
+  for(auto [entity, app, positionable]: positionableApps.each()) {
+    shader->setMatrix4("model", positionable.modelMatrix);
+    shader->setInt("appNumber", app.getAppIndex());
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+  }
 
   if (appEntity.has_value()) {
     auto &app = registry->get<X11App>(appEntity.value());

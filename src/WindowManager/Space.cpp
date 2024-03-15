@@ -40,17 +40,6 @@ void Space::initAppPositions() {
   auto &app = registry->get<X11App>(entity);
   renderer->deregisterApp(app.getAppIndex());
   registry->destroy(entity);
-  refreshRendererCubes();
-}
-
-void Space::refreshRendererCubes() {
-  auto positionableApps = registry->view<X11App, Positionable>();
-
-  int i = 0;
-  for(auto [entity, app, positionable]: positionableApps.each()) {
-    renderer->addAppCube(i, app.getAppIndex(), positionable.pos);
-    i++;
-  }
 }
 
 float Space::getViewDistanceForWindowSize(entt::entity entity) {
@@ -157,7 +146,6 @@ void Space::addApp(entt::entity entity, bool spawnAtCamera) {
   registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), glm::vec3(0.0), 1);
   if (renderer != NULL) {
     renderer->registerApp(&app);
-    renderer->addAppCube(index, app.getAppIndex(), pos);
   }
 }
 

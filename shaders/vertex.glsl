@@ -18,7 +18,6 @@ flat out int IsLookedAt;
 flat out int Selection;
 
 uniform mat4 meshModel;
-uniform mat4 appModel;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
@@ -30,13 +29,14 @@ uniform bool isLookedAt;
 uniform bool isDynamicObject;
 uniform bool isModel;
 uniform int lookedAtBlockType;
+uniform int appNumber;
 
 void main()
 {
   // model in this case is used per call to glDrawArraysInstanced
   if(isApp) {
-    gl_Position = projection * view * appModel * vec4(vertexPositionInModel + modelOffset, 1.0);
-    BlockType = blockType;
+    gl_Position = projection * view * model * vec4(vertexPositionInModel, 1.0);
+    BlockType = appNumber;
     TexCoord = texCoord;
   } else if(isLine) {
     gl_Position = projection * view *  vec4(position, 1.0);
