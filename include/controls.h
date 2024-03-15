@@ -1,6 +1,5 @@
 #pragma once
 
-#include "WindowManager/Space.h"
 #include "blocks.h"
 #include "camera.h"
 #include <functional>
@@ -9,9 +8,7 @@
 #include <memory>
 #include "app.h"
 #include "world.h"
-#include "wm.h"
-
-class WM;
+#include "WindowManager/WindowManager.h"
 
 struct DeferedAction {
   shared_ptr<bool> isDone;
@@ -20,7 +17,7 @@ struct DeferedAction {
 
 class Controls {
   shared_ptr<blocks::TexturePack> texturePack;
-  WM* wm;
+  WindowManager::WindowManager* wm;
   World *world;
   Camera *camera;
   Renderer *renderer;
@@ -56,7 +53,7 @@ class Controls {
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
 public:
-  Controls(WM *wm, World *world, Camera *camera, Renderer* renderer, shared_ptr<blocks::TexturePack> texturePack) : wm(wm), world(world), camera(camera), renderer(renderer), texturePack(texturePack) {}
+  Controls(WindowManager::WindowManager *wm, World *world, Camera *camera, Renderer* renderer, shared_ptr<blocks::TexturePack> texturePack) : wm(wm), world(world), camera(camera), renderer(renderer), texturePack(texturePack) {}
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
   void goToApp(X11App * app);

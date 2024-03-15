@@ -1,5 +1,6 @@
-#include "wm.h"
+#include "WindowManager/WindowManager.h"
 #include "app.h"
+#include "controls.h"
 #include "renderer.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
@@ -19,7 +20,10 @@
 #define TERM true
 #define MAGICA true
 
-void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app, char **envp, string args) {
+namespace WindowManager {
+
+void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
+                                  X11App *&app, char **envp, string args) {
   char *line;
   std::size_t len = 0;
   FILE *pidPipe = popen(string("pgrep " + pidOf).c_str(), "r");
@@ -27,7 +31,7 @@ void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
     int pid = fork();
     if (pid == 0) {
       setsid();
-      if(args != "") {
+      if (args != "") {
         execle(cmd.c_str(), cmd.c_str(), args.c_str(), NULL, envp);
       }
       execle(cmd.c_str(), cmd.c_str(), NULL, envp);
@@ -35,10 +39,9 @@ void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
     }
     if (className == "obs") {
       sleep(30);
-    } else if(className == "magicavoxel.exe") {
+    } else if (className == "magicavoxel.exe") {
       sleep(6);
-    }
-    else {
+    } else {
       sleep(4);
     }
   }
@@ -47,31 +50,31 @@ void WM::forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
   logger->info("created " + className + " app");
 }
 
-void WM::createAndRegisterApps(char **envp) {
+void WindowManager::createAndRegisterApps(char **envp) {
   logger->info("enter createAndRegisterApps()");
 
   forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
-  if(MAGICA) {
+  if (MAGICA) {
     forkOrFindApp("/usr/bin/wine", "MagicaVoxel.exe", "magicavoxel.exe",
-                  magicaVoxel, envp, "/home/collin/magicavoxel/MagicaVoxel.exe");
+                  magicaVoxel, envp,
+                  "/home/collin/magicavoxel/MagicaVoxel.exe");
   }
-  if(EDGE) {
-  forkOrFindApp("/usr/bin/microsoft-edge", "msedge", "Microsoft-edge",
-                microsoftEdge, envp);
+  if (EDGE) {
+    forkOrFindApp("/usr/bin/microsoft-edge", "msedge", "Microsoft-edge",
+                  microsoftEdge, envp);
   }
-  if(TERM) {
-  forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
-                envp);
+  if (TERM) {
+    forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
+                  envp);
   }
-  if(OBS) {
+  if (OBS) {
     forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   }
 
   logger->info("exit createAndRegisterApps()");
 }
 
-
-void WM::allow_input_passthrough(Window window) {
+void WindowManager::allow_input_passthrough(Window window) {
   XserverRegion region = XFixesCreateRegion(display, NULL, 0);
 
   XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0, 0, 0);
@@ -80,62 +83,63 @@ void WM::allow_input_passthrough(Window window) {
   XFixesDestroyRegion(display, region);
 }
 
-void WM::passthroughInput() {
+void WindowManager::passthroughInput() {
   allow_input_passthrough(overlay);
   allow_input_passthrough(matrix);
   XFlush(display);
 }
 
-void WM::capture_input(Window window, bool shapeBounding, bool shapeInput) {
+void WindowManager::capture_input(Window window, bool shapeBounding,
+                                  bool shapeInput) {
   // Create a region covering the entire window
   XserverRegion region = XFixesCreateRegion(display, NULL, 0);
   XRectangle rect;
   rect.x = 0;
   rect.y = 0;
-  rect.width = 1920;   // Replace with your window's width
+  rect.width = 1920;  // Replace with your window's width
   rect.height = 1080; // Replace with your window's height
   XFixesSetRegion(display, region, &rect, 1);
 
-  if(shapeBounding) {
+  if (shapeBounding) {
     XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0, 0, region);
   }
-  if(shapeInput) {
+  if (shapeInput) {
     XFixesSetWindowShapeRegion(display, window, ShapeInput, 0, 0, region);
   }
-    XFixesDestroyRegion(display, region);
-  }
+  XFixesDestroyRegion(display, region);
+}
 
-void WM::captureInput() {
+void WindowManager::captureInput() {
   capture_input(overlay, true, true);
   capture_input(matrix, true, true);
   XFlush(display);
 }
 
-void WM::addApps() {
+void WindowManager::addApps() {
   space->addApp(emacs);
-  if(MAGICA) {
+  if (MAGICA) {
     space->addApp(magicaVoxel);
   }
-  if(TERM) {
+  if (TERM) {
     space->addApp(terminator);
   }
-  if(EDGE) {
+  if (EDGE) {
     space->addApp(microsoftEdge);
   }
-  if(OBS) {
+  if (OBS) {
     space->addApp(obs);
   }
 }
 
-void WM::wire(Camera *camera, Renderer *renderer) {
-  space = make_shared<WindowManager::Space>(renderer, camera, logSink);
+void WindowManager::wire(Camera *camera, Renderer *renderer) {
+  space = make_shared<Space>(renderer, camera, logSink);
   renderer->wireWindowManagerSpace(space);
   controls->wireWindowManager(space);
   addApps();
 }
 
-    X11App *WM::createApp(Window window, unsigned int width,
-                          unsigned int height) {
+X11App *WindowManager::createApp(Window window, unsigned int width,
+                                 unsigned int height) {
   X11App *app = X11App::byWindow(window, display, screen, width, height);
   renderLoopMutex.lock();
   appsToAdd.push_back(app);
@@ -144,7 +148,7 @@ void WM::wire(Camera *camera, Renderer *renderer) {
   return app;
 }
 
-void WM::onMapRequest(XMapRequestEvent event) {
+void WindowManager::onMapRequest(XMapRequestEvent event) {
   char *name;
   XFetchName(display, event.window, &name);
   string sName(name);
@@ -155,7 +159,7 @@ void WM::onMapRequest(XMapRequestEvent event) {
     logger->info(ss.str());
     logger->flush();
     auto app = createApp(event.window);
-    if(!app->isAccessory() && currentlyFocusedApp == NULL) {
+    if (!app->isAccessory() && currentlyFocusedApp == NULL) {
       auto t = thread([this, app, event]() -> void {
         usleep(0.5 * 1000000);
         app->unfocus(matrix);
@@ -165,8 +169,8 @@ void WM::onMapRequest(XMapRequestEvent event) {
   }
 }
 
-void WM::onDestroyNotify(XDestroyWindowEvent event) {
-  if(dynamicApps.contains(event.window)) {
+void WindowManager::onDestroyNotify(XDestroyWindowEvent event) {
+  if (dynamicApps.contains(event.window)) {
     X11App *app = dynamicApps.at(event.window);
     dynamicApps.erase(event.window);
     renderLoopMutex.lock();
@@ -175,14 +179,14 @@ void WM::onDestroyNotify(XDestroyWindowEvent event) {
   }
 }
 
-void WM::onHotkeyPress(XKeyEvent event) {
+void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-  vector<X11App*> appsWithHotKeys = {emacs};
-  if(EDGE) {
+  vector<X11App *> appsWithHotKeys = {emacs};
+  if (EDGE) {
     appsWithHotKeys.push_back(microsoftEdge);
   }
-  if(TERM) {
+  if (TERM) {
     appsWithHotKeys.push_back(terminator);
   }
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
@@ -203,7 +207,7 @@ void WM::onHotkeyPress(XKeyEvent event) {
   }
 }
 
-void WM::handleSubstructure() {
+void WindowManager::handleSubstructure() {
   for (;;) {
     XEvent e;
     XNextEvent(display, &e);
@@ -216,9 +220,10 @@ void WM::handleSubstructure() {
     case CreateNotify:
       logger->info("CreateNotify event");
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
-      if(e.xcreatewindow.override_redirect == True) {
-        auto app = createApp(e.xcreatewindow.window, e.xcreatewindow.width, e.xcreatewindow.height);
-        //app->positionNotify(e.xcreatewindow.x, e.xcreatewindow.y);
+      if (e.xcreatewindow.override_redirect == True) {
+        auto app = createApp(e.xcreatewindow.window, e.xcreatewindow.width,
+                             e.xcreatewindow.height);
+        // app->positionNotify(e.xcreatewindow.x, e.xcreatewindow.y);
         stringstream ss;
         ss << "CreateNotify event: position: ";
         ss << attrs.x << ",";
@@ -243,15 +248,15 @@ void WM::handleSubstructure() {
   }
 }
 
-void WM::tick() {
+void WindowManager::tick() {
   renderLoopMutex.lock();
-  for(auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
+  for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
       space->addApp(*it);
-      //if(!(*it)->isAccessory()) {
+      // if(!(*it)->isAccessory()) {
       //(*it)->unfocus(matrix);
-        //}
-    } catch(exception &e) {
+      // }
+    } catch (exception &e) {
       logger->error(e.what());
       logger->flush();
     }
@@ -275,64 +280,65 @@ void WM::tick() {
   renderLoopMutex.unlock();
 }
 
-void WM::focusApp(X11App* app) {
+void WindowManager::focusApp(X11App *app) {
   currentlyFocusedApp = app;
   app->focus(matrix);
 }
 
-void WM::unfocusApp() {
-  if(currentlyFocusedApp != NULL) {
+void WindowManager::unfocusApp() {
+  if (currentlyFocusedApp != NULL) {
     currentlyFocusedApp->unfocus(matrix);
     currentlyFocusedApp = NULL;
   }
 }
 
-void WM::registerControls(Controls *controls) {
+void WindowManager::registerControls(Controls *controls) {
   this->controls = controls;
 }
 
-WM::WM(Window matrix, spdlog::sink_ptr loggerSink):
-  matrix(matrix), logSink(loggerSink) {
-        logger = make_shared<spdlog::logger>("wm", loggerSink);
-        logger->set_level(spdlog::level::debug);
-        logger->flush_on(spdlog::level::info);
-        logger->debug("WM()");
-        display = XOpenDisplay(NULL);
-        screen = XDefaultScreen(display);
-        X11App::initAppClass(display, screen);
-        Window root = RootWindow(display, screen);
-        XCompositeRedirectSubwindows(display, RootWindow(display, screen),
-                                     CompositeRedirectAutomatic);
+WindowManager::WindowManager(Window matrix, spdlog::sink_ptr loggerSink)
+    : matrix(matrix), logSink(loggerSink) {
+  logger = make_shared<spdlog::logger>("wm", loggerSink);
+  logger->set_level(spdlog::level::debug);
+  logger->flush_on(spdlog::level::info);
+  logger->debug("WindowManager()");
+  display = XOpenDisplay(NULL);
+  screen = XDefaultScreen(display);
+  X11App::initAppClass(display, screen);
+  Window root = RootWindow(display, screen);
+  XCompositeRedirectSubwindows(display, RootWindow(display, screen),
+                               CompositeRedirectAutomatic);
 
-        overlay = XCompositeGetOverlayWindow(display, root);
-        XReparentWindow(display, matrix, overlay, 0, 0);
+  overlay = XCompositeGetOverlayWindow(display, root);
+  XReparentWindow(display, matrix, overlay, 0, 0);
 
-        XFixesSelectCursorInput(display, overlay,
-                                XFixesDisplayCursorNotifyMask);
+  XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
 
-        XSelectInput(display, root,
-                     EnterWindowMask | SubstructureRedirectMask |
-                     SubstructureNotifyMask | FocusChangeMask | LeaveWindowMask | EnterWindowMask);
+  XSelectInput(display, root,
+               EnterWindowMask | SubstructureRedirectMask |
+                   SubstructureNotifyMask | FocusChangeMask | LeaveWindowMask |
+                   EnterWindowMask);
 
-        XSelectInput(display, matrix, FocusChangeMask | LeaveWindowMask);
+  XSelectInput(display, matrix, FocusChangeMask | LeaveWindowMask);
 
-        Atom XdndSelectionAtom = XInternAtom(display, "XdndSelection", False);
-        XSetSelectionOwner(display, overlay, matrix, CurrentTime);
+  Atom XdndSelectionAtom = XInternAtom(display, "XdndSelection", False);
+  XSetSelectionOwner(display, overlay, matrix, CurrentTime);
 
-        for (int i = 0; i < 10; i++) {
-          KeyCode code = XKeysymToKeycode(display, XK_0 + i);
-          XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync,
-                   GrabModeAsync);
-        }
-        XSync(display, false);
-        XFlush(display);
+  for (int i = 0; i < 10; i++) {
+    KeyCode code = XKeysymToKeycode(display, XK_0 + i);
+    XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+  }
+  XSync(display, false);
+  XFlush(display);
 
-        passthroughInput();
-        allow_input_passthrough(overlay);
-        substructureThread = thread(&WM::handleSubstructure, this);
-        substructureThread.detach();
-      }
+  passthroughInput();
+  allow_input_passthrough(overlay);
+  substructureThread = thread(&WindowManager::handleSubstructure, this);
+  substructureThread.detach();
+}
 
-WM::~WM() {
+WindowManager::~WindowManager() {
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
 }
+
+} // namespace WindowManager

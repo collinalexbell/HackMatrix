@@ -3,7 +3,7 @@
 #include "camera.h"
 #include "controls.h"
 #include "renderer.h"
-#include "wm.h"
+#include "WindowManager/WindowManager.h"
 #include "world.h"
 #include "entity.h"
 #include "engineGui.h"
@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <spdlog/common.h>
+
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos);
 
@@ -20,7 +21,7 @@ class Engine {
   Renderer *renderer;
   Controls *controls;
   Camera *camera;
-  WM *wm;
+  WindowManager::WindowManager *wm;
   GLFWwindow *window;
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
