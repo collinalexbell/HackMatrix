@@ -37,8 +37,10 @@ class X11App {
   X11App(Display *display, int screen);
   int x;
   int y;
+  size_t appIndex;
 
 public:
+  X11App(X11App &&other) noexcept;
   static X11App *byName(string windowName, Display *display, int screen,
                         int width, int height);
   static X11App *byClass(string windowClass, Display *display, int screen,
@@ -53,7 +55,7 @@ public:
 
   void positionNotify(int x, int y);
   void appTexture();
-  void attachTexture(int textureUnit, int textureId);
+  void attachTexture(int textureUnit, int textureId, size_t appIndex);
   void focus(Window matrix);
   void takeInputFocus();
   void unfocus(Window matrix);
@@ -62,6 +64,7 @@ public:
   bool isAccessory();
   Window getWindow();
   array<int, 2> getPosition();
+  size_t getAppIndex() {return appIndex;}
 };
 
 #endif

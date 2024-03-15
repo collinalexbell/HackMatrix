@@ -21,6 +21,28 @@ using namespace std;
 
 std::shared_ptr<spdlog::logger> app_logger;
 
+X11App::X11App(X11App &&other) noexcept
+    : display(other.display), screen(other.screen), appWindow(other.appWindow),
+      attrs(other.attrs), fbConfigs(other.fbConfigs),
+      fbConfigCount(other.fbConfigCount), textureUnit(other.textureUnit),
+      textureId(other.textureId), focused(other.focused.load()), x(other.x),
+      y(other.y), appIndex(other.appIndex), width(other.width),
+      height(other.height) {
+  // Reset the source object to a valid state
+  other.display = nullptr;
+  other.screen = 0;
+  other.appWindow = 0;
+  other.fbConfigs = nullptr;
+  other.fbConfigCount = 0;
+  other.textureUnit = -1;
+  other.textureId = -1;
+  other.x = 0;
+  other.y = 0;
+  other.appIndex = 0;
+  other.width = 0;
+  other.height = 0;
+}
+
 bool X11App::initAppClass(Display *display, int screen) {
   app_logger = make_shared<spdlog::logger>("app", fileSink);
   app_logger->set_level(spdlog::level::info);
@@ -344,9 +366,10 @@ array<int, 2> X11App::getPosition() {
   return {x,y};
 }
 
-void X11App::attachTexture(int textureUnit, int textureId) {
+void X11App::attachTexture(int textureUnit, int textureId, size_t appIndex) {
   this->textureUnit = textureUnit;
   this->textureId = textureId;
+  this->appIndex = appIndex;
 }
 
 bool X11App::isAccessory() {

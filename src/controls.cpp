@@ -177,12 +177,16 @@ void Controls::moveTo(glm::vec3 pos, float secs) {
   camera->moveTo(pos, camera->front, secs);
 }
 
-void Controls::goToApp(X11App* app) {
+void Controls::goToApp(entt::entity app) {
   wm->passthroughInput();
   float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
+  glm::vec3 rotationV = windowManagerSpace->getAppRotation(app);
+  glm::quat rotation = glm::quat(glm::radians(rotationV));
+
   glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
-  targetPosition.z = targetPosition.z + deltaZ;
-  glm::vec3 front = glm::vec3(0, 0, -1);
+  targetPosition = targetPosition + rotation * glm::vec3(0,0,deltaZ);
+
+  glm::vec3 front = rotation * glm::vec3(0, 0, -1);
   float moveSeconds = 0.25;
   resetMouse = true;
   grabbedCursor = false;
@@ -195,11 +199,11 @@ void Controls::goToApp(X11App* app) {
 }
 
 void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera) {
-  X11App *app = windowManagerSpace->getLookedAtApp();
-  if(app != NULL) {
+  auto app = windowManagerSpace->getLookedAtApp();
+  if(app.has_value()) {
     int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
     if( rKeyPressed && debounce(lastKeyPressTime)) {
-      goToApp(app);
+      goToApp(app.value());
     }
   }
 }

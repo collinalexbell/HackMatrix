@@ -41,6 +41,8 @@ public:
   glm::mat4 tick();
   bool isMoving();
   std::shared_ptr<bool> moveTo(glm::vec3 position, glm::vec3 front, float moveSeconds);
+  float getYaw() {return yaw;}
+  float getPitch() {return pitch;}
 };
 
 

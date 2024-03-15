@@ -88,8 +88,8 @@ glm::mat4 Camera::getViewMatrix() {
 
 std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetFront,
                     float moveSeconds) {
-  yaw = -90;
-  pitch = 0;
+  pitch = glm::degrees(asin(targetFront.y));
+  yaw = glm::degrees(atan2(targetFront.z, targetFront.x));
   std::shared_ptr<bool> isDone(new bool(false));
   double curTime = glfwGetTime();
   double finishTime = curTime + moveSeconds;

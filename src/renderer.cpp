@@ -1,4 +1,6 @@
+#include "IndexPool.h"
 #include "glm/ext/matrix_transform.hpp"
+#include "model.h"
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
@@ -45,7 +47,6 @@ void Renderer::genDynamicObjectResources() {
 
 void Renderer::genGlResources() {
   glGenVertexArrays(1, &APP_VAO);
-  glGenBuffers(1, &APP_INSTANCE);
   glGenBuffers(1, &APP_VBO);
 
   glGenVertexArrays(1, &LINE_VAO);
@@ -102,19 +103,6 @@ void Renderer::setupVertexAttributePointers() {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
-  // instance coord attribute
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
-                        (3 * sizeof(float)) + (1 * sizeof(int)), (void *)0);
-  glEnableVertexAttribArray(2);
-  glVertexAttribDivisor(2, 1);
-
-  // instance app number attribute
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glVertexAttribIPointer(3, 1, GL_INT, (3 * sizeof(float)) + (1 * sizeof(int)),
-                         (void *)(3 * sizeof(float)));
-  glEnableVertexAttribArray(3);
-  glVertexAttribDivisor(3, 1);
 
   // line
   glBindVertexArray(LINE_VAO);
@@ -144,10 +132,7 @@ void Renderer::fillDynamicObjectBuffers() {
 }
 
 void Renderer::fillBuffers() {
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * 20,
-               (void *)0, GL_STATIC_DRAW);
-  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+   glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
 
 
@@ -194,7 +179,8 @@ void Renderer::toggleWireframe() {
 
 Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *world, shared_ptr<blocks::TexturePack> texturePack):
   texturePack(texturePack),
-  registry(registry)
+  registry(registry),
+  appIndexPool(IndexPool(10))
 {
   this->camera = camera;
   this->world = world;
@@ -250,7 +236,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   projection =
       glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
   meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
-  appModel = glm::mat4(1.0f);
 }
 
 void Renderer::initAppTextures() {
@@ -268,8 +253,6 @@ void Renderer::updateTransformMatrices() {
   unsigned int modelLoc = glGetUniformLocation(shader->ID, "meshModel");
   glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meshModel));
 
-  unsigned int appModelLoc = glGetUniformLocation(shader->ID, "appModel");
-  glUniformMatrix4fv(appModelLoc, 1, GL_FALSE, glm::value_ptr(appModel));
   unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -313,15 +296,6 @@ void Renderer::updateDynamicObjects(shared_ptr<DynamicObject> obj) {
   verticesInDynamicObjects = renderable.vertices.size();
 }
 
-void Renderer::addAppCube(int index, glm::vec3 pos) {
-  glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * index,
-                  sizeof(glm::vec3), &pos);
-  glBufferSubData(GL_ARRAY_BUFFER,
-                  sizeof(glm::vec3) * (index + 1) + sizeof(int) * index,
-                  sizeof(int), &index);
-}
-
 void Renderer::addLine(int index, Line line) {
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
   glBufferSubData(GL_ARRAY_BUFFER,
@@ -346,7 +320,7 @@ void Renderer::renderDynamicObjects() {
 }
 
 void Renderer::drawAppDirect(X11App *app) {
-  int index = windowManagerSpace->getIndexOfApp(app);
+  int index = app->getAppIndex();
   int screenWidth = 1920;
   int screenHeight = 1080;
   int appWidth = app->width;
@@ -443,25 +417,30 @@ void Renderer::renderChunkMesh() {
 }
 
 void Renderer::renderApps() {
-  X11App *app = windowManagerSpace->getLookedAtApp();
-  if (app != NULL) {
-    shader->setBool("appSelected", app->isFocused());
-  } else {
-    shader->setBool("appSelected", false);
-  }
+  auto appEntity = windowManagerSpace->getLookedAtApp();
+  shader->setBool("appSelected", false);
 
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDisable(GL_CULL_FACE);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, windowManagerSpace->getAppCubes().size());
-
-  if (app != NULL && app->isFocused()) {
-    drawAppDirect(app);
+  auto positionableApps = registry->view<X11App, Positionable>();
+  for(auto [entity, app, positionable]: positionableApps.each()) {
+    shader->setMatrix4("model", positionable.modelMatrix);
+    shader->setInt("appNumber", app.getAppIndex());
+    glDrawArrays(GL_TRIANGLES, 0, 6);
   }
 
-  vector<X11App *> directRenders = windowManagerSpace->getDirectRenderApps();
-  for (auto directApp : directRenders) {
-    drawAppDirect(directApp);
+  if (appEntity.has_value()) {
+    auto &app = registry->get<X11App>(appEntity.value());
+    if(app.isFocused()) {
+      shader->setBool("appSelected", app.isFocused());
+      drawAppDirect(&app);
+    }
+  }
+
+  auto directRenders = registry->view<X11App>(entt::exclude<Positionable>);
+  for (auto [entity, directApp] : directRenders.each()) {
+    drawAppDirect(&directApp);
   }
 
   shader->setBool("isApp", false);
@@ -519,16 +498,20 @@ void Renderer::render() {
 
 Camera *Renderer::getCamera() { return camera; }
 
-void Renderer::registerApp(X11App *app, int index) {
+void Renderer::registerApp(X11App *app) {
+  // We need to keep track of which textureN has been used.
+  // because deletions means this won't work
+  // indices will change.
+  auto index = appIndexPool.acquireIndex();
   int textureN = 31 - index;
   int textureUnit = GL_TEXTURE0 + textureN;
   int textureId = textures["app" + to_string(index)]->ID;
-  app->attachTexture(textureUnit, textureId);
+  app->attachTexture(textureUnit, textureId, index);
   app->appTexture();
 
   unsigned int framebufferId;
   glGenFramebuffers(1, &framebufferId);
-  frameBuffers.push_back(framebufferId);
+  frameBuffers[index] = framebufferId;
   glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferId);
   glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, textures["app" + to_string(index)]->ID,
@@ -536,8 +519,9 @@ void Renderer::registerApp(X11App *app, int index) {
 }
 
 void Renderer::deregisterApp(int index) {
+  appIndexPool.relinquishIndex(index);
   glDeleteFramebuffers(1, &frameBuffers[index]);
-  frameBuffers.erase(frameBuffers.begin() + index);
+  frameBuffers.erase(index);
 }
 
 void Renderer::toggleMeshing() {

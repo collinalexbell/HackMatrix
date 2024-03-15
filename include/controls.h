@@ -56,7 +56,7 @@ public:
   Controls(WindowManager::WindowManager *wm, World *world, Camera *camera, Renderer* renderer, shared_ptr<blocks::TexturePack> texturePack) : wm(wm), world(world), camera(camera), renderer(renderer), texturePack(texturePack) {}
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
-  void goToApp(X11App * app);
+  void goToApp(entt::entity);
   void moveTo(glm::vec3 pos, float secs);
   void disable();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
