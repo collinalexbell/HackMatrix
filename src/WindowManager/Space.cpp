@@ -77,10 +77,10 @@ struct Intersection {
 };
 
 Intersection intersectLineAndPlane(glm::vec3 linePos, glm::vec3 lineDir,
-                                   glm::vec3 planePos) {
+                                   glm::vec3 planePos, glm::vec3 planeDir) {
   Intersection intersection;
   glm::vec3 normLineDir = glm::normalize(lineDir);
-  glm::intersectRayPlane(linePos, normLineDir, planePos, glm::vec3(0, 0, 1),
+  glm::intersectRayPlane(linePos, normLineDir, planePos, planeDir,
                          intersection.dist);
   intersection.intersectionPoint = (normLineDir * intersection.dist) + linePos;
   return intersection;
@@ -93,8 +93,11 @@ optional<entt::entity> Space::getLookedAtApp() {
   auto view = registry->view<X11App, Positionable>();
   for (auto [entity, app, positionable]: view.each()) {
     auto appPosition = positionable.pos;
+
+    glm::quat rotation = glm::quat(glm::radians(positionable.rotate));
+    auto appDir = rotation * glm::vec3(0.0f,0.0f,1.0f);
     Intersection intersection =
-        intersectLineAndPlane(camera->position, camera->front, appPosition);
+      intersectLineAndPlane(camera->position, camera->front, appPosition, appDir);
     float minX = appPosition.x - (width / 3);
     float maxX = appPosition.x + (width / 3);
     float minY = appPosition.y - (height / 3);
