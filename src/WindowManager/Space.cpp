@@ -122,10 +122,16 @@ size_t Space::getNumPositionableApps() {
   return numPositionableApps;
 }
 
-void Space::addApp(entt::entity entity) {
+void Space::addApp(entt::entity entity, bool spawnAtCamera) {
   auto &app = registry->get<X11App>(entity);
   if (!app.isAccessory()) {
-    glm::vec3 pos = availableAppPositions.front();
+    glm::vec3 pos;
+    if(spawnAtCamera) {
+      auto dist = getViewDistanceForWindowSize(entity);
+      pos = camera->position + glm::vec3(0,0,-dist);
+    } else {
+      pos = availableAppPositions.front();
+    }
     addApp(entity, pos);
     if (availableAppPositions.size() > 1) {
       availableAppPositions.pop();

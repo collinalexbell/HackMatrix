@@ -37,7 +37,7 @@ namespace WindowManager {
 
     size_t getNumPositionableApps();
 
-    void addApp(entt::entity);
+    void addApp(entt::entity, bool = false);
     void removeApp(entt::entity);
 
     void refreshRendererCubes();

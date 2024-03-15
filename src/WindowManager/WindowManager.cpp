@@ -252,7 +252,8 @@ void WindowManager::tick() {
       auto appEntity = dynamicApps[(*it)->getWindow()];
       registry->emplace<X11App>(appEntity, std::move(**it));
       delete *it;
-      space->addApp(appEntity);
+      auto spawnAtCamera = !currentlyFocusedApp.has_value();
+      space->addApp(appEntity, spawnAtCamera);
       if(registry->valid(appEntity)) {
         auto &app = registry->get<X11App>(appEntity);
         if (!app.isAccessory() && !currentlyFocusedApp.has_value()) {
