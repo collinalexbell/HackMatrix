@@ -2,6 +2,8 @@
 #include "app.h"
 #include "camera.h"
 #include "entity.h"
+#include "glm/ext/quaternion_trigonometric.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include "model.h"
 #include "renderer.h"
 #include <glm/gtx/intersect.hpp>
@@ -114,11 +116,24 @@ size_t Space::getNumPositionableApps() {
 void Space::addApp(entt::entity entity, bool spawnAtCamera) {
   auto &app = registry->get<X11App>(entity);
   if (!app.isAccessory()) {
+
     glm::vec3 pos;
-    glm::vec3 rot = glm::vec3(0.0);
+    glm::vec3 rot = glm::vec3(0.0f);
     if(spawnAtCamera) {
+
+      float yaw = camera->getYaw();
+      float pitch = camera->getPitch();
+      glm::quat yawRotation =
+          glm::angleAxis(glm::radians(90+yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+      glm::quat pitchRotation =
+          glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+      glm::quat finalRotation = yawRotation * pitchRotation;
+      rot = glm::degrees(glm::eulerAngles(finalRotation));
+
       auto dist = getViewDistanceForWindowSize(entity);
-      pos = camera->position + glm::vec3(0,0,-dist);
+      pos = camera->position +
+        finalRotation * glm::vec3(0,0,-dist);
+
     } else {
       pos = availableAppPositions.front();
       if (availableAppPositions.size() > 1) {
