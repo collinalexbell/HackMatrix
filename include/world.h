@@ -39,8 +39,6 @@ class World: public WorldInterface {
   Renderer *renderer = NULL;
   Camera *camera = NULL;
   vector<Line> lines;
-  unordered_map<glm::vec3, int> appCubes;
-  vector<X11App*> apps;
   deque<deque<shared_ptr<Chunk>>> chunks;
   map<DIRECTION, deque<future<deque<shared_ptr<Chunk>>>>> preloadedChunks;
   int WORLD_SIZE = 9;
@@ -53,7 +51,6 @@ class World: public WorldInterface {
   const vector<shared_ptr<Cube>> getCubes();
   const vector<shared_ptr<Cube>> getCubes(int x1, int y1, int z1, int x2, int y2, int z2);
   void updateDamage(int index);
-  queue<glm::vec3> availableAppPositions;
   void removeCube(WorldPosition position);
   ChunkIndex getChunkIndex(int x, int z);
   ChunkIndex playersChunkIndex();
@@ -64,40 +61,27 @@ class World: public WorldInterface {
   void transferChunksToPreload(DIRECTION movementDirection, deque<shared_ptr<Chunk>> slice);
   ChunkIndex middleIndex;
   void initChunks();
-  void initAppPositions();
   void initLogger(spdlog::sink_ptr loggerSink);
   void loadChunksIfNeccissary();
   void initPreloadedChunks();
   void logCoordinates(array<Coordinate, 2> c, string label);
-  vector<pair<X11App*, int>> directRenderApps;
   shared_ptr<DynamicObjectSpace> dynamicObjects;
   void cubeAction(Action toTake);
   void dynamicObjectAction(Action toTake);
 
 public:
   void tick() override;
-  vector<X11App *> getDirectRenderApps() override;
   const float CUBE_SIZE = 0.1;
   World(shared_ptr<EntityRegistry>, Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug = false, spdlog::sink_ptr loggerSink = fileSink);
   ~World();
   void attachRenderer(Renderer *renderer) override;
-  float getViewDistanceForWindowSize(X11App *app) override;
   Loader *loader;
-
-  X11App *getLookedAtApp() override;
   Position getLookedAtCube() override;
-  const std::vector<glm::vec3> getAppCubes() override;
-  glm::vec3 getAppPosition(X11App *app) override;
 
   void addCube(int x, int y, int z, int blockType) override;
   void addLine(Line line) override;
   void removeLine(Line line) override;
-  void addApp(glm::vec3, X11App *app) override;
-  void addApp(X11App *app) override;
-  void removeApp(X11App *app) override;
-  int getIndexOfApp(X11App *app) override;
 
-  void refreshRendererCubes() override;
   void action(Action) override;
   vector<Line> getLines() override;
 

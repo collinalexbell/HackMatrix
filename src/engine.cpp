@@ -1,3 +1,4 @@
+#include "engine.h"
 #include "components/Key.h"
 #include "components/Lock.h"
 #include "components/Parent.h"
@@ -7,17 +8,19 @@
 #include "model.h"
 #include "persister.h"
 #include "systems/Derivative.h"
+#include "WindowManager/WindowManager.h"
+#include "assets.h"
+#include "blocks.h"
+#include "systems/Door.h"
+
 #include <memory>
 #include <spdlog/common.h>
 #define GLFW_EXPOSE_NATIVE_X11
-#include "engine.h"
-#include "blocks.h"
-#include "assets.h"
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
-#include "systems/Door.h"
 
 #include "imgui/imgui_impl_opengl3.h"
+
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   Engine *engine = (Engine *)glfwGetWindowUserPointer(window);
@@ -99,7 +102,7 @@ Engine::~Engine() {
 
 void Engine::initialize(){
   auto texturePack = blocks::initializeBasicPack();
-  wm = new WM(glfwGetX11Window(window), loggerSink);
+  wm = new WindowManager::WindowManager(glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
   api = new Api("tcp://*:3333", registry);
@@ -111,10 +114,7 @@ void Engine::initialize(){
 
 void Engine::wire() {
   world->attachRenderer(renderer);
-  wm->attachWorld(world);
-  wm->addAppsToWorld();
-  //world->loadLatest();
-  //world->loadMinecraft();
+  wm->wire(camera, renderer);
 }
 
 void Engine::loop() {
@@ -131,7 +131,7 @@ void Engine::loop() {
       world->tick();
       renderer->render();
       api->mutateEntities();
-      wm->mutateWorld();
+      wm->tick();
       controls->poll(window, camera, world);
 
       frameTimes[frameIndex] = glfwGetTime() - frameStart;

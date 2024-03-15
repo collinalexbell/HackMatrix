@@ -7,14 +7,14 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
+ALL_OBJECTS = build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
 
 
 all: FLAGS+=-O3 -g
 all: matrix trampoline build/diagnosis
 
-matrix: build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/wm.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o $(SQLITE_OBJECTS)
+matrix: build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/main.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o imgui_objects include/protos/api.pb.h src/api.pb.cc build/enkimi.o build/miniz.o $(SQLITE_OBJECTS)
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
@@ -26,7 +26,7 @@ build/enkimi.o: src/enkimi.c
 build/miniz.o: src/miniz.c
 	g++ $(FLAGS) $(LOADER_FLAGS) -o build/miniz.o -c src/miniz.c $(INCLUDES) -lm
 
-build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h
+build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
 
 build/main.o: src/main.cpp include/engine.h
@@ -47,19 +47,22 @@ build/camera.o: src/camera.cpp include/camera.h
 build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h
 	g++  -std=c++20 $(FLAGS) -o build/api.o -c src/api.cpp $(INCLUDES)
 
-build/controls.o: src/controls.cpp include/controls.h include/camera.h include/wm.h include/world.h
+build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h
 	g++  -std=c++20 $(FLAGS) -o build/controls.o -c src/controls.cpp $(INCLUDES)
 
 build/app.o: src/app.cpp include/app.h
 	g++  -std=c++20 $(FLAGS) -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
 
-build/wm.o: src/wm.cpp include/wm.h include/controls.h include/logger.h include/world.h
-	g++ -std=c++20 $(FLAGS) -o build/wm.o -c src/wm.cpp $(INCLUDES)
+build/WindowManager/WindowManager.o: src/WindowManager/WindowManager.cpp include/WindowManager/WindowManager.h include/controls.h include/logger.h include/world.h include/WindowManager/Space.h
+	g++ -std=c++20 $(FLAGS) -o build/WindowManager/WindowManager.o -c src/WindowManager/WindowManager.cpp $(INCLUDES)
+
+build/WindowManager/Space.o: src/WindowManager/Space.cpp include/WindowManager/Space.h include/loader.h include/app.h include/camera.h include/renderer.h
+	g++ -std=c++20 $(FLAGS) -o build/WindowManager/Space.o -c src/WindowManager/Space.cpp $(INCLUDES)
 
 build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 $(FLAGS) -o build/logger.o -c src/logger.cpp $(INCLUDES)
 
-build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/wm.h include/world.h include/blocks.h include/assets.h include/entity.h include/model.h include/systems/Derivative.h
+build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/WindowManager/WindowManager.h include/world.h include/blocks.h include/assets.h include/entity.h include/model.h include/systems/Derivative.h
 	g++ -std=c++20 $(FLAGS) -o build/engine.o -c src/engine.cpp $(INCLUDES)
 
 build/cube.o: src/cube.cpp include/cube.h
