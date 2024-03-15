@@ -115,38 +115,24 @@ void Space::addApp(entt::entity entity, bool spawnAtCamera) {
   auto &app = registry->get<X11App>(entity);
   if (!app.isAccessory()) {
     glm::vec3 pos;
+    glm::vec3 rot = glm::vec3(0.0);
     if(spawnAtCamera) {
       auto dist = getViewDistanceForWindowSize(entity);
       pos = camera->position + glm::vec3(0,0,-dist);
     } else {
       pos = availableAppPositions.front();
-    }
-    addApp(entity, pos);
-    if (availableAppPositions.size() > 1) {
-      availableAppPositions.pop();
-    }
-  } else {
-    if (app.width > 30) {
-      stringstream ss;
-      ss << "accessory app of size: " << app.width << "x" << app.height;
-      logger->debug(ss.str());
-      try {
-        renderer->registerApp(&app);
-      } catch (...) {
-        logger->info("accessory app failed to register texture");
-        registry->destroy(entity);
+      if (availableAppPositions.size() > 1) {
+        availableAppPositions.pop();
       }
     }
+    int index = numPositionableApps++;
+    registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), rot, 1);
   }
-}
-
-  void Space::addApp(entt::entity entity, glm::vec3 pos) {
-  int index = numPositionableApps++;
-  auto &app = registry->get<X11App>(entity);
-  registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), glm::vec3(0.0), 1);
-  if (renderer != NULL) {
+  try {
     renderer->registerApp(&app);
+  } catch (...) {
+    logger->info("accessory app failed to register texture");
+    registry->destroy(entity);
   }
 }
-
 } // namespace WindowManager

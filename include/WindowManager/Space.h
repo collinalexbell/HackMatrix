@@ -26,7 +26,6 @@ namespace WindowManager {
     size_t numPositionableApps = 0;
 
     void initAppPositions();
-    void addApp(entt::entity, glm::vec3);
 
   public:
     Space(shared_ptr<EntityRegistry>, Renderer *, Camera *, spdlog::sink_ptr);
