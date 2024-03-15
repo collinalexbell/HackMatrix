@@ -6,6 +6,7 @@
 #include "components/Parent.h"
 #include "components/RotateMovement.h"
 #include "components/Scriptable.h"
+#include "components/TranslateMovement.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
 #include "logger.h"
@@ -102,10 +103,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int LOCK_TYPE = 6;
   static int PARENT_TYPE = 7;
   static int SCRIPTABLE_TYPE = 8;
+  static int TRANSLATE_MOVEMENT_TYPE = 9;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0Scriptable\0");
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0Scriptable\0TranslateMovement\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -254,6 +256,18 @@ void EngineGui::addComponentPanel(entt::entity entity,
       systems::emplaceBoundingSphere(registry, entity);
       showAddComponentPanel = false;
     }
+  } else if (selectedComponentType == TRANSLATE_MOVEMENT_TYPE) {
+    static glm::vec3 translateDelta(0.0f);
+    static float unitsPerSecond = 0.0f;
+
+    ImGui::InputFloat3("Translation Delta", glm::value_ptr(translateDelta));
+    ImGui::InputFloat("Units/s", &unitsPerSecond);
+
+    if (ImGui::Button("Add TranslateMovement Component")) {
+      registry->emplace<TranslateMovement>(entity, translateDelta,
+                                           unitsPerSecond);
+      showAddComponentPanel = false;
+    }
   }
 }
 
@@ -334,6 +348,23 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
             ("Delete Component##RotateMovement" + to_string((int)entity)).c_str())) {
       registry->remove<RotateMovement>(entity);
     }
+    ImGui::Spacing();
+  }
+  if (registry->any_of<TranslateMovement>(entity)) {
+    // not a reference, because I'm just displaying text
+    auto translateMovement = registry->get<TranslateMovement>(entity);
+
+    ImGui::Text("TranslateMovement Component");
+    ImGui::Text("Delta: (%.2f, %.2f, %.2f)", translateMovement.delta.x,
+                translateMovement.delta.y, translateMovement.delta.z);
+    ImGui::Text("Units/s: %.2f", translateMovement.unitsPerSecond);
+
+    if (ImGui::Button(
+            ("Delete Component##TranslateMovement" + to_string((int)entity))
+                .c_str())) {
+      registry->remove<TranslateMovement>(entity);
+    }
+
     ImGui::Spacing();
   }
   if(registry->any_of<Door>(entity)) {
