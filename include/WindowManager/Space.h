@@ -24,19 +24,25 @@ namespace WindowManager {
     vector<pair<X11App *, int>> directRenderApps;
     queue<glm::vec3> availableAppPositions;
 
+    size_t numPositionableApps = 0;
 
     void initAppPositions();
+    void addApp(glm::vec3, X11App *app);
+
   public:
     Space(Renderer *, Camera *, spdlog::sink_ptr);
-    vector<X11App *> getDirectRenderApps();
-    void removeApp(X11App *app);
-    void refreshRendererCubes();
+
     float getViewDistanceForWindowSize(X11App *app);
     glm::vec3 getAppPosition(X11App *app);
     X11App *getLookedAtApp();
+
     int getIndexOfApp(X11App *app);
-    void addApp(glm::vec3, X11App *app);
+    size_t getNumPositionableApps();
+
     void addApp(X11App *app);
-    size_t numPositionableApps();
+    void removeApp(X11App *app);
+
+    void refreshRendererCubes();
+    vector<X11App *> getDirectRenderApps();
   };
 }

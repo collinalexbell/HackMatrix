@@ -453,7 +453,8 @@ void Renderer::renderApps() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDisable(GL_CULL_FACE);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, windowManagerSpace->numPositionableApps());
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6,
+                        windowManagerSpace->getNumPositionableApps());
 
   if (app != NULL && app->isFocused()) {
     drawAppDirect(app);

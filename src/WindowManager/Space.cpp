@@ -65,6 +65,8 @@ void Space::removeApp(X11App *app) {
         appKV->second--;
       }
     }
+  } else {
+    numPositionableApps--;
   }
 
   renderer->deregisterApp(index);
@@ -170,19 +172,14 @@ int Space::getIndexOfApp(X11App *app) {
   return -1;
 }
 
-size_t Space::numPositionableApps() {
-  size_t count = 0;
-  for(auto appPosition: appPositions) {
-    if(appPosition.has_value()) {
-      count++;
-    }
-  }
-  return count;
+size_t Space::getNumPositionableApps() {
+  return numPositionableApps;
 }
 
 void Space::addApp(X11App *app) {
   if (!app->isAccessory()) {
     glm::vec3 pos = availableAppPositions.front();
+    numPositionableApps++;
     addApp(pos, app);
     if (availableAppPositions.size() > 1) {
       availableAppPositions.pop();
