@@ -1,5 +1,6 @@
 #ifndef __RENDERER_H__
 #define __RENDERER_H__
+#include "IndexPool.h"
 #include "blocks.h"
 #include "chunk.h"
 #include "cube.h"
@@ -15,6 +16,7 @@
 #include "WindowManager/Space.h"
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -71,7 +73,7 @@ class Renderer {
   float deltaTime = 0.0f;	// Time between current frame and last frame
   float lastFrame = 0.0f; // Time of last frame
 
-  vector<unsigned int> frameBuffers;
+  unordered_map<int, unsigned int> frameBuffers;
   void drawAppDirect(X11App* app);
   void updateShaderUniforms();
   void renderChunkMesh();
@@ -95,6 +97,8 @@ class Renderer {
   int verticesInMesh = 0;
   int verticesInDynamicObjects = 0;
 
+  IndexPool appIndexPool;
+
 public:
   Renderer(shared_ptr<EntityRegistry> registry, Camera*, World*, shared_ptr<blocks::TexturePack>);
   ~Renderer();
@@ -104,8 +108,8 @@ public:
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
   void addLine(int index, Line line);
-  void addAppCube(int index, glm::vec3 pos);
-  void registerApp(X11App* app, int index);
+  void addAppCube(int bufferIndex, int appIndex, glm::vec3 pos);
+  void registerApp(X11App* app);
   void deregisterApp(int index);
   void reloadChunk();
   void screenshot();

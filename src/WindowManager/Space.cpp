@@ -69,19 +69,23 @@ void Space::removeApp(X11App *app) {
     numPositionableApps--;
   }
 
-  renderer->deregisterApp(index);
+  // not the same as the local variable 'index'
+  renderer->deregisterApp(app->getAppIndex());
   refreshRendererCubes();
 }
 
 void Space::refreshRendererCubes() {
   vector<glm::vec3> appCubesV;
-  for(auto position: appPositions) {
+  vector<size_t> indices;
+  for(int i = 0; i < appPositions.size(); i++) {
+    auto position = appPositions[i];
     if(position.has_value()) {
       appCubesV.push_back(position.value());
+      indices.push_back(apps[i]->getAppIndex());
     }
   }
   for (int i = 0; i < appCubesV.size(); i++) {
-    renderer->addAppCube(i, appCubesV[i]);
+    renderer->addAppCube(i, indices[i], appCubesV[i]);
   }
 }
 
@@ -179,7 +183,6 @@ size_t Space::getNumPositionableApps() {
 void Space::addApp(X11App *app) {
   if (!app->isAccessory()) {
     glm::vec3 pos = availableAppPositions.front();
-    numPositionableApps++;
     addApp(pos, app);
     if (availableAppPositions.size() > 1) {
       availableAppPositions.pop();
@@ -194,7 +197,7 @@ void Space::addApp(X11App *app) {
       apps.push_back(app);
       appPositions.push_back(std::nullopt);
       try {
-        renderer->registerApp(app, index);
+        renderer->registerApp(app);
       } catch (...) {
         logger->info("accessory app failed to register texture");
         apps.pop_back();
@@ -205,12 +208,12 @@ void Space::addApp(X11App *app) {
 }
 
 void Space::addApp(glm::vec3 pos, X11App *app) {
-  int index = apps.size();
+  int index = numPositionableApps++;
   apps.push_back(app);
   appPositions.push_back(pos);
   if (renderer != NULL) {
-    renderer->registerApp(app, index);
-    renderer->addAppCube(index, pos);
+    renderer->registerApp(app);
+    renderer->addAppCube(index, app->getAppIndex(), pos);
   }
 }
 

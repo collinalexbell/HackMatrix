@@ -344,9 +344,10 @@ array<int, 2> X11App::getPosition() {
   return {x,y};
 }
 
-void X11App::attachTexture(int textureUnit, int textureId) {
+void X11App::attachTexture(int textureUnit, int textureId, size_t appIndex) {
   this->textureUnit = textureUnit;
   this->textureId = textureId;
+  this->appIndex = appIndex;
 }
 
 bool X11App::isAccessory() {

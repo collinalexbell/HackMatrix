@@ -1,3 +1,4 @@
+#include "IndexPool.h"
 #include "glm/ext/matrix_transform.hpp"
 #include "texture.h"
 #include "renderer.h"
@@ -194,7 +195,8 @@ void Renderer::toggleWireframe() {
 
 Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *world, shared_ptr<blocks::TexturePack> texturePack):
   texturePack(texturePack),
-  registry(registry)
+  registry(registry),
+  appIndexPool(IndexPool(10))
 {
   this->camera = camera;
   this->world = world;
@@ -313,13 +315,13 @@ void Renderer::updateDynamicObjects(shared_ptr<DynamicObject> obj) {
   verticesInDynamicObjects = renderable.vertices.size();
 }
 
-void Renderer::addAppCube(int index, glm::vec3 pos) {
+void Renderer::addAppCube(int bufferIndex, int appIndex, glm::vec3 pos) {
   glBindBuffer(GL_ARRAY_BUFFER, APP_INSTANCE);
-  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * index,
+  glBufferSubData(GL_ARRAY_BUFFER, (sizeof(glm::vec3) + sizeof(int)) * bufferIndex,
                   sizeof(glm::vec3), &pos);
   glBufferSubData(GL_ARRAY_BUFFER,
-                  sizeof(glm::vec3) * (index + 1) + sizeof(int) * index,
-                  sizeof(int), &index);
+                  sizeof(glm::vec3) * (bufferIndex + 1) + sizeof(int) * bufferIndex,
+                  sizeof(int), &appIndex);
 }
 
 void Renderer::addLine(int index, Line line) {
@@ -346,7 +348,7 @@ void Renderer::renderDynamicObjects() {
 }
 
 void Renderer::drawAppDirect(X11App *app) {
-  int index = windowManagerSpace->getIndexOfApp(app);
+  int index = app->getAppIndex();
   int screenWidth = 1920;
   int screenHeight = 1080;
   int appWidth = app->width;
@@ -520,19 +522,20 @@ void Renderer::render() {
 
 Camera *Renderer::getCamera() { return camera; }
 
-void Renderer::registerApp(X11App *app, int index) {
+void Renderer::registerApp(X11App *app) {
   // We need to keep track of which textureN has been used.
   // because deletions means this won't work
   // indices will change.
+  auto index = appIndexPool.acquireIndex();
   int textureN = 31 - index;
   int textureUnit = GL_TEXTURE0 + textureN;
   int textureId = textures["app" + to_string(index)]->ID;
-  app->attachTexture(textureUnit, textureId);
+  app->attachTexture(textureUnit, textureId, index);
   app->appTexture();
 
   unsigned int framebufferId;
   glGenFramebuffers(1, &framebufferId);
-  frameBuffers.push_back(framebufferId);
+  frameBuffers[index] = framebufferId;
   glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferId);
   glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D, textures["app" + to_string(index)]->ID,
@@ -540,8 +543,9 @@ void Renderer::registerApp(X11App *app, int index) {
 }
 
 void Renderer::deregisterApp(int index) {
+  appIndexPool.relinquishIndex(index);
   glDeleteFramebuffers(1, &frameBuffers[index]);
-  frameBuffers.erase(frameBuffers.begin() + index);
+  frameBuffers.erase(index);
 }
 
 void Renderer::toggleMeshing() {
