@@ -24,7 +24,7 @@ void Space::initAppPositions() {
 Space::Space(Renderer *renderer, Camera *camera, spdlog::sink_ptr loggerSink)
     : renderer(renderer), camera(camera) {
   initAppPositions();
-  logger = make_shared<spdlog::logger>("World", loggerSink);
+  logger = make_shared<spdlog::logger>("WindowManager::Space", loggerSink);
   logger->set_level(spdlog::level::debug);
 }
 
