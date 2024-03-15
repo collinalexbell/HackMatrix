@@ -7,6 +7,7 @@
 #include "loader.h"
 #include "app.h"
 #include <glm/gtx/hash.hpp>
+#include <optional>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ namespace WindowManager {
     Renderer *renderer = NULL;
     Camera *camera = NULL;
     vector<X11App *> apps;
-    unordered_map<glm::vec3, int> appCubes;
+    vector<optional<glm::vec3>> appPositions;
     vector<pair<X11App *, int>> directRenderApps;
     queue<glm::vec3> availableAppPositions;
 
@@ -27,7 +28,6 @@ namespace WindowManager {
     void initAppPositions();
   public:
     Space(Renderer *, Camera *, spdlog::sink_ptr);
-    const std::vector<glm::vec3> getAppCubes();
     vector<X11App *> getDirectRenderApps();
     void removeApp(X11App *app);
     void refreshRendererCubes();
@@ -37,5 +37,6 @@ namespace WindowManager {
     int getIndexOfApp(X11App *app);
     void addApp(glm::vec3, X11App *app);
     void addApp(X11App *app);
+    size_t numPositionableApps();
   };
 }

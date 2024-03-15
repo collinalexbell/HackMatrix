@@ -453,7 +453,7 @@ void Renderer::renderApps() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDisable(GL_CULL_FACE);
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, windowManagerSpace->getAppCubes().size());
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, windowManagerSpace->numPositionableApps());
 
   if (app != NULL && app->isFocused()) {
     drawAppDirect(app);
@@ -520,6 +520,9 @@ void Renderer::render() {
 Camera *Renderer::getCamera() { return camera; }
 
 void Renderer::registerApp(X11App *app, int index) {
+  // We need to keep track of which textureN has been used.
+  // because deletions means this won't work
+  // indices will change.
   int textureN = 31 - index;
   int textureUnit = GL_TEXTURE0 + textureN;
   int textureId = textures["app" + to_string(index)]->ID;
