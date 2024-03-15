@@ -102,7 +102,7 @@ Engine::~Engine() {
 
 void Engine::initialize(){
   auto texturePack = blocks::initializeBasicPack();
-  wm = new WindowManager::WindowManager(glfwGetX11Window(window), loggerSink);
+  wm = new WindowManager::WindowManager(registry, glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
   api = new Api("tcp://*:3333", registry);

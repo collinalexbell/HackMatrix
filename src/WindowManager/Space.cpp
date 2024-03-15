@@ -1,5 +1,6 @@
 #include "WindowManager/Space.h"
 #include "camera.h"
+#include "entity.h"
 #include "renderer.h"
 #include <glm/gtx/intersect.hpp>
 #include <iterator>
@@ -21,8 +22,9 @@ void Space::initAppPositions() {
   availableAppPositions.push(glm::vec3(2.4 + xOffset, 7 + yOffset, z));
 }
 
-Space::Space(Renderer *renderer, Camera *camera, spdlog::sink_ptr loggerSink)
-    : renderer(renderer), camera(camera) {
+  Space::Space(shared_ptr<EntityRegistry> registry, Renderer *renderer,
+               Camera *camera, spdlog::sink_ptr loggerSink)
+    : renderer(renderer), camera(camera), registry(registry) {
   initAppPositions();
   logger = make_shared<spdlog::logger>("WindowManager::Space", loggerSink);
   logger->set_level(spdlog::level::debug);
@@ -210,6 +212,10 @@ void Space::addApp(X11App *app) {
 void Space::addApp(glm::vec3 pos, X11App *app) {
   int index = numPositionableApps++;
   apps.push_back(app);
+  // TODO: push back an entity instead
+  // add Positionable to the entity
+  // renderer should remove the position from the instance
+  // use the positionable model matrix
   appPositions.push_back(pos);
   if (renderer != NULL) {
     renderer->registerApp(app);

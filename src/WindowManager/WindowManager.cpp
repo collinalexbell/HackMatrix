@@ -1,6 +1,7 @@
 #include "WindowManager/WindowManager.h"
 #include "app.h"
 #include "controls.h"
+#include "entity.h"
 #include "renderer.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
@@ -132,7 +133,7 @@ void WindowManager::addApps() {
 }
 
 void WindowManager::wire(Camera *camera, Renderer *renderer) {
-  space = make_shared<Space>(renderer, camera, logSink);
+  space = make_shared<Space>(registry, renderer, camera, logSink);
   renderer->wireWindowManagerSpace(space);
   controls->wireWindowManager(space);
   addApps();
@@ -296,8 +297,9 @@ void WindowManager::registerControls(Controls *controls) {
   this->controls = controls;
 }
 
-WindowManager::WindowManager(Window matrix, spdlog::sink_ptr loggerSink)
-    : matrix(matrix), logSink(loggerSink) {
+  WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
+                             spdlog::sink_ptr loggerSink)
+    : matrix(matrix), logSink(loggerSink), registry(registry) {
   logger = make_shared<spdlog::logger>("wm", loggerSink);
   logger->set_level(spdlog::level::debug);
   logger->flush_on(spdlog::level::info);

@@ -1,6 +1,7 @@
 #pragma once
 #include "WindowManager/Space.h"
 #include "app.h"
+#include "entity.h"
 #include "logger.h"
 #include "world.h"
 #include <X11/Xlib.h>
@@ -18,6 +19,7 @@ class WindowManager {
   static constexpr int APP_WIDTH = 1920 * .85;
   static constexpr int APP_HEIGHT = 1920 * .85 * .54;
 
+  shared_ptr<EntityRegistry> registry;
   Display *display = NULL;
   Controls *controls = NULL;
   spdlog::sink_ptr logSink;
@@ -54,7 +56,7 @@ public:
   void passthroughInput();
   void captureInput();
   void createAndRegisterApps(char **envp);
-  WindowManager(Window, spdlog::sink_ptr);
+  WindowManager(shared_ptr<EntityRegistry>, Window, spdlog::sink_ptr);
   ~WindowManager();
   void focusApp(X11App *app);
   void wire(Camera *camera, Renderer *renderer);

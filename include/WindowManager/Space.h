@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <queue>
+#include "entity.h"
 #include "loader.h"
 #include "app.h"
 #include <glm/gtx/hash.hpp>
@@ -16,6 +17,7 @@ class Camera;
 
 namespace WindowManager {
   class Space {
+    shared_ptr<EntityRegistry> registry;
     shared_ptr<spdlog::logger> logger;
     Renderer *renderer = NULL;
     Camera *camera = NULL;
@@ -30,7 +32,7 @@ namespace WindowManager {
     void addApp(glm::vec3, X11App *app);
 
   public:
-    Space(Renderer *, Camera *, spdlog::sink_ptr);
+    Space(shared_ptr<EntityRegistry>, Renderer *, Camera *, spdlog::sink_ptr);
 
     float getViewDistanceForWindowSize(X11App *app);
     glm::vec3 getAppPosition(X11App *app);
