@@ -1,15 +1,18 @@
 #include "WindowManager/WindowManager.h"
 #include "app.h"
 #include "controls.h"
+#include "entity.h"
 #include "renderer.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <cstddef>
 #include <glm/glm.hpp>
 #include <iostream>
 
 #include <X11/extensions/shape.h>
 #include <memory>
+#include <optional>
 #include <spdlog/common.h>
 #include <sstream>
 #include <thread>
@@ -23,7 +26,7 @@
 namespace WindowManager {
 
 void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
-                                  X11App *&app, char **envp, string args) {
+                                  entt::entity &appEntity, char **envp, string args) {
   char *line;
   std::size_t len = 0;
   FILE *pidPipe = popen(string("pgrep " + pidOf).c_str(), "r");
@@ -45,8 +48,10 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
       sleep(4);
     }
   }
-  app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
-  dynamicApps[app->getWindow()] = app;
+  X11App* app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
+  appEntity = registry->create();
+  registry->emplace<X11App>(appEntity, std::move(*app));
+  dynamicApps[app->getWindow()] = appEntity;
   logger->info("created " + className + " app");
 }
 
@@ -132,20 +137,20 @@ void WindowManager::addApps() {
 }
 
 void WindowManager::wire(Camera *camera, Renderer *renderer) {
-  space = make_shared<Space>(renderer, camera, logSink);
+  space = make_shared<Space>(registry, renderer, camera, logSink);
   renderer->wireWindowManagerSpace(space);
   controls->wireWindowManager(space);
   addApps();
 }
 
-X11App *WindowManager::createApp(Window window, unsigned int width,
+void WindowManager::createApp(Window window, unsigned int width,
                                  unsigned int height) {
+  auto entity = registry->create();
   X11App *app = X11App::byWindow(window, display, screen, width, height);
   renderLoopMutex.lock();
   appsToAdd.push_back(app);
+  dynamicApps[window] = entity;
   renderLoopMutex.unlock();
-  dynamicApps[window] = app;
-  return app;
 }
 
 void WindowManager::onMapRequest(XMapRequestEvent event) {
@@ -158,31 +163,24 @@ void WindowManager::onMapRequest(XMapRequestEvent event) {
     ss << "window created: " << event.window << " " << name;
     logger->info(ss.str());
     logger->flush();
-    auto app = createApp(event.window);
-    if (!app->isAccessory() && currentlyFocusedApp == NULL) {
-      auto t = thread([this, app, event]() -> void {
-        usleep(0.5 * 1000000);
-        app->unfocus(matrix);
-      });
-      t.detach();
-    }
+    createApp(event.window);
   }
 }
 
 void WindowManager::onDestroyNotify(XDestroyWindowEvent event) {
+  renderLoopMutex.lock();
   if (dynamicApps.contains(event.window)) {
-    X11App *app = dynamicApps.at(event.window);
+    auto appEntity = dynamicApps.at(event.window);
     dynamicApps.erase(event.window);
-    renderLoopMutex.lock();
-    appsToRemove.push_back(app);
-    renderLoopMutex.unlock();
+    appsToRemove.push_back(appEntity);
   }
+  renderLoopMutex.unlock();
 }
 
 void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-  vector<X11App *> appsWithHotKeys = {emacs};
+  vector<entt::entity> appsWithHotKeys = {emacs};
   if (EDGE) {
     appsWithHotKeys.push_back(microsoftEdge);
   }
@@ -221,9 +219,8 @@ void WindowManager::handleSubstructure() {
       logger->info("CreateNotify event");
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
       if (e.xcreatewindow.override_redirect == True) {
-        auto app = createApp(e.xcreatewindow.window, e.xcreatewindow.width,
+        createApp(e.xcreatewindow.window, e.xcreatewindow.width,
                              e.xcreatewindow.height);
-        // app->positionNotify(e.xcreatewindow.x, e.xcreatewindow.y);
         stringstream ss;
         ss << "CreateNotify event: position: ";
         ss << attrs.x << ",";
@@ -252,10 +249,24 @@ void WindowManager::tick() {
   renderLoopMutex.lock();
   for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
-      space->addApp(*it);
-      // if(!(*it)->isAccessory()) {
-      //(*it)->unfocus(matrix);
-      // }
+      auto appEntity = dynamicApps[(*it)->getWindow()];
+      registry->emplace<X11App>(appEntity, std::move(**it));
+      delete *it;
+      auto spawnAtCamera = !currentlyFocusedApp.has_value();
+      space->addApp(appEntity, spawnAtCamera);
+      if(registry->valid(appEntity)) {
+        auto &app = registry->get<X11App>(appEntity);
+        if (!app.isAccessory() && !currentlyFocusedApp.has_value()) {
+          auto t = thread([this, appEntity]() -> void {
+            auto app = registry->try_get<X11App>(appEntity);
+            usleep(0.5 * 1000000);
+            if(app != NULL) {
+              app->unfocus(matrix);
+            }
+          });
+          t.detach();
+        }
+      }
     } catch (exception &e) {
       logger->error(e.what());
       logger->flush();
@@ -268,8 +279,12 @@ void WindowManager::tick() {
       if (currentlyFocusedApp == *it) {
         unfocusApp();
       }
-      space->removeApp(*it);
-      delete *it;
+      if(registry->all_of<X11App>(*it)) {
+        space->removeApp(*it);
+      } else {
+        // empty entity
+        registry->destroy(*it);
+      }
     } catch (exception &e) {
       logger->error(e.what());
       logger->flush();
@@ -280,15 +295,17 @@ void WindowManager::tick() {
   renderLoopMutex.unlock();
 }
 
-void WindowManager::focusApp(X11App *app) {
-  currentlyFocusedApp = app;
-  app->focus(matrix);
+void WindowManager::focusApp(entt::entity appEntity) {
+  currentlyFocusedApp = appEntity;
+  auto &app = registry->get<X11App>(appEntity);
+  app.focus(matrix);
 }
 
 void WindowManager::unfocusApp() {
-  if (currentlyFocusedApp != NULL) {
-    currentlyFocusedApp->unfocus(matrix);
-    currentlyFocusedApp = NULL;
+  if (currentlyFocusedApp.has_value()) {
+    auto &app = registry->get<X11App>(currentlyFocusedApp.value());
+    app.unfocus(matrix);
+    currentlyFocusedApp = std::nullopt;
   }
 }
 
@@ -296,8 +313,9 @@ void WindowManager::registerControls(Controls *controls) {
   this->controls = controls;
 }
 
-WindowManager::WindowManager(Window matrix, spdlog::sink_ptr loggerSink)
-    : matrix(matrix), logSink(loggerSink) {
+  WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
+                             spdlog::sink_ptr loggerSink)
+    : matrix(matrix), logSink(loggerSink), registry(registry) {
   logger = make_shared<spdlog::logger>("wm", loggerSink);
   logger->set_level(spdlog::level::debug);
   logger->flush_on(spdlog::level::info);
