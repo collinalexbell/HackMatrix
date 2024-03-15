@@ -180,9 +180,13 @@ void Controls::moveTo(glm::vec3 pos, float secs) {
 void Controls::goToApp(entt::entity app) {
   wm->passthroughInput();
   float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
+  glm::vec3 rotationV = windowManagerSpace->getAppRotation(app);
+  glm::quat rotation = glm::quat(glm::radians(rotationV));
+
   glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
-  targetPosition.z = targetPosition.z + deltaZ;
-  glm::vec3 front = glm::vec3(0, 0, -1);
+  targetPosition = targetPosition + rotation * glm::vec3(0,0,deltaZ);
+
+  glm::vec3 front = rotation * glm::vec3(0, 0, -1);
   float moveSeconds = 0.25;
   resetMouse = true;
   grabbedCursor = false;

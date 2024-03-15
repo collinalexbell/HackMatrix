@@ -32,6 +32,7 @@ namespace WindowManager {
 
     float getViewDistanceForWindowSize(entt::entity);
     glm::vec3 getAppPosition(entt::entity);
+    glm::vec3 getAppRotation(entt::entity);
     optional<entt::entity> getLookedAtApp();
 
     size_t getNumPositionableApps();

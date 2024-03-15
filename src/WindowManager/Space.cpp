@@ -71,6 +71,14 @@ glm::vec3 Space::getAppPosition(entt::entity entity) {
   return positionable->pos;
 }
 
+glm::vec3 Space::getAppRotation(entt::entity entity) {
+  auto positionable = registry->try_get<Positionable>(entity);
+  if (positionable == NULL) {
+    throw "app doesn't exist or has no position";
+  }
+  return positionable->rotate;
+}
+
 struct Intersection {
   glm::vec3 intersectionPoint;
   float dist;
