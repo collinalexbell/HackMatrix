@@ -1,4 +1,5 @@
 #pragma once
+#include "WindowManager/Space.h"
 #include "app.h"
 #include "logger.h"
 #include "world.h"
@@ -19,6 +20,7 @@ class WM {
 
   Display *display = NULL;
   Controls *controls = NULL;
+  spdlog::sink_ptr logSink;
   int screen;
   X11App *emacs = NULL;
   X11App *magicaVoxel = NULL;
@@ -26,7 +28,7 @@ class WM {
   X11App *obs = NULL;
   X11App *terminator = NULL;
   X11App *currentlyFocusedApp = NULL;
-  World *world = NULL;
+  shared_ptr<WindowManager::Space> space;
   Window matrix;
   Window overlay;
   atomic_bool firstRenderComplete = false;
@@ -45,6 +47,7 @@ class WM {
   X11App* createApp(Window window, unsigned int width = APP_WIDTH, unsigned int height = APP_HEIGHT);
   void allow_input_passthrough(Window window);
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
+  void addApps();
 
 public:
   void passthroughInput();
@@ -53,10 +56,9 @@ public:
   WM(Window, spdlog::sink_ptr);
   ~WM();
   void focusApp(X11App *app);
-  void attachWorld(World *world) {this->world = world;}
-  void addAppsToWorld();
+  void wire(Camera* camera, Renderer* renderer);
   void handleSubstructure();
   void goToLookedAtApp();
   void registerControls(Controls *controls);
-  void mutateWorld();
+  void tick();
 };

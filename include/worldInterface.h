@@ -37,23 +37,13 @@ enum Action {
 class WorldInterface {
 public:
   virtual void tick() = 0;
-  virtual vector<X11App *> getDirectRenderApps() = 0;
   virtual void attachRenderer(Renderer *renderer) = 0;
-  virtual float getViewDistanceForWindowSize(X11App *app) = 0;
-  virtual X11App *getLookedAtApp() = 0;
   virtual Position getLookedAtCube() = 0;
-  virtual const std::vector<glm::vec3> getAppCubes() = 0;
-  virtual glm::vec3 getAppPosition(X11App *app) = 0;
 
   virtual void addCube(int x, int y, int z, int blockType) = 0;
   virtual void addLine(Line line) = 0;
   virtual void removeLine(Line line) = 0;
-  virtual void addApp(glm::vec3, X11App *app) = 0;
-  virtual void addApp(X11App *app) = 0;
-  virtual void removeApp(X11App *app) = 0;
-  virtual int getIndexOfApp(X11App *app) = 0;
 
-  virtual void refreshRendererCubes() = 0;
   virtual void action(Action) = 0;
   virtual vector<Line> getLines() = 0;
 

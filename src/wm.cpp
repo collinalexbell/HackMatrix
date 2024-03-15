@@ -1,5 +1,6 @@
 #include "wm.h"
 #include "app.h"
+#include "renderer.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -110,30 +111,37 @@ void WM::captureInput() {
   XFlush(display);
 }
 
-void WM::addAppsToWorld() {
-  world->addApp(emacs);
+void WM::addApps() {
+  space->addApp(emacs);
   if(MAGICA) {
-    world->addApp(magicaVoxel);
+    space->addApp(magicaVoxel);
   }
   if(TERM) {
-    world->addApp(terminator);
+    space->addApp(terminator);
   }
   if(EDGE) {
-    world->addApp(microsoftEdge);
+    space->addApp(microsoftEdge);
   }
   if(OBS) {
-    world->addApp(obs);
+    space->addApp(obs);
   }
 }
 
-X11App* WM::createApp(Window window, unsigned int width, unsigned int height) {
-    X11App *app =
-      X11App::byWindow(window, display, screen, width, height);
-    renderLoopMutex.lock();
-    appsToAdd.push_back(app);
-    renderLoopMutex.unlock();
-    dynamicApps[window] = app;
-    return app;
+void WM::wire(Camera *camera, Renderer *renderer) {
+  space = make_shared<WindowManager::Space>(renderer, camera, logSink);
+  renderer->wireWindowManagerSpace(space);
+  controls->wireWindowManager(space);
+  addApps();
+}
+
+    X11App *WM::createApp(Window window, unsigned int width,
+                          unsigned int height) {
+  X11App *app = X11App::byWindow(window, display, screen, width, height);
+  renderLoopMutex.lock();
+  appsToAdd.push_back(app);
+  renderLoopMutex.unlock();
+  dynamicApps[window] = app;
+  return app;
 }
 
 void WM::onMapRequest(XMapRequestEvent event) {
@@ -235,11 +243,11 @@ void WM::handleSubstructure() {
   }
 }
 
-void WM::mutateWorld() {
+void WM::tick() {
   renderLoopMutex.lock();
   for(auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
-      world->addApp(*it);
+      space->addApp(*it);
       //if(!(*it)->isAccessory()) {
       //(*it)->unfocus(matrix);
         //}
@@ -255,7 +263,7 @@ void WM::mutateWorld() {
       if (currentlyFocusedApp == *it) {
         unfocusApp();
       }
-      world->removeApp(*it);
+      space->removeApp(*it);
       delete *it;
     } catch (exception &e) {
       logger->error(e.what());
@@ -284,7 +292,7 @@ void WM::registerControls(Controls *controls) {
 }
 
 WM::WM(Window matrix, spdlog::sink_ptr loggerSink):
-      matrix(matrix) {
+  matrix(matrix), logSink(loggerSink) {
         logger = make_shared<spdlog::logger>("wm", loggerSink);
         logger->set_level(spdlog::level::debug);
         logger->flush_on(spdlog::level::info);

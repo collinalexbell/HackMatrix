@@ -1,5 +1,6 @@
 #pragma once
 
+#include "WindowManager/Space.h"
 #include "blocks.h"
 #include "camera.h"
 #include <functional>
@@ -32,6 +33,7 @@ class Controls {
   float lastY;
   int clickY = 100;
   vector<DeferedAction> deferedActions;
+  shared_ptr<WindowManager::Space> windowManagerSpace;
 
   void handleControls(GLFWwindow* window, Camera* camera);
   void handleEscape(GLFWwindow* window);
@@ -60,4 +62,5 @@ public:
   void goToApp(X11App * app);
   void moveTo(glm::vec3 pos, float secs);
   void disable();
+  void wireWindowManager(shared_ptr<WindowManager::Space>);
 };

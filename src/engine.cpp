@@ -111,10 +111,7 @@ void Engine::initialize(){
 
 void Engine::wire() {
   world->attachRenderer(renderer);
-  wm->attachWorld(world);
-  wm->addAppsToWorld();
-  //world->loadLatest();
-  //world->loadMinecraft();
+  wm->wire(camera, renderer);
 }
 
 void Engine::loop() {
@@ -131,7 +128,7 @@ void Engine::loop() {
       world->tick();
       renderer->render();
       api->mutateEntities();
-      wm->mutateWorld();
+      wm->tick();
       controls->poll(window, camera, world);
 
       frameTimes[frameIndex] = glfwGetTime() - frameStart;

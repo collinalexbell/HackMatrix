@@ -35,7 +35,6 @@ using namespace std;
 World::World(shared_ptr<EntityRegistry> registry, Camera *camera, shared_ptr<blocks::TexturePack> texturePack, string minecraftFolder, bool debug, spdlog::sink_ptr loggerSink) : registry(registry), camera(camera) {
   initLogger(loggerSink);
   logger->debug("Hello World!");
-  initAppPositions();
   //initLoader(minecraftFolder, texturePack);
   //initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
@@ -61,20 +60,6 @@ World::World(shared_ptr<EntityRegistry> registry, Camera *camera, shared_ptr<blo
 void World::initLogger(spdlog::sink_ptr loggerSink) {
   logger = make_shared<spdlog::logger>("World", loggerSink);
   logger->set_level(spdlog::level::debug);
-}
-
-void World::initAppPositions() {
-  float z = 0.3;
-  float xOffset = -1.2;
-  float yOffset = -2.4;
-  availableAppPositions.push(glm::vec3(0.0+xOffset, 3.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(1.2+xOffset, 3.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(1.2+xOffset, 4.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(1.2+xOffset, 5.00+yOffset, z));
-  availableAppPositions.push(glm::vec3(2.4+xOffset, 3.5+yOffset, z));
-  availableAppPositions.push(glm::vec3(0+xOffset, 4.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(2.4+xOffset, 4.25+yOffset, z));
-  availableAppPositions.push(glm::vec3(2.4 + xOffset, 7 + yOffset, z));
 }
 
 void World::initChunks() {
@@ -167,15 +152,6 @@ const std::vector<shared_ptr<Cube>> World::getCubes(int _x1, int _y1, int _z1,
   }
   return rv;
 }
-
-const std::vector<glm::vec3> World::getAppCubes() {
-  std::vector<glm::vec3> appCubeKeys(appCubes.size());
-  for(auto kv: appCubes) {
-    appCubeKeys[kv.second] = kv.first;
-  }
-  return appCubeKeys;
-}
-
 
 ChunkIndex World::getChunkIndex(int x, int z) {
   ChunkPosition minChunkPosition = chunks[0][0]->getPosition();
@@ -615,12 +591,7 @@ void World::addLine(Line line) {
   }
 }
 
-void World::refreshRendererCubes() {
-  vector<glm::vec3> appCubesV = getAppCubes();
-  for(int i=0; i < appCubesV.size(); i++){
-    renderer->addAppCube(i, appCubesV[i]);
-  }
-}
+
 
 void World::updateDamage(int index) {
   bool greaterDamage = !isDamaged || index < damageIndex;
@@ -653,103 +624,8 @@ void World::removeLine(Line l) {
   }
 }
 
-vector<X11App*> World::getDirectRenderApps() {
-  vector<X11App*> rv;
-  for(auto app: directRenderApps) {
-    rv.push_back(app.first);
-  }
-  return rv;
-}
-
-void World::addApp(X11App* app) {
-  if(!app->isAccessory()) {
-    glm::vec3 pos = availableAppPositions.front();
-    addApp(pos, app);
-    if(availableAppPositions.size() > 1) {
-      availableAppPositions.pop();
-    }
-  } else {
-    if(app->width > 30) {
-    stringstream ss;
-    ss << "accessory app of size: " << app->width << "x" << app->height;
-    logger->debug(ss.str());
-    int index = apps.size();
-    directRenderApps.push_back(make_pair(app, index));
-    apps.push_back(app);
-    try {
-      renderer->registerApp(app, index);
-    } catch(...) {
-      logger->info("accessory app failed to register texture");
-      apps.pop_back();
-      directRenderApps.pop_back();
-    }
-    }
-  }
-}
-
-void World::addApp(glm::vec3 pos, X11App* app) {
-  int index = appCubes.size();
-  appCubes.insert(std::pair<glm::vec3, int>(pos, index));
-  apps.push_back(app);
-  if(renderer != NULL) {
-    renderer->registerApp(app, index);
-    renderer->addAppCube(index, pos);
-  }
-}
-
-void World::removeApp(X11App *app) {
-  int index = -1;
-  for(int i=0; i<apps.size();i++) {
-    if(apps[i] == app) {
-      index = i;
-    }
-  }
-
-  if(index < 0) {
-    return;
-  }
-
-
-  apps.erase(apps.begin() + index);
-
-  auto it =
-      std::find_if(appCubes.begin(), appCubes.end(),
-                   [index](const std::pair<glm::vec3, int> &element) {
-                     return element.second == index;
-                   });
-
-
-  if(it != appCubes.end()) {
-    appCubes.erase(it);
-    for(auto appKV = appCubes.begin(); appKV != appCubes.end(); appKV++) {
-      if(appKV->second > index){
-        appKV->second--;
-      }
-    }
-  }
-
-  auto directRenderIt = std::find_if(directRenderApps.begin(), directRenderApps.end(),
-                         [index](const std::pair<X11App*, int> &element) {
-                           return element.second == index;
-                         });
-
-  if(directRenderIt != directRenderApps.end()) {
-    directRenderApps.erase(directRenderIt);
-    for (auto appKV = directRenderApps.begin(); appKV != directRenderApps.end();
-         appKV++) {
-      if (appKV->second > index) {
-        appKV->second--;
-      }
-    }
-  }
-
-  renderer->deregisterApp(index);
-  refreshRendererCubes();
-}
-
 void World::attachRenderer(Renderer* renderer){
   this->renderer = renderer;
-  refreshRendererCubes();
 }
 
 shared_ptr<Cube> World::getCube(float x, float y, float z) {
@@ -766,40 +642,6 @@ glm::vec3 World::cameraToVoxelSpace(glm::vec3 cameraPosition) {
   glm::vec3 halfAVoxel(0.5);
   glm::vec3 rv = (cameraPosition / glm::vec3(CUBE_SIZE)) + halfAVoxel;
   return rv;
-}
-
-struct Intersection {
-  glm::vec3 intersectionPoint;
-  float dist;
-};
-
-Intersection intersectLineAndPlane(glm::vec3 linePos, glm::vec3 lineDir, glm::vec3 planePos) {
-  Intersection intersection;
-  glm::vec3 normLineDir = glm::normalize(lineDir);
-  glm::intersectRayPlane(linePos, normLineDir, planePos, glm::vec3(0,0,1), intersection.dist);
-  intersection.intersectionPoint = (normLineDir * intersection.dist) + linePos;
-  return intersection;
-}
-
-X11App* World::getLookedAtApp(){
-  float DIST_LIMIT = 1.5;
-  float height = 0.74;
-  float width = 1.0;
-  for (glm::vec3 appPosition : getAppCubes()) {
-    Intersection intersection = intersectLineAndPlane(camera->position, camera->front, appPosition);
-    float minX = appPosition.x - (width / 3);
-    float maxX = appPosition.x + (width / 3);
-    float minY = appPosition.y - (height / 3);
-    float maxY = appPosition.y + (height / 3);
-    float x = intersection.intersectionPoint.x;
-    float y = intersection.intersectionPoint.y;
-    if(x>minX && x<maxX && y>minY && y<maxY && intersection.dist < DIST_LIMIT) {
-      int index = appCubes.at(appPosition);
-      X11App* app = apps[index];
-      return app;
-    }
-  }
-  return NULL;
 }
 
 Position World::getLookedAtCube() {
@@ -966,48 +808,6 @@ void World::dynamicObjectAction(Action toTake) {
 void World::action(Action toTake) {
   cubeAction(toTake);
   dynamicObjectAction(toTake);
-}
-
-int World::getIndexOfApp(X11App *app) {
-  for(int i = 0; i < apps.size(); i++) {
-    if(app == apps[i]){
-      return i;
-    }
-  }
-  return -1;
-}
-
-float World::getViewDistanceForWindowSize(X11App *app) {
-  // view = projection^-1 * gl_vertex * vertex^-1
-  float glVertexX = float(app->width)/1920;
-  glm::vec4 gl_pos = glm::vec4(10000,0,0,0);
-  float zBest;
-  float target = glVertexX;
-    for (float z = 0.0; z <= 10.5; z = z + 0.001) {
-      glm::vec4 candidate;
-      candidate = renderer->projection * glm::vec4(0.5, 0, -z, 1);
-      candidate = candidate/candidate.w;
-      if(abs(candidate.x - target) < abs(gl_pos.x - target)) {
-        gl_pos = candidate;
-        zBest = z;
-      }
-    }
-    return zBest;
-}
-
-glm::vec3 World::getAppPosition(X11App* app) {
-  int index = -1;
-  for(int i=0; i<apps.size(); i++) {
-    if(app == apps[i]) {
-      index = i;
-    }
-  }
-  if(index == -1) {
-    throw "app not found";
-  }
-
-  return getAppCubes()[index];
-
 }
 
 vector<Line> World::getLines() {
