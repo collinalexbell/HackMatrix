@@ -1,5 +1,6 @@
 #include "IndexPool.h"
 #include "glm/ext/matrix_transform.hpp"
+#include "model.h"
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
@@ -445,12 +446,8 @@ void Renderer::renderChunkMesh() {
 }
 
 void Renderer::renderApps() {
-  X11App *app = windowManagerSpace->getLookedAtApp();
-  if (app != NULL) {
-    shader->setBool("appSelected", app->isFocused());
-  } else {
-    shader->setBool("appSelected", false);
-  }
+  auto appEntity = windowManagerSpace->getLookedAtApp();
+  shader->setBool("appSelected", false);
 
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
@@ -458,13 +455,17 @@ void Renderer::renderApps() {
   glDrawArraysInstanced(GL_TRIANGLES, 0, 6,
                         windowManagerSpace->getNumPositionableApps());
 
-  if (app != NULL && app->isFocused()) {
-    drawAppDirect(app);
+  if (appEntity.has_value()) {
+    auto &app = registry->get<X11App>(appEntity.value());
+    if(app.isFocused()) {
+      shader->setBool("appSelected", app.isFocused());
+      drawAppDirect(&app);
+    }
   }
 
-  vector<X11App *> directRenders = windowManagerSpace->getDirectRenderApps();
-  for (auto directApp : directRenders) {
-    drawAppDirect(directApp);
+  auto directRenders = registry->view<X11App>(entt::exclude<Positionable>);
+  for (auto [entity, directApp] : directRenders.each()) {
+    drawAppDirect(&directApp);
   }
 
   shader->setBool("isApp", false);

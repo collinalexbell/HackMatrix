@@ -1,6 +1,8 @@
 #include "WindowManager/Space.h"
+#include "app.h"
 #include "camera.h"
 #include "entity.h"
+#include "model.h"
 #include "renderer.h"
 #include <glm/gtx/intersect.hpp>
 #include <iterator>
@@ -30,70 +32,31 @@ void Space::initAppPositions() {
   logger->set_level(spdlog::level::debug);
 }
 
-vector<X11App *> Space::getDirectRenderApps() {
-  vector<X11App *> rv;
-  for (auto app : directRenderApps) {
-    rv.push_back(app.first);
-  }
-  return rv;
-}
-
-void Space::removeApp(X11App *app) {
-  int index = -1;
-  for (int i = 0; i < apps.size(); i++) {
-    if (apps[i] == app) {
-      index = i;
-    }
-  }
-
-  if (index < 0) {
-    return;
-  }
-
-  apps.erase(apps.begin() + index);
-  appPositions.erase(appPositions.begin() + index);
-
-  auto directRenderIt =
-      std::find_if(directRenderApps.begin(), directRenderApps.end(),
-                   [index](const std::pair<X11App *, int> &element) {
-                     return element.second == index;
-                   });
-
-  if (directRenderIt != directRenderApps.end()) {
-    directRenderApps.erase(directRenderIt);
-    for (auto appKV = directRenderApps.begin(); appKV != directRenderApps.end();
-         appKV++) {
-      if (appKV->second > index) {
-        appKV->second--;
-      }
-    }
-  } else {
+  void Space::removeApp(entt::entity entity) {
+  if(registry->all_of<Positionable>(entity)) {
     numPositionableApps--;
   }
 
-  // not the same as the local variable 'index'
-  renderer->deregisterApp(app->getAppIndex());
+  auto &app = registry->get<X11App>(entity);
+  renderer->deregisterApp(app.getAppIndex());
+  registry->destroy(entity);
   refreshRendererCubes();
 }
 
 void Space::refreshRendererCubes() {
-  vector<glm::vec3> appCubesV;
-  vector<size_t> indices;
-  for(int i = 0; i < appPositions.size(); i++) {
-    auto position = appPositions[i];
-    if(position.has_value()) {
-      appCubesV.push_back(position.value());
-      indices.push_back(apps[i]->getAppIndex());
-    }
-  }
-  for (int i = 0; i < appCubesV.size(); i++) {
-    renderer->addAppCube(i, indices[i], appCubesV[i]);
+  auto positionableApps = registry->view<X11App, Positionable>();
+
+  int i = 0;
+  for(auto [entity, app, positionable]: positionableApps.each()) {
+    renderer->addAppCube(i, app.getAppIndex(), positionable.pos);
+    i++;
   }
 }
 
-float Space::getViewDistanceForWindowSize(X11App *app) {
+float Space::getViewDistanceForWindowSize(entt::entity entity) {
+  auto &app = registry->get<X11App>(entity);
   // view = projection^-1 * gl_vertex * vertex^-1
-  float glVertexX = float(app->width) / 1920;
+  float glVertexX = float(app.width) / 1920;
   glm::vec4 gl_pos = glm::vec4(10000, 0, 0, 0);
   float zBest;
   float target = glVertexX;
@@ -109,23 +72,12 @@ float Space::getViewDistanceForWindowSize(X11App *app) {
   return zBest;
 }
 
-glm::vec3 Space::getAppPosition(X11App *app) {
-  int index = -1;
-  for (int i = 0; i < apps.size(); i++) {
-    if (app == apps[i]) {
-      index = i;
-    }
+glm::vec3 Space::getAppPosition(entt::entity entity) {
+  auto positionable = registry->try_get<Positionable>(entity);
+  if(positionable == NULL) {
+    throw "app doesn't exist or has no position";
   }
-  if (index == -1) {
-    throw "app not found";
-  }
-
-  auto appPosition = appPositions[index];
-  if(!appPosition.has_value()) {
-    throw "app is not positionable";
-  }
-
-  return appPosition.value();
+  return positionable->pos;
 }
 
 struct Intersection {
@@ -143,83 +95,63 @@ Intersection intersectLineAndPlane(glm::vec3 linePos, glm::vec3 lineDir,
   return intersection;
 }
 
-X11App *Space::getLookedAtApp() {
+optional<entt::entity> Space::getLookedAtApp() {
   float DIST_LIMIT = 1.5;
   float height = 0.74;
   float width = 1.0;
-  for (int index = 0; index < appPositions.size(); index++) {
-    auto appPositionOptional = appPositions[index];
-    if(appPositionOptional.has_value()) {
-      auto appPosition = appPositionOptional.value();
-      Intersection intersection =
-          intersectLineAndPlane(camera->position, camera->front, appPosition);
-      float minX = appPosition.x - (width / 3);
-      float maxX = appPosition.x + (width / 3);
-      float minY = appPosition.y - (height / 3);
-      float maxY = appPosition.y + (height / 3);
-      float x = intersection.intersectionPoint.x;
-      float y = intersection.intersectionPoint.y;
-      if (x > minX && x < maxX && y > minY && y < maxY &&
-          intersection.dist < DIST_LIMIT) {
-        X11App *app = apps[index];
-        return app;
-      }
+  auto view = registry->view<X11App, Positionable>();
+  for (auto [entity, app, positionable]: view.each()) {
+    auto appPosition = positionable.pos;
+    Intersection intersection =
+        intersectLineAndPlane(camera->position, camera->front, appPosition);
+    float minX = appPosition.x - (width / 3);
+    float maxX = appPosition.x + (width / 3);
+    float minY = appPosition.y - (height / 3);
+    float maxY = appPosition.y + (height / 3);
+    float x = intersection.intersectionPoint.x;
+    float y = intersection.intersectionPoint.y;
+    if (x > minX && x < maxX && y > minY && y < maxY &&
+        intersection.dist < DIST_LIMIT) {
+      return entity;
     }
   }
-  return NULL;
-}
-
-int Space::getIndexOfApp(X11App *app) {
-  for (int i = 0; i < apps.size(); i++) {
-    if (app == apps[i]) {
-      return i;
-    }
-  }
-  return -1;
+  return std::nullopt;
 }
 
 size_t Space::getNumPositionableApps() {
   return numPositionableApps;
 }
 
-void Space::addApp(X11App *app) {
-  if (!app->isAccessory()) {
+void Space::addApp(entt::entity entity) {
+  auto &app = registry->get<X11App>(entity);
+  if (!app.isAccessory()) {
     glm::vec3 pos = availableAppPositions.front();
-    addApp(pos, app);
+    addApp(entity, pos);
     if (availableAppPositions.size() > 1) {
       availableAppPositions.pop();
     }
   } else {
-    if (app->width > 30) {
+    if (app.width > 30) {
       stringstream ss;
-      ss << "accessory app of size: " << app->width << "x" << app->height;
+      ss << "accessory app of size: " << app.width << "x" << app.height;
       logger->debug(ss.str());
-      int index = apps.size();
-      directRenderApps.push_back(make_pair(app, index));
-      apps.push_back(app);
-      appPositions.push_back(std::nullopt);
       try {
-        renderer->registerApp(app);
+        renderer->registerApp(&app);
       } catch (...) {
         logger->info("accessory app failed to register texture");
-        apps.pop_back();
-        directRenderApps.pop_back();
+        registry->destroy(entity);
       }
     }
   }
 }
 
-void Space::addApp(glm::vec3 pos, X11App *app) {
+  void Space::addApp(entt::entity entity, glm::vec3 pos) {
   int index = numPositionableApps++;
-  apps.push_back(app);
-  // TODO: push back an entity instead
-  // add Positionable to the entity
-  // renderer should remove the position from the instance
-  // use the positionable model matrix
-  appPositions.push_back(pos);
+  auto &app = registry->get<X11App>(entity);
+  registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), glm::vec3(0.0), 1);
   if (renderer != NULL) {
-    renderer->registerApp(app);
-    renderer->addAppCube(index, app->getAppIndex(), pos);
+    renderer->registerApp(&app);
+    renderer->addAppCube(index, app.getAppIndex(), pos);
   }
 }
 

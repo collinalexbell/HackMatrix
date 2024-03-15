@@ -24,21 +24,21 @@ class WindowManager {
   Controls *controls = NULL;
   spdlog::sink_ptr logSink;
   int screen;
-  X11App *emacs = NULL;
-  X11App *magicaVoxel = NULL;
-  X11App *microsoftEdge = NULL;
-  X11App *obs = NULL;
-  X11App *terminator = NULL;
-  X11App *currentlyFocusedApp = NULL;
+  entt::entity emacs;
+  entt::entity magicaVoxel;
+  entt::entity microsoftEdge;
+  entt::entity obs;
+  entt::entity terminator;
+  optional<entt::entity> currentlyFocusedApp;
   shared_ptr<Space> space;
   Window matrix;
   Window overlay;
   atomic_bool firstRenderComplete = false;
-  map<Window, X11App *> dynamicApps;
+  map<Window, entt::entity> dynamicApps;
   mutex renderLoopMutex;
-  vector<X11App *> appsToAdd;
-  vector<X11App *> appsToRemove;
-  void forkOrFindApp(string cmd, string pidOf, string className, X11App *&app,
+  vector<X11App*> appsToAdd;
+  vector<entt::entity> appsToRemove;
+  void forkOrFindApp(string cmd, string pidOf, string className, entt::entity&,
                      char **envp, string args = "");
   std::thread substructureThread;
   void onDestroyNotify(XDestroyWindowEvent);
@@ -46,7 +46,7 @@ class WindowManager {
   std::shared_ptr<spdlog::logger> logger;
   void onHotkeyPress(XKeyEvent event);
   void unfocusApp();
-  X11App *createApp(Window window, unsigned int width = APP_WIDTH,
+  void createApp(Window window, unsigned int width = APP_WIDTH,
                     unsigned int height = APP_HEIGHT);
   void allow_input_passthrough(Window window);
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
@@ -58,7 +58,7 @@ public:
   void createAndRegisterApps(char **envp);
   WindowManager(shared_ptr<EntityRegistry>, Window, spdlog::sink_ptr);
   ~WindowManager();
-  void focusApp(X11App *app);
+  void focusApp(entt::entity);
   void wire(Camera *camera, Renderer *renderer);
   void handleSubstructure();
   void goToLookedAtApp();

@@ -40,6 +40,7 @@ class X11App {
   size_t appIndex;
 
 public:
+  X11App(X11App &&other) noexcept;
   static X11App *byName(string windowName, Display *display, int screen,
                         int width, int height);
   static X11App *byClass(string windowClass, Display *display, int screen,
