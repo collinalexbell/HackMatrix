@@ -219,8 +219,10 @@ void WindowManager::handleSubstructure() {
       logger->info("CreateNotify event");
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
       if (e.xcreatewindow.override_redirect == True) {
-        createApp(e.xcreatewindow.window, e.xcreatewindow.width,
-                             e.xcreatewindow.height);
+        if(e.xcreatewindow.width > 30) {
+          createApp(e.xcreatewindow.window, e.xcreatewindow.width,
+                    e.xcreatewindow.height);
+	}
         stringstream ss;
         ss << "CreateNotify event: position: ";
         ss << attrs.x << ",";
