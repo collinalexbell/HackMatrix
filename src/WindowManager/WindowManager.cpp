@@ -20,6 +20,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <spdlog/common.h>
 #include <sstream>
@@ -231,6 +232,12 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
 
 void WindowManager::handleSubstructure() {
   for (;;) {
+    {
+      lock_guard<std::mutex> continueLock(continueMutex);
+      if(!continueRunning) {
+        break;
+      }
+    }
     XEvent e;
     XNextEvent(display, &e);
     stringstream eventInfo;
@@ -384,8 +391,15 @@ void WindowManager::registerControls(Controls *controls) {
 }
 
 WindowManager::~WindowManager() {
+  {
+    lock_guard<std::mutex> continueLock(continueMutex);
+    continueRunning = false;
+  }
+  if(substructureThread.joinable()) {
+    substructureThread.join();
+  }
   kill(ideSelection.terminatorPid, SIGTERM);
-  //XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
+  XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
 }
 
 } // namespace WindowManager

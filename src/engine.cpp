@@ -97,11 +97,11 @@ Engine::~Engine() {
   // may want to remove this because it might be slow on shutdown
   // when trying to get fast dev time
   registry->saveAll();
+  delete wm;
   delete controls;
   delete renderer;
   delete world;
   delete camera;
-  delete wm;
   delete api;
 }
 

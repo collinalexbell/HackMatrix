@@ -50,11 +50,13 @@ class WindowManager {
   atomic_bool firstRenderComplete = false;
   map<Window, entt::entity> dynamicApps;
   mutex renderLoopMutex;
+  mutex continueMutex;
   vector<X11App*> appsToAdd;
   vector<entt::entity> appsToRemove;
   void forkOrFindApp(string cmd, string pidOf, string className, entt::entity&,
                      char **envp, string args = "");
   std::thread substructureThread;
+  bool continueRunning = true;
   void onDestroyNotify(XDestroyWindowEvent);
   void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
