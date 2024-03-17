@@ -34,7 +34,11 @@ void BootablePersister::saveAll() {
       query.bind(2, bootable.cmd);
       query.bind(3, bootable.args);
       query.bind(4, bootable.killOnExit ? 1 : 0);
-      query.bind(5, bootable.pid);
+      if(bootable.pid.has_value()) {
+        query.bind(5, bootable.pid.value());
+      } else {
+        query.bind(5, nullptr);
+      }
       query.exec();
       query.reset();
     }

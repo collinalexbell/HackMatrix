@@ -8,7 +8,7 @@ struct Bootable {
   std::string cmd;
   std::string args;
   bool killOnExit;
-  pid_t pid;
+  optional<pid_t> pid;
 };
 
 class BootablePersister: public SQLPersisterImpl {
