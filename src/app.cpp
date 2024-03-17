@@ -2,6 +2,7 @@
 #include <X11/Xutil.h>
 #include <iostream>
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <X11/extensions/Xcomposite.h>
 #include <X11/XKBlib.h>
 #include <string>
@@ -53,8 +54,6 @@ bool X11App::initAppClass(Display *display, int screen) {
   }
   return true;
 };
-
-#define XA_ATOM 4
 
 const int pixmap_config[] = {
     GLX_BIND_TO_TEXTURE_RGB_EXT, 1,
@@ -379,4 +378,30 @@ bool X11App::isAccessory() {
     return true;
   }
   return false;
+}
+
+int X11App::getPID() {
+  Atom actual_type;
+  int actual_format;
+  unsigned long nitems;
+  unsigned long bytes_after;
+  unsigned char *prop = NULL;
+  pid_t pid;
+
+  // Get the _NET_WM_PID atom
+  auto net_wm_pid = XInternAtom(display, "_NET_WM_PID", False);
+
+  // Get the window property
+  if (XGetWindowProperty(display, appWindow, net_wm_pid, 0, LONG_MAX, False, XA_CARDINAL,
+                         &actual_type, &actual_format, &nitems, &bytes_after,
+                         &prop) == Success) {
+    if (actual_format == 32 && actual_type == XA_CARDINAL && nitems > 0) {
+      pid = *((pid_t *)prop);
+      XFree(prop);
+      return pid;
+    }
+  } else {
+    return -2;
+  }
+  return -1;
 }

@@ -35,31 +35,6 @@
 
 namespace WindowManager {
 
-
-  class TerminatorKiller : public DBus::ObjectProxy, DBus::IntrospectableProxy {
-public:
-  TerminatorKiller(DBus::Connection conn)
-      : DBus::ObjectProxy(conn, "/net/tenshu/Terminator2",
-                          "net.tenshu.Terminator2") {}
-    void kill(int window) {
-      DBus::CallMessage message("net.tenshu.Terminator2",
-                                "/net/tenshu/Terminator2",
-                                "net.tenshu.Terminator2",
-                                "CloseWindow");
-      message.append(window);
-
-      this->invoke_method(message);
-    }
-};
-
-void killTerminator() {
-  DBus::BusDispatcher dispatcher;
-  DBus::default_dispatcher = &dispatcher;
-  DBus::Connection conn = DBus::Connection::SessionBus();
-  auto killer = TerminatorKiller(conn);
-  killer.kill(std::stoul("0x402625", nullptr, 16));
-}
-
 int forkApp(string cmd, char **envp, string args) {
   int pid = fork();
   if (pid == 0) {
@@ -296,6 +271,13 @@ void WindowManager::tick() {
   for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
       auto appEntity = dynamicApps[(*it)->getWindow()];
+      if ((*it)->getPID() == ideSelection.terminatorPid) {
+        ideSelection.terminator = appEntity;
+        stringstream debug;
+        debug << "kitty entity:" << (int)appEntity;
+        logger->debug(debug.str());
+        logger->flush();
+      }
       registry->emplace<X11App>(appEntity, std::move(**it));
       delete *it;
       auto spawnAtCamera = !currentlyFocusedApp.has_value();
