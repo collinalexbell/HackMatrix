@@ -12,6 +12,7 @@ struct Bootable {
 };
 
 class BootablePersister: public SQLPersisterImpl {
+public:
   BootablePersister(std::shared_ptr<EntityRegistry> registry)
       : SQLPersisterImpl("Bootable", registry){};
   void createTablesIfNeeded() override;
@@ -21,3 +22,4 @@ class BootablePersister: public SQLPersisterImpl {
   void load(entt::entity) override;
   void depersistIfGone(entt::entity) override;
 };
+

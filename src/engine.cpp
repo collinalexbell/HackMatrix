@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "components/Bootable.h"
 #include "components/Key.h"
 #include "components/Lock.h"
 #include "components/Parent.h"
@@ -66,6 +67,10 @@ void Engine::setupRegistry() {
   shared_ptr<SQLPersister> scriptablePersister =
       make_shared<ScriptablePersister>(registry);
   registry->addPersister(scriptablePersister);
+
+  shared_ptr<SQLPersister> bootablePersister =
+      make_shared<BootablePersister>(registry);
+  registry->addPersister(bootablePersister);
 
   registry->createTablesIfNeeded();
 }
