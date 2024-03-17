@@ -16,8 +16,13 @@ class Controls;
 
 struct IdeSelection {
   entt::entity emacs;
+  int emacsPid;
+
   entt::entity terminator;
+  int terminatorPid;
+
   entt::entity vsCode;
+  int vsCodePid;
 };
 
 namespace WindowManager {

@@ -7,16 +7,26 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <cstddef>
+#include <dbus-c++-1/dbus-c++/interface.h>
+#include <dbus-c++-1/dbus-c++/dispatcher.h>
+#include <dbus-c++-1/dbus-c++/eventloop-integration.h>
+#include <dbus-c++-1/dbus-c++/introspection.h>
+#include <dbus-c++-1/dbus-c++/message.h>
+#include <dbus-c++-1/dbus-c++/object.h>
 #include <glm/glm.hpp>
 #include <iostream>
 
 #include <X11/extensions/shape.h>
+#include <csignal>
+#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <spdlog/common.h>
 #include <sstream>
 #include <thread>
 #include <unistd.h>
+
+#include <dbus-c++-1/dbus-c++/interface.h>
 
 #define OBS false
 #define EDGE true
@@ -25,21 +35,53 @@
 
 namespace WindowManager {
 
+
+  class TerminatorKiller : public DBus::ObjectProxy, DBus::IntrospectableProxy {
+public:
+  TerminatorKiller(DBus::Connection conn)
+      : DBus::ObjectProxy(conn, "/net/tenshu/Terminator2",
+                          "net.tenshu.Terminator2") {}
+    void kill(int window) {
+      DBus::CallMessage message("net.tenshu.Terminator2",
+                                "/net/tenshu/Terminator2",
+                                "net.tenshu.Terminator2",
+                                "CloseWindow");
+      message.append(window);
+
+      this->invoke_method(message);
+    }
+};
+
+void killTerminator() {
+  DBus::BusDispatcher dispatcher;
+  DBus::default_dispatcher = &dispatcher;
+  DBus::Connection conn = DBus::Connection::SessionBus();
+  auto killer = TerminatorKiller(conn);
+  killer.kill(std::stoul("0x402625", nullptr, 16));
+}
+
+int forkApp(string cmd, char **envp, string args) {
+  int pid = fork();
+  if (pid == 0) {
+    setsid();
+    if (args != "") {
+      execle(cmd.c_str(), cmd.c_str(), args.c_str(), NULL, envp);
+    }
+    execle(cmd.c_str(), cmd.c_str(), NULL, envp);
+    exit(0);
+  } else {
+    return pid;
+  }
+}
+
 void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
-                                  entt::entity &appEntity, char **envp, string args) {
+                                  entt::entity &appEntity, char **envp,
+                                  string args) {
   char *line;
   std::size_t len = 0;
   FILE *pidPipe = popen(string("pgrep " + pidOf).c_str(), "r");
   if (getline(&line, &len, pidPipe) == -1) {
-    int pid = fork();
-    if (pid == 0) {
-      setsid();
-      if (args != "") {
-        execle(cmd.c_str(), cmd.c_str(), args.c_str(), NULL, envp);
-      }
-      execle(cmd.c_str(), cmd.c_str(), NULL, envp);
-      exit(0);
-    }
+    forkApp(cmd, envp, args);
     if (className == "obs") {
       sleep(30);
     } else if (className == "magicavoxel.exe") {
@@ -48,7 +90,8 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
       sleep(4);
     }
   }
-  X11App* app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
+  X11App *app =
+      X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
   appEntity = registry->create();
   registry->emplace<X11App>(appEntity, std::move(*app));
   dynamicApps[app->getWindow()] = appEntity;
@@ -69,17 +112,19 @@ void WindowManager::createAndRegisterApps(char **envp) {
                   microsoftEdge, envp);
   }
   if (TERM) {
-    forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
-                  envp);
+    forkOrFindApp("/home/collin/.local/kitty.app/bin/kitty", "kitty",
+                  "kitty", terminator, envp);
   }
   if (OBS) {
     forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   }
 
-  //forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator",
-  //             ideSelection.terminator, envp);
+  ideSelection.terminatorPid = forkApp("/home/collin/.local/kitty.app/bin/kitty",
+                                       envp, "");
+  logger->debug(ideSelection.terminatorPid);
   //forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", ideSelection.emacs, envp);
   //forkOrFindApp("/usr/bin/code", "emacs", "Emacs", ideSelection.vsCode, envp);
+  //killTerminator();
 
   logger->info("exit createAndRegisterApps()");
 }
@@ -318,7 +363,7 @@ void WindowManager::registerControls(Controls *controls) {
                              spdlog::sink_ptr loggerSink)
     : matrix(matrix), logSink(loggerSink), registry(registry) {
   logger = make_shared<spdlog::logger>("wm", loggerSink);
-  logger->set_level(spdlog::level::info);
+  logger->set_level(spdlog::level::debug);
   logger->flush_on(spdlog::level::info);
   logger->debug("WindowManager()");
   display = XOpenDisplay(NULL);
@@ -357,7 +402,8 @@ void WindowManager::registerControls(Controls *controls) {
 }
 
 WindowManager::~WindowManager() {
-  XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
+  kill(ideSelection.terminatorPid, SIGTERM);
+  //XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
 }
 
 } // namespace WindowManager
