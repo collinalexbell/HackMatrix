@@ -22,4 +22,3 @@ public:
   void load(entt::entity) override;
   void depersistIfGone(entt::entity) override;
 };
-

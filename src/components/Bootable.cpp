@@ -14,7 +14,7 @@ void BootablePersister::createTablesIfNeeded() {
          << "args TEXT, "
          << "kill_on_exit INTEGER, "
          << "pid INTEGER, "
-         << "FOREIGN KEY (entity_id) REFERENCES Entity(id), "
+         << "FOREIGN KEY (entity_id) REFERENCES Entity(id)"
          <<")";
   db.exec(create.str());
 }
