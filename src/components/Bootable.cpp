@@ -19,9 +19,52 @@ void BootablePersister::createTablesIfNeeded() {
   db.exec(create.str());
 }
 void BootablePersister::saveAll() {
-  // even the pid should get saved (used for killOnExit = false)
+    auto view = registry->view<Persistable, Bootable>();
+    SQLite::Database &db = registry->getDatabase();
+
+    stringstream queryStream;
+    queryStream << "INSERT INTO " << entityName << " "
+                << "(entity_id, cmd, args, kill_on_exit, pid)"
+                << "VALUES (?, ?, ?, ?, ?)";
+    SQLite::Statement query(db, queryStream.str());
+
+    db.exec("BEGIN TRANSACTION");
+    for (auto [entity, persist, bootable] : view.each()) {
+      query.bind(1, persist.entityId);
+      query.bind(2, bootable.cmd);
+      query.bind(3, bootable.args);
+      query.bind(4, bootable.killOnExit ? 1 : 0);
+      query.bind(5, bootable.pid);
+      query.exec();
+      query.reset();
+    }
+    db.exec("COMMIT");
 }
+
 void BootablePersister::save(entt::entity){}
-void BootablePersister::loadAll(){}
+void BootablePersister::loadAll() {
+  auto view = registry->view<Persistable>();
+  SQLite::Database &db = registry->getDatabase();
+
+  stringstream queryStream;
+  queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid "
+              << "FROM " << entityName;
+  SQLite::Statement query(db, queryStream.str());
+
+  while(query.executeStep()) {
+    auto entityId = query.getColumn(0).getInt();
+    auto cmd = query.getColumn(1).getText();
+    auto args = query.getColumn(2).getText();
+    bool killOnExit = query.getColumn(3).getInt() == 0 ? false : true;
+    auto pid = query.getColumn(4).getInt();
+    auto entity = registry->locateEntity(entityId);
+
+    if(entity.has_value()) {
+      registry->emplace<Bootable>(entity.value(), cmd, args, killOnExit, pid);
+    }
+  }
+}
 void BootablePersister::load(entt::entity){}
-void BootablePersister::depersistIfGone(entt::entity){}
+void BootablePersister::depersistIfGone(entt::entity entity) {
+  depersistIfGoneTyped<Bootable>(entity);
+}
