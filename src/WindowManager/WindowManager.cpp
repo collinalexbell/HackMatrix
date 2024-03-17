@@ -76,6 +76,11 @@ void WindowManager::createAndRegisterApps(char **envp) {
     forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   }
 
+  //forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator",
+  //             ideSelection.terminator, envp);
+  //forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", ideSelection.emacs, envp);
+  //forkOrFindApp("/usr/bin/code", "emacs", "Emacs", ideSelection.vsCode, envp);
+
   logger->info("exit createAndRegisterApps()");
 }
 
@@ -154,15 +159,14 @@ void WindowManager::createApp(Window window, unsigned int width,
 }
 
 void WindowManager::onMapRequest(XMapRequestEvent event) {
-  char *name;
-  XFetchName(display, event.window, &name);
-  string sName(name);
   bool alreadyRegistered = dynamicApps.count(event.window);
-  if (!alreadyRegistered && !sName.ends_with("one")) {
-    stringstream ss;
-    ss << "window created: " << event.window << " " << name;
-    logger->info(ss.str());
-    logger->flush();
+
+  stringstream ss;
+  ss << "map request for window: " << event.window << ", "
+     << "alreadyRegistered: " << alreadyRegistered;
+  logger->debug(ss.str());
+
+  if (!alreadyRegistered) {
     createApp(event.window);
   }
 }
@@ -217,19 +221,14 @@ void WindowManager::handleSubstructure() {
     switch (e.type) {
     case CreateNotify:
       logger->info("CreateNotify event");
+      logger->flush();
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
       if (e.xcreatewindow.override_redirect == True) {
         if(e.xcreatewindow.width > 30) {
           createApp(e.xcreatewindow.window, e.xcreatewindow.width,
                     e.xcreatewindow.height);
-	}
-        stringstream ss;
-        ss << "CreateNotify event: position: ";
-        ss << attrs.x << ",";
-        ss << attrs.y;
-        logger->debug(ss.str());
+        }
       }
-      logger->flush();
       break;
     case DestroyNotify:
       logger->info("DestroyNotify event");
@@ -319,7 +318,7 @@ void WindowManager::registerControls(Controls *controls) {
                              spdlog::sink_ptr loggerSink)
     : matrix(matrix), logSink(loggerSink), registry(registry) {
   logger = make_shared<spdlog::logger>("wm", loggerSink);
-  logger->set_level(spdlog::level::debug);
+  logger->set_level(spdlog::level::info);
   logger->flush_on(spdlog::level::info);
   logger->debug("WindowManager()");
   display = XOpenDisplay(NULL);

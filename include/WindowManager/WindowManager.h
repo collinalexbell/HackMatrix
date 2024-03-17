@@ -14,6 +14,12 @@
 
 class Controls;
 
+struct IdeSelection {
+  entt::entity emacs;
+  entt::entity terminator;
+  entt::entity vsCode;
+};
+
 namespace WindowManager {
 class WindowManager {
   static constexpr int APP_WIDTH = 1920 * .85;
@@ -29,6 +35,9 @@ class WindowManager {
   entt::entity microsoftEdge;
   entt::entity obs;
   entt::entity terminator;
+
+  IdeSelection ideSelection;
+
   optional<entt::entity> currentlyFocusedApp;
   shared_ptr<Space> space;
   Window matrix;
