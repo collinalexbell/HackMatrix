@@ -67,6 +67,7 @@ class WindowManager {
   void allow_input_passthrough(Window window);
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
   void addApps();
+  void createUnfocusHackThread(entt::entity entity);
 
 public:
   void passthroughInput();

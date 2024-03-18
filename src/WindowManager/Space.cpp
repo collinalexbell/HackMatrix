@@ -126,7 +126,8 @@ size_t Space::getNumPositionableApps() {
 
 void Space::addApp(entt::entity entity, bool spawnAtCamera) {
   auto &app = registry->get<X11App>(entity);
-  if (!app.isAccessory()) {
+  auto hasPositionable = registry->all_of<Positionable>(entity);
+  if (!app.isAccessory() && !hasPositionable) {
 
     glm::vec3 pos;
     glm::vec3 rot = glm::vec3(0.0f);

@@ -1,5 +1,6 @@
 #include "WindowManager/WindowManager.h"
 #include "app.h"
+#include "components/Bootable.h"
 #include "controls.h"
 #include "entity.h"
 #include "renderer.h"
@@ -171,8 +172,24 @@ void WindowManager::wire(Camera *camera, Renderer *renderer) {
 
 void WindowManager::createApp(Window window, unsigned int width,
                                  unsigned int height) {
-  auto entity = registry->create();
+
   X11App *app = X11App::byWindow(window, display, screen, width, height);
+
+  auto bootableView = registry->view<Bootable>();
+  entt::entity entity;
+  bool foundEntity = false;
+
+  for (auto [entity, bootable] : bootableView.each()) {
+    if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
+      entity = entity;
+      foundEntity = true;
+    }
+  }
+
+  if(!foundEntity) {
+    entity = registry->create();
+  }
+
   renderLoopMutex.lock();
   appsToAdd.push_back(app);
   dynamicApps[window] = entity;
@@ -273,35 +290,36 @@ void WindowManager::handleSubstructure() {
   }
 }
 
+void WindowManager::createUnfocusHackThread(entt::entity entity) {
+  auto app = registry->try_get<X11App>(entity);
+  if (app != NULL && !app->isAccessory() && !currentlyFocusedApp.has_value()) {
+    auto t = thread([this, entity]() -> void {
+      auto app = registry->try_get<X11App>(entity);
+      usleep(0.5 * 1000000);
+      if (app != NULL) {
+        app->unfocus(matrix);
+      }
+    });
+    t.detach();
+  }
+}
+
 void WindowManager::tick() {
   renderLoopMutex.lock();
   for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
     try {
       auto appEntity = dynamicApps[(*it)->getWindow()];
-      if ((*it)->getPID() == ideSelection.terminatorPid) {
-        ideSelection.terminator = appEntity;
-        stringstream debug;
-        debug << "kitty entity:" << (int)appEntity;
-        logger->debug(debug.str());
-        logger->flush();
-      }
+
       registry->emplace<X11App>(appEntity, std::move(**it));
       delete *it;
+
       auto spawnAtCamera = !currentlyFocusedApp.has_value();
       space->addApp(appEntity, spawnAtCamera);
+
       if(registry->valid(appEntity)) {
-        auto &app = registry->get<X11App>(appEntity);
-        if (!app.isAccessory() && !currentlyFocusedApp.has_value()) {
-          auto t = thread([this, appEntity]() -> void {
-            auto app = registry->try_get<X11App>(appEntity);
-            usleep(0.5 * 1000000);
-            if(app != NULL) {
-              app->unfocus(matrix);
-            }
-          });
-          t.detach();
-        }
+        createUnfocusHackThread(appEntity);
       }
+
     } catch (exception &e) {
       logger->error(e.what());
       logger->flush();

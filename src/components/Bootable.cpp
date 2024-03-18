@@ -1,4 +1,5 @@
 #include "components/Bootable.h"
+#include <optional>
 
 void BootablePersister::createTablesIfNeeded() {
   // even the pid should get saved (used for killOnExit = false)
@@ -60,7 +61,12 @@ void BootablePersister::loadAll() {
     auto cmd = query.getColumn(1).getText();
     auto args = query.getColumn(2).getText();
     bool killOnExit = query.getColumn(3).getInt() == 0 ? false : true;
-    auto pid = query.getColumn(4).getInt();
+    optional<int> pid;
+    if(query.isColumnNull(4)) {
+      pid = nullopt;
+    } else {
+      pid = query.getColumn(4).getInt();
+    }
     auto entity = registry->locateEntity(entityId);
 
     if(entity.has_value()) {
