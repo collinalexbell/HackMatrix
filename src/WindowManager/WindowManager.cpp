@@ -4,6 +4,7 @@
 #include "controls.h"
 #include "entity.h"
 #include "renderer.h"
+#include "systems/Boot.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -95,10 +96,7 @@ void WindowManager::createAndRegisterApps(char **envp) {
   if (OBS) {
     forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   }
-
-  ideSelection.terminatorPid = forkApp("/home/collin/.local/kitty.app/bin/kitty",
-                                       envp, "");
-  logger->debug(ideSelection.terminatorPid);
+  systems::bootAll(registry, envp);
   //forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", ideSelection.emacs, envp);
   //forkOrFindApp("/usr/bin/code", "emacs", "Emacs", ideSelection.vsCode, envp);
   //killTerminator();
@@ -179,9 +177,9 @@ void WindowManager::createApp(Window window, unsigned int width,
   entt::entity entity;
   bool foundEntity = false;
 
-  for (auto [entity, bootable] : bootableView.each()) {
+  for (auto [candidateEntity, bootable] : bootableView.each()) {
     if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
-      entity = entity;
+      entity = candidateEntity;
       foundEntity = true;
     }
   }

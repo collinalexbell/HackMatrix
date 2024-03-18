@@ -24,7 +24,7 @@ void BootablePersister::saveAll() {
     SQLite::Database &db = registry->getDatabase();
 
     stringstream queryStream;
-    queryStream << "INSERT INTO " << entityName << " "
+    queryStream << "INSERT OR REPLACE INTO " << entityName << " "
                 << "(entity_id, cmd, args, kill_on_exit, pid)"
                 << "VALUES (?, ?, ?, ?, ?)";
     SQLite::Statement query(db, queryStream.str());
