@@ -179,6 +179,7 @@ void WindowManager::createApp(Window window, unsigned int width,
 
   for (auto [candidateEntity, bootable] : bootableView.each()) {
     if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
+      cout << "found pid" << bootable.pid.value();
       entity = candidateEntity;
       foundEntity = true;
     }
@@ -211,6 +212,9 @@ void WindowManager::onDestroyNotify(XDestroyWindowEvent event) {
   renderLoopMutex.lock();
   if (dynamicApps.contains(event.window)) {
     auto appEntity = dynamicApps.at(event.window);
+    auto persistable = registry->try_get<Persistable>(appEntity);
+    cout << "destroying: " << (int)appEntity;
+    if(persistable) cout << "forDB: " << persistable->entityId;
     dynamicApps.erase(event.window);
     appsToRemove.push_back(appEntity);
   }
@@ -308,14 +312,22 @@ void WindowManager::tick() {
     try {
       auto appEntity = dynamicApps[(*it)->getWindow()];
 
-      registry->emplace<X11App>(appEntity, std::move(**it));
-      delete *it;
-
-      auto spawnAtCamera = !currentlyFocusedApp.has_value();
-      space->addApp(appEntity, spawnAtCamera);
-
       if(registry->valid(appEntity)) {
-        createUnfocusHackThread(appEntity);
+	      if(registry->all_of<X11App>(appEntity)) {
+		      registry->remove<X11App>(appEntity);
+	      }
+	      registry->emplace<X11App>(appEntity, std::move(**it));
+	      
+	      delete *it;
+
+	      auto spawnAtCamera = !currentlyFocusedApp.has_value();
+	      space->addApp(appEntity, spawnAtCamera);
+
+	      if(registry->valid(appEntity)) {
+		createUnfocusHackThread(appEntity);
+	      }
+      } else {
+	      dynamicApps.erase((*it)->getWindow());
       }
 
     } catch (exception &e) {

@@ -41,7 +41,7 @@ void Space::initAppPositions() {
 
   auto &app = registry->get<X11App>(entity);
   renderer->deregisterApp(app.getAppIndex());
-  registry->destroy(entity);
+  //registry->destroy(entity);
 }
 
 float Space::getViewDistanceForWindowSize(entt::entity entity) {
@@ -159,7 +159,7 @@ void Space::addApp(entt::entity entity, bool spawnAtCamera) {
     renderer->registerApp(&app);
   } catch (...) {
     logger->info("accessory app failed to register texture");
-    registry->destroy(entity);
+    //registry->destroy(entity);
   }
 }
 } // namespace WindowManager
