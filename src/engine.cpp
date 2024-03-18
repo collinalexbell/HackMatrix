@@ -96,13 +96,13 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
 Engine::~Engine() {
   // may want to remove this because it might be slow on shutdown
   // when trying to get fast dev time
-  registry->saveAll();
   delete wm;
   delete controls;
   delete renderer;
   delete world;
   delete camera;
   delete api;
+  registry->saveAll();
 }
 
 void Engine::initialize(){
