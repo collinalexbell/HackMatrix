@@ -1,5 +1,6 @@
 #include "systems/Boot.h"
 #include "components/Bootable.h"
+#include <signal.h>
 
 int forkApp(string cmd, char **envp, string args) {
   int pid = fork();
@@ -29,5 +30,15 @@ void systems::bootAll(std::shared_ptr<EntityRegistry> registry, char** envp) {
   auto bootables = registry->view<Bootable>();
   for(auto [entity, bootable]: bootables.each()) {
     boot(registry, entity, envp);
+  }
+}
+
+void systems::killBootablesOnExit(std::shared_ptr<EntityRegistry> registry) {
+  auto bootables = registry->view<Bootable>();
+  for (auto [entity, bootable] : bootables.each()) {
+    if (bootable.killOnExit && bootable.pid.has_value()) {
+      kill(bootable.pid.value(), SIGTERM);
+      bootable.pid = nullopt;
+    }
   }
 }

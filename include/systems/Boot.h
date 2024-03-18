@@ -7,4 +7,5 @@ namespace systems {
             entt::entity entity,
             char** envp);
   void bootAll(std::shared_ptr<EntityRegistry> registry, char** envp);
+  void killBootablesOnExit(std::shared_ptr<EntityRegistry>);
 }

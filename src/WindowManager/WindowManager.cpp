@@ -414,13 +414,7 @@ WindowManager::~WindowManager() {
   if(substructureThread.joinable()) {
     substructureThread.join();
   }
-  auto bootables = registry->view<Bootable>();
-  for(auto [entity, bootable]: bootables.each()) {
-    if(bootable.killOnExit && bootable.pid.has_value()) {
-      kill(bootable.pid.value(), SIGTERM);
-      bootable.pid = nullopt;
-    }
-  }
+  systems::killBootablesOnExit(registry);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
 }
 
