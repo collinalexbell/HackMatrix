@@ -5,6 +5,7 @@
 #include <X11/Xatom.h>
 #include <X11/extensions/Xcomposite.h>
 #include <X11/XKBlib.h>
+#include <optional>
 #include <string>
 #include <functional>
 #include <glad/glad_glx.h>
@@ -120,6 +121,60 @@ void traverseWindowTree(Display* display, Window win, std::function<void(Display
   }
 }
 
+std::optional<int> getPID(Display* display, Window window) {
+  Atom actual_type;
+  int actual_format;
+  unsigned long nitems;
+  unsigned long bytes_after;
+  unsigned char *prop = NULL;
+  pid_t pid;
+
+  // Get the _NET_WM_PID atom
+  auto net_wm_pid = XInternAtom(display, "_NET_WM_PID", False);
+
+  // Get the window property
+  if (XGetWindowProperty(display, window, net_wm_pid, 0, LONG_MAX, False,
+                         XA_CARDINAL, &actual_type, &actual_format, &nitems,
+                         &bytes_after, &prop) == Success) {
+    if (actual_format == 32 && actual_type == XA_CARDINAL && nitems > 0) {
+      pid = *((pid_t *)prop);
+      XFree(prop);
+      return pid;
+    }
+  }
+  return nullopt;
+}
+
+Window getWindowByPid(Display* display, int pid) {
+  Window root = XDefaultRootWindow(display);
+  Window rv;
+  bool found = false;
+  int largestWidth = 0;
+
+  traverseWindowTree(
+      display, root,
+      [&rv, &found, &largestWidth, pid](Display *display, Window window) {
+        if (pid == getPID(display, window)) {
+          XWindowAttributes attrs;
+          XGetWindowAttributes(display, window, &attrs);
+          bool larger = attrs.width > largestWidth;
+          bool equalAndNotAccessory =
+              attrs.width == largestWidth && !attrs.override_redirect;
+          if (larger || equalAndNotAccessory) {
+            largestWidth = attrs.width;
+            rv = window;
+            found = true;
+          }
+        }
+      });
+
+  if (!found) {
+    cout << "unable to find window with pid: \"" << pid << "\"" << endl;
+    throw "unable to find window";
+  }
+  return rv;
+}
+
 Window getWindowByName(Display* display, string search) {
   Window root = XDefaultRootWindow(display);
   Window rv;
@@ -191,6 +246,8 @@ void X11App::fetchInfo(Identifier identifier) {
   case WINDOW:
     appWindow = identifier.win;
     break;
+  case PID:
+    appWindow = getWindowByPid(display, identifier.pid);
   }
   app_logger->info("XMapWindow()");
   app_logger->flush();
@@ -247,6 +304,17 @@ X11App* X11App::byWindow(Window window, Display *display, int screen, int width,
   Identifier id;
   id.type = WINDOW;
   id.win = window;
+  rv->fetchInfo(id);
+  rv->resize(width, height);
+  return rv;
+}
+
+X11App* X11App::byPID(int pid, Display *display, int screen, int width,
+                             int height) {
+  X11App *rv = new X11App(display, screen);
+  Identifier id;
+  id.type = PID;
+  id.pid = pid;
   rv->fetchInfo(id);
   rv->resize(width, height);
   return rv;
@@ -381,27 +449,10 @@ bool X11App::isAccessory() {
 }
 
 int X11App::getPID() {
-  Atom actual_type;
-  int actual_format;
-  unsigned long nitems;
-  unsigned long bytes_after;
-  unsigned char *prop = NULL;
-  pid_t pid;
-
-  // Get the _NET_WM_PID atom
-  auto net_wm_pid = XInternAtom(display, "_NET_WM_PID", False);
-
-  // Get the window property
-  if (XGetWindowProperty(display, appWindow, net_wm_pid, 0, LONG_MAX, False, XA_CARDINAL,
-                         &actual_type, &actual_format, &nitems, &bytes_after,
-                         &prop) == Success) {
-    if (actual_format == 32 && actual_type == XA_CARDINAL && nitems > 0) {
-      pid = *((pid_t *)prop);
-      XFree(prop);
-      return pid;
-    }
+  auto pid = ::getPID(display, appWindow);
+  if(pid.has_value()) {
+    return pid.value();
   } else {
-    return -2;
+    return -1;
   }
-  return -1;
 }
