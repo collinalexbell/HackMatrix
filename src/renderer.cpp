@@ -503,11 +503,16 @@ void Renderer::registerApp(X11App *app) {
   // because deletions means this won't work
   // indices will change.
   auto index = appIndexPool.acquireIndex();
-  int textureN = 31 - index;
-  int textureUnit = GL_TEXTURE0 + textureN;
-  int textureId = textures["app" + to_string(index)]->ID;
-  app->attachTexture(textureUnit, textureId, index);
-  app->appTexture();
+  try {
+    int textureN = 31 - index;
+    int textureUnit = GL_TEXTURE0 + textureN;
+    int textureId = textures["app" + to_string(index)]->ID;
+    app->attachTexture(textureUnit, textureId, index);
+    app->appTexture();
+  } catch (...) {
+    appIndexPool.relinquishIndex(index);
+    throw;
+  }
 
   unsigned int framebufferId;
   glGenFramebuffers(1, &framebufferId);

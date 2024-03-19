@@ -62,6 +62,7 @@ public:
   void resize(int width, int height);
   bool isFocused();
   bool isAccessory();
+  int getPID();
   Window getWindow();
   array<int, 2> getPosition();
   size_t getAppIndex() {return appIndex;}

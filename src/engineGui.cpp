@@ -1,4 +1,5 @@
 #include "engineGui.h"
+#include "components/Bootable.h"
 #include "components/BoundingSphere.h"
 #include "components/Door.h"
 #include "components/Key.h"
@@ -13,6 +14,7 @@
 #include "persister.h"
 #include "string"
 #include <functional>
+#include <optional>
 #include <string>
 #include "entity.h"
 #include "systems/Door.h"
@@ -104,10 +106,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int PARENT_TYPE = 7;
   static int SCRIPTABLE_TYPE = 8;
   static int TRANSLATE_MOVEMENT_TYPE = 9;
+  static int BOOTABLE_TYPE = 10;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
   ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0Scriptable\0TranslateMovement\0");
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0Scriptable\0TranslateMovement\0Bootable\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
@@ -266,6 +269,22 @@ void EngineGui::addComponentPanel(entt::entity entity,
     if (ImGui::Button("Add TranslateMovement Component")) {
       registry->emplace<TranslateMovement>(entity, translateDelta,
                                            unitsPerSecond);
+      showAddComponentPanel = false;
+    }
+  } else if (selectedComponentType == BOOTABLE_TYPE) {
+    static char cmd[128] = "";
+    static char args[128] = "";
+    static int killOnExit;
+    ImGui::InputText("Command##NewBootable", cmd, IM_ARRAYSIZE(cmd));
+    ImGui::InputText("Args##NewBootable", args, IM_ARRAYSIZE(args));
+    ImGui::Text("Kill on exit:");
+    ImGui::RadioButton("True", &killOnExit, 1);
+    ImGui::RadioButton("False", &killOnExit, 0);
+
+    if (ImGui::Button("Add Bootable Component")) {
+      registry->emplace<Bootable>(entity, cmd, args,
+                                  killOnExit == 1 ? true: false,
+                                  nullopt);
       showAddComponentPanel = false;
     }
   }
@@ -518,6 +537,36 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
                 boundingSphere.center.z);
     ImGui::Text("Radius: %f", boundingSphere.radius);
     ImGui::Spacing();
+  }
+
+  if (registry->any_of<Bootable>(entity)) {
+    ImGui::Text("Bootable Component:");
+    auto &bootable = registry->get<Bootable>(entity);
+    auto label = makeLabeler(entity);
+
+    char cmd[128] = "";
+    strcpy(cmd, bootable.cmd.c_str());
+
+    char args[128] = "";
+    strcpy(args, bootable.args.c_str());
+
+    int killOnExit = bootable.killOnExit;
+
+    ImGui::InputText(label("Command").c_str(), cmd, IM_ARRAYSIZE(cmd));
+    ImGui::InputText(label("Args").c_str(), args, IM_ARRAYSIZE(args));
+    ImGui::Text("Kill on Exit:");
+    ImGui::RadioButton("True", &killOnExit, 1);
+    ImGui::RadioButton("False", &killOnExit, 0);
+    if(bootable.pid.has_value()) {
+      ImGui::Text("PID: %d", bootable.pid.value());
+    } else {
+      ImGui::Text("PID: N/A");
+    }
+    ImGui::Spacing();
+
+    bootable.cmd = cmd;
+    bootable.args = args;
+    bootable.killOnExit = killOnExit == 1 ? true : false;
   }
 }
 

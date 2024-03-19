@@ -1,22 +1,35 @@
 #include "WindowManager/WindowManager.h"
 #include "app.h"
+#include "components/Bootable.h"
 #include "controls.h"
 #include "entity.h"
 #include "renderer.h"
+#include "systems/Boot.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <cstddef>
+#include <dbus-c++-1/dbus-c++/interface.h>
+#include <dbus-c++-1/dbus-c++/dispatcher.h>
+#include <dbus-c++-1/dbus-c++/eventloop-integration.h>
+#include <dbus-c++-1/dbus-c++/introspection.h>
+#include <dbus-c++-1/dbus-c++/message.h>
+#include <dbus-c++-1/dbus-c++/object.h>
 #include <glm/glm.hpp>
 #include <iostream>
 
 #include <X11/extensions/shape.h>
+#include <csignal>
+#include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <spdlog/common.h>
 #include <sstream>
 #include <thread>
 #include <unistd.h>
+
+#include <dbus-c++-1/dbus-c++/interface.h>
 
 #define OBS false
 #define EDGE true
@@ -25,21 +38,28 @@
 
 namespace WindowManager {
 
+int forkApp(string cmd, char **envp, string args) {
+  int pid = fork();
+  if (pid == 0) {
+    setsid();
+    if (args != "") {
+      execle(cmd.c_str(), cmd.c_str(), args.c_str(), NULL, envp);
+    }
+    execle(cmd.c_str(), cmd.c_str(), NULL, envp);
+    exit(0);
+  } else {
+    return pid;
+  }
+}
+
 void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
-                                  entt::entity &appEntity, char **envp, string args) {
+                                  entt::entity &appEntity, char **envp,
+                                  string args) {
   char *line;
   std::size_t len = 0;
   FILE *pidPipe = popen(string("pgrep " + pidOf).c_str(), "r");
   if (getline(&line, &len, pidPipe) == -1) {
-    int pid = fork();
-    if (pid == 0) {
-      setsid();
-      if (args != "") {
-        execle(cmd.c_str(), cmd.c_str(), args.c_str(), NULL, envp);
-      }
-      execle(cmd.c_str(), cmd.c_str(), NULL, envp);
-      exit(0);
-    }
+    forkApp(cmd, envp, args);
     if (className == "obs") {
       sleep(30);
     } else if (className == "magicavoxel.exe") {
@@ -48,7 +68,8 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
       sleep(4);
     }
   }
-  X11App* app = X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
+  X11App *app =
+      X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
   appEntity = registry->create();
   registry->emplace<X11App>(appEntity, std::move(*app));
   dynamicApps[app->getWindow()] = appEntity;
@@ -69,12 +90,16 @@ void WindowManager::createAndRegisterApps(char **envp) {
                   microsoftEdge, envp);
   }
   if (TERM) {
-    forkOrFindApp("/usr/bin/terminator", "terminator", "Terminator", terminator,
-                  envp);
+    forkOrFindApp("/home/collin/.local/kitty.app/bin/kitty", "kitty",
+                  "kitty", terminator, envp);
   }
   if (OBS) {
     forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   }
+  systems::bootAll(registry, envp);
+  //forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", ideSelection.emacs, envp);
+  //forkOrFindApp("/usr/bin/code", "emacs", "Emacs", ideSelection.vsCode, envp);
+  //killTerminator();
 
   logger->info("exit createAndRegisterApps()");
 }
@@ -145,8 +170,25 @@ void WindowManager::wire(Camera *camera, Renderer *renderer) {
 
 void WindowManager::createApp(Window window, unsigned int width,
                                  unsigned int height) {
-  auto entity = registry->create();
+
   X11App *app = X11App::byWindow(window, display, screen, width, height);
+
+  auto bootableView = registry->view<Bootable>();
+  entt::entity entity;
+  bool foundEntity = false;
+
+  for (auto [candidateEntity, bootable] : bootableView.each()) {
+    if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
+      cout << "found pid" << bootable.pid.value();
+      entity = candidateEntity;
+      foundEntity = true;
+    }
+  }
+
+  if(!foundEntity) {
+    entity = registry->create();
+  }
+
   renderLoopMutex.lock();
   appsToAdd.push_back(app);
   dynamicApps[window] = entity;
@@ -154,15 +196,15 @@ void WindowManager::createApp(Window window, unsigned int width,
 }
 
 void WindowManager::onMapRequest(XMapRequestEvent event) {
-  char *name;
-  XFetchName(display, event.window, &name);
-  string sName(name);
   bool alreadyRegistered = dynamicApps.count(event.window);
-  if (!alreadyRegistered && !sName.ends_with("one")) {
-    stringstream ss;
-    ss << "window created: " << event.window << " " << name;
-    logger->info(ss.str());
-    logger->flush();
+
+  stringstream ss;
+  ss << "map request for window: " << event.window << ", "
+     << "alreadyRegistered: " << alreadyRegistered;
+  logger->debug(ss.str());
+  logger->flush();
+
+  if (!alreadyRegistered) {
     createApp(event.window);
   }
 }
@@ -207,6 +249,12 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
 
 void WindowManager::handleSubstructure() {
   for (;;) {
+    {
+      lock_guard<std::mutex> continueLock(continueMutex);
+      if(!continueRunning) {
+        break;
+      }
+    }
     XEvent e;
     XNextEvent(display, &e);
     stringstream eventInfo;
@@ -217,19 +265,14 @@ void WindowManager::handleSubstructure() {
     switch (e.type) {
     case CreateNotify:
       logger->info("CreateNotify event");
+      logger->flush();
       XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
       if (e.xcreatewindow.override_redirect == True) {
         if(e.xcreatewindow.width > 30) {
           createApp(e.xcreatewindow.window, e.xcreatewindow.width,
                     e.xcreatewindow.height);
-	}
-        stringstream ss;
-        ss << "CreateNotify event: position: ";
-        ss << attrs.x << ",";
-        ss << attrs.y;
-        logger->debug(ss.str());
+        }
       }
-      logger->flush();
       break;
     case DestroyNotify:
       logger->info("DestroyNotify event");
@@ -247,45 +290,32 @@ void WindowManager::handleSubstructure() {
   }
 }
 
+void WindowManager::createUnfocusHackThread(entt::entity entity) {
+  auto app = registry->try_get<X11App>(entity);
+  if (app != NULL && !app->isAccessory() && !currentlyFocusedApp.has_value()) {
+    auto t = thread([this, entity]() -> void {
+      auto app = registry->try_get<X11App>(entity);
+      usleep(0.5 * 1000000);
+      if (app != NULL) {
+        app->unfocus(matrix);
+      }
+    });
+    t.detach();
+  }
+}
+
 void WindowManager::tick() {
   renderLoopMutex.lock();
-  for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
-    try {
-      auto appEntity = dynamicApps[(*it)->getWindow()];
-      registry->emplace<X11App>(appEntity, std::move(**it));
-      delete *it;
-      auto spawnAtCamera = !currentlyFocusedApp.has_value();
-      space->addApp(appEntity, spawnAtCamera);
-      if(registry->valid(appEntity)) {
-        auto &app = registry->get<X11App>(appEntity);
-        if (!app.isAccessory() && !currentlyFocusedApp.has_value()) {
-          auto t = thread([this, appEntity]() -> void {
-            auto app = registry->try_get<X11App>(appEntity);
-            usleep(0.5 * 1000000);
-            if(app != NULL) {
-              app->unfocus(matrix);
-            }
-          });
-          t.detach();
-        }
-      }
-    } catch (exception &e) {
-      logger->error(e.what());
-      logger->flush();
-    }
-  }
-  appsToAdd.clear();
-
   for (auto it = appsToRemove.begin(); it != appsToRemove.end(); it++) {
     try {
       if (currentlyFocusedApp == *it) {
         unfocusApp();
       }
-      if(registry->all_of<X11App>(*it)) {
+      if (registry->all_of<X11App>(*it)) {
         space->removeApp(*it);
-      } else {
-        // empty entity
-        registry->destroy(*it);
+        if (registry->orphan(*it)) {
+          registry->destroy(*it);
+        }
       }
     } catch (exception &e) {
       logger->error(e.what());
@@ -294,6 +324,31 @@ void WindowManager::tick() {
   }
   appsToRemove.clear();
 
+  vector<X11App *> waitForRemoval;
+  for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
+    try {
+
+      auto appEntity = dynamicApps[(*it)->getWindow()];
+
+      if(registry->valid(appEntity)) {
+          registry->emplace<X11App>(appEntity, std::move(**it));
+          delete *it;
+
+          auto spawnAtCamera = !currentlyFocusedApp.has_value();
+          space->addApp(appEntity, spawnAtCamera);
+
+          if(registry->all_of<X11App>(appEntity)) {
+            createUnfocusHackThread(appEntity);
+          } else {
+            dynamicApps.erase((*it)->getWindow());
+          }
+      }
+    } catch (exception &e) {
+      logger->error(e.what());
+      logger->flush();
+    }
+  }
+  appsToAdd.clear();
   renderLoopMutex.unlock();
 }
 
@@ -358,6 +413,14 @@ void WindowManager::registerControls(Controls *controls) {
 }
 
 WindowManager::~WindowManager() {
+  {
+    lock_guard<std::mutex> continueLock(continueMutex);
+    continueRunning = false;
+  }
+  if(substructureThread.joinable()) {
+    substructureThread.join();
+  }
+  systems::killBootablesOnExit(registry);
   XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
 }
 
