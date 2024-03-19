@@ -43,6 +43,7 @@ class WindowManager {
 
   IdeSelection ideSelection;
 
+  vector<entt::entity> appsWithHotKeys;
   optional<entt::entity> currentlyFocusedApp;
   shared_ptr<Space> space;
   Window matrix;

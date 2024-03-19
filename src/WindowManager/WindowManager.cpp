@@ -8,6 +8,7 @@
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <algorithm>
 #include <cstddef>
 #include <dbus-c++-1/dbus-c++/interface.h>
 #include <dbus-c++-1/dbus-c++/dispatcher.h>
@@ -97,6 +98,7 @@ void WindowManager::createAndRegisterApps(char **envp) {
   }
   auto alreadyBooted = systems::getAlreadyBooted(registry);
   for(auto entityAndPid : alreadyBooted) {
+    appsWithHotKeys.push_back(entityAndPid.first);
     auto app = X11App::byPID(entityAndPid.second, display, screen, APP_WIDTH, APP_HEIGHT);
     addApp(app, entityAndPid.first);
   }
@@ -230,7 +232,6 @@ void WindowManager::onDestroyNotify(XDestroyWindowEvent event) {
 void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-  vector<entt::entity> appsWithHotKeys = {};
   if (EDGE) {
     appsWithHotKeys.push_back(microsoftEdge);
   }
@@ -241,7 +242,7 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
   }
-  for (int i = 0; i < appsWithHotKeys.size(); i++) {
+  for (int i = 0; i < min((int)appsWithHotKeys.size(), 9); i++) {
     KeyCode code = XKeysymToKeycode(display, XK_1 + i);
     if (event.keycode == code && event.state & Mod4Mask) {
       unfocusApp();
