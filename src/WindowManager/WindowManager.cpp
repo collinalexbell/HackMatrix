@@ -202,6 +202,7 @@ void WindowManager::onMapRequest(XMapRequestEvent event) {
   ss << "map request for window: " << event.window << ", "
      << "alreadyRegistered: " << alreadyRegistered;
   logger->debug(ss.str());
+  logger->flush();
 
   if (!alreadyRegistered) {
     createApp(event.window);
@@ -212,9 +213,6 @@ void WindowManager::onDestroyNotify(XDestroyWindowEvent event) {
   renderLoopMutex.lock();
   if (dynamicApps.contains(event.window)) {
     auto appEntity = dynamicApps.at(event.window);
-    auto persistable = registry->try_get<Persistable>(appEntity);
-    cout << "destroying: " << (int)appEntity;
-    if(persistable) cout << "forDB: " << persistable->entityId;
     dynamicApps.erase(event.window);
     appsToRemove.push_back(appEntity);
   }
@@ -308,44 +306,16 @@ void WindowManager::createUnfocusHackThread(entt::entity entity) {
 
 void WindowManager::tick() {
   renderLoopMutex.lock();
-  for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
-    try {
-      auto appEntity = dynamicApps[(*it)->getWindow()];
-
-      if(registry->valid(appEntity)) {
-	      if(registry->all_of<X11App>(appEntity)) {
-          space->removeApp(appEntity);
-	      }
-	      registry->emplace<X11App>(appEntity, std::move(**it));
-	      delete *it;
-
-	      auto spawnAtCamera = !currentlyFocusedApp.has_value();
-	      space->addApp(appEntity, spawnAtCamera);
-
-	      if(registry->valid(appEntity)) {
-		createUnfocusHackThread(appEntity);
-	      }
-      } else {
-	      dynamicApps.erase((*it)->getWindow());
-      }
-
-    } catch (exception &e) {
-      logger->error(e.what());
-      logger->flush();
-    }
-  }
-  appsToAdd.clear();
-
   for (auto it = appsToRemove.begin(); it != appsToRemove.end(); it++) {
     try {
       if (currentlyFocusedApp == *it) {
         unfocusApp();
       }
-      if(registry->all_of<X11App>(*it)) {
+      if (registry->all_of<X11App>(*it)) {
         space->removeApp(*it);
-      } else {
-        // empty entity
-        registry->destroy(*it);
+        if (registry->orphan(*it)) {
+          registry->destroy(*it);
+        }
       }
     } catch (exception &e) {
       logger->error(e.what());
@@ -353,6 +323,42 @@ void WindowManager::tick() {
     }
   }
   appsToRemove.clear();
+
+  vector<X11App *> waitForRemoval;
+  for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
+    try {
+
+      auto appEntity = dynamicApps[(*it)->getWindow()];
+
+      if(registry->valid(appEntity)) {
+        /*
+        if(registry->all_of<X11App>(appEntity)) {
+          waitForRemoval.push_back(*it);
+        } else {
+        */
+          registry->emplace<X11App>(appEntity, std::move(**it));
+          delete *it;
+
+          auto spawnAtCamera = !currentlyFocusedApp.has_value();
+          space->addApp(appEntity, spawnAtCamera);
+
+          if(registry->all_of<X11App>(appEntity)) {
+            createUnfocusHackThread(appEntity);
+          } else {
+            dynamicApps.erase((*it)->getWindow());
+          }
+          /*}*/
+      }
+    } catch (exception &e) {
+      logger->error(e.what());
+      logger->flush();
+    }
+  }
+  appsToAdd.clear();
+  appsToAdd.assign(waitForRemoval.begin(), waitForRemoval.end());
+  if(appsToAdd.size() > 10) {
+    logger->critical("apps waiting for onDestroy are accumulating");
+  }
 
   renderLoopMutex.unlock();
 }
