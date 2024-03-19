@@ -14,13 +14,15 @@ using namespace std;
 enum IdentifierType {
   NAME,
   CLASS,
-  WINDOW
+  WINDOW,
+  PID
 };
 
 struct Identifier {
   IdentifierType type;
   string strId;
   Window win;
+  int pid;
 };
 
 class X11App {
@@ -47,6 +49,8 @@ public:
                          int width, int height);
 
   static X11App *byWindow(Window window, Display *display, int screen, int width, int height);
+
+  static X11App *byPID(int pid, Display *display, int screen, int width, int height);
 
   static bool initAppClass(Display * display, int screen);
 

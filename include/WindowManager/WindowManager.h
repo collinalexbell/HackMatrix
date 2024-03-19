@@ -64,6 +64,7 @@ class WindowManager {
   void unfocusApp();
   void createApp(Window window, unsigned int width = APP_WIDTH,
                     unsigned int height = APP_HEIGHT);
+  void addApp(X11App *, entt::entity);
   void allow_input_passthrough(Window window);
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
   void addApps();
