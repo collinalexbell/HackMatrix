@@ -314,10 +314,9 @@ void WindowManager::tick() {
 
       if(registry->valid(appEntity)) {
 	      if(registry->all_of<X11App>(appEntity)) {
-		      registry->remove<X11App>(appEntity);
+          space->removeApp(appEntity);
 	      }
 	      registry->emplace<X11App>(appEntity, std::move(**it));
-	      
 	      delete *it;
 
 	      auto spawnAtCamera = !currentlyFocusedApp.has_value();
