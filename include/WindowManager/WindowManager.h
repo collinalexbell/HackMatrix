@@ -70,6 +70,10 @@ class WindowManager {
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
   void addApps();
   void createUnfocusHackThread(entt::entity entity);
+  int waitForRemovalChangeSize (int curSize);
+  void logWaitForRemovalChangeSize(int changeSize);
+  void adjustAppsToAddAfterAdditions(vector<X11App*>& waitForRemoval);
+
 
 public:
   void passthroughInput();

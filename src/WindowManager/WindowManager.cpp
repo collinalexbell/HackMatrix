@@ -313,8 +313,34 @@ void WindowManager::createUnfocusHackThread(entt::entity entity) {
   }
 }
 
+void WindowManager::logWaitForRemovalChangeSize(int changeSize) {
+    if (changeSize < 0) {
+      logger->info("waitForRemovalCount decreased");
+    }
+    if (changeSize > 0){
+      logger->info("waitForRemovalCount increased");
+    }
+}
+
+  int WindowManager::waitForRemovalChangeSize(int curSize) {
+  static int lastWaitForRemovalCount = 0;
+  auto changeSize = curSize - lastWaitForRemovalCount;
+  lastWaitForRemovalCount = changeSize;
+  return changeSize;
+}
+
+void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemoval) {
+  appsToAdd.clear();
+  int changeSize = waitForRemovalChangeSize(waitForRemoval.size());
+  logWaitForRemovalChangeSize(changeSize);
+  if(waitForRemoval.size() >= 10) {
+    logger->critical("waitForRemoval size is critically large");
+  }
+  appsToAdd.assign(waitForRemoval.begin(), waitForRemoval.end());
+}
+
 void WindowManager::tick() {
-  renderLoopMutex.lock();
+  lock_guard<mutex> lock(renderLoopMutex);
   for (auto it = appsToRemove.begin(); it != appsToRemove.end(); it++) {
     try {
       if (currentlyFocusedApp == *it) {
@@ -340,6 +366,9 @@ void WindowManager::tick() {
       auto appEntity = dynamicApps[(*it)->getWindow()];
 
       if(registry->valid(appEntity)) {
+        if(registry->all_of<X11App>(appEntity)) {
+          waitForRemoval.push_back(*it);
+        } else {
           registry->emplace<X11App>(appEntity, std::move(**it));
           delete *it;
 
@@ -351,14 +380,14 @@ void WindowManager::tick() {
           } else {
             dynamicApps.erase((*it)->getWindow());
           }
+        }
       }
     } catch (exception &e) {
       logger->error(e.what());
       logger->flush();
     }
   }
-  appsToAdd.clear();
-  renderLoopMutex.unlock();
+  adjustAppsToAddAfterAdditions(waitForRemoval);
 }
 
 void WindowManager::focusApp(entt::entity appEntity) {
