@@ -331,11 +331,6 @@ void WindowManager::tick() {
       auto appEntity = dynamicApps[(*it)->getWindow()];
 
       if(registry->valid(appEntity)) {
-        /*
-        if(registry->all_of<X11App>(appEntity)) {
-          waitForRemoval.push_back(*it);
-        } else {
-        */
           registry->emplace<X11App>(appEntity, std::move(**it));
           delete *it;
 
@@ -347,7 +342,6 @@ void WindowManager::tick() {
           } else {
             dynamicApps.erase((*it)->getWindow());
           }
-          /*}*/
       }
     } catch (exception &e) {
       logger->error(e.what());
@@ -355,11 +349,6 @@ void WindowManager::tick() {
     }
   }
   appsToAdd.clear();
-  appsToAdd.assign(waitForRemoval.begin(), waitForRemoval.end());
-  if(appsToAdd.size() > 10) {
-    logger->critical("apps waiting for onDestroy are accumulating");
-  }
-
   renderLoopMutex.unlock();
 }
 
