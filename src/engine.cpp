@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "components/Bootable.h"
 #include "components/Key.h"
 #include "components/Lock.h"
 #include "components/Parent.h"
@@ -67,6 +68,10 @@ void Engine::setupRegistry() {
       make_shared<ScriptablePersister>(registry);
   registry->addPersister(scriptablePersister);
 
+  shared_ptr<SQLPersister> bootablePersister =
+      make_shared<BootablePersister>(registry);
+  registry->addPersister(bootablePersister);
+
   registry->createTablesIfNeeded();
 }
 
@@ -91,13 +96,13 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
 Engine::~Engine() {
   // may want to remove this because it might be slow on shutdown
   // when trying to get fast dev time
-  registry->saveAll();
+  delete wm;
   delete controls;
   delete renderer;
   delete world;
   delete camera;
-  //delete wm;
   delete api;
+  registry->saveAll();
 }
 
 void Engine::initialize(){

@@ -14,6 +14,17 @@
 
 class Controls;
 
+struct IdeSelection {
+  entt::entity emacs;
+  int emacsPid;
+
+  entt::entity terminator;
+  int terminatorPid;
+
+  entt::entity vsCode;
+  int vsCodePid;
+};
+
 namespace WindowManager {
 class WindowManager {
   static constexpr int APP_WIDTH = 1920 * .85;
@@ -29,6 +40,9 @@ class WindowManager {
   entt::entity microsoftEdge;
   entt::entity obs;
   entt::entity terminator;
+
+  IdeSelection ideSelection;
+
   optional<entt::entity> currentlyFocusedApp;
   shared_ptr<Space> space;
   Window matrix;
@@ -36,11 +50,13 @@ class WindowManager {
   atomic_bool firstRenderComplete = false;
   map<Window, entt::entity> dynamicApps;
   mutex renderLoopMutex;
+  mutex continueMutex;
   vector<X11App*> appsToAdd;
   vector<entt::entity> appsToRemove;
   void forkOrFindApp(string cmd, string pidOf, string className, entt::entity&,
                      char **envp, string args = "");
   std::thread substructureThread;
+  bool continueRunning = true;
   void onDestroyNotify(XDestroyWindowEvent);
   void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
@@ -51,6 +67,7 @@ class WindowManager {
   void allow_input_passthrough(Window window);
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
   void addApps();
+  void createUnfocusHackThread(entt::entity entity);
 
 public:
   void passthroughInput();
