@@ -85,9 +85,9 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   logger = make_shared<spdlog::logger>("engine", loggerSink);
   logger->set_level(spdlog::level::debug);
   initialize();
-  wm->createAndRegisterApps(envp);
   glfwFocusWindow(window);
   wire();
+  wm->createAndRegisterApps(envp);
   registerCursorCallback();
   // Has to be be created after the cursorCallback because gui wraps the callback
   engineGui = make_shared<EngineGui>(window, registry, loggerVector);

@@ -8,6 +8,7 @@
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <algorithm>
 #include <cstddef>
 #include <dbus-c++-1/dbus-c++/interface.h>
 #include <dbus-c++-1/dbus-c++/dispatcher.h>
@@ -79,7 +80,6 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
 void WindowManager::createAndRegisterApps(char **envp) {
   logger->info("enter createAndRegisterApps()");
 
-  forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", emacs, envp);
   if (MAGICA) {
     forkOrFindApp("/usr/bin/wine", "MagicaVoxel.exe", "magicavoxel.exe",
                   magicaVoxel, envp,
@@ -96,10 +96,18 @@ void WindowManager::createAndRegisterApps(char **envp) {
   if (OBS) {
     forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
   }
+  auto alreadyBooted = systems::getAlreadyBooted(registry);
+  for(auto entityAndPid : alreadyBooted) {
+    appsWithHotKeys.push_back(entityAndPid.first);
+    auto app = X11App::byPID(entityAndPid.second, display, screen, APP_WIDTH, APP_HEIGHT);
+    addApp(app, entityAndPid.first);
+  }
   systems::bootAll(registry, envp);
+
   //forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", ideSelection.emacs, envp);
   //forkOrFindApp("/usr/bin/code", "emacs", "Emacs", ideSelection.vsCode, envp);
   //killTerminator();
+  addApps();
 
   logger->info("exit createAndRegisterApps()");
 }
@@ -146,7 +154,6 @@ void WindowManager::captureInput() {
 }
 
 void WindowManager::addApps() {
-  space->addApp(emacs);
   if (MAGICA) {
     space->addApp(magicaVoxel);
   }
@@ -165,7 +172,13 @@ void WindowManager::wire(Camera *camera, Renderer *renderer) {
   space = make_shared<Space>(registry, renderer, camera, logSink);
   renderer->wireWindowManagerSpace(space);
   controls->wireWindowManager(space);
-  addApps();
+}
+
+void WindowManager::addApp(X11App *app, entt::entity entity) {
+  std::lock_guard<std::mutex> lock(renderLoopMutex);
+  auto window = app->getWindow();
+  appsToAdd.push_back(app);
+  dynamicApps[window] = entity;
 }
 
 void WindowManager::createApp(Window window, unsigned int width,
@@ -189,10 +202,7 @@ void WindowManager::createApp(Window window, unsigned int width,
     entity = registry->create();
   }
 
-  renderLoopMutex.lock();
-  appsToAdd.push_back(app);
-  dynamicApps[window] = entity;
-  renderLoopMutex.unlock();
+  addApp(app, entity);
 }
 
 void WindowManager::onMapRequest(XMapRequestEvent event) {
@@ -222,7 +232,6 @@ void WindowManager::onDestroyNotify(XDestroyWindowEvent event) {
 void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-  vector<entt::entity> appsWithHotKeys = {emacs};
   if (EDGE) {
     appsWithHotKeys.push_back(microsoftEdge);
   }
@@ -233,7 +242,7 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
   }
-  for (int i = 0; i < appsWithHotKeys.size(); i++) {
+  for (int i = 0; i < min((int)appsWithHotKeys.size(), 9); i++) {
     KeyCode code = XKeysymToKeycode(display, XK_1 + i);
     if (event.keycode == code && event.state & Mod4Mask) {
       unfocusApp();

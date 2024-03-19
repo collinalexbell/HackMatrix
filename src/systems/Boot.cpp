@@ -89,11 +89,24 @@ int forkApp(string cmd, char **envp, string args) {
   }
 }
 
+bool pidIsRunning(int pid) {
+  return kill(pid, 0) == 0;
+}
+
 void systems::boot(std::shared_ptr<EntityRegistry> registry,
                    entt::entity entity,
                    char** envp) {
   auto bootable = registry->try_get<Bootable>(entity);
+
   if(bootable) {
+
+    if (bootable->pid != std::nullopt && !bootable->killOnExit) {
+      // Check if the process exists
+      if (pidIsRunning(bootable->pid.value())) {
+        return; // Process is already running, no need to fork
+      }
+    }
+
     bootable->pid = forkApp(bootable->cmd, envp, bootable->args);
     if(bootable->pid == -1) {
       bootable->pid = nullopt;
@@ -116,4 +129,19 @@ void systems::killBootablesOnExit(std::shared_ptr<EntityRegistry> registry) {
       bootable.pid = nullopt;
     }
   }
+}
+
+std::vector<std::pair<entt::entity, int>>
+systems::getAlreadyBooted(std::shared_ptr<EntityRegistry> registry) {
+
+  std::vector<std::pair<entt::entity, int>> rv;
+  auto bootables = registry->view<Bootable>();
+  for (auto [entity, bootable] : bootables.each()) {
+    if (!bootable.killOnExit &&
+        bootable.pid.has_value() &&
+        pidIsRunning(bootable.pid.value())) {
+      rv.push_back(std::make_pair(entity,bootable.pid.value()));
+    }
+  }
+  return rv;
 }
