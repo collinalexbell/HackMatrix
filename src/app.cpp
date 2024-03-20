@@ -56,6 +56,7 @@ bool X11App::initAppClass(Display *display, int screen) {
   return true;
 };
 
+/*
 const int pixmap_config[] = {
   GLX_RGBA,1,
   GLX_DOUBLEBUFFER, 1,
@@ -71,8 +72,27 @@ const int pixmap_config[] = {
   GLX_BLUE_SIZE, 8,
   GLX_ALPHA_SIZE, 8,
   GLX_STENCIL_SIZE, 0,
-  GLX_DEPTH_SIZE, 16,
+  GLX_DEPTH_SIZE, 24,
   0};
+*/
+
+const int pixmap_config[] = {
+    GLX_BIND_TO_TEXTURE_RGBA_EXT, 1,
+    GLX_BIND_TO_TEXTURE_TARGETS_EXT, GLX_TEXTURE_2D_BIT_EXT,
+    GLX_RENDER_TYPE, GLX_RGBA_BIT,
+    GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT,
+    GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
+    GLX_X_RENDERABLE, 1,
+    GLX_BUFFER_SIZE, 32,
+    //		GLX_SAMPLE_BUFFERS, 1,
+    //		GLX_SAMPLES, 4,
+    GLX_DOUBLEBUFFER, 1,
+    GLX_RED_SIZE, 8,
+    GLX_GREEN_SIZE, 8,
+    GLX_BLUE_SIZE, 8,
+    GLX_ALPHA_SIZE, 8,
+    GLX_STENCIL_SIZE, 0,
+    GLX_DEPTH_SIZE, 16, 0};
 
 std::vector<int> getWindowRootPosition(Display* display, Window window) {
     Window root_return, parent_return, *children_return;
@@ -353,6 +373,14 @@ bool X11App::isFocused() {
 void X11App::focus(Window matrix) {
   focused = true;
   Window root = DefaultRootWindow(display);
+
+  // Set _NET_SUPPORTING_WM_CHECK property on the root window
+  Atom net_supporting_wm_check =
+      XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", False);
+  XChangeProperty(display, RootWindow(display, DefaultScreen(display)),
+                  net_supporting_wm_check, XA_WINDOW, 32, PropModeReplace,
+                  (unsigned char *)&appWindow, 1);
+
   takeInputFocus();
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   XGrabKey(display, eKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);

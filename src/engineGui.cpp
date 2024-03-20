@@ -290,10 +290,10 @@ void EngineGui::addComponentPanel(entt::entity entity,
   }
 }
 
-function<string(string)> makeLabeler(entt::entity entity) {
-  return [entity](string name) -> string {
+function<string(string)> makeLabeler(entt::entity entity, string component = "") {
+  return [entity, component](string name) -> string {
     stringstream rv;
-    rv << name << "##" << to_string((int) entity);
+    rv << name << "##" << to_string((int) entity) << "#" << component;
     return rv.str();
   };
 }
@@ -542,7 +542,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
   if (registry->any_of<Bootable>(entity)) {
     ImGui::Text("Bootable Component:");
     auto &bootable = registry->get<Bootable>(entity);
-    auto label = makeLabeler(entity);
+    auto label = makeLabeler(entity, "Bootable");
 
     char cmd[128] = "";
     strcpy(cmd, bootable.cmd.c_str());
@@ -555,8 +555,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::InputText(label("Command").c_str(), cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText(label("Args").c_str(), args, IM_ARRAYSIZE(args));
     ImGui::Text("Kill on Exit:");
-    ImGui::RadioButton("True", &killOnExit, 1);
-    ImGui::RadioButton("False", &killOnExit, 0);
+    ImGui::RadioButton(label("True").c_str(), &killOnExit, 1);
+    ImGui::RadioButton(label("False").c_str(), &killOnExit, 0);
     if(bootable.pid.has_value()) {
       ImGui::Text("PID: %d", bootable.pid.value());
     } else {
