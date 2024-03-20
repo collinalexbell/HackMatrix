@@ -424,6 +424,8 @@ void WindowManager::registerControls(Controls *controls) {
 
   overlay = XCompositeGetOverlayWindow(display, root);
   XReparentWindow(display, matrix, overlay, 0, 0);
+  Xutf8SetWMProperties(display, matrix, "matrix", "matrix", NULL,
+                       0, NULL, NULL, NULL);
 
   XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
 
