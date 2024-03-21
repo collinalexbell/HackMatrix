@@ -3,9 +3,41 @@ from rich.text import Text
 from rich.progress import Progress, SpinnerColumn
 import subprocess
 import time
+import json
+import hackMatrix.api as matrix
 
 def select_ide(console):
-    pass
+    subprocess.run(["python select-ide.py"], shell=True)
+    console.clear()
+    text = Text()
+
+    matrix.player_move((-0.38, 1.3, -4.6), (0,30,0), 2)
+
+    # Specify the file path
+    file_path = "../settings.json"
+
+    # Read data from JSON file
+    with open(file_path, "r") as json_file:
+        data = json.load(json_file)
+
+    # Extract the 'ide' value and store it in the 'ide' variable
+    ide = data["ide"]
+
+    if ide == "Vim":
+        text.append("Vim is a simple, yet powerful\n")
+        text.append("    used by some of the oldest and wisest of code mages\n")
+
+    if ide == "Emacs":
+        text.append("Emacs is extensive, deep, and highly customizable\n")
+        text.append("      used by unique code mages\n")
+        text.append("              who love the power of LISP\n")
+
+    if ide == "VSCode":
+        text.append("VSCode is popular amongst code mages\n")
+        text.append("          for its sleek and extensible design\n")
+
+    text.append("\nGreat choice!\n")
+    console.print(text)
 
 def talk(console):
     text = Text()
