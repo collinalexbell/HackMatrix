@@ -6,6 +6,7 @@ import numpy as np
 import hackMatrix.api as matrix
 from scipy.spatial.transform import Rotation as R
 
+
 # Initialize the console
 console = Console()
 console.clear()
@@ -22,7 +23,7 @@ relative_app_orientations = np.array([(0, 0, 0), (0, -30, 0), (0, -45, 0)])
 selected_index = 0
 
 def move(pos, rotation):
-    matrix.player_move(pos, rotation, 2)
+    matrix.player_move(pos, rotation, 1)
 
 def move_to(selected_index):
     global cur_pos
@@ -107,3 +108,16 @@ console.input()
 
 # Hide the cursor
 console.show_cursor(True)
+
+
+import json
+
+data = {"ide": ide_options[selected_index]}
+
+# Specify the file path
+file_path = "../settings.json"
+
+# Write data to JSON file
+with open(file_path, "w") as json_file:
+    json.dump(data, json_file)
+
