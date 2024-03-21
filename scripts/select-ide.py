@@ -3,6 +3,7 @@ from rich.panel import Panel
 from rich.text import Text
 from pynput import keyboard
 import numpy as np
+import hackMatrix.api as matrix
 
 # Initialize the console
 console = Console()
@@ -11,22 +12,33 @@ console.clear()
 # Define the IDE options
 # Define the IDE options
 ide_options = ["Vim", "Emacs", "VSCode"]
-relative_app_positions = np.array([(0, 0, 0), (1, 1, 1), (2, 2, 2)])
-relative_app_orientations = np.array([(0, 0, 0), (1, 1, 1), (2, 2, 2)])
+startPos = np.array((1.5, 1.5, -3.9))
+startOrientation = np.array((0,-5,0))
+relative_app_positions = np.array([(0,0,0),
+                                   (2.5, 1.5, -3.5)-startPos,
+                                   (3.3, 1.5, -2.78)-startPos])
+relative_app_orientations = np.array([(0, 0, 0), (0, -35, 0), (0, -50, 0)])
 selected_index = 0
-cur_pos = relative_app_positions[0]
-cur_orientation = relative_app_orientations[0]
 
-def move(pos, front):
-    # zmq function
-    pass
+def move(pos, rotation):
+    matrix.player_move(pos, rotation, 2)
 
 def move_to(selected_index):
     global cur_pos
     global cur_orientation
-    cur_pos = relative_app_positions[selected_index] - cur_pos
-    cur_orientation = relative_app_orientations[selected_index] - cur_orientation
-    move(cur_pos, cur_orientation)
+
+    awayFromScreenPosOffset = np.array((0,-0.35,1.2))
+    awayFromScreenOrientationOffset = np.array((2, 0, 0))
+
+    move(
+        relative_app_positions[selected_index] +
+        startPos +
+        awayFromScreenPosOffset,
+
+        relative_app_orientations[selected_index] +
+        startOrientation +
+        awayFromScreenOrientationOffset
+    )
 
 # Function to display the IDE options with the arrow indicating the selected option
 def display_options(selected_index):
@@ -63,6 +75,7 @@ console.show_cursor(False)
 
 # Display the IDE options initially
 display_options(selected_index)
+move_to(0)
 
 with keyboard.Events() as events:
     # Wait for an Enter keypress

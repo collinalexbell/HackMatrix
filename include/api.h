@@ -13,6 +13,7 @@
 
 using namespace std;
 
+class Controls;
 class Api;
 class CommandServer {
 protected:
@@ -48,6 +49,8 @@ class Api {
     void poll() override;
   };
 
+  Controls* controls;
+
   shared_ptr<spdlog::logger> logger;
   shared_ptr<EntityRegistry> registry;
 
@@ -68,7 +71,7 @@ protected:
   void processBatchedRequest(BatchedRequest);
 
 public:
-  Api(std::string bindAddress, shared_ptr<EntityRegistry>);
+  Api(std::string bindAddress, shared_ptr<EntityRegistry>, Controls *controls);
   ~Api();
   void poll();
   void mutateEntities();
