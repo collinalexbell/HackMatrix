@@ -110,9 +110,9 @@ void Engine::initialize(){
   wm = new WindowManager::WindowManager(registry, glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
-  api = new Api("tcp://*:3333", registry);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
+  api = new Api("tcp://*:3333", registry, controls);
   wm->registerControls(controls);
 }
 

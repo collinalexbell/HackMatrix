@@ -14,7 +14,7 @@ message Vector {
 
 message PlayerMove {
   Vector position = 1;
-  Vector front = 2;
+  Vector rotation = 2;
   float unitsPerSecond = 3;
 }
 
