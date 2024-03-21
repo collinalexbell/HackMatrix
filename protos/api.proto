@@ -3,13 +3,26 @@ syntax = "proto3";
 enum MessageType {
   MOVE = 0;
   TURN_KEY = 1;
+  PLAYER_MOVE = 2;
+}
+
+message Vector {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message PlayerMove {
+  Vector position = 1;
+  Vector front = 2;
+  float unitsPerSecond = 3;
 }
 
 message Move {
-  float xDelta = 2;
-  float yDelta = 3;
-  float zDelta = 4;
-  float unitsPerSecond = 5;
+  float xDelta = 1;
+  float yDelta = 2;
+  float zDelta = 3;
+  float unitsPerSecond = 4;
 }
 
 message TurnKey {
@@ -22,6 +35,7 @@ message ApiRequest {
   oneof payload {
     Move move = 3;
     TurnKey turnKey = 4;
+    PlayerMove playerMove = 5;
   }
 }
 

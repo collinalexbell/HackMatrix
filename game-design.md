@@ -325,6 +325,10 @@ a plotline you think would work well in HackMatrix,
 or all of the above.
 I'll work with you to design and implement a quest that is inspired by you!
 
+- Educator Bundle (5 custom labs, 100 HackMatrix seats):
+I'll work with you to design 5 custom lab projects in 3d.
+
+
 ### Final Evaluation of the Lenses
 I should do a final evaluation of lenses
 to ensure that the game is most impactful

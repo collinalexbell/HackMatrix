@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x10protos/api.proto\"N\n\x04Move\x12\x0e\n\x06xDelta\x18\x02 \x01(\x02\x12\x0e\n\x06yDelta\x18\x03 \x01(\x02\x12\x0e\n\x06zDelta\x18\x04 \x01(\x02\x12\x16\n\x0eunitsPerSecond\x18\x05 \x01(\x02\"\x15\n\x07TurnKey\x12\n\n\x02on\x18\x02 \x01(\x08\"y\n\nApiRequest\x12\x10\n\x08\x65ntityId\x18\x01 \x01(\x03\x12\x1a\n\x04type\x18\x02 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x03 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x04 \x01(\x0b\x32\x08.TurnKeyH\x00\x42\t\n\x07payload\"\'\n\x12\x41piRequestResponse\x12\x11\n\trequestId\x18\x01 \x01(\x03*%\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x62\x06proto3'
+  serialized_pb=b'\n\x10protos/api.proto\")\n\x06Vector\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"W\n\nPlayerMove\x12\x19\n\x08position\x18\x01 \x01(\x0b\x32\x07.Vector\x12\x16\n\x05\x66ront\x18\x02 \x01(\x0b\x32\x07.Vector\x12\x16\n\x0eunitsPerSecond\x18\x03 \x01(\x02\"N\n\x04Move\x12\x0e\n\x06xDelta\x18\x01 \x01(\x02\x12\x0e\n\x06yDelta\x18\x02 \x01(\x02\x12\x0e\n\x06zDelta\x18\x03 \x01(\x02\x12\x16\n\x0eunitsPerSecond\x18\x04 \x01(\x02\"\x15\n\x07TurnKey\x12\n\n\x02on\x18\x02 \x01(\x08\"\x9c\x01\n\nApiRequest\x12\x10\n\x08\x65ntityId\x18\x01 \x01(\x03\x12\x1a\n\x04type\x18\x02 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x03 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x04 \x01(\x0b\x32\x08.TurnKeyH\x00\x12!\n\nplayerMove\x18\x05 \x01(\x0b\x32\x0b.PlayerMoveH\x00\x42\t\n\x07payload\"\'\n\x12\x41piRequestResponse\x12\x11\n\trequestId\x18\x01 \x01(\x03*6\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x12\x0f\n\x0bPLAYER_MOVE\x10\x02\x62\x06proto3'
 )
 
 _MESSAGETYPE = _descriptor.EnumDescriptor(
@@ -40,52 +40,51 @@ _MESSAGETYPE = _descriptor.EnumDescriptor(
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='PLAYER_MOVE', index=2, number=2,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=287,
-  serialized_end=324,
+  serialized_start=455,
+  serialized_end=509,
 )
 _sym_db.RegisterEnumDescriptor(_MESSAGETYPE)
 
 MessageType = enum_type_wrapper.EnumTypeWrapper(_MESSAGETYPE)
 MOVE = 0
 TURN_KEY = 1
+PLAYER_MOVE = 2
 
 
 
-_MOVE = _descriptor.Descriptor(
-  name='Move',
-  full_name='Move',
+_VECTOR = _descriptor.Descriptor(
+  name='Vector',
+  full_name='Vector',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='xDelta', full_name='Move.xDelta', index=0,
+      name='x', full_name='Vector.x', index=0,
+      number=1, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='y', full_name='Vector.y', index=1,
       number=2, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='yDelta', full_name='Move.yDelta', index=1,
+      name='z', full_name='Vector.z', index=2,
       number=3, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='zDelta', full_name='Move.zDelta', index=2,
-      number=4, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='unitsPerSecond', full_name='Move.unitsPerSecond', index=3,
-      number=5, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -103,7 +102,106 @@ _MOVE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=20,
-  serialized_end=98,
+  serialized_end=61,
+)
+
+
+_PLAYERMOVE = _descriptor.Descriptor(
+  name='PlayerMove',
+  full_name='PlayerMove',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='position', full_name='PlayerMove.position', index=0,
+      number=1, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='front', full_name='PlayerMove.front', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='unitsPerSecond', full_name='PlayerMove.unitsPerSecond', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=63,
+  serialized_end=150,
+)
+
+
+_MOVE = _descriptor.Descriptor(
+  name='Move',
+  full_name='Move',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='xDelta', full_name='Move.xDelta', index=0,
+      number=1, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='yDelta', full_name='Move.yDelta', index=1,
+      number=2, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='zDelta', full_name='Move.zDelta', index=2,
+      number=3, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='unitsPerSecond', full_name='Move.unitsPerSecond', index=3,
+      number=4, type=2, cpp_type=6, label=1,
+      has_default_value=False, default_value=float(0),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=152,
+  serialized_end=230,
 )
 
 
@@ -134,8 +232,8 @@ _TURNKEY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=100,
-  serialized_end=121,
+  serialized_start=232,
+  serialized_end=253,
 )
 
 
@@ -175,6 +273,13 @@ _APIREQUEST = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='playerMove', full_name='ApiRequest.playerMove', index=4,
+      number=5, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
   ],
   extensions=[
   ],
@@ -192,8 +297,8 @@ _APIREQUEST = _descriptor.Descriptor(
       create_key=_descriptor._internal_create_key,
     fields=[]),
   ],
-  serialized_start=123,
-  serialized_end=244,
+  serialized_start=256,
+  serialized_end=412,
 )
 
 
@@ -224,25 +329,47 @@ _APIREQUESTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=246,
-  serialized_end=285,
+  serialized_start=414,
+  serialized_end=453,
 )
 
+_PLAYERMOVE.fields_by_name['position'].message_type = _VECTOR
+_PLAYERMOVE.fields_by_name['front'].message_type = _VECTOR
 _APIREQUEST.fields_by_name['type'].enum_type = _MESSAGETYPE
 _APIREQUEST.fields_by_name['move'].message_type = _MOVE
 _APIREQUEST.fields_by_name['turnKey'].message_type = _TURNKEY
+_APIREQUEST.fields_by_name['playerMove'].message_type = _PLAYERMOVE
 _APIREQUEST.oneofs_by_name['payload'].fields.append(
   _APIREQUEST.fields_by_name['move'])
 _APIREQUEST.fields_by_name['move'].containing_oneof = _APIREQUEST.oneofs_by_name['payload']
 _APIREQUEST.oneofs_by_name['payload'].fields.append(
   _APIREQUEST.fields_by_name['turnKey'])
 _APIREQUEST.fields_by_name['turnKey'].containing_oneof = _APIREQUEST.oneofs_by_name['payload']
+_APIREQUEST.oneofs_by_name['payload'].fields.append(
+  _APIREQUEST.fields_by_name['playerMove'])
+_APIREQUEST.fields_by_name['playerMove'].containing_oneof = _APIREQUEST.oneofs_by_name['payload']
+DESCRIPTOR.message_types_by_name['Vector'] = _VECTOR
+DESCRIPTOR.message_types_by_name['PlayerMove'] = _PLAYERMOVE
 DESCRIPTOR.message_types_by_name['Move'] = _MOVE
 DESCRIPTOR.message_types_by_name['TurnKey'] = _TURNKEY
 DESCRIPTOR.message_types_by_name['ApiRequest'] = _APIREQUEST
 DESCRIPTOR.message_types_by_name['ApiRequestResponse'] = _APIREQUESTRESPONSE
 DESCRIPTOR.enum_types_by_name['MessageType'] = _MESSAGETYPE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
+
+Vector = _reflection.GeneratedProtocolMessageType('Vector', (_message.Message,), {
+  'DESCRIPTOR' : _VECTOR,
+  '__module__' : 'protos.api_pb2'
+  # @@protoc_insertion_point(class_scope:Vector)
+  })
+_sym_db.RegisterMessage(Vector)
+
+PlayerMove = _reflection.GeneratedProtocolMessageType('PlayerMove', (_message.Message,), {
+  'DESCRIPTOR' : _PLAYERMOVE,
+  '__module__' : 'protos.api_pb2'
+  # @@protoc_insertion_point(class_scope:PlayerMove)
+  })
+_sym_db.RegisterMessage(PlayerMove)
 
 Move = _reflection.GeneratedProtocolMessageType('Move', (_message.Message,), {
   'DESCRIPTOR' : _MOVE,
