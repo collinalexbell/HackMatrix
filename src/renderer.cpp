@@ -426,8 +426,14 @@ void Renderer::renderApps() {
   glDisable(GL_CULL_FACE);
   auto positionableApps = registry->view<X11App, Positionable>();
   for(auto [entity, app, positionable]: positionableApps.each()) {
+    auto bootable = registry->try_get<Bootable>(entity);
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setInt("appNumber", app.getAppIndex());
+    if(bootable && bootable->transparent) {
+      shader->setBool("appTransparent", true);
+    } else {
+      shader->setBool("appTransparent", false);
+    }
     glDrawArrays(GL_TRIANGLES, 0, 6);
   }
 
@@ -437,6 +443,7 @@ void Renderer::renderApps() {
     if(app.isFocused() && (!bootable || !bootable->transparent)) {
       shader->setBool("appSelected", app.isFocused());
       drawAppDirect(&app);
+      shader->setBool("appSelected", false);
     }
   }
 
