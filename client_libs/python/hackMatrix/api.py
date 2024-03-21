@@ -25,7 +25,7 @@ def move(entityId, xDelta, yDelta, zDelta, unitsPerSecond):
     socket.send(serializedRequest)
     socket.recv()
 
-def player_move(entityId, position, rotation, unitsPerSecond):
+def player_move(position, rotation, unitsPerSecond):
     positionMessage = api_pb2.Vector(x=position[0], y=position[1], z=position[2])
     frontMessage = api_pb2.Vector(x=rotation[0], y=rotation[1], z=rotation[2])
     commandMessage = api_pb2.PlayerMove(position=positionMessage,

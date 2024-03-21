@@ -21,7 +21,7 @@ relative_app_orientations = np.array([(0, 0, 0), (0, -35, 0), (0, -50, 0)])
 selected_index = 0
 
 def move(pos, rotation):
-    matrix.player_move(0, pos, rotation, 2)
+    matrix.player_move(pos, rotation, 2)
 
 def move_to(selected_index):
     global cur_pos
