@@ -16,6 +16,8 @@ void BootablePersister::createTablesIfNeeded() {
          << "kill_on_exit INTEGER, "
          << "pid INTEGER, "
          << "transparent INTEGER, "
+         << "width INTEGER, "
+         << "height INTEGER, "
          << "FOREIGN KEY (entity_id) REFERENCES Entity(id)"
          <<")";
   db.exec(create.str());
@@ -26,8 +28,8 @@ void BootablePersister::saveAll() {
 
     stringstream queryStream;
     queryStream << "INSERT OR REPLACE INTO " << entityName << " "
-                << "(entity_id, cmd, args, kill_on_exit, pid, transparent)"
-                << "VALUES (?, ?, ?, ?, ?, ?)";
+                << "(entity_id, cmd, args, kill_on_exit, pid, transparent, width, height)"
+                << "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     SQLite::Statement query(db, queryStream.str());
 
     db.exec("BEGIN TRANSACTION");
@@ -42,6 +44,8 @@ void BootablePersister::saveAll() {
         query.bind(5, nullptr);
       }
       query.bind(6, bootable.transparent ? 1 : 0);
+      query.bind(7, bootable.width);
+      query.bind(8, bootable.height);
       query.exec();
       query.reset();
     }
@@ -54,7 +58,8 @@ void BootablePersister::loadAll() {
   SQLite::Database &db = registry->getDatabase();
 
   stringstream queryStream;
-  queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid, transparent "
+  queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid ,"
+              << "transparent, width, height "
               << "FROM " << entityName;
   SQLite::Statement query(db, queryStream.str());
 
@@ -70,11 +75,13 @@ void BootablePersister::loadAll() {
       pid = query.getColumn(4).getInt();
     }
     bool transparent = query.getColumn(5).getInt() == 0 ? false : true;
+    int width = query.getColumn(6).getInt();
+    int height = query.getColumn(7).getInt();
     auto entity = registry->locateEntity(entityId);
 
     if(entity.has_value()) {
       registry->emplace<Bootable>(entity.value(), cmd, args, killOnExit,
-                                  pid, transparent);
+                                  pid, transparent, width, height);
     }
   }
 }

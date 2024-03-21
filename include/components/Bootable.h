@@ -10,6 +10,8 @@ struct Bootable {
   bool killOnExit;
   optional<pid_t> pid;
   bool transparent;
+  int width = 1920 * 0.85;
+  int height = 1920 * 0.85 * 0.54;
 };
 
 class BootablePersister: public SQLPersisterImpl {
