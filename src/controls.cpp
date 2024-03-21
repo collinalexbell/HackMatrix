@@ -173,8 +173,18 @@ void Controls::handleModEscape(GLFWwindow* window) {
   }
 }
 
-void Controls::moveTo(glm::vec3 pos, float secs) {
-  camera->moveTo(pos, camera->front, secs);
+void Controls::moveTo(glm::vec3 pos, optional<glm::vec3> front, float secs,
+                      optional<function<void()>> callback) {
+  grabbedCursor = false;
+  resetMouse = true;
+  auto frontOrCamera = front.has_value() ? front.value() : camera->front;
+  shared_ptr<bool> isDone = camera->moveTo(pos, frontOrCamera, secs);
+  doAfter(isDone, [this, callback]() -> void {
+    if(callback.has_value()) {
+      callback.value()();
+    }
+    grabbedCursor = true;
+  });
 }
 
 void Controls::goToApp(entt::entity app) {
@@ -185,17 +195,10 @@ void Controls::goToApp(entt::entity app) {
 
   glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
   targetPosition = targetPosition + rotation * glm::vec3(0,0,deltaZ);
-
   glm::vec3 front = rotation * glm::vec3(0, 0, -1);
   float moveSeconds = 0.25;
-  resetMouse = true;
-  grabbedCursor = false;
-  shared_ptr<bool> isDone = camera->moveTo(targetPosition, front, moveSeconds);
-  auto &grabbedCursor = this->grabbedCursor;
-  doAfter(isDone, [app, &grabbedCursor, this]() {
-    grabbedCursor = true;
-    wm->focusApp(app);
-  });
+  moveTo(targetPosition, front, moveSeconds,
+                     [app, this]() {wm->focusApp(app); });
 }
 
 void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera) {
