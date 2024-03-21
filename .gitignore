@@ -53,3 +53,5 @@ analysis.txt
 vox/*
 db/*
 imgui.ini
+
+settings.json
