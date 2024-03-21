@@ -491,9 +491,9 @@ void Renderer::render() {
   renderLines();
   renderLookedAtFace();
   renderChunkMesh();
-  renderApps();
   renderDynamicObjects();
   renderModels();
+  renderApps();
 }
 
 Camera *Renderer::getCamera() { return camera; }
