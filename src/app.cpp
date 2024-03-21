@@ -56,17 +56,43 @@ bool X11App::initAppClass(Display *display, int screen) {
   return true;
 };
 
+/*
 const int pixmap_config[] = {
-    GLX_BIND_TO_TEXTURE_RGB_EXT, 1,
+  GLX_RGBA,1,
+  GLX_DOUBLEBUFFER, 1,
+  GLX_BIND_TO_TEXTURE_RGBA_EXT, 1,
+  GLX_RENDER_TYPE, GLX_RGBA_BIT,
+  0x20B2, (GLint) GLX_DONT_CARE,
+  GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
+  GLX_X_RENDERABLE, true,
+  GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT,
+  GLX_BUFFER_SIZE, 32,
+  GLX_RED_SIZE, 8,
+  GLX_GREEN_SIZE, 8,
+  GLX_BLUE_SIZE, 8,
+  GLX_ALPHA_SIZE, 8,
+  GLX_STENCIL_SIZE, 0,
+  GLX_DEPTH_SIZE, 24,
+  0};
+*/
+
+const int pixmap_config[] = {
+    GLX_BIND_TO_TEXTURE_RGBA_EXT, 1,
     GLX_BIND_TO_TEXTURE_TARGETS_EXT, GLX_TEXTURE_2D_BIT_EXT,
-    GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT | GLX_WINDOW_BIT,
+    GLX_RENDER_TYPE, GLX_RGBA_BIT,
+    GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT,
+    GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
+    GLX_X_RENDERABLE, 1,
+    GLX_BUFFER_SIZE, 32,
+    //		GLX_SAMPLE_BUFFERS, 1,
+    //		GLX_SAMPLES, 4,
     GLX_DOUBLEBUFFER, 1,
-    GLX_BUFFER_SIZE, 24,
     GLX_RED_SIZE, 8,
     GLX_GREEN_SIZE, 8,
     GLX_BLUE_SIZE, 8,
-    GLX_ALPHA_SIZE, 0,
-    0};
+    GLX_ALPHA_SIZE, 8,
+    GLX_STENCIL_SIZE, 0,
+    GLX_DEPTH_SIZE, 16, 0};
 
 std::vector<int> getWindowRootPosition(Display* display, Window window) {
     Window root_return, parent_return, *children_return;
@@ -347,6 +373,14 @@ bool X11App::isFocused() {
 void X11App::focus(Window matrix) {
   focused = true;
   Window root = DefaultRootWindow(display);
+
+  // Set _NET_SUPPORTING_WM_CHECK property on the root window
+  Atom net_supporting_wm_check =
+      XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", False);
+  XChangeProperty(display, RootWindow(display, DefaultScreen(display)),
+                  net_supporting_wm_check, XA_WINDOW, 32, PropModeReplace,
+                  (unsigned char *)&appWindow, 1);
+
   takeInputFocus();
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   XGrabKey(display, eKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
@@ -364,13 +398,26 @@ void X11App::appTexture() {
 
   const int pixmap_attribs[] = {
     GLX_TEXTURE_TARGET_EXT, GLX_TEXTURE_2D_EXT,
-    GLX_TEXTURE_FORMAT_EXT, GLX_TEXTURE_FORMAT_RGB_EXT,
+    GLX_TEXTURE_FORMAT_EXT, GLX_TEXTURE_FORMAT_RGBA_EXT,
     None
   };
 
+  int i = 0;
+  for (; i < fbConfigCount; i++) {
+    auto config = fbConfigs[i];
+
+    int has_alpha;
+    glad_glXGetFBConfigAttrib(display, config,
+                                GLX_BIND_TO_TEXTURE_RGBA_EXT, &has_alpha);
+    if(has_alpha) {
+      cout << "HAS ALPHA" << endl;
+      break;
+    }
+  }
+
   app_logger->info("glXCreatePixmap()");
   app_logger->flush();
-  GLXPixmap glxPixmap = glXCreatePixmap(display, fbConfigs[0], pixmap, pixmap_attribs);
+  GLXPixmap glxPixmap = glXCreatePixmap(display, fbConfigs[i], pixmap, pixmap_attribs);
   app_logger->info("glXBindTexImageEXT()");
   app_logger->flush();
   glXBindTexImageEXT(display, glxPixmap, GLX_FRONT_LEFT_EXT, NULL);

@@ -34,7 +34,7 @@
 
 #define OBS false
 #define EDGE true
-#define TERM true
+#define TERM false
 #define MAGICA true
 
 namespace WindowManager {
@@ -408,7 +408,91 @@ void WindowManager::registerControls(Controls *controls) {
   this->controls = controls;
 }
 
-  WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
+void WindowManager::setWMProps(Window root) {
+
+  Window screen_owner = XCreateSimpleWindow(display, root, 0, 0, 1, 1, 0, 0, 0);
+  Xutf8SetWMProperties(display, screen_owner, "matrixWM", "matrixWM", NULL,
+                       0, NULL, NULL, NULL);
+
+  char name[] = "_NET_WM_CM_S##";
+  snprintf(name, sizeof(name), "_NET_WM_CM_S%d", screen);
+
+  Atom atom = XInternAtom(display, name, 0);
+  XSetSelectionOwner(display, atom, screen_owner, 0);
+  // Set the _NET_SUPPORTED property
+  Atom net_supported = XInternAtom(display, "_NET_SUPPORTED", False);
+  Atom net_supported_atoms[] = {
+      XInternAtom(display, "_NET_WM_ACTION_CLOSE", False),
+      XInternAtom(display, "_NET_WM_ACTION_MOVE", False),
+      XInternAtom(display, "_NET_WM_ACTION_RESIZE", False),
+      XInternAtom(display, "_NET_WM_ACTION_MINIMIZE", False),
+      XInternAtom(display, "_NET_WM_ACTION_FULLSCREEN", False),
+      XInternAtom(display, "_NET_WM_ACTION_SHADE", False),
+      XInternAtom(display, "_NET_WM_OPACITY", False),
+      XInternAtom(display, "_NET_WM_STATE_MODAL", False),
+      XInternAtom(display, "_NET_WM_STATE_STICKY", False),
+      XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
+      XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", False),
+      XInternAtom(display, "_NET_WM_STATE_SHADED", False),
+      XInternAtom(display, "_NET_WM_STATE_SKIP_TASKBAR", False),
+      XInternAtom(display, "_NET_WM_STATE_SKIP_PAGER", False),
+      XInternAtom(display, "_NET_WM_STATE_HIDDEN", False),
+      XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False),
+      XInternAtom(display, "_NET_WM_STATE_ABOVE", False),
+      XInternAtom(display, "_NET_WM_STATE_BELOW", False),
+      XInternAtom(display, "_NET_WM_STATE_DEMANDS_ATTENTION", False)
+  };
+
+  int num_supported_atoms = sizeof(net_supported_atoms) / sizeof(Atom);
+
+  // Set _NET_SUPPORTED property on the root window
+  XChangeProperty(display, root, XInternAtom(display, "_NET_SUPPORTED", False),
+                  XA_ATOM, 32, PropModeReplace,
+                  (unsigned char *)net_supported_atoms, num_supported_atoms);
+
+  // Set the work area rectangle (assuming resolution of 1920x1080)
+  int workarea_x = 0;
+  int workarea_y = 0;
+  int workarea_width = 1920;
+  int workarea_height = 1080;
+
+  // Convert the work area rectangle into a format suitable for the
+  // _NET_WORKAREA property
+  long workarea[] = {workarea_x, workarea_y, workarea_width, workarea_height};
+
+  // Set the _NET_WORKAREA property on the root window
+  Atom net_workarea = XInternAtom(display, "_NET_WORKAREA", False);
+  XChangeProperty(display, root, net_workarea, XA_CARDINAL, 32, PropModeReplace,
+                  (unsigned char *)&workarea, 4);
+
+  long desktop_viewport[] = {0, 0};
+
+  // Set the _NET_DESKTOP_VIEWPORT property on the root window
+  Atom net_desktop_viewport =
+      XInternAtom(display, "_NET_DESKTOP_VIEWPORT", False);
+  XChangeProperty(display, root, net_desktop_viewport, XA_CARDINAL, 32,
+                  PropModeReplace, (unsigned char *)&desktop_viewport, 2);
+
+  // Set the _NET_SUPPORTING_WM_CHECK property on the root window
+  Atom net_supporting_wm_check =
+      XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", False);
+  XChangeProperty(display, root, net_supporting_wm_check,
+                  XA_WINDOW, 32, PropModeReplace,
+                  (unsigned char *)&screen_owner, 1);
+
+  // Set the _NET_SUPPORTING_WM_CHECK property on matrix
+  XChangeProperty(display, screen_owner, net_supporting_wm_check,
+                  XA_WINDOW, 32, PropModeReplace, (unsigned char *)&screen_owner, 1);
+
+  // Set the _NET_WM_NAME property of the matrix window
+  Atom net_wm_name = XInternAtom(display, "_NET_WM_NAME", False);
+  XChangeProperty(display, screen_owner, net_wm_name, XA_STRING, 8,
+                  PropModeReplace, (unsigned char *)"matrixWM", strlen("matrixWM"));
+
+  XFlush(display);
+}
+
+WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
                              spdlog::sink_ptr loggerSink)
     : matrix(matrix), logSink(loggerSink), registry(registry) {
   logger = make_shared<spdlog::logger>("wm", loggerSink);
@@ -419,8 +503,9 @@ void WindowManager::registerControls(Controls *controls) {
   screen = XDefaultScreen(display);
   X11App::initAppClass(display, screen);
   Window root = RootWindow(display, screen);
+  setWMProps(root);
   XCompositeRedirectSubwindows(display, RootWindow(display, screen),
-                               CompositeRedirectAutomatic);
+                                 CompositeRedirectAutomatic);
 
   overlay = XCompositeGetOverlayWindow(display, root);
   XReparentWindow(display, matrix, overlay, 0, 0);
