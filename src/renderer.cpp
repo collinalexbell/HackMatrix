@@ -7,6 +7,7 @@
 #include "camera.h"
 #include "app.h"
 #include "cube.h"
+#include "components/Bootable.h"
 #include <vector>
 #include <iostream>
 #include <glad/glad.h>
@@ -431,8 +432,9 @@ void Renderer::renderApps() {
   }
 
   if (appEntity.has_value()) {
+    auto bootable = registry->try_get<Bootable>(appEntity.value());
     auto &app = registry->get<X11App>(appEntity.value());
-    if(app.isFocused()) {
+    if(app.isFocused() && (!bootable || !bootable->transparent)) {
       shader->setBool("appSelected", app.isFocused());
       drawAppDirect(&app);
     }

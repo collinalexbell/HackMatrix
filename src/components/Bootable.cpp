@@ -15,6 +15,7 @@ void BootablePersister::createTablesIfNeeded() {
          << "args TEXT, "
          << "kill_on_exit INTEGER, "
          << "pid INTEGER, "
+         << "transparent INTEGER, "
          << "FOREIGN KEY (entity_id) REFERENCES Entity(id)"
          <<")";
   db.exec(create.str());
@@ -25,8 +26,8 @@ void BootablePersister::saveAll() {
 
     stringstream queryStream;
     queryStream << "INSERT OR REPLACE INTO " << entityName << " "
-                << "(entity_id, cmd, args, kill_on_exit, pid)"
-                << "VALUES (?, ?, ?, ?, ?)";
+                << "(entity_id, cmd, args, kill_on_exit, pid, transparent)"
+                << "VALUES (?, ?, ?, ?, ?, ?)";
     SQLite::Statement query(db, queryStream.str());
 
     db.exec("BEGIN TRANSACTION");
@@ -40,6 +41,7 @@ void BootablePersister::saveAll() {
       } else {
         query.bind(5, nullptr);
       }
+      query.bind(6, bootable.transparent ? 1 : 0);
       query.exec();
       query.reset();
     }
@@ -52,7 +54,7 @@ void BootablePersister::loadAll() {
   SQLite::Database &db = registry->getDatabase();
 
   stringstream queryStream;
-  queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid "
+  queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid, transparent "
               << "FROM " << entityName;
   SQLite::Statement query(db, queryStream.str());
 
@@ -67,10 +69,12 @@ void BootablePersister::loadAll() {
     } else {
       pid = query.getColumn(4).getInt();
     }
+    bool transparent = query.getColumn(5).getInt() == 0 ? false : true;
     auto entity = registry->locateEntity(entityId);
 
     if(entity.has_value()) {
-      registry->emplace<Bootable>(entity.value(), cmd, args, killOnExit, pid);
+      registry->emplace<Bootable>(entity.value(), cmd, args, killOnExit,
+                                  pid, transparent);
     }
   }
 }
