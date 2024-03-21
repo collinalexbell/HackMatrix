@@ -275,16 +275,21 @@ void EngineGui::addComponentPanel(entt::entity entity,
     static char cmd[128] = "";
     static char args[128] = "";
     static int killOnExit;
+    static int transparent;
     ImGui::InputText("Command##NewBootable", cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText("Args##NewBootable", args, IM_ARRAYSIZE(args));
     ImGui::Text("Kill on exit:");
     ImGui::RadioButton("True", &killOnExit, 1);
     ImGui::RadioButton("False", &killOnExit, 0);
+    ImGui::Text("Transparent:");
+    ImGui::RadioButton("True", &transparent, 1);
+    ImGui::RadioButton("False", &transparent, 0);
 
     if (ImGui::Button("Add Bootable Component")) {
       registry->emplace<Bootable>(entity, cmd, args,
-                                  killOnExit == 1 ? true: false,
-                                  nullopt);
+                                  killOnExit == 1 ? true : false,
+                                  nullopt,
+                                  transparent == 1 ? true : false);
       showAddComponentPanel = false;
     }
   }
@@ -551,6 +556,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     strcpy(args, bootable.args.c_str());
 
     int killOnExit = bootable.killOnExit;
+    int transparent = bootable.transparent;
 
     ImGui::InputText(label("Command").c_str(), cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText(label("Args").c_str(), args, IM_ARRAYSIZE(args));
@@ -562,11 +568,15 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     } else {
       ImGui::Text("PID: N/A");
     }
+    ImGui::Text("Transparent:");
+    ImGui::RadioButton(label("True##Transparent").c_str(), &transparent, 1);
+    ImGui::RadioButton(label("False##Transparent").c_str(), &transparent, 0);
     ImGui::Spacing();
 
     bootable.cmd = cmd;
     bootable.args = args;
     bootable.killOnExit = killOnExit == 1 ? true : false;
+    bootable.transparent = transparent == 1 ? true : false;
   }
 }
 

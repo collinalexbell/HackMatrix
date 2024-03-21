@@ -24,6 +24,7 @@ uniform bool appSelected;
 uniform bool isMesh;
 uniform bool isDynamicObject;
 uniform bool isLight;
+uniform bool appTransparent;
 uniform int totalBlockTypes;
 uniform float time;
 uniform vec3 lightPos;
@@ -72,7 +73,11 @@ vec4 floor( vec2 fragCoord ) {
 }
 
 vec4 colorFromTexture(sampler2D tex, vec2 coord) {
-	return texture(tex, coord * vec2(1,-1));
+  if(appTransparent) {
+    return texture(tex, coord * vec2(1,-1));
+  } else {
+    return vec4(vec3(texture(tex, coord * vec2(1,-1))), 1);
+  }
 }
 
 void main()

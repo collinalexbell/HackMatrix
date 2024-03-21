@@ -9,6 +9,7 @@ struct Bootable {
   std::string args;
   bool killOnExit;
   optional<pid_t> pid;
+  bool transparent;
 };
 
 class BootablePersister: public SQLPersisterImpl {
