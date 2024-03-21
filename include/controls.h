@@ -57,7 +57,7 @@ public:
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback (GLFWwindow* window, double xpos, double ypos);
   void goToApp(entt::entity);
-  void moveTo(glm::vec3 pos, float secs);
+  void moveTo(glm::vec3 pos, optional<glm::vec3> front, float secs, optional<function<void()>> = nullopt);
   void disable();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
 };

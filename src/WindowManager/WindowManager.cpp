@@ -252,7 +252,7 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode code = XKeysymToKeycode(display, XK_0);
   if (event.keycode == code && event.state & Mod4Mask) {
     unfocusApp();
-    controls->moveTo(glm::vec3(3.0, 5.0, 16), 4);
+    controls->moveTo(glm::vec3(3.0, 5.0, 16), nullopt, 4);
   }
 }
 
