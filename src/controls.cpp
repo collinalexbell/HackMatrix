@@ -173,11 +173,19 @@ void Controls::handleModEscape(GLFWwindow* window) {
   }
 }
 
-void Controls::moveTo(glm::vec3 pos, optional<glm::vec3> front, float secs,
+void Controls::moveTo(glm::vec3 pos, optional<glm::vec3> rotation, float secs,
                       optional<function<void()>> callback) {
   grabbedCursor = false;
   resetMouse = true;
-  auto frontOrCamera = front.has_value() ? front.value() : camera->front;
+
+  glm::vec3 front;
+  // convert front to a rotated vector
+  if(rotation.has_value()) {
+    glm::quat rotationQuat = glm::quat(glm::radians(rotation.value()));
+    front = rotationQuat * glm::vec3(0,0,-1);
+  }
+
+  auto frontOrCamera = rotation.has_value() ? front : camera->front;
   shared_ptr<bool> isDone = camera->moveTo(pos, frontOrCamera, secs);
   doAfter(isDone, [this, callback]() -> void {
     if(callback.has_value()) {
@@ -190,14 +198,13 @@ void Controls::moveTo(glm::vec3 pos, optional<glm::vec3> front, float secs,
 void Controls::goToApp(entt::entity app) {
   wm->passthroughInput();
   float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
-  glm::vec3 rotationV = windowManagerSpace->getAppRotation(app);
-  glm::quat rotation = glm::quat(glm::radians(rotationV));
+  glm::vec3 rotationDegrees = windowManagerSpace->getAppRotation(app);
+  glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
 
   glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
-  targetPosition = targetPosition + rotation * glm::vec3(0,0,deltaZ);
-  glm::vec3 front = rotation * glm::vec3(0, 0, -1);
+  targetPosition = targetPosition + rotationQuat * glm::vec3(0,0,deltaZ);
   float moveSeconds = 0.25;
-  moveTo(targetPosition, front, moveSeconds,
+  moveTo(targetPosition, rotationDegrees, moveSeconds,
                      [app, this]() {wm->focusApp(app); });
 }
 

@@ -1,4 +1,5 @@
 #include "api.h"
+#include "controls.h"
 #include "dynamicObject.h"
 #include "glm/fwd.hpp"
 #include "logger.h"
@@ -21,7 +22,7 @@ using namespace std;
 
 int BatchedRequest::nextId = 0;
 
-Api::Api(std::string bindAddress, shared_ptr<EntityRegistry> registry): registry(registry) {
+Api::Api(std::string bindAddress, shared_ptr<EntityRegistry> registry, Controls* controls): registry(registry), controls(controls) {
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
   logger->set_level(spdlog::level::debug);
@@ -96,6 +97,16 @@ void Api::processBatchedRequest(BatchedRequest batchedRequest) {
       systems::unturnKey(registry, entityId);
     }
     break;
+  }
+  case PLAYER_MOVE: {
+    auto playerMove = batchedRequest.request.playermove();
+    glm::vec3 pos(playerMove.position().x(),
+                  playerMove.position().y(),
+                  playerMove.position().z());
+    glm::vec3 rotation(playerMove.rotation().x(),
+                    playerMove.rotation().y(),
+                    playerMove.rotation().z());
+    controls->moveTo(pos, rotation, playerMove.unitspersecond());
   }
   default:
     break;
