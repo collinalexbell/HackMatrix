@@ -4,6 +4,7 @@ from rich.text import Text
 from pynput import keyboard
 import numpy as np
 import hackMatrix.api as matrix
+from scipy.spatial.transform import Rotation as R
 
 # Initialize the console
 console = Console()
@@ -17,7 +18,7 @@ startOrientation = np.array((0,-5,0))
 relative_app_positions = np.array([(0,0,0),
                                    (2.5, 1.5, -3.5)-startPos,
                                    (3.3, 1.5, -2.78)-startPos])
-relative_app_orientations = np.array([(0, 0, 0), (0, -35, 0), (0, -50, 0)])
+relative_app_orientations = np.array([(0, 0, 0), (0, -30, 0), (0, -45, 0)])
 selected_index = 0
 
 def move(pos, rotation):
@@ -28,16 +29,34 @@ def move_to(selected_index):
     global cur_orientation
 
     awayFromScreenPosOffset = np.array((0,-0.35,1.2))
-    awayFromScreenOrientationOffset = np.array((2, 0, 0))
+    awayFromScreenOrientationOffset = np.array((6,0,0))
+
+    # Convert the orientation offset to a rotation quaternion
+    rotation = R.from_euler('xyz',
+                            relative_app_orientations[selected_index] +
+                            startOrientation,
+
+                            degrees=True).as_quat()
+
+    awayFromScreenRotation = R.from_euler('xyz',
+                                          awayFromScreenOrientationOffset,
+                                          degrees=True).as_quat()
+
+
+    # Rotate the position offset by the orientation
+    rotated_offset = R.from_quat(rotation).apply(awayFromScreenPosOffset)
+
+
+    orientation = rotation
+
+    orientationRotation = R.from_quat(orientation).as_euler("xyz", degrees=True)
 
     move(
         relative_app_positions[selected_index] +
         startPos +
-        awayFromScreenPosOffset,
+        rotated_offset,
+        orientationRotation + awayFromScreenOrientationOffset
 
-        relative_app_orientations[selected_index] +
-        startOrientation +
-        awayFromScreenOrientationOffset
     )
 
 # Function to display the IDE options with the arrow indicating the selected option
