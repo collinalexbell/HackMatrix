@@ -311,7 +311,20 @@ Thats it... thats all I will need
     - Follow interest curves (I don't know how I'll do this).
 
 ### Perks
-To be honest, I don't know how to create differentiated perks
+- Put your Pet into the game!
+Would you like a Pet NPC that only you can script?
+Send me some pics of your pet and some behavioural traits
+and I'll do my best to create voxel replica and base script
+to make your pet come alive in HackMatrix!
+
+- Design a Quest
+Put your quest idea into the game.
+Maybe you are interested in a particular quest theme,
+a CS concept you wish to explore in 3d,
+a plotline you think would work well in HackMatrix,
+or all of the above.
+I'll work with you to design and implement a quest that is inspired by you!
+
 ### Final Evaluation of the Lenses
 I should do a final evaluation of lenses
 to ensure that the game is most impactful
