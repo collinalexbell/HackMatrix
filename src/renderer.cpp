@@ -235,7 +235,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
 
   view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
   projection =
-      glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.1f, 100.0f);
+      glm::perspective(glm::radians(45.0f), 1920.0f / 1080.0f, 0.02f, 100.0f);
   meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
 }
 

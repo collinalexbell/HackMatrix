@@ -47,8 +47,10 @@ void Space::initAppPositions() {
 
 float Space::getViewDistanceForWindowSize(entt::entity entity) {
   auto &app = registry->get<X11App>(entity);
+  auto positionable = registry->try_get<Positionable>(entity);
   // view = projection^-1 * gl_vertex * vertex^-1
-  float glVertexX = float(app.width) / 1920;
+  float scaleFactor = positionable != NULL ? positionable->scale : 1;
+  float glVertexX = float(app.width) / 1920 / scaleFactor;
   glm::vec4 gl_pos = glm::vec4(10000, 0, 0, 0);
   float zBest;
   float target = glVertexX;
