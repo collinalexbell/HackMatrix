@@ -208,7 +208,7 @@ Window getWindowByName(Display* display, string search) {
 
   traverseWindowTree(display, root, [&rv, &found, search](Display* display, Window window) {
     char nameMem[100];
-    char* name;
+    char* name = nameMem;
     XFetchName(display, window, &name);
     if(name != NULL && string(name).find(search) != string::npos) {
       found = true;
@@ -232,7 +232,6 @@ Window getWindowByClass(Display *display, string search) {
   traverseWindowTree(
       display, root,
       [&rv, &found, search, &largestWidth](Display *display, Window window) {
-        char nameMem[100];
         XClassHint classHint;
         classHint.res_class = NULL;
         classHint.res_name = NULL;
@@ -502,4 +501,12 @@ int X11App::getPID() {
   } else {
     return -1;
   }
+}
+
+
+string X11App::getWindowName() {
+  char nameMem[100];
+  char *name = nameMem;
+  XFetchName(display, appWindow, &name);
+  return string(name);
 }

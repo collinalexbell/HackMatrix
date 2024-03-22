@@ -67,6 +67,7 @@ public:
   bool isFocused();
   bool isAccessory();
   int getPID();
+  string getWindowName();
   Window getWindow();
   array<int, 2> getPosition();
   size_t getAppIndex() {return appIndex;}

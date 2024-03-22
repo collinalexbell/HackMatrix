@@ -98,8 +98,7 @@ void systems::boot(std::shared_ptr<EntityRegistry> registry,
                    char** envp) {
   auto bootable = registry->try_get<Bootable>(entity);
 
-  if(bootable) {
-
+  if(bootable && bootable->bootOnStartup) {
     if (bootable->pid != std::nullopt && !bootable->killOnExit) {
       // Check if the process exists
       if (pidIsRunning(bootable->pid.value())) {
@@ -165,7 +164,8 @@ optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,
 
   for (auto [candidateEntity, bootable] : bootableView.each()) {
     if (bootable.name.has_value() &&
-        bootable.name.value() == "asd" /*app->getName()*/) {
+        bootable.name.value() == app->getWindowName()) {
+      bootable.pid = app->getPID();
       foundEntity = true;
     }
     if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
@@ -174,6 +174,10 @@ optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,
     if(foundEntity) {
       app->resize(bootable.getWidth(), bootable.getHeight());
       return candidateEntity;
+    }
+    if (bootable.name.has_value()) {
+      cout << "name: " << bootable.name.value() << endl;
+      cout << "appName: " << app->getWindowName() << endl;
     }
   }
   return nullopt;

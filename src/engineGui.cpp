@@ -281,7 +281,7 @@ void EngineGui::addComponentPanel(entt::entity entity,
     static int bootOnStartup = 1;
     ImGui::InputText("Command##NewBootable", cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText("Args##NewBootable", args, IM_ARRAYSIZE(args));
-    ImGui::InputText("Name##NewBootable", args, IM_ARRAYSIZE(name));
+    ImGui::InputText("Name##NewBootable", name, IM_ARRAYSIZE(name));
     ImGui::Text("Kill on exit:");
     ImGui::RadioButton("True##KillOnExit", &killOnExit, 1);
     ImGui::RadioButton("False##KillOnExit", &killOnExit, 0);
