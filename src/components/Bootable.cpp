@@ -5,11 +5,13 @@
 int Bootable::DEFAULT_WIDTH = 1920 * 0.85;
 int Bootable::DEFAULT_HEIGHT = 1920 * 0.85 * 0.54;
 
-Bootable::Bootable(std::string cmd, std::string args,
-                   bool killOnExit, optional<pid_t> pid,
-                   bool transparent, int width, int height):
-  cmd(cmd), args(args), killOnExit(killOnExit), pid(pid),
-  transparent(transparent), width(width), height(height) {
+Bootable::Bootable(std::string cmd, std::string args, bool killOnExit,
+                   optional<pid_t> pid, bool transparent,
+                   optional<std::string> name, bool bootOnStartup,
+                   int width, int height)
+    : cmd(cmd), args(args), killOnExit(killOnExit), pid(pid),
+      transparent(transparent), name(name), bootOnStartup(bootOnStartup),
+      width(width), height(height) {
   recomputeHeightScaler();
 }
 
@@ -41,6 +43,8 @@ void BootablePersister::createTablesIfNeeded() {
          << "transparent INTEGER, "
          << "width INTEGER, "
          << "height INTEGER, "
+         << "name TEXT, "
+         << "boot_on_startup INTEGER, "
          << "FOREIGN KEY (entity_id) REFERENCES Entity(id)"
          <<")";
   db.exec(create.str());
@@ -51,8 +55,9 @@ void BootablePersister::saveAll() {
 
     stringstream queryStream;
     queryStream << "INSERT OR REPLACE INTO " << entityName << " "
-                << "(entity_id, cmd, args, kill_on_exit, pid, transparent, width, height)"
-                << "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                << "(entity_id, cmd, args, kill_on_exit, pid, "
+                << "transparent, width, height, name, boot_on_startup)"
+                << "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     SQLite::Statement query(db, queryStream.str());
 
     db.exec("BEGIN TRANSACTION");
@@ -69,6 +74,12 @@ void BootablePersister::saveAll() {
       query.bind(6, bootable.transparent ? 1 : 0);
       query.bind(7, bootable.width);
       query.bind(8, bootable.height);
+      if (bootable.name.has_value()) {
+        query.bind(9, bootable.name.value());
+      } else {
+        query.bind(9, nullptr);
+      }
+      query.bind(10, bootable.bootOnStartup ? 1 : 0);
       query.exec();
       query.reset();
     }
@@ -82,7 +93,7 @@ void BootablePersister::loadAll() {
 
   stringstream queryStream;
   queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid ,"
-              << "transparent, width, height "
+              << "transparent, width, height, name, boot_on_startup "
               << "FROM " << entityName;
   SQLite::Statement query(db, queryStream.str());
 
@@ -98,13 +109,21 @@ void BootablePersister::loadAll() {
       pid = query.getColumn(4).getInt();
     }
     bool transparent = query.getColumn(5).getInt() == 0 ? false : true;
-    int width = query.getColumn(6).getInt();
-    int height = query.getColumn(7).getInt();
+    auto width = query.getColumn(6).getInt();
+    auto height = query.getColumn(7).getInt();
+    optional<std::string> name;
+    if(query.isColumnNull(8)) {
+      name = nullopt;
+    } else {
+      name = query.getColumn(8).getText();
+    }
+    bool bootOnStartup = query.getColumn(9).getInt() == 0 ? false : true;
     auto entity = registry->locateEntity(entityId);
 
     if(entity.has_value()) {
       registry->emplace<Bootable>(entity.value(), cmd, args, killOnExit,
-                                  pid, transparent, width, height);
+                                  pid, transparent, name, bootOnStartup,
+                                  width, height);
     }
   }
 }

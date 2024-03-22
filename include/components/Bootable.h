@@ -14,14 +14,22 @@ class Bootable {
   void recomputeHeightScaler();
 
 public:
-  Bootable(std::string cmd, std::string args, bool killOnExit, optional<pid_t> pid, bool transparent, int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT);
+  Bootable(std::string cmd, std::string args, bool killOnExit, optional<pid_t> pid,
+           bool transparent, optional<std::string> name, bool bootOnStartup = true,
+           int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT);
   static int DEFAULT_WIDTH;
   static int DEFAULT_HEIGHT;
+
+  // struct members
   std::string cmd;
   std::string args;
   bool killOnExit;
   optional<pid_t> pid;
   bool transparent;
+  optional<std::string> name;
+  bool bootOnStartup;
+
+  // methods
   int getWidth();
   int getHeight();
   glm::mat4 getHeightScaler();
