@@ -424,17 +424,24 @@ void Renderer::renderApps() {
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDisable(GL_CULL_FACE);
-  auto positionableApps = registry->view<X11App, Positionable>();
-  for(auto [entity, app, positionable]: positionableApps.each()) {
-    auto bootable = registry->try_get<Bootable>(entity);
+
+  // this is LEGACY for msedge
+  auto positionableNonBootable = registry->view<X11App, Positionable>(entt::exclude<Bootable>);
+  for(auto [entity, app, positionable]: positionableNonBootable.each()) {
     shader->setMatrix4("model", positionable.modelMatrix);
-    if(bootable) {
-      shader->setMatrix4("bootableScale", bootable->getHeightScaler());
-    } else {
-      shader->setMatrix4("bootableScale", glm::mat4(1.0));
-    }
+    shader->setMatrix4("bootableScale", glm::mat4(1.0));
     shader->setInt("appNumber", app.getAppIndex());
-    if(bootable && bootable->transparent) {
+    shader->setBool("appTransparent", false);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+  }
+
+
+  auto positionableApps = registry->view<X11App, Positionable, Bootable>();
+  for(auto [entity, app, positionable, bootable]: positionableApps.each()) {
+    shader->setMatrix4("model", positionable.modelMatrix);
+    shader->setMatrix4("bootableScale", bootable.getHeightScaler());
+    shader->setInt("appNumber", app.getAppIndex());
+    if(bootable.transparent) {
       shader->setBool("appTransparent", true);
     } else {
       shader->setBool("appTransparent", false);
