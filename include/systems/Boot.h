@@ -13,4 +13,5 @@ namespace systems {
   getAlreadyBooted(std::shared_ptr<EntityRegistry> registry);
 
   void killBootablesOnExit(std::shared_ptr<EntityRegistry>);
+  void resizeBootable(std::shared_ptr<EntityRegistry>, entt::entity, int width, int height);
 }

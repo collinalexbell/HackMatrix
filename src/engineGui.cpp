@@ -17,6 +17,7 @@
 #include <optional>
 #include <string>
 #include "entity.h"
+#include "systems/Boot.h"
 #include "systems/Door.h"
 #include "systems/Intersections.h"
 #include "systems/KeyAndLock.h"
@@ -557,9 +558,15 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
 
     int killOnExit = bootable.killOnExit;
     int transparent = bootable.transparent;
+    int width = bootable.getWidth();
+    int height = bootable.getHeight();
+    int oldWidth = width;
+    int oldHeight = height;
 
     ImGui::InputText(label("Command").c_str(), cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText(label("Args").c_str(), args, IM_ARRAYSIZE(args));
+    ImGui::InputInt(label("Width").c_str(), &width);
+    ImGui::InputInt(label("Height").c_str(), &height);
     ImGui::Text("Kill on Exit:");
     ImGui::RadioButton(label("True").c_str(), &killOnExit, 1);
     ImGui::RadioButton(label("False").c_str(), &killOnExit, 0);
@@ -577,6 +584,9 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     bootable.args = args;
     bootable.killOnExit = killOnExit == 1 ? true : false;
     bootable.transparent = transparent == 1 ? true : false;
+    if(oldWidth != width || oldHeight != height) {
+      systems::resizeBootable(registry, entity, width, height);
+    }
   }
 }
 

@@ -21,6 +21,7 @@ uniform mat4 meshModel;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 bootableScale;
 uniform mat3 normalMatrix;
 uniform bool isApp;
 uniform bool isLine;
@@ -35,7 +36,7 @@ void main()
 {
   // model in this case is used per call to glDrawArraysInstanced
   if(isApp) {
-    gl_Position = projection * view * model * vec4(vertexPositionInModel, 1.0);
+    gl_Position = projection * view * model * bootableScale * vec4(vertexPositionInModel, 1.0);
     BlockType = appNumber;
     TexCoord = texCoord;
   } else if(isLine) {

@@ -1,8 +1,28 @@
 #include "components/Bootable.h"
 #include <optional>
+#include <glm/gtx/transform.hpp>
 
 int Bootable::DEFAULT_WIDTH = 1920 * 0.85;
 int Bootable::DEFAULT_HEIGHT = 1920 * 0.85 * 0.54;
+
+Bootable::Bootable(std::string cmd, std::string args,
+                   bool killOnExit, optional<pid_t> pid,
+                   bool transparent, int width, int height):
+  cmd(cmd), args(args), killOnExit(killOnExit), pid(pid),
+  transparent(transparent), width(width), height(height) {
+  recomputeHeightScaler();
+}
+
+int Bootable::getWidth() { return width; }
+int Bootable::getHeight() { return height; }
+glm::mat4 Bootable::getHeightScaler() { return heightScaler; }
+
+void Bootable::recomputeHeightScaler() {
+  auto standardRatio = 0.54;
+  auto currentRatio = (double)getHeight() / (double)getWidth();
+  auto scaleFactor = currentRatio / standardRatio;
+  heightScaler = glm::scale(glm::mat4(1.0), glm::vec3(1, scaleFactor, 1));
+}
 
 void BootablePersister::createTablesIfNeeded() {
   // even the pid should get saved (used for killOnExit = false)

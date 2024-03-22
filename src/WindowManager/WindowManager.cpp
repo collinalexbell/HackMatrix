@@ -103,7 +103,7 @@ void WindowManager::createAndRegisterApps(char **envp) {
     auto bootable = registry->get<Bootable>(entityAndPid.first);
     appsWithHotKeys.push_back(entityAndPid.first);
     auto app = X11App::byPID(entityAndPid.second, display, screen,
-                             bootable.width, bootable.height);
+                             bootable.getWidth(), bootable.getHeight());
     addApp(app, entityAndPid.first);
   }
   systems::bootAll(registry, envp);
@@ -199,7 +199,7 @@ void WindowManager::createApp(Window window, unsigned int width,
       cout << "found pid" << bootable.pid.value();
       entity = candidateEntity;
       foundEntity = true;
-      app->resize(bootable.width, bootable.height);
+      app->resize(bootable.getWidth(), bootable.getHeight());
     }
   }
 

@@ -428,6 +428,11 @@ void Renderer::renderApps() {
   for(auto [entity, app, positionable]: positionableApps.each()) {
     auto bootable = registry->try_get<Bootable>(entity);
     shader->setMatrix4("model", positionable.modelMatrix);
+    if(bootable) {
+      shader->setMatrix4("bootableScale", bootable->getHeightScaler());
+    } else {
+      shader->setMatrix4("bootableScale", glm::mat4(1.0));
+    }
     shader->setInt("appNumber", app.getAppIndex());
     if(bootable && bootable->transparent) {
       shader->setBool("appTransparent", true);
