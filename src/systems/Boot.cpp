@@ -147,13 +147,13 @@ systems::getAlreadyBooted(std::shared_ptr<EntityRegistry> registry) {
 
 
 void systems::resizeBootable(std::shared_ptr<EntityRegistry> registry, entt::entity entity, int width, int height) {
-  auto &app = registry->get<X11App>(entity);
-  auto &bootable = registry->get<Bootable>(entity);
+  auto app = registry->try_get<X11App>(entity);
+  if (app) {
+    auto &bootable = registry->get<Bootable>(entity);
 
-  app.resize(width, height);
-  bootable.width = width;
-  bootable.height = height;
-  bootable.recomputeHeightScaler();
+    bootable.resize(width, height);
+    app->resizeMove(width, height, bootable.x, bootable.y);
+  }
 }
 
 optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,

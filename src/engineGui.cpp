@@ -279,9 +279,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
     static int killOnExit;
     static int transparent = 0;
     static int bootOnStartup = 1;
+    static int xy[2];
     ImGui::InputText("Command##NewBootable", cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText("Args##NewBootable", args, IM_ARRAYSIZE(args));
     ImGui::InputText("Name##NewBootable", name, IM_ARRAYSIZE(name));
+    ImGui::InputInt2("XY:", xy);
     ImGui::Text("Kill on exit:");
     ImGui::RadioButton("True##KillOnExit", &killOnExit, 1);
     ImGui::RadioButton("False##KillOnExit", &killOnExit, 0);
@@ -581,12 +583,18 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     int height = bootable.getHeight();
     int oldWidth = width;
     int oldHeight = height;
+    int xy[2];
+    xy[0] = bootable.x;
+    xy[1] = bootable.y;
+    int oldX = xy[0];
+    int oldY = xy[1];
 
     ImGui::InputText(label("Command").c_str(), cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText(label("Args").c_str(), args, IM_ARRAYSIZE(args));
     ImGui::InputText(label("Name").c_str(), name, IM_ARRAYSIZE(name));
     ImGui::InputInt(label("Width").c_str(), &width);
     ImGui::InputInt(label("Height").c_str(), &height);
+    ImGui::InputInt2(label("X,Y").c_str(), xy);
     ImGui::Text("Kill on Exit:");
     ImGui::RadioButton(label("True##KillOnExit").c_str(), &killOnExit, 1);
     ImGui::RadioButton(label("False##KillOnExit").c_str(), &killOnExit, 0);
@@ -613,7 +621,9 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     bootable.killOnExit = killOnExit == 1 ? true : false;
     bootable.transparent = transparent == 1 ? true : false;
     bootable.bootOnStartup = bootOnStartup == 1 ? true : false;
-    if(oldWidth != width || oldHeight != height) {
+    if(oldWidth != width || oldHeight != height || oldX != xy[0] || oldY != xy[1]) {
+      bootable.x = xy[0];
+      bootable.y = xy[1];
       systems::resizeBootable(registry, entity, width, height);
     }
   }

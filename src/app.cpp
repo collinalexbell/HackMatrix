@@ -445,6 +445,15 @@ void getAbsoluteMousePosition(Display *display, int *x_out, int *y_out) {
   }
 }
 
+void X11App::resizeMove(int width, int height, int x, int y) {
+  this->x = x;
+  this->y = SCREEN_HEIGHT - y - height;
+  if(!isAccessory()) {
+    XMoveResizeWindow(display, appWindow, x, y, width, height);
+    XFlush(display);
+  }
+}
+
 void X11App::resize(int width, int height) {
   this->width = width;
   this->height = height;

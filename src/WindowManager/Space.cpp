@@ -1,5 +1,6 @@
 #include "WindowManager/Space.h"
 #include "app.h"
+#include "components/Bootable.h"
 #include "camera.h"
 #include "entity.h"
 #include "glm/ext/quaternion_trigonometric.hpp"
@@ -130,7 +131,8 @@ size_t Space::getNumPositionableApps() {
 void Space::addApp(entt::entity entity, bool spawnAtCamera) {
   auto &app = registry->get<X11App>(entity);
   auto hasPositionable = registry->all_of<Positionable>(entity);
-  if (!app.isAccessory() && !hasPositionable) {
+  auto bootable = registry->try_get<Bootable>(entity);
+  if (!app.isAccessory() && !hasPositionable && !bootable) {
 
     glm::vec3 pos;
     glm::vec3 rot = glm::vec3(0.0f);
@@ -155,8 +157,13 @@ void Space::addApp(entt::entity entity, bool spawnAtCamera) {
         availableAppPositions.pop();
       }
     }
+
     int index = numPositionableApps++;
     registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), rot, 1);
+  }
+  if (!app.isAccessory() && bootable) {
+    systems::resizeBootable(registry, entity, bootable->getWidth(),
+                            bootable->getHeight());
   }
   try {
     renderer->registerApp(&app);

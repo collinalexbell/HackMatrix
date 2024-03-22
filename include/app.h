@@ -64,6 +64,7 @@ public:
   void takeInputFocus();
   void unfocus(Window matrix);
   void resize(int width, int height);
+  void resizeMove(int width, int height, int x, int y);
   bool isFocused();
   bool isAccessory();
   int getPID();
