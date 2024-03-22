@@ -70,7 +70,9 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
     }
   }
   X11App *app =
-      X11App::byClass(className, display, screen, APP_WIDTH, APP_HEIGHT);
+    X11App::byClass(className, display, screen,
+                    Bootable::DEFAULT_WIDTH,
+                    Bootable::DEFAULT_HEIGHT);
   appEntity = registry->create();
   registry->emplace<X11App>(appEntity, std::move(*app));
   dynamicApps[app->getWindow()] = appEntity;
@@ -98,8 +100,10 @@ void WindowManager::createAndRegisterApps(char **envp) {
   }
   auto alreadyBooted = systems::getAlreadyBooted(registry);
   for(auto entityAndPid : alreadyBooted) {
+    auto bootable = registry->get<Bootable>(entityAndPid.first);
     appsWithHotKeys.push_back(entityAndPid.first);
-    auto app = X11App::byPID(entityAndPid.second, display, screen, APP_WIDTH, APP_HEIGHT);
+    auto app = X11App::byPID(entityAndPid.second, display, screen,
+                             bootable.width, bootable.height);
     addApp(app, entityAndPid.first);
   }
   systems::bootAll(registry, envp);
@@ -195,6 +199,7 @@ void WindowManager::createApp(Window window, unsigned int width,
       cout << "found pid" << bootable.pid.value();
       entity = candidateEntity;
       foundEntity = true;
+      app->resize(bootable.width, bootable.height);
     }
   }
 

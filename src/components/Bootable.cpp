@@ -1,6 +1,9 @@
 #include "components/Bootable.h"
 #include <optional>
 
+int Bootable::DEFAULT_WIDTH = 1920 * 0.85;
+int Bootable::DEFAULT_HEIGHT = 1920 * 0.85 * 0.54;
+
 void BootablePersister::createTablesIfNeeded() {
   // even the pid should get saved (used for killOnExit = false)
 
