@@ -156,3 +156,23 @@ void systems::resizeBootable(std::shared_ptr<EntityRegistry> registry, entt::ent
   bootable.height = height;
   bootable.recomputeHeightScaler();
 }
+
+optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,
+                                         X11App *app) {
+  auto bootableView = registry->view<Bootable>();
+  entt::entity entity;
+  bool foundEntity = false;
+
+  for (auto [candidateEntity, bootable] : bootableView.each()) {
+    if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
+      cout << "found pid" << bootable.pid.value();
+      entity = candidateEntity;
+      foundEntity = true;
+      app->resize(bootable.getWidth(), bootable.getHeight());
+    }
+  }
+  if(foundEntity) {
+    return entity;
+  }
+  return nullopt;
+}

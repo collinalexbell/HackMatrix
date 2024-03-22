@@ -35,7 +35,7 @@
 #define OBS false
 #define EDGE true
 #define TERM false
-#define MAGICA true
+#define MAGICA false
 
 namespace WindowManager {
 
@@ -190,20 +190,13 @@ void WindowManager::createApp(Window window, unsigned int width,
 
   X11App *app = X11App::byWindow(window, display, screen, width, height);
 
-  auto bootableView = registry->view<Bootable>();
   entt::entity entity;
-  bool foundEntity = false;
 
-  for (auto [candidateEntity, bootable] : bootableView.each()) {
-    if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
-      cout << "found pid" << bootable.pid.value();
-      entity = candidateEntity;
-      foundEntity = true;
-      app->resize(bootable.getWidth(), bootable.getHeight());
-    }
-  }
+  auto bootableEntity = systems::matchApp(registry, app);
 
-  if(!foundEntity) {
+  if(bootableEntity.has_value()) {
+    entity = bootableEntity.value();
+  } else {
     entity = registry->create();
   }
 
