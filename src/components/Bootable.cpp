@@ -1,5 +1,64 @@
 #include "components/Bootable.h"
 #include <optional>
+#include <glm/gtx/transform.hpp>
+
+int Bootable::DEFAULT_WIDTH = 1920 * 0.85;
+int Bootable::DEFAULT_HEIGHT = 1920 * 0.85 * 0.54;
+
+Bootable::Bootable(std::string cmd, std::string args, bool killOnExit,
+                   optional<pid_t> pid, bool transparent,
+                   optional<std::string> name, bool bootOnStartup,
+                   int width, int height,
+                   optional<int> x, optional<int> y)
+    : cmd(cmd), args(args), killOnExit(killOnExit), pid(pid),
+      transparent(transparent), name(name), bootOnStartup(bootOnStartup),
+      width(width), height(height) {
+
+  recomputeHeightScaler();
+  resetDefaultXYBySize();
+
+  if (x.has_value()) {
+    this->x = x.value();
+  }
+  else {
+    this->x = defaultXBySize;
+  }
+
+  if (y.has_value()) {
+    this->y = y.value();
+  } else {
+    this->y = defaultYBySize;
+  }
+}
+
+int Bootable::getWidth() { return width; }
+int Bootable::getHeight() { return height; }
+glm::mat4 Bootable::getHeightScaler() { return heightScaler; }
+
+void Bootable::resize(int width, int height) {
+  this->width = width;
+  this->height = height;
+  auto oldDefaultXBySize = defaultXBySize;
+  auto oldDefaultYBySize = defaultYBySize;
+  resetDefaultXYBySize();
+  if(x == oldDefaultXBySize || y == oldDefaultYBySize) {
+    x = defaultXBySize;
+    y = defaultYBySize;
+  }
+  recomputeHeightScaler();
+}
+
+void Bootable::resetDefaultXYBySize() {
+  defaultXBySize = (SCREEN_WIDTH - width) / 2;
+  defaultYBySize = (SCREEN_HEIGHT - height) / 2;
+}
+
+void Bootable::recomputeHeightScaler() {
+  auto standardRatio = 0.54;
+  auto currentRatio = (double)getHeight() / (double)getWidth();
+  auto scaleFactor = currentRatio / standardRatio;
+  heightScaler = glm::scale(glm::mat4(1.0), glm::vec3(1, scaleFactor, 1));
+}
 
 void BootablePersister::createTablesIfNeeded() {
   // even the pid should get saved (used for killOnExit = false)
@@ -16,6 +75,12 @@ void BootablePersister::createTablesIfNeeded() {
          << "kill_on_exit INTEGER, "
          << "pid INTEGER, "
          << "transparent INTEGER, "
+         << "width INTEGER, "
+         << "height INTEGER, "
+         << "name TEXT, "
+         << "boot_on_startup INTEGER, "
+         << "x INTEGER, "
+         << "y INTEGER, "
          << "FOREIGN KEY (entity_id) REFERENCES Entity(id)"
          <<")";
   db.exec(create.str());
@@ -26,8 +91,9 @@ void BootablePersister::saveAll() {
 
     stringstream queryStream;
     queryStream << "INSERT OR REPLACE INTO " << entityName << " "
-                << "(entity_id, cmd, args, kill_on_exit, pid, transparent)"
-                << "VALUES (?, ?, ?, ?, ?, ?)";
+                << "(entity_id, cmd, args, kill_on_exit, pid, "
+                << "transparent, width, height, name, boot_on_startup, x, y)"
+                << "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     SQLite::Statement query(db, queryStream.str());
 
     db.exec("BEGIN TRANSACTION");
@@ -42,6 +108,16 @@ void BootablePersister::saveAll() {
         query.bind(5, nullptr);
       }
       query.bind(6, bootable.transparent ? 1 : 0);
+      query.bind(7, bootable.width);
+      query.bind(8, bootable.height);
+      if (bootable.name.has_value()) {
+        query.bind(9, bootable.name.value());
+      } else {
+        query.bind(9, nullptr);
+      }
+      query.bind(10, bootable.bootOnStartup ? 1 : 0);
+      query.bind(11, bootable.x);
+      query.bind(12, bootable.y);
       query.exec();
       query.reset();
     }
@@ -54,7 +130,8 @@ void BootablePersister::loadAll() {
   SQLite::Database &db = registry->getDatabase();
 
   stringstream queryStream;
-  queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid, transparent "
+  queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid ,"
+              << "transparent, width, height, name, boot_on_startup, x, y "
               << "FROM " << entityName;
   SQLite::Statement query(db, queryStream.str());
 
@@ -70,11 +147,32 @@ void BootablePersister::loadAll() {
       pid = query.getColumn(4).getInt();
     }
     bool transparent = query.getColumn(5).getInt() == 0 ? false : true;
+    auto width = query.getColumn(6).getInt();
+    auto height = query.getColumn(7).getInt();
+    optional<std::string> name;
+    if(query.isColumnNull(8)) {
+      name = nullopt;
+    } else {
+      name = query.getColumn(8).getText();
+    }
+    bool bootOnStartup = query.getColumn(9).getInt() == 0 ? false : true;
+    optional<int> x, y;
+    if(query.isColumnNull(10)) {
+      x = nullopt;
+    } else {
+      x = query.getColumn(10).getInt();
+    }
+    if(query.isColumnNull(11)) {
+      y = nullopt;
+    } else {
+      y = query.getColumn(11).getInt();
+    }
     auto entity = registry->locateEntity(entityId);
 
     if(entity.has_value()) {
       registry->emplace<Bootable>(entity.value(), cmd, args, killOnExit,
-                                  pid, transparent);
+                                  pid, transparent, name, bootOnStartup,
+                                  width, height, x, y);
     }
   }
 }

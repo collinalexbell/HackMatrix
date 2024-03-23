@@ -17,6 +17,7 @@
 #include <optional>
 #include <string>
 #include "entity.h"
+#include "systems/Boot.h"
 #include "systems/Door.h"
 #include "systems/Intersections.h"
 #include "systems/KeyAndLock.h"
@@ -274,22 +275,37 @@ void EngineGui::addComponentPanel(entt::entity entity,
   } else if (selectedComponentType == BOOTABLE_TYPE) {
     static char cmd[128] = "";
     static char args[128] = "";
+    static char name[128] = "";
     static int killOnExit;
-    static int transparent;
+    static int transparent = 0;
+    static int bootOnStartup = 1;
+    static int xy[2];
     ImGui::InputText("Command##NewBootable", cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText("Args##NewBootable", args, IM_ARRAYSIZE(args));
+    ImGui::InputText("Name##NewBootable", name, IM_ARRAYSIZE(name));
+    ImGui::InputInt2("XY:", xy);
     ImGui::Text("Kill on exit:");
-    ImGui::RadioButton("True", &killOnExit, 1);
-    ImGui::RadioButton("False", &killOnExit, 0);
+    ImGui::RadioButton("True##KillOnExit", &killOnExit, 1);
+    ImGui::RadioButton("False##KillOnExit", &killOnExit, 0);
     ImGui::Text("Transparent:");
-    ImGui::RadioButton("True", &transparent, 1);
-    ImGui::RadioButton("False", &transparent, 0);
+    ImGui::RadioButton("True##Transparent", &transparent, 1);
+    ImGui::RadioButton("False##Transparent", &transparent, 0);
+    ImGui::Text("Boot on startup:");
+    ImGui::RadioButton("True##BootOnStartup", &bootOnStartup, 1);
+    ImGui::RadioButton("False##BootOnStartup", &bootOnStartup, 0);
 
     if (ImGui::Button("Add Bootable Component")) {
+      std::string strName = name;
+      optional<std::string> optname;
+      if(strName.length() > 0) {
+        optname = strName;
+      }
       registry->emplace<Bootable>(entity, cmd, args,
                                   killOnExit == 1 ? true : false,
                                   nullopt,
-                                  transparent == 1 ? true : false);
+                                  transparent == 1 ? true : false,
+                                  optname,
+                                  bootOnStartup);
       showAddComponentPanel = false;
     }
   }
@@ -555,14 +571,33 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     char args[128] = "";
     strcpy(args, bootable.args.c_str());
 
-    int killOnExit = bootable.killOnExit;
-    int transparent = bootable.transparent;
+    char name[128] = "";
+    if (bootable.name.has_value()) {
+      strcpy(name, bootable.name.value().c_str());
+    }
+
+    int killOnExit = bootable.killOnExit ? 1:0;
+    int transparent = bootable.transparent ? 1:0;
+    int bootOnStartup = bootable.bootOnStartup ? 1:0;
+    int width = bootable.getWidth();
+    int height = bootable.getHeight();
+    int oldWidth = width;
+    int oldHeight = height;
+    int xy[2];
+    xy[0] = bootable.x;
+    xy[1] = bootable.y;
+    int oldX = xy[0];
+    int oldY = xy[1];
 
     ImGui::InputText(label("Command").c_str(), cmd, IM_ARRAYSIZE(cmd));
     ImGui::InputText(label("Args").c_str(), args, IM_ARRAYSIZE(args));
+    ImGui::InputText(label("Name").c_str(), name, IM_ARRAYSIZE(name));
+    ImGui::InputInt(label("Width").c_str(), &width);
+    ImGui::InputInt(label("Height").c_str(), &height);
+    ImGui::InputInt2(label("X,Y").c_str(), xy);
     ImGui::Text("Kill on Exit:");
-    ImGui::RadioButton(label("True").c_str(), &killOnExit, 1);
-    ImGui::RadioButton(label("False").c_str(), &killOnExit, 0);
+    ImGui::RadioButton(label("True##KillOnExit").c_str(), &killOnExit, 1);
+    ImGui::RadioButton(label("False##KillOnExit").c_str(), &killOnExit, 0);
     if(bootable.pid.has_value()) {
       ImGui::Text("PID: %d", bootable.pid.value());
     } else {
@@ -571,12 +606,26 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::Text("Transparent:");
     ImGui::RadioButton(label("True##Transparent").c_str(), &transparent, 1);
     ImGui::RadioButton(label("False##Transparent").c_str(), &transparent, 0);
+    ImGui::Text("Boot on Startup");
+    ImGui::RadioButton(label("True##BootOnStartup").c_str(), &bootOnStartup, 1);
+    ImGui::RadioButton(label("False##BootOnStartup").c_str(), &bootOnStartup, 0);
     ImGui::Spacing();
 
     bootable.cmd = cmd;
     bootable.args = args;
+    if(string(name) != "") {
+      bootable.name = name;
+    } else {
+      bootable.name = nullopt;
+    }
     bootable.killOnExit = killOnExit == 1 ? true : false;
     bootable.transparent = transparent == 1 ? true : false;
+    bootable.bootOnStartup = bootOnStartup == 1 ? true : false;
+    if(oldWidth != width || oldHeight != height || oldX != xy[0] || oldY != xy[1]) {
+      bootable.x = xy[0];
+      bootable.y = xy[1];
+      systems::resizeBootable(registry, entity, width, height);
+    }
   }
 }
 

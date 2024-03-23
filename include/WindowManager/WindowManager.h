@@ -4,6 +4,7 @@
 #include "entity.h"
 #include "logger.h"
 #include "world.h"
+#include "components/Bootable.h"
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
 #include <atomic>
@@ -27,9 +28,6 @@ struct IdeSelection {
 
 namespace WindowManager {
 class WindowManager {
-  static constexpr int APP_WIDTH = 1920 * .85;
-  static constexpr int APP_HEIGHT = 1920 * .85 * .54;
-
   shared_ptr<EntityRegistry> registry;
   Display *display = NULL;
   Controls *controls = NULL;
@@ -63,8 +61,8 @@ class WindowManager {
   std::shared_ptr<spdlog::logger> logger;
   void onHotkeyPress(XKeyEvent event);
   void unfocusApp();
-  void createApp(Window window, unsigned int width = APP_WIDTH,
-                    unsigned int height = APP_HEIGHT);
+  void createApp(Window window, unsigned int width = Bootable::DEFAULT_WIDTH,
+                 unsigned int height = Bootable::DEFAULT_HEIGHT);
   void addApp(X11App *, entt::entity);
   void allow_input_passthrough(Window window);
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
