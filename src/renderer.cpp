@@ -33,6 +33,15 @@ float appVertices[] = {
   -0.5f, -HEIGHT, 0, 0.0f, 0.0f,
 };
 
+float directRenderQuad[] = {
+  -1, -1, 0, 0, 0,
+   1, -1, 0, 1, 0,
+   1,  1, 0, 1, 1,
+   1,  1, 0, 1, 1,
+   -1, 1, 0, 0, 1,
+   -1, -1, 0, 0, 0
+};
+
 void Renderer::genMeshResources() {
   glGenVertexArrays(1, &MESH_VERTEX);
   glGenBuffers(1, &MESH_VERTEX_POSITIONS);
@@ -49,6 +58,9 @@ void Renderer::genDynamicObjectResources() {
 void Renderer::genGlResources() {
   glGenVertexArrays(1, &APP_VAO);
   glGenBuffers(1, &APP_VBO);
+
+  glGenVertexArrays(1, &DIRECT_RENDER_VAO);
+  glGenBuffers(1, &DIRECT_RENDER_VBO);
 
   glGenVertexArrays(1, &LINE_VAO);
   glGenBuffers(1, &LINE_VBO);
@@ -105,6 +117,20 @@ void Renderer::setupVertexAttributePointers() {
                         (void *)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 
+  // direct render
+  glBindVertexArray(DIRECT_RENDER_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, DIRECT_RENDER_VBO);
+  // position attribute
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+  glEnableVertexAttribArray(0);
+
+  // texture coord attribute
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+                        (void *)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+
+
+
   // line
   glBindVertexArray(LINE_VAO);
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
@@ -135,6 +161,10 @@ void Renderer::fillDynamicObjectBuffers() {
 void Renderer::fillBuffers() {
    glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, DIRECT_RENDER_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(directRenderQuad),
+               directRenderQuad, GL_STATIC_DRAW);
 
 
   glBindBuffer(GL_ARRAY_BUFFER, LINE_VBO);
@@ -224,6 +254,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   shader->setBool("isLookedAt", false);
   shader->setBool("isMesh", false);
   shader->setBool("isModel", false);
+  shader->setBool("directRender", false);
 
   if(isWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
@@ -320,7 +351,7 @@ void Renderer::renderDynamicObjects() {
   shader->setBool("isDynamicObject", false);
 }
 
-void Renderer::drawAppDirect(X11App *app) {
+void Renderer::drawAppDirect(X11App *app, Bootable* bootable) {
   int index = app->getAppIndex();
   int screenWidth = 1920;
   int screenHeight = 1080;
@@ -328,26 +359,65 @@ void Renderer::drawAppDirect(X11App *app) {
   int appHeight = app->height;
   auto pos = app->getPosition();
   if (index >= 0) {
-    glBlitNamedFramebuffer(frameBuffers[index], 0,
-                           // src x1, src y1 (flip)
-                           0, appHeight,
-                           // end x2, end y2 (flip)
-                           appWidth, 0,
+    if (!bootable) {
+      glBlitNamedFramebuffer(frameBuffers[index], 0,
+                             // src x1, src y1 (flip)
+                             0, appHeight,
+                             // end x2, end y2 (flip)
+                             appWidth, 0,
 
-                           // dest x1,y1,x2,y2
-                           /*
-                           (screenWidth - appWidth) / 2,
-                           (screenHeight - appHeight) / 2,
-                           appWidth + (screenWidth - appWidth) / 2,
-                           appHeight + (screenHeight - appHeight) / 2,
-                           */
-                           pos[0],
-                           pos[1],
-                           pos[0] + appWidth,
-                           pos[1] + appHeight,
+                             // dest x1,y1,x2,y2
+                             /*
+                             (screenWidth - appWidth) / 2,
+                             (screenHeight - appHeight) / 2,
+                             appWidth + (screenWidth - appWidth) / 2,
+                             appHeight + (screenHeight - appHeight) / 2,
+                             */
+                             pos[0], pos[1], pos[0] + appWidth,
+                             pos[1] + appHeight,
+
+                             GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    } else {
+      glBindVertexArray(DIRECT_RENDER_VAO);
+      shader->setBool("directRender", true);
+      static int x = -1;
+      static int y = -1;
+      static glm::mat4 model;
+      if(x == -1 || y == -1 ||
+         x != bootable->x || y != bootable->y) {
+        model = glm::mat4(1.0);
 
 
-                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        model = glm::translate(model,
+                               glm::vec3(
+                                         (-0.5 +
+                                          (float)appWidth/(float)screenWidth/2 +
+                                          (float)bootable->x/(float)screenWidth)
+                                         *2,
+
+                                         -((-0.5 +
+                                            (float)appHeight/(float)screenHeight/2 +
+                                            (float)bootable->y/(float)screenHeight)
+                                           *2),
+
+                                         0));
+
+        model = glm::scale(model, glm::vec3((float)appWidth /
+                                            ((float)screenWidth),
+
+                                            (float)appHeight /
+                                            ((float)screenHeight), 1));
+
+
+        x = bootable->x;
+        y = bootable->y;
+      }
+      shader->setInt("appNumber", app->getAppIndex());
+      shader->setBool("appTransparent", bootable->transparent);
+      shader->setMatrix4("model", model);
+      glDrawArrays(GL_TRIANGLES, 0, 6);
+      shader->setBool("directRender", false);
+    }
   }
 }
 
@@ -459,9 +529,16 @@ void Renderer::renderApps() {
     }
   }
 
-  auto directRenders = registry->view<X11App>(entt::exclude<Positionable>);
-  for (auto [entity, directApp] : directRenders.each()) {
+  auto directRenderBlits =
+    registry->view<X11App>(entt::exclude<Positionable, Bootable>);
+  for (auto [entity, directApp] : directRenderBlits.each()) {
     drawAppDirect(&directApp);
+  }
+
+  auto directRenderNonBlits =
+    registry->view<X11App, Bootable>(entt::exclude<Positionable>);
+  for (auto [entity, directApp, bootable] : directRenderNonBlits.each()) {
+    drawAppDirect(&directApp, &bootable);
   }
 
   shader->setBool("isApp", false);

@@ -29,6 +29,7 @@ uniform bool isMesh;
 uniform bool isLookedAt;
 uniform bool isDynamicObject;
 uniform bool isModel;
+uniform bool directRender;
 uniform int lookedAtBlockType;
 uniform int appNumber;
 
@@ -36,7 +37,11 @@ void main()
 {
   // model in this case is used per call to glDrawArraysInstanced
   if(isApp) {
-    gl_Position = projection * view * model * bootableScale * vec4(vertexPositionInModel, 1.0);
+    if(directRender) {
+      gl_Position = model * vec4(vertexPositionInModel, 1.0);
+    } else {
+      gl_Position = projection * view * model * bootableScale * vec4(vertexPositionInModel, 1.0);
+    }
     BlockType = appNumber;
     TexCoord = texCoord;
   } else if(isLine) {

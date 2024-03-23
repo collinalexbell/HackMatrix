@@ -7,6 +7,7 @@
 #include "dynamicObject.h"
 #include "entity.h"
 #include "model.h"
+#include "components/Bootable.h"
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
@@ -33,6 +34,9 @@ class Renderer {
   shared_ptr<blocks::TexturePack> texturePack;
   unsigned int APP_VBO;
   unsigned int APP_VAO;
+
+  unsigned int DIRECT_RENDER_VBO;
+  unsigned int DIRECT_RENDER_VAO;
 
   unsigned int LINE_VBO;
   unsigned int LINE_INSTANCE;
@@ -72,7 +76,7 @@ class Renderer {
   float lastFrame = 0.0f; // Time of last frame
 
   unordered_map<int, unsigned int> frameBuffers;
-  void drawAppDirect(X11App* app);
+  void drawAppDirect(X11App* app, Bootable* bootable=NULL);
   void updateShaderUniforms();
   void renderChunkMesh();
   void renderApps();
