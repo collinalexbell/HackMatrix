@@ -7,11 +7,11 @@ import json
 import hackMatrix.api as matrix
 
 def select_ide(console):
-    subprocess.run(["python select-ide.py"], shell=True)
+    subprocess.run(["kitty --title select-ide --config ../apps/.select_ide.conf python select-ide.py"], shell=True)
     console.clear()
     text = Text()
 
-    matrix.player_move((-0.38, 1.3, -4.6), (0,30,0), 2)
+    matrix.player_move((-0.38, 1.3, -4.6), (0,30,0), 1)
 
     # Specify the file path
     file_path = "../settings.json"

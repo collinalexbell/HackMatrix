@@ -26,7 +26,7 @@ build/enkimi.o: src/enkimi.c
 build/miniz.o: src/miniz.c
 	g++ $(FLAGS) $(LOADER_FLAGS) -o build/miniz.o -c src/miniz.c $(INCLUDES) -lm
 
-build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h
+build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
 
 build/IndexPool.o: include/IndexPool.h src/IndexPool.cpp
@@ -101,7 +101,7 @@ build/mesh.o: src/mesh.cpp include/mesh.h
 build/entity.o: src/entity.cpp include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/entity.o -c src/entity.cpp $(INCLUDES)
 
-build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h include/systems/Update.h
+build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h include/systems/Update.h include/components/Bootable.h
 	g++ -std=c++20 $(FLAGS) -o build/engineGui.o -c src/engineGui.cpp $(INCLUDES)
 
 build/persister.o: src/persister.cpp include/persister.h

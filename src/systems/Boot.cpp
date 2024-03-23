@@ -98,8 +98,7 @@ void systems::boot(std::shared_ptr<EntityRegistry> registry,
                    char** envp) {
   auto bootable = registry->try_get<Bootable>(entity);
 
-  if(bootable) {
-
+  if(bootable && bootable->bootOnStartup) {
     if (bootable->pid != std::nullopt && !bootable->killOnExit) {
       // Check if the process exists
       if (pidIsRunning(bootable->pid.value())) {
@@ -144,4 +143,41 @@ systems::getAlreadyBooted(std::shared_ptr<EntityRegistry> registry) {
     }
   }
   return rv;
+}
+
+
+void systems::resizeBootable(std::shared_ptr<EntityRegistry> registry, entt::entity entity, int width, int height) {
+  auto app = registry->try_get<X11App>(entity);
+  auto &bootable = registry->get<Bootable>(entity);
+  bootable.resize(width, height);
+  if (app) {
+    app->resizeMove(width, height, bootable.x, bootable.y);
+  }
+}
+
+optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,
+                                         X11App *app) {
+  auto bootableView = registry->view<Bootable>();
+  entt::entity entity;
+  bool foundEntity = false;
+
+  for (auto [candidateEntity, bootable] : bootableView.each()) {
+    if (bootable.name.has_value() &&
+        bootable.name.value() == app->getWindowName()) {
+      bootable.pid = app->getPID();
+      foundEntity = true;
+    }
+    if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
+      foundEntity = true;
+    }
+    if(foundEntity) {
+      app->resize(bootable.getWidth(), bootable.getHeight());
+      return candidateEntity;
+    }
+    if (bootable.name.has_value()) {
+      cout << "name: " << bootable.name.value() << endl;
+      cout << "appName: " << app->getWindowName() << endl;
+    }
+  }
+  return nullopt;
 }
