@@ -62,8 +62,8 @@ def move_to(selected_index):
 
 # Function to display the IDE options with the arrow indicating the selected option
 def display_options(selected_index):
-    options_text = "\n".join([f"[{'bold purple'}]{'->' if i == selected_index else '  '}[/] {option}" for i, option in enumerate(ide_options)])
-    header = Text("Select an IDE:", style="bold green")
+    options_text = "\n".join([f"[{'bold purple'}]{'->' if i == selected_index else '  '}[/] [{'bold'}]{option}" for i, option in enumerate(ide_options)])
+    header = Text("Select an IDE:", style="bold white on purple")
     console.print(header)
     console.print(options_text)
 
