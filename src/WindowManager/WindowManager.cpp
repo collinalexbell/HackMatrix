@@ -299,15 +299,20 @@ void WindowManager::handleSubstructure() {
 
 void WindowManager::createUnfocusHackThread(entt::entity entity) {
   auto app = registry->try_get<X11App>(entity);
-  if (app != NULL && !app->isAccessory() && !currentlyFocusedApp.has_value()) {
-    auto t = thread([this, entity]() -> void {
-      auto app = registry->try_get<X11App>(entity);
-      usleep(0.5 * 1000000);
-      if (app != NULL) {
-        app->unfocus(matrix);
-      }
-    });
-    t.detach();
+  try {
+    if (app != NULL && !app->isAccessory() &&
+        !currentlyFocusedApp.has_value()) {
+      auto t = thread([this, entity]() -> void {
+        auto app = registry->try_get<X11App>(entity);
+        usleep(0.5 * 1000000);
+        if (app != NULL) {
+          app->unfocus(matrix);
+        }
+      });
+      t.detach();
+    }
+  } catch (...) {
+    logger->error("likely it was the app->isAccessory");
   }
 }
 
