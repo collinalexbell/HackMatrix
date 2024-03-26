@@ -35,7 +35,7 @@
 #define OBS false
 #define EDGE true
 #define TERM false
-#define MAGICA false
+#define MAGICA true
 
 namespace WindowManager {
 
