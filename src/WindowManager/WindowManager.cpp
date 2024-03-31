@@ -10,12 +10,6 @@
 #include <X11/Xlib.h>
 #include <algorithm>
 #include <cstddef>
-#include <dbus-c++-1/dbus-c++/interface.h>
-#include <dbus-c++-1/dbus-c++/dispatcher.h>
-#include <dbus-c++-1/dbus-c++/eventloop-integration.h>
-#include <dbus-c++-1/dbus-c++/introspection.h>
-#include <dbus-c++-1/dbus-c++/message.h>
-#include <dbus-c++-1/dbus-c++/object.h>
 #include <glm/glm.hpp>
 #include <iostream>
 
@@ -35,7 +29,7 @@
 #define OBS false
 #define EDGE true
 #define TERM false
-#define MAGICA true
+#define MAGICA false
 
 namespace WindowManager {
 
