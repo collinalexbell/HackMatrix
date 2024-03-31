@@ -163,6 +163,7 @@ optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,
 
   for (auto [candidateEntity, bootable] : bootableView.each()) {
     if (bootable.name.has_value() &&
+        app != NULL &&
         bootable.name.value() == app->getWindowName()) {
       bootable.pid = app->getPID();
       foundEntity = true;

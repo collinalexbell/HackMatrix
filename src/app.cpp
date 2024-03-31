@@ -516,8 +516,10 @@ int X11App::getPID() {
 
 
 string X11App::getWindowName() {
-  char nameMem[100];
-  char *name = nameMem;
+  char *name;
   XFetchName(display, appWindow, &name);
-  return string(name);
+  if (name != NULL) {
+    return string(name);
+  }
+  return "";
 }
