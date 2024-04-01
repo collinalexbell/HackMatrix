@@ -10,7 +10,12 @@
 unsigned int TextureFromFile(const char *path, const string &directory,
                              bool gamma = false);
 
-struct Light {
+class Light {
+  unsigned int depthMapFBO;
+  unsigned int depthMap;
+  const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+public:
+  Light(glm::vec3 color);
   glm::vec3 color;
 };
 
