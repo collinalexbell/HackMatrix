@@ -16,6 +16,7 @@ class Light {
   const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 public:
   Light(glm::vec3 color);
+  void renderDepthMap(function<void()>);
   glm::vec3 color;
 };
 

@@ -505,6 +505,18 @@ Light::Light(glm::vec3 color): color(color) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Light::renderDepthMap(function<void()> renderScene) {
+  int viewport[4];
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  int SCR_WIDTH = viewport[2];
+  int SCR_HEIGHT = viewport[3];
+  glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+  glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+  glClear(GL_DEPTH_BUFFER_BIT);
+  renderScene();
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void LightPersister::createTablesIfNeeded() {
   SQLite::Database &db = registry->getDatabase();
   std::stringstream createTableStream;

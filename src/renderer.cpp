@@ -228,14 +228,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   fillBuffers();
   setupVertexAttributePointers();
 
-  /*
-  std::vector<std::string> images = {
-      "images/bAndGrey.png",         "images/purpleRoad.png",
-      "images/bAndGreySpeckled.png", "images/grass.png",
-      "images/pillar.png",           "images/reactor_texture.png",
-      "images/road.png"};
-  */
-
   std::vector<std::string> images = texturePack->imageNames();
   textures.insert(std::pair<string, Texture *>(
       "allBlocks", new Texture(images, GL_TEXTURE0)));

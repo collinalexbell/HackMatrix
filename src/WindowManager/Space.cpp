@@ -14,7 +14,7 @@
 namespace WindowManager {
 
 void Space::initAppPositions() {
-  float z = 0.3;
+  float z = -2;
   float xOffset = -1.2;
   float yOffset = -2.4;
   availableAppPositions.push(glm::vec3(0.0 + xOffset, 3.5 + yOffset, z));
