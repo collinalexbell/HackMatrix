@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo perf record --call-graph dwarf -g ./matrix
+sudo perf record -g ./matrix
