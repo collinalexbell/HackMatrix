@@ -1,3 +1,3 @@
 #!/bin/bash
 
-perf report
+sudo perf report
