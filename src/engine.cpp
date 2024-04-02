@@ -129,22 +129,23 @@ void Engine::loop() {
   double fps;
   try {
     while (!glfwWindowShouldClose(window)) {
+      frameStart = glfwGetTime();
       glfwPollEvents();
 
       engineGui->render(fps, frameIndex, frameTimes);
-      frameStart = glfwGetTime();
       world->tick();
       renderer->render();
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
 
-      frameTimes[frameIndex] = glfwGetTime() - frameStart;
-      frameIndex = (frameIndex + 1) % 20;
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       glfwSwapBuffers(window);
+
+      frameTimes[frameIndex] = glfwGetTime() - frameStart;
+      frameIndex = (frameIndex + 1) % 20;
     }
   } catch (const std::exception &e) {
     logger->error(e.what());

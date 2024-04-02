@@ -14,7 +14,6 @@
 #include <iostream>
 
 #include <X11/extensions/shape.h>
-#include <csignal>
 #include <cstdlib>
 #include <memory>
 #include <mutex>

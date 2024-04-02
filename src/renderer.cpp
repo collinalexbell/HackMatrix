@@ -480,7 +480,7 @@ void Renderer::renderChunkMesh() {
 }
 
 void Renderer::renderApps() {
-  auto appEntity = windowManagerSpace->getLookedAtApp();
+  auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
   shader->setBool("appSelected", false);
 
   shader->setBool("isApp", true);
@@ -511,9 +511,9 @@ void Renderer::renderApps() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
   }
 
-  if (appEntity.has_value()) {
-    auto bootable = registry->try_get<Bootable>(appEntity.value());
-    auto &app = registry->get<X11App>(appEntity.value());
+  if (lookedAtAppEntity.has_value()) {
+    auto bootable = registry->try_get<Bootable>(lookedAtAppEntity.value());
+    auto &app = registry->get<X11App>(lookedAtAppEntity.value());
     if(app.isFocused() && (!bootable || !bootable->transparent)) {
       shader->setBool("appSelected", app.isFocused());
       drawAppDirect(&app);
@@ -578,10 +578,6 @@ void Renderer::render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   view = camera->tick();
   updateShaderUniforms();
-  renderLines();
-  renderLookedAtFace();
-  renderChunkMesh();
-  renderDynamicObjects();
   renderModels();
   renderApps();
 }
