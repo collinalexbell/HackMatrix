@@ -17,6 +17,7 @@ class Light {
 public:
   Light(glm::vec3 color);
   void renderDepthMap(function<void()>);
+  void saveDepthMap();
   glm::vec3 color;
 };
 

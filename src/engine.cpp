@@ -10,7 +10,6 @@
 #include "persister.h"
 #include "systems/Derivative.h"
 #include "WindowManager/WindowManager.h"
-#include "assets.h"
 #include "blocks.h"
 #include "systems/Door.h"
 
@@ -127,6 +126,13 @@ void Engine::loop() {
   double frameStart;
   int frameIndex = 0;
   double fps;
+  auto lightView = registry->view<Light>();
+  auto lightEntity = lightView.front();
+  auto &light = registry->get<Light>(lightEntity);
+  std::function<void()> render = std::bind(&Renderer::render, renderer);
+  light.renderDepthMap(render);
+  light.saveDepthMap();
+  
   try {
     while (!glfwWindowShouldClose(window)) {
       frameStart = glfwGetTime();

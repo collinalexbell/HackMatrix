@@ -6,10 +6,10 @@
 #include <iostream>
 #include <sstream>
 #include "components/BoundingSphere.h"
-#include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/trigonometric.hpp"
 #include "persister.h"
 #include "stb/stb_image.h"
+#include "stb/stb_image_write.h"
 
 #include "glm/ext/matrix_transform.hpp"
 #include <glm/gtc/quaternion.hpp>
@@ -514,7 +514,31 @@ void Light::renderDepthMap(function<void()> renderScene) {
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
   renderScene();
+  glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Light::saveDepthMap() {
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    std::vector<float> pixels(SHADOW_WIDTH * SHADOW_HEIGHT);
+    glReadPixels(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT, pixels.data());
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    float largest = -99999999;
+    float smallest = 99999999;
+    std::vector<unsigned char> grayscaleValues(SHADOW_WIDTH * SHADOW_HEIGHT);
+
+    for (int row = 0; row < SHADOW_HEIGHT; ++row) {
+        for (int col = 0; col < SHADOW_WIDTH; ++col) {
+            int index = (SHADOW_HEIGHT - row - 1) * SHADOW_WIDTH + col;
+            grayscaleValues[row * SHADOW_WIDTH + col] = static_cast<unsigned char>(std::round((pixels[index]-0.99)/(1-0.99) * 255.0f));
+        }
+    }
+
+    cout << "largest: " << largest << ", smallest: " << smallest << endl;
+
+    // Save the flipped pixel data to a PNG image file
+    stbi_write_png("output.png", SHADOW_WIDTH, SHADOW_HEIGHT, 1, grayscaleValues.data(), SHADOW_WIDTH);
 }
 
 void LightPersister::createTablesIfNeeded() {
