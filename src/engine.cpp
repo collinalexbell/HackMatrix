@@ -4,6 +4,7 @@
 #include "components/Lock.h"
 #include "components/Parent.h"
 #include "components/Scriptable.h"
+#include "components/Light.h"
 #include "entity.h"
 #include "logger.h"
 #include "model.h"
@@ -131,7 +132,6 @@ void Engine::loop() {
   auto &light = registry->get<Light>(lightEntity);
   std::function<void()> render = std::bind(&Renderer::render, renderer);
   light.renderDepthMap(render);
-  light.saveDepthMap();
   
   try {
     while (!glfwWindowShouldClose(window)) {

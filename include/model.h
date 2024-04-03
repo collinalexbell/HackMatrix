@@ -1,4 +1,5 @@
 #pragma once
+
 #include "components/BoundingSphere.h"
 #include "mesh.h"
 #include "SQLPersisterImpl.h"
@@ -9,29 +10,6 @@
 
 unsigned int TextureFromFile(const char *path, const string &directory,
                              bool gamma = false);
-
-class Light {
-  unsigned int depthMapFBO;
-  unsigned int depthMap;
-  const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-public:
-  Light(glm::vec3 color);
-  void renderDepthMap(function<void()>);
-  void saveDepthMap();
-  glm::vec3 color;
-};
-
-class LightPersister: public SQLPersisterImpl {
-public:
-  LightPersister(std::shared_ptr<EntityRegistry> registry)
-    : SQLPersisterImpl("Light", registry){};
-  void createTablesIfNeeded() override;
-  void saveAll() override;
-  void save(entt::entity) override;
-  void loadAll() override;
-  void load(entt::entity) override;
-  void depersistIfGone(entt::entity) override;
-};
 
 struct Positionable {
   Positionable(glm::vec3 pos, glm::vec3 origin, glm::vec3 rotate, float scale);

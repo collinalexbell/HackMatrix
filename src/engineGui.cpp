@@ -7,6 +7,7 @@
 #include "components/Parent.h"
 #include "components/RotateMovement.h"
 #include "components/Scriptable.h"
+#include "components/Light.h"
 #include "components/TranslateMovement.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"

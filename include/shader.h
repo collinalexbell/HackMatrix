@@ -2,8 +2,6 @@
 #define __SHADER_H__
 #include <string>
 #include "glad/glad.h"
-#include "glm/detail/qualifier.hpp"
-#include "glm/ext/matrix_double4x4.hpp"
 #include <glm/glm.hpp>
 
 class Shader
