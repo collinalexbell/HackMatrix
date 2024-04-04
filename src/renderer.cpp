@@ -8,6 +8,7 @@
 #include "camera.h"
 #include "app.h"
 #include "components/Bootable.h"
+#include <iostream>
 #include <vector>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -573,7 +574,7 @@ void Renderer::renderModels(RenderPerspective perspective) {
       }
     }
     if(perspective == CAMERA) {
-      shader->setInt("depthCubeMap", light.depthCubemap);
+      shader->setInt("depthCubeMap", 20);
     }
   }
 
@@ -594,9 +595,12 @@ void Renderer::render(RenderPerspective perspective) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(perspective == CAMERA) {
     shader = cameraShader;
+    shader->use();
     view = camera->tick();
   } else {
+    std::cout << "using depth shader" << endl;
     shader = depthShader;
+    shader->use();
   }
   updateShaderUniforms();
   renderModels(perspective);

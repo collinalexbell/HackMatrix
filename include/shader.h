@@ -8,7 +8,7 @@
 class Shader
 {
   // shader ids
-  unsigned int vertex, fragment;
+  unsigned int vertex, fragment, geometry;
   void linkShaderProgram();
   void createAndCompileShader(GLenum shaderType, std::string sourceCode);
   void createShaders();

@@ -74,6 +74,9 @@ void Shader::linkShaderProgram() {
   ID = glCreateProgram();
   glAttachShader(ID, vertex);
   glAttachShader(ID, fragment);
+  if(geometryCode.has_value()) {
+    glAttachShader(ID, geometry);
+  }
   glLinkProgram(ID);
   printLinkingErrors(ID);
 }
@@ -81,11 +84,17 @@ void Shader::linkShaderProgram() {
 void Shader::createShaders() {
   createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
   createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
+  if(geometryCode.has_value()) {
+    createAndCompileShader(GL_GEOMETRY_SHADER, geometryCode.value());
+  }
 }
 
 void Shader::deleteShaders() {
   glDeleteShader(vertex);
   glDeleteShader(fragment);
+  if(geometryCode.has_value()) {
+    glDeleteShader(geometry);
+  }
 }
 
 void Shader::loadCode(std::string vertexPath,
@@ -93,7 +102,11 @@ void Shader::loadCode(std::string vertexPath,
     std::optional<std::string> geometryPath = std::nullopt) {
   vertexCode = retrieveShaderCode(vertexPath);
   fragmentCode = retrieveShaderCode(fragmentPath);
-  if(vertexCode == "" || fragmentCode == "") {
+  if(geometryPath.has_value()) {
+    geometryCode = retrieveShaderCode(geometryPath.value());
+  }
+  if(vertexCode == "" || fragmentCode == "" ||
+      (geometryPath.has_value() && geometryCode.value() == "")) {
     std::cout << "ERROR::SHADER::FAILED_TO_INITIALIZE" << std::endl;
     return;
   }

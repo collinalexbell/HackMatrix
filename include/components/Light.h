@@ -13,10 +13,11 @@ public:
   unsigned int depthCubemap;
   Light(glm::vec3 color);
   void renderDepthMap(glm::vec3 lightPos, std::function<void()>);
+  void saveDepthMap();
   glm::vec3 color;
   std::vector<glm::mat4> shadowTransforms;
-  const float nearPlane = 1.0f;
-  float farPlane = 25.0f;
+  float nearPlane;
+  float farPlane;
 };
 
 class LightPersister: public SQLPersisterImpl {
