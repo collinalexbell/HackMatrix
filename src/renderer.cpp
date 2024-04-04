@@ -229,8 +229,13 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   std::vector<std::string> images = texturePack->imageNames();
   textures.insert(std::pair<string, Texture *>(
       "allBlocks", new Texture(images, GL_TEXTURE0)));
-  shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-  depthShader = new Shader("shaderrs/depthVertex.glsl", "shaders/depthFragment.glsl");
+ cameraShader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+  depthShader = new Shader(
+      "shaders/depthVertex.glsl",
+      "shaders/depthGeometry.glsl",
+      "shaders/depthFragment.glsl");
+
+  shader = cameraShader;
 
   shader->use(); // may need to move into loop to use changing uniforms
 
@@ -543,10 +548,11 @@ void Renderer::renderLines() {
   shader->setBool("isLine", false);
 }
 
-void Renderer::renderModels() {
+void Renderer::renderModels(RenderPerspective perspective) {
   shader->setBool("isModel", true);
   shader->setVec3("viewPos", camera->position);
   shader->setBool("isLight", false);
+
   auto modelView = registry->view<Positionable, Model>();
   auto lightView = registry->view<Light,Positionable>();
 
@@ -557,8 +563,18 @@ void Renderer::renderModels() {
   for(auto [entity, light, positionable]: lightView.each()) {
     shader->setVec3("lightPos", positionable.pos);
     shader->setVec3("lightColor", light.color);
+    shader->setFloat("far_plane", light.farPlane);
     lightEntity = entity;
     hasLight = true;
+    if(perspective == LIGHT) {
+      for (unsigned int i = 0; i < 6; ++i) {
+            shader->setMatrix4("shadowMatrices[" + std::to_string(i) + "]",
+                light.shadowTransforms[i]);
+      }
+    }
+    if(perspective == CAMERA) {
+      shader->setInt("depthCubeMap", light.depthCubemap);
+    }
   }
 
   for(auto [entity, p, m]: modelView.each()) {
@@ -574,12 +590,19 @@ void Renderer::renderModels() {
   shader->setBool("isModel", false);
 }
 
-void Renderer::render() {
+void Renderer::render(RenderPerspective perspective) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  view = camera->tick();
+  if(perspective == CAMERA) {
+    shader = cameraShader;
+    view = camera->tick();
+  } else {
+    shader = depthShader;
+  }
   updateShaderUniforms();
-  renderModels();
-  renderApps();
+  renderModels(perspective);
+  if(perspective == CAMERA) {
+    renderApps();
+  }
 }
 
 Camera *Renderer::getCamera() { return camera; }

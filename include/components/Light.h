@@ -6,14 +6,17 @@
 
 class Light {
   unsigned int depthMapFBO;
-  unsigned int depthCubemap;
   const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
   void lightspaceTransform(glm::vec3);
 public:
+  unsigned int depthCubemap;
   Light(glm::vec3 color);
-  void renderDepthMap(std::function<void()>);
+  void renderDepthMap(glm::vec3 lightPos, std::function<void()>);
   glm::vec3 color;
+  std::vector<glm::mat4> shadowTransforms;
+  const float nearPlane = 1.0f;
+  float farPlane = 25.0f;
 };
 
 class LightPersister: public SQLPersisterImpl {

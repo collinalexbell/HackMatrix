@@ -29,7 +29,7 @@ Light::Light(glm::vec3 color): color(color) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Light::renderDepthMap(std::function<void()> renderScene) {
+void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene) {
   int viewport[4];
   glGetIntegerv(GL_VIEWPORT, viewport);
   int SCR_WIDTH = viewport[2];
@@ -40,28 +40,26 @@ void Light::renderDepthMap(std::function<void()> renderScene) {
   renderScene();
   glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  lightspaceTransform(lightPos);
 }
 
 void Light::lightspaceTransform(glm::vec3 lightPos) {
   float aspect = (float)SHADOW_WIDTH/(float)SHADOW_HEIGHT;
-  float near = 1.0f;
-  float far = 25.0f;
-  glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
-
-std::vector<glm::mat4> shadowTransforms;
-
-shadowTransforms.push_back(shadowProj *
-    glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0) , glm::vec3(0.0,-1.0, 0.0)));
-shadowTransforms.push_back(shadowProj *
-  glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0) , glm::vec3(0.0,-1.0, 0.0)));
-shadowTransforms.push_back(shadowProj *
-  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0) , glm::vec3(0.0, 0.0, 1.0)));
-shadowTransforms.push_back(shadowProj *
-  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0) , glm::vec3(0.0, 0.0,-1.0)));
-shadowTransforms.push_back(shadowProj *
-  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0) , glm::vec3(0.0,-1.0, 0.0)));
-shadowTransforms.push_back(shadowProj *
-  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0) , glm::vec3(0.0,-1.0, 0.0)));
+  glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f),
+      aspect, nearPlane, farPlane);
+  shadowTransforms.clear();
+  shadowTransforms.push_back(shadowProj *
+      glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0) , glm::vec3(0.0,-1.0, 0.0)));
+  shadowTransforms.push_back(shadowProj *
+      glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0) , glm::vec3(0.0,-1.0, 0.0)));
+  shadowTransforms.push_back(shadowProj *
+      glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0) , glm::vec3(0.0, 0.0, 1.0)));
+  shadowTransforms.push_back(shadowProj *
+      glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0) , glm::vec3(0.0, 0.0,-1.0)));
+  shadowTransforms.push_back(shadowProj *
+      glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0) , glm::vec3(0.0,-1.0, 0.0)));
+  shadowTransforms.push_back(shadowProj *
+      glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0) , glm::vec3(0.0,-1.0, 0.0)));
 
 
 }

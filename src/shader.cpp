@@ -88,7 +88,9 @@ void Shader::deleteShaders() {
   glDeleteShader(fragment);
 }
 
-void Shader::loadCode(std::string vertexPath, std::string fragmentPath) {
+void Shader::loadCode(std::string vertexPath,
+    std::string fragmentPath,
+    std::optional<std::string> geometryPath = std::nullopt) {
   vertexCode = retrieveShaderCode(vertexPath);
   fragmentCode = retrieveShaderCode(fragmentPath);
   if(vertexCode == "" || fragmentCode == "") {
@@ -99,6 +101,17 @@ void Shader::loadCode(std::string vertexPath, std::string fragmentPath) {
 
 Shader::Shader(std::string vertexPath, std::string fragmentPath) {
   loadCode(vertexPath, fragmentPath);
+  createShaderProgram();
+}
+
+Shader::Shader(std::string vertexPath,
+    std::string geometryPath,
+    std::string fragmentPath) {
+  loadCode(vertexPath, fragmentPath, geometryPath);
+  createShaderProgram();
+}
+
+void Shader::createShaderProgram() {
   createShaders();
   linkShaderProgram();
   deleteShaders();

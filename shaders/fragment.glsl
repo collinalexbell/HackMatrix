@@ -9,6 +9,7 @@ flat in int BlockType;
 flat in int IsLookedAt;
 flat in int Selection;
 
+uniform samplerCube depthCubeMap;
 uniform sampler2DArray allBlocks;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D app0;
@@ -30,6 +31,7 @@ uniform float time;
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 uniform vec3 viewPos;
+uniform float far_plane;
 
 struct Material {
   vec3 ambient;
@@ -78,6 +80,24 @@ vec4 colorFromTexture(sampler2D tex, vec2 coord) {
   } else {
     return vec4(vec3(texture(tex, coord * vec2(1,-1))), 1);
   }
+}
+
+
+float ShadowCalculation(vec3 fragPos)
+{
+    // get vector between fragment position and light position
+    vec3 fragToLight = fragPos - lightPos;
+    // use the light to fragment vector to sample from the depth map
+    float closestDepth = texture(depthCubeMap, fragToLight).r;
+    // it is currently in linear range between [0,1]. Re-transform back to original value
+    closestDepth *= far_plane;
+    // now get current linear depth as the length between the fragment and light position
+    float currentDepth = length(fragToLight);
+    // now test for shadows
+    float bias = 0.05;
+    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
+
+    return shadow;
 }
 
 void main()
@@ -129,7 +149,12 @@ void main()
       float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
       vec3 specular = specularStrength * spec * lightColor;
 
-      FragColor = vec4(ambient + diffuse + specular, 1.0) * texture(texture_diffuse1, TexCoord);
+      // calculate shadow
+      float shadow = ShadowCalculation(FragPos);                      
+      //float shadow = 0.0;
+      //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+
+      FragColor = vec4(ambient + (1.0-shadow) + diffuse + specular, 1.0) * texture(texture_diffuse1, TexCoord);
     }
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));

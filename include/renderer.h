@@ -24,6 +24,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+enum RenderPerspective {
+  CAMERA, LIGHT
+};
+
 class Cube;
 class World;
 class Renderer {
@@ -54,6 +58,7 @@ class Renderer {
   bool isWireframe = false;
 
   Shader* shader;
+  Shader* cameraShader;
   Shader* appShader;
   Shader* depthShader;
   std::map<string, Texture*> textures;
@@ -80,7 +85,7 @@ class Renderer {
   void renderLines();
   void renderLookedAtFace();
   void renderDynamicObjects();
-  void renderModels();
+  void renderModels(RenderPerspective);
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
 
@@ -103,7 +108,7 @@ public:
   ~Renderer();
   shared_ptr<EntityRegistry> registry;
   Camera* getCamera();
-  void render();
+  void render(RenderPerspective = CAMERA);
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
   void addLine(int index, Line line);

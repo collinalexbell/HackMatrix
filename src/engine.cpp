@@ -130,9 +130,9 @@ void Engine::loop() {
   auto lightView = registry->view<Light>();
   auto lightEntity = lightView.front();
   auto &light = registry->get<Light>(lightEntity);
-  std::function<void()> render = std::bind(&Renderer::render, renderer);
-  light.renderDepthMap(render);
-  
+  auto &lightPosition = registry->get<Positionable>(lightEntity);
+  std::function<void()> render = std::bind(&Renderer::render, renderer, LIGHT);
+  light.renderDepthMap(lightPosition.pos, render);
   try {
     while (!glfwWindowShouldClose(window)) {
       frameStart = glfwGetTime();

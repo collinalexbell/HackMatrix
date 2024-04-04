@@ -1,5 +1,6 @@
 #ifndef __SHADER_H__
 #define __SHADER_H__
+#include <optional>
 #include <string>
 #include "glad/glad.h"
 #include <glm/glm.hpp>
@@ -12,15 +13,21 @@ class Shader
   void createAndCompileShader(GLenum shaderType, std::string sourceCode);
   void createShaders();
   void deleteShaders();
-  void loadCode(std::string, std::string);
+  void createShaderProgram();
+  void loadCode(std::string, std::string, std::optional<std::string>);
   std::string vertexCode;
   std::string fragmentCode;
+  std::optional<std::string> geometryCode;
+
 
  public:
   // the program ID
   unsigned int ID;
   // constructor reads and builds the shader
   Shader(std::string vertexPath, std::string fragmentPath);
+  Shader(std::string vertexPath,
+      std::string geometryShader,
+      std::string fragmentPath);
   // use/activate the shader
   void use();
   // utility uniform functions
