@@ -97,7 +97,7 @@ float ShadowCalculation(vec3 fragPos)
     float bias = 0.05;
     float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
 
-    return closestDepth / far_plane;
+    return shadow;
 }
 
 void main()
@@ -154,8 +154,7 @@ void main()
       //float shadow = 0.0;
       //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 
-      FragColor = vec4(ambient + (1.0-shadow) + diffuse + specular, 1.0) * texture(texture_diffuse1, TexCoord);
-      FragColor = vec4(shadow, shadow, shadow, 1);
+      FragColor = vec4(ambient + (1.0-shadow) * diffuse + specular, 1.0) * texture(texture_diffuse1, TexCoord);
     }
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));

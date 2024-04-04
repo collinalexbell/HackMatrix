@@ -568,6 +568,7 @@ void Renderer::renderModels(RenderPerspective perspective) {
     lightEntity = entity;
     hasLight = true;
     if(perspective == LIGHT) {
+      cout << "perspective is light" << endl;
       for (unsigned int i = 0; i < 6; ++i) {
             shader->setMatrix4("shadowMatrices[" + std::to_string(i) + "]",
                 light.shadowTransforms[i]);
@@ -579,13 +580,19 @@ void Renderer::renderModels(RenderPerspective perspective) {
   }
 
   for(auto [entity, p, m]: modelView.each()) {
+    bool shouldDraw = true;
     if(hasLight && lightEntity == entity) {
       shader->setBool("isLight", true);
+      if(perspective == LIGHT) {
+        shouldDraw = false;
+      }
     }
     shader->setMatrix3("normalMatrix", p.normalMatrix);
     shader->setMatrix4("model", p.modelMatrix);
 
-    m.Draw(*shader);
+    if(shouldDraw) {
+      m.Draw(*shader);
+    }
     shader->setBool("isLight", false);
   }
   shader->setBool("isModel", false);
@@ -598,7 +605,6 @@ void Renderer::render(RenderPerspective perspective) {
     shader->use();
     view = camera->tick();
   } else {
-    std::cout << "using depth shader" << endl;
     shader = depthShader;
     shader->use();
   }

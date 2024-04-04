@@ -54,6 +54,10 @@ void Shader::createAndCompileShader(GLenum shaderType, const std::string sourceC
     vertex=shaderId;
     shaderName = "VERTEX";
   }
+  if(shaderType == GL_GEOMETRY_SHADER) {
+    geometry=shaderId;
+    shaderName = "GEOMETRY";
+  }
   printCompileErrorsIfAny(shaderId, shaderName);
 }
 
@@ -85,6 +89,7 @@ void Shader::createShaders() {
   createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
   createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
   if(geometryCode.has_value()) {
+    std::cout << "creating geometry shader" << std::endl;
     createAndCompileShader(GL_GEOMETRY_SHADER, geometryCode.value());
   }
 }
@@ -99,7 +104,7 @@ void Shader::deleteShaders() {
 
 void Shader::loadCode(std::string vertexPath,
     std::string fragmentPath,
-    std::optional<std::string> geometryPath = std::nullopt) {
+    std::optional<std::string> geometryPath) {
   vertexCode = retrieveShaderCode(vertexPath);
   fragmentCode = retrieveShaderCode(fragmentPath);
   if(geometryPath.has_value()) {

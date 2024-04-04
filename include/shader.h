@@ -14,7 +14,7 @@ class Shader
   void createShaders();
   void deleteShaders();
   void createShaderProgram();
-  void loadCode(std::string, std::string, std::optional<std::string>);
+  void loadCode(std::string, std::string, std::optional<std::string> = std::nullopt);
   std::string vertexCode;
   std::string fragmentCode;
   std::optional<std::string> geometryCode;

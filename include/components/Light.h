@@ -13,7 +13,6 @@ public:
   unsigned int depthCubemap;
   Light(glm::vec3 color);
   void renderDepthMap(glm::vec3 lightPos, std::function<void()>);
-  void saveDepthMap();
   glm::vec3 color;
   std::vector<glm::mat4> shadowTransforms;
   float nearPlane;

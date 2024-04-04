@@ -133,7 +133,6 @@ void Engine::loop() {
   auto &lightPosition = registry->get<Positionable>(lightEntity);
   std::function<void()> render = std::bind(&Renderer::render, renderer, LIGHT);
   light.renderDepthMap(lightPosition.pos, render);
-  //light.saveDepthMap();
   try {
     while (!glfwWindowShouldClose(window)) {
       frameStart = glfwGetTime();

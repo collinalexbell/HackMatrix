@@ -6,17 +6,18 @@
 #include "stb/stb_image_write.h"
 
 Light::Light(glm::vec3 color): color(color) {
-  farPlane = 100.0f;
+  farPlane = 25.0f;
   nearPlane = 0.02f;
 
   glGenFramebuffers(1, &depthMapFBO);
   glGenTextures(1, &depthCubemap);
-  glActiveTexture(GL_TEXTURE20);
   glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+
+  // Allocate storage for each face of the depth cubemap
   for (unsigned int i = 0; i < 6; ++i) {
     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0,
         GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT,
-        0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL); 
   }
 
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -29,9 +30,13 @@ Light::Light(glm::vec3 color): color(color) {
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
+
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glActiveTexture(GL_TEXTURE20);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 }
 
 void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene) {
@@ -44,37 +49,8 @@ void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
   renderScene();
-  glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void Light::saveDepthMap() {
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    std::vector<float> pixels(SHADOW_WIDTH * SHADOW_HEIGHT);
-    glReadPixels(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT, pixels.data());
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    float largest = -99999999.0;
-    float smallest = 99999999.0;
-    std::vector<unsigned char> grayscaleValues(SHADOW_WIDTH * SHADOW_HEIGHT);
-
-    for (int row = 0; row < SHADOW_HEIGHT; ++row) {
-        for (int col = 0; col < SHADOW_WIDTH; ++col) {
-            int index = (SHADOW_HEIGHT - row - 1) * SHADOW_WIDTH + col;
-            grayscaleValues[row * SHADOW_WIDTH + col] = static_cast<unsigned char>(std::round(pixels[index] * 255.0f));
-            if(pixels[index] > largest) {
-              largest = pixels[index];
-            }
-            if(pixels[index] < smallest) {
-              smallest = pixels[index];
-            }
-        }
-    }
-
-    std::cout << "largest:" <<  largest << ", smallest:" << smallest << std::endl;
-
-    // Save the flipped pixel data to a PNG image file
-    stbi_write_png("output.png", SHADOW_WIDTH, SHADOW_HEIGHT, 1, grayscaleValues.data(), SHADOW_WIDTH);
+  glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
 void Light::lightspaceTransform(glm::vec3 lightPos) {
