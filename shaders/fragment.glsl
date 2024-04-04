@@ -83,7 +83,7 @@ vec4 colorFromTexture(sampler2D tex, vec2 coord) {
 }
 
 
-float ShadowCalculation(vec3 fragPos)
+float ShadowCalculation(vec3 fragPos, vec3 norm, vec3 lightDir)
 {
     // get vector between fragment position and light position
     vec3 fragToLight = fragPos - lightPos;
@@ -94,7 +94,7 @@ float ShadowCalculation(vec3 fragPos)
     // now get current linear depth as the length between the fragment and light position
     float currentDepth = length(fragToLight);
     // now test for shadows
-    float bias = 0.05;
+    float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005);
     float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
 
     return shadow;
@@ -150,7 +150,7 @@ void main()
       vec3 specular = specularStrength * spec * lightColor;
 
       // calculate shadow
-      float shadow = ShadowCalculation(FragPos);                      
+      float shadow = ShadowCalculation(FragPos, norm, lightDir);                      
       //float shadow = 0.0;
       //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
 

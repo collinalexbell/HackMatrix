@@ -610,8 +610,8 @@ void Renderer::render(RenderPerspective perspective) {
   }
   updateShaderUniforms();
   renderModels(perspective);
+  renderApps();
   if(perspective == CAMERA) {
-    renderApps();
   }
 }
 
