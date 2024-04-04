@@ -419,7 +419,14 @@ void X11App::appTexture() {
   GLXPixmap glxPixmap = glXCreatePixmap(display, fbConfigs[i], pixmap, pixmap_attribs);
   app_logger->info("glXBindTexImageEXT()");
   app_logger->flush();
+
+  // clear errors
+  glGetError();
   glXBindTexImageEXT(display, glxPixmap, GLX_FRONT_LEFT_EXT, NULL);
+  GLenum error = glGetError();
+  if(error != GL_NO_ERROR) {
+    throw "failed to bind tex image (bad pixmap)";
+  }
   app_logger->info("appTexture() success");
 }
 
@@ -497,12 +504,16 @@ void X11App::attachTexture(int textureUnit, int textureId, size_t appIndex) {
 }
 
 bool X11App::isAccessory() {
-  XWindowAttributes attrs;
-  XGetWindowAttributes(display, appWindow, &attrs);
-  if(attrs.override_redirect) {
-    return true;
+  try {
+    XWindowAttributes attrs;
+    XGetWindowAttributes(display, appWindow, &attrs);
+    if(attrs.override_redirect) {
+      return true;
+    }
+    return false;
+  } catch (...) {
+    throw;
   }
-  return false;
 }
 
 int X11App::getPID() {
