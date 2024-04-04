@@ -129,47 +129,49 @@ size_t Space::getNumPositionableApps() {
 }
 
 void Space::addApp(entt::entity entity, bool spawnAtCamera) {
-  auto &app = registry->get<X11App>(entity);
-  auto hasPositionable = registry->all_of<Positionable>(entity);
-  auto bootable = registry->try_get<Bootable>(entity);
-  if (!app.isAccessory() && !hasPositionable && !bootable) {
-
-    glm::vec3 pos;
-    glm::vec3 rot = glm::vec3(0.0f);
-    if(spawnAtCamera) {
-
-      float yaw = camera->getYaw();
-      float pitch = camera->getPitch();
-      glm::quat yawRotation =
-          glm::angleAxis(glm::radians(90+yaw), glm::vec3(0.0f, -1.0f, 0.0f));
-      glm::quat pitchRotation =
-          glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-      glm::quat finalRotation = yawRotation * pitchRotation;
-      rot = glm::degrees(glm::eulerAngles(finalRotation));
-
-      auto dist = getViewDistanceForWindowSize(entity);
-      pos = camera->position +
-        finalRotation * glm::vec3(0,0,-dist);
-
-    } else {
-      pos = availableAppPositions.front();
-      if (availableAppPositions.size() > 1) {
-        availableAppPositions.pop();
-      }
-    }
-
-    int index = numPositionableApps++;
-    registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), rot, 1);
-  }
-  if (!app.isAccessory() && bootable) {
-    systems::resizeBootable(registry, entity, bootable->getWidth(),
-                            bootable->getHeight());
-  }
   try {
-    renderer->registerApp(&app);
-  } catch (...) {
-    logger->info("accessory app failed to register texture");
-    registry->remove<X11App>(entity);
-  }
+    auto &app = registry->get<X11App>(entity);
+    auto hasPositionable = registry->all_of<Positionable>(entity);
+    auto bootable = registry->try_get<Bootable>(entity);
+    if (!app.isAccessory() && !hasPositionable && !bootable) {
+
+      glm::vec3 pos;
+      glm::vec3 rot = glm::vec3(0.0f);
+      if(spawnAtCamera) {
+
+        float yaw = camera->getYaw();
+        float pitch = camera->getPitch();
+        glm::quat yawRotation =
+          glm::angleAxis(glm::radians(90+yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+        glm::quat pitchRotation =
+          glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::quat finalRotation = yawRotation * pitchRotation;
+        rot = glm::degrees(glm::eulerAngles(finalRotation));
+
+        auto dist = getViewDistanceForWindowSize(entity);
+        pos = camera->position +
+          finalRotation * glm::vec3(0,0,-dist);
+
+      } else {
+        pos = availableAppPositions.front();
+        if (availableAppPositions.size() > 1) {
+          availableAppPositions.pop();
+        }
+      }
+
+      int index = numPositionableApps++;
+      registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), rot, 1);
+    }
+    if (!app.isAccessory() && bootable) {
+      systems::resizeBootable(registry, entity, bootable->getWidth(),
+          bootable->getHeight());
+    }
+    try {
+      renderer->registerApp(&app);
+    } catch (...) {
+      logger->info("accessory app failed to register texture");
+      registry->remove<X11App>(entity);
+    }
+  } catch(...) {}
 }
 } // namespace WindowManager
