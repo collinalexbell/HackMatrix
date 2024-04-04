@@ -1,5 +1,7 @@
 #include "components/Light.h"
 #include "glad/glad.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include <sstream>
 
 Light::Light(glm::vec3 color): color(color) {
@@ -38,6 +40,30 @@ void Light::renderDepthMap(std::function<void()> renderScene) {
   renderScene();
   glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Light::lightspaceTransform(glm::vec3 lightPos) {
+  float aspect = (float)SHADOW_WIDTH/(float)SHADOW_HEIGHT;
+  float near = 1.0f;
+  float far = 25.0f;
+  glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), aspect, near, far);
+
+std::vector<glm::mat4> shadowTransforms;
+
+shadowTransforms.push_back(shadowProj *
+    glm::lookAt(lightPos, lightPos + glm::vec3( 1.0, 0.0, 0.0) , glm::vec3(0.0,-1.0, 0.0)));
+shadowTransforms.push_back(shadowProj *
+  glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0) , glm::vec3(0.0,-1.0, 0.0)));
+shadowTransforms.push_back(shadowProj *
+  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 1.0, 0.0) , glm::vec3(0.0, 0.0, 1.0)));
+shadowTransforms.push_back(shadowProj *
+  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0,-1.0, 0.0) , glm::vec3(0.0, 0.0,-1.0)));
+shadowTransforms.push_back(shadowProj *
+  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0, 1.0) , glm::vec3(0.0,-1.0, 0.0)));
+shadowTransforms.push_back(shadowProj *
+  glm::lookAt(lightPos, lightPos + glm::vec3( 0.0, 0.0,-1.0) , glm::vec3(0.0,-1.0, 0.0)));
+
+
 }
 
 void LightPersister::createTablesIfNeeded() {

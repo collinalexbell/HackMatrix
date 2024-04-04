@@ -8,6 +8,8 @@ class Light {
   unsigned int depthMapFBO;
   unsigned int depthCubemap;
   const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+
+  void lightspaceTransform(glm::vec3);
 public:
   Light(glm::vec3 color);
   void renderDepthMap(std::function<void()>);

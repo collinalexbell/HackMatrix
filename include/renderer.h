@@ -2,18 +2,14 @@
 #define __RENDERER_H__
 #include "IndexPool.h"
 #include "blocks.h"
-#include "chunk.h"
-#include "cube.h"
 #include "dynamicObject.h"
 #include "entity.h"
-#include "model.h"
 #include "components/Bootable.h"
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
 #include "camera.h"
 #include "app.h"
-#include "logger.h"
 #include "WindowManager/Space.h"
 #include <map>
 #include <memory>
@@ -59,6 +55,7 @@ class Renderer {
 
   Shader* shader;
   Shader* appShader;
+  Shader* depthShader;
   std::map<string, Texture*> textures;
   void initAppTextures();
   glm::mat4 trans;

@@ -230,6 +230,8 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   textures.insert(std::pair<string, Texture *>(
       "allBlocks", new Texture(images, GL_TEXTURE0)));
   shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+  depthShader = new Shader("shaderrs/depthVertex.glsl", "shaders/depthFragment.glsl");
+
   shader->use(); // may need to move into loop to use changing uniforms
 
   shader->setInt("allBlocks", 0);
