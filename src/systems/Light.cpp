@@ -6,8 +6,9 @@
 void systems::updateLighting(
     std::shared_ptr<EntityRegistry> registry, Renderer* renderer) {
   auto view = registry->view<Light, Positionable>();
-  std::function<void()> render = std::bind(&Renderer::render, renderer, LIGHT);
   for(auto [entity, light, positionable]: view.each()) {
+    std::function<void()> render = std::bind(
+        &Renderer::render, renderer, LIGHT, entity);
     light.renderDepthMap(positionable.pos, render);
   }
 }

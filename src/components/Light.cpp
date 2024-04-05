@@ -5,12 +5,17 @@
 #include <iostream>
 #include "stb/stb_image_write.h"
 
+unsigned int Light::nextTextureUnit = 20;
+
 Light::Light(glm::vec3 color): color(color) {
+  textureUnit = nextTextureUnit++;
+  std::cout << "textureUnit: " << textureUnit << std::endl;
   farPlane = 25.0f;
   nearPlane = 0.02f;
 
   glGenFramebuffers(1, &depthMapFBO);
   glGenTextures(1, &depthCubemap);
+  glActiveTexture(GL_TEXTURE0 + textureUnit);
   glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
   // Allocate storage for each face of the depth cubemap
@@ -35,8 +40,6 @@ Light::Light(glm::vec3 color): color(color) {
   glReadBuffer(GL_NONE);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glActiveTexture(GL_TEXTURE20);
-  glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 }
 
 void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene) {
@@ -54,6 +57,7 @@ void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene
 }
 
 void Light::lightspaceTransform(glm::vec3 lightPos) {
+  std::cout << "lightspace transform: " << lightPos.x << "," << lightPos.y << ", " << lightPos.z << std::endl;
   float aspect = (float)SHADOW_WIDTH/(float)SHADOW_HEIGHT;
   glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f),
       aspect, nearPlane, farPlane);

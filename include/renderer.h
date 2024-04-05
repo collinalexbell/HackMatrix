@@ -97,7 +97,9 @@ class Renderer {
   void genGlResources();
   void fillBuffers();
   void setupVertexAttributePointers();
-  void lightUniforms(RenderPerspective perspective);
+  void lightUniforms(
+      RenderPerspective perspective,
+      std::optional<entt::entity> fromLight);
 
   int verticesInMesh = 0;
   int verticesInDynamicObjects = 0;
@@ -109,7 +111,8 @@ public:
   ~Renderer();
   shared_ptr<EntityRegistry> registry;
   Camera* getCamera();
-  void render(RenderPerspective = CAMERA);
+  void render(RenderPerspective = CAMERA,
+      std::optional<entt::entity> = std::nullopt);
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
   void addLine(int index, Line line);

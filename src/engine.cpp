@@ -9,7 +9,9 @@
 #include "logger.h"
 #include "model.h"
 #include "persister.h"
+#include "systems/Boot.h"
 #include "systems/Derivative.h"
+#include "systems/Light.h"
 #include "WindowManager/WindowManager.h"
 #include "blocks.h"
 #include "systems/Door.h"
@@ -127,12 +129,7 @@ void Engine::loop() {
   double frameStart;
   int frameIndex = 0;
   double fps;
-  auto lightView = registry->view<Light>();
-  auto lightEntity = lightView.front();
-  auto &light = registry->get<Light>(lightEntity);
-  auto &lightPosition = registry->get<Positionable>(lightEntity);
-  std::function<void()> render = std::bind(&Renderer::render, renderer, LIGHT);
-  light.renderDepthMap(lightPosition.pos, render);
+  systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
       frameStart = glfwGetTime();

@@ -5,11 +5,13 @@
 #include "glm/glm.hpp"
 
 class Light {
+  static unsigned int nextTextureUnit;
   unsigned int depthMapFBO;
   const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
   void lightspaceTransform(glm::vec3);
 public:
+  unsigned int textureUnit;
   unsigned int depthCubemap;
   Light(glm::vec3 color);
   void renderDepthMap(glm::vec3 lightPos, std::function<void()>);

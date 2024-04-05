@@ -546,24 +546,28 @@ void Renderer::renderLines() {
   shader->setBool("isLine", false);
 }
 
-void Renderer::lightUniforms(RenderPerspective perspective) {
+void Renderer::lightUniforms(
+    RenderPerspective perspective, std::optional<entt::entity> fromLight) {
   auto lightView = registry->view<Light,Positionable>();
-  int i = 0;
+  int lightIndex = 0;
   for(auto [entity, light, positionable]: lightView.each()) {
-    shader->setVec3("lightPos[" + std::to_string(i) + "]", positionable.pos);
-    shader->setVec3("lightColor[" + std::to_string(i) + "]", light.color);
-    shader->setFloat("far_plane[" + std::to_string(i) + "]", light.farPlane);
-    if(perspective == LIGHT) {
+    shader->setVec3("lightPos[" + std::to_string(lightIndex) + "]", positionable.pos);
+    shader->setVec3("lightColor[" + std::to_string(lightIndex) + "]", light.color);
+    shader->setFloat("far_plane[" + std::to_string(lightIndex) + "]", light.farPlane);
+    if(perspective == LIGHT && fromLight == entity) {
+      shader->setInt("fromLightIndex", lightIndex);
+      cout << "lightIndex: " << lightIndex << endl;
       for (unsigned int i = 0; i < 6; ++i) {
-            shader->setMatrix4("shadowMatrices[" + std::to_string(i) + "]",
-                light.shadowTransforms[i]);
+        shader->setMatrix4("shadowMatrices[" + std::to_string(i) + "]",
+            light.shadowTransforms[i]);
       }
     }
     if(perspective == CAMERA) {
-      shader->setInt("depthCubeMap", 20);
+      shader->setInt("depthCubeMap"+ std::to_string(lightIndex), light.textureUnit);
     }
-    i++;
+    lightIndex++;
   }
+  shader->setInt("numLights", lightIndex);
 }
 
 void Renderer::renderModels(RenderPerspective perspective) {
@@ -601,7 +605,8 @@ void Renderer::renderModels(RenderPerspective perspective) {
   shader->setBool("isModel", false);
 }
 
-void Renderer::render(RenderPerspective perspective) {
+void Renderer::render(
+    RenderPerspective perspective, std::optional<entt::entity> fromLight) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(perspective == CAMERA) {
     shader = cameraShader;
@@ -612,7 +617,7 @@ void Renderer::render(RenderPerspective perspective) {
     shader->use();
   }
   updateShaderUniforms();
-  lightUniforms(perspective);
+  lightUniforms(perspective, fromLight);
   renderModels(perspective);
   renderApps();
   if(perspective == CAMERA) {
