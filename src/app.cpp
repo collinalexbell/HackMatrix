@@ -504,16 +504,18 @@ void X11App::attachTexture(int textureUnit, int textureId, size_t appIndex) {
 }
 
 bool X11App::isAccessory() {
-  try {
     XWindowAttributes attrs;
+
+    glGetError();
     XGetWindowAttributes(display, appWindow, &attrs);
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR) {
+      throw "XGetWindowAttributes failed";
+    }
     if(attrs.override_redirect) {
       return true;
     }
     return false;
-  } catch (...) {
-    throw;
-  }
 }
 
 int X11App::getPID() {

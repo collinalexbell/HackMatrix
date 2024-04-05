@@ -1,18 +1,17 @@
 #include "IndexPool.h"
 #include "glm/ext/matrix_transform.hpp"
 #include "model.h"
+#include "components/Light.h"
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
 #include "camera.h"
 #include "app.h"
-#include "cube.h"
 #include "components/Bootable.h"
-#include <vector>
 #include <iostream>
+#include <vector>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <math.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -23,6 +22,7 @@
 #include <iomanip>
 
 float HEIGHT = 0.27;
+float MAX_LIGHTS = 5;
 
 float appVertices[] = {
   -0.5f, -HEIGHT, 0, 0.0f, 0.0f,
@@ -231,14 +231,18 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   std::vector<std::string> images = texturePack->imageNames();
   textures.insert(std::pair<string, Texture *>(
       "allBlocks", new Texture(images, GL_TEXTURE0)));
-  shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+ cameraShader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+  depthShader = new Shader(
+      "shaders/depthVertex.glsl",
+      "shaders/depthGeometry.glsl",
+      "shaders/depthFragment.glsl");
+
+  shader = cameraShader;
+
   shader->use(); // may need to move into loop to use changing uniforms
 
   shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
-
-  shader->setVec3("lightPos", glm::vec3(0, 0, 0));
-  shader->setVec3("lightColor", glm::vec3(0.5, 0.5, 0.5));
 
   initAppTextures();
 
@@ -543,43 +547,90 @@ void Renderer::renderLines() {
   shader->setBool("isLine", false);
 }
 
-void Renderer::renderModels() {
+void Renderer::lightUniforms(
+    RenderPerspective perspective, std::optional<entt::entity> fromLight) {
+  auto lightView = registry->view<Light,Positionable>();
+  int lightIndex = 0;
+  int lastTextureUnit;
+  for(auto [entity, light, positionable]: lightView.each()) {
+    shader->setVec3("lightPos[" + std::to_string(lightIndex) + "]", positionable.pos);
+    shader->setVec3("lightColor[" + std::to_string(lightIndex) + "]", light.color);
+    shader->setFloat("far_plane[" + std::to_string(lightIndex) + "]", light.farPlane);
+    if(perspective == LIGHT && fromLight == entity) {
+      shader->setInt("fromLightIndex", lightIndex);
+      cout << "lightIndex: " << lightIndex << endl;
+      for (unsigned int i = 0; i < 6; ++i) {
+        shader->setMatrix4("shadowMatrices[" + std::to_string(i) + "]",
+            light.shadowTransforms[i]);
+      }
+    }
+    if(perspective == CAMERA) {
+      shader->setInt("depthCubeMap"+ std::to_string(lightIndex), light.textureUnit);
+      // THIS IS A HACK
+      lastTextureUnit = light.textureUnit;
+    }
+
+    // THIS IS A HACK. If I exceed 5 lights, use texture array (proper)
+    for(int i = lightIndex; i < MAX_LIGHTS; i++) {
+      shader->setInt("depthCubeMap"+ std::to_string(i), light.textureUnit);
+    }
+    lightIndex++;
+  }
+  shader->setInt("numLights", lightIndex);
+}
+
+void Renderer::renderModels(RenderPerspective perspective) {
   shader->setBool("isModel", true);
   shader->setVec3("viewPos", camera->position);
   shader->setBool("isLight", false);
+
   auto modelView = registry->view<Positionable, Model>();
-  auto lightView = registry->view<Light,Positionable>();
 
-
-  entt::entity lightEntity;
   bool hasLight = false;
 
+  set<entt::entity> lightEntities;
+  auto lightView = registry->view<Light,Positionable>();
   for(auto [entity, light, positionable]: lightView.each()) {
-    shader->setVec3("lightPos", positionable.pos);
-    shader->setVec3("lightColor", light.color);
-    lightEntity = entity;
-    hasLight = true;
+    lightEntities.insert(entity);
   }
 
+
   for(auto [entity, p, m]: modelView.each()) {
-    if(hasLight && lightEntity == entity) {
+    bool shouldDraw = true;
+    if(!lightEntities.empty() && lightEntities.contains(entity)) {
       shader->setBool("isLight", true);
+      if(perspective == LIGHT) {
+        shouldDraw = false;
+      }
     }
     shader->setMatrix3("normalMatrix", p.normalMatrix);
     shader->setMatrix4("model", p.modelMatrix);
 
-    m.Draw(*shader);
+    if(shouldDraw) {
+      m.Draw(*shader);
+    }
     shader->setBool("isLight", false);
   }
   shader->setBool("isModel", false);
 }
 
-void Renderer::render() {
+void Renderer::render(
+    RenderPerspective perspective, std::optional<entt::entity> fromLight) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  view = camera->tick();
+  if(perspective == CAMERA) {
+    shader = cameraShader;
+    shader->use();
+    view = camera->tick();
+  } else {
+    shader = depthShader;
+    shader->use();
+  }
   updateShaderUniforms();
-  renderModels();
+  lightUniforms(perspective, fromLight);
+  renderModels(perspective);
   renderApps();
+  if(perspective == CAMERA) {
+  }
 }
 
 Camera *Renderer::getCamera() { return camera; }

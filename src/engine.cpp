@@ -4,13 +4,15 @@
 #include "components/Lock.h"
 #include "components/Parent.h"
 #include "components/Scriptable.h"
+#include "components/Light.h"
 #include "entity.h"
 #include "logger.h"
 #include "model.h"
 #include "persister.h"
+#include "systems/Boot.h"
 #include "systems/Derivative.h"
+#include "systems/Light.h"
 #include "WindowManager/WindowManager.h"
-#include "assets.h"
 #include "blocks.h"
 #include "systems/Door.h"
 
@@ -127,6 +129,7 @@ void Engine::loop() {
   double frameStart;
   int frameIndex = 0;
   double fps;
+  systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
       frameStart = glfwGetTime();

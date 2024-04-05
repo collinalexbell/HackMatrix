@@ -2,18 +2,14 @@
 #define __RENDERER_H__
 #include "IndexPool.h"
 #include "blocks.h"
-#include "chunk.h"
-#include "cube.h"
 #include "dynamicObject.h"
 #include "entity.h"
-#include "model.h"
 #include "components/Bootable.h"
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
 #include "camera.h"
 #include "app.h"
-#include "logger.h"
 #include "WindowManager/Space.h"
 #include <map>
 #include <memory>
@@ -27,6 +23,10 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+enum RenderPerspective {
+  CAMERA, LIGHT
+};
 
 class Cube;
 class World;
@@ -58,7 +58,9 @@ class Renderer {
   bool isWireframe = false;
 
   Shader* shader;
+  Shader* cameraShader;
   Shader* appShader;
+  Shader* depthShader;
   std::map<string, Texture*> textures;
   void initAppTextures();
   glm::mat4 trans;
@@ -83,7 +85,7 @@ class Renderer {
   void renderLines();
   void renderLookedAtFace();
   void renderDynamicObjects();
-  void renderModels();
+  void renderModels(RenderPerspective);
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
 
@@ -95,6 +97,9 @@ class Renderer {
   void genGlResources();
   void fillBuffers();
   void setupVertexAttributePointers();
+  void lightUniforms(
+      RenderPerspective perspective,
+      std::optional<entt::entity> fromLight);
 
   int verticesInMesh = 0;
   int verticesInDynamicObjects = 0;
@@ -106,7 +111,8 @@ public:
   ~Renderer();
   shared_ptr<EntityRegistry> registry;
   Camera* getCamera();
-  void render();
+  void render(RenderPerspective = CAMERA,
+      std::optional<entt::entity> = std::nullopt);
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
   void addLine(int index, Line line);

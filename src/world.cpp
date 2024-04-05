@@ -907,12 +907,7 @@ void World::tick(){
   //loadChunksIfNeccissary();
   systems::applyRotation(registry);
   systems::applyTranslations(registry);
-  auto view = registry->view<Positionable>();
-  for(auto [entity, positionable]: view.each()) {
-    if(positionable.damaged) {
-      systems::update(registry, entity);
-    }
-  }
+  systems::updateAll(registry, renderer);
   if(dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
   }
