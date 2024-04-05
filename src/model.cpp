@@ -237,7 +237,6 @@ void Positionable::damage() {
 }
 
 Positionable::Positionable(glm::vec3 pos, glm::vec3 origin, glm::vec3 rotate, float scale): pos(pos), origin(origin), scale(scale), rotate(rotate) {
-  update();
 }
 
 void PositionablePersister::createTablesIfNeeded() {

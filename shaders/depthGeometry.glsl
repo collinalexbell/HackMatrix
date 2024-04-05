@@ -2,6 +2,8 @@
 layout (triangles) in;
 layout (triangle_strip, max_vertices=18) out;
 
+in vec2 TexCoord[];
+
 uniform mat4 shadowMatrices[6];
 
 out vec4 FragPos; // FragPos from GS (output per emitvertex)

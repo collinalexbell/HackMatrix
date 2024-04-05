@@ -20,7 +20,7 @@ struct Positionable {
   void update();
   glm::mat4 modelMatrix;
   glm::mat3 normalMatrix;
-  bool damaged = false;
+  bool damaged = true;
   void damage();
 };
 
