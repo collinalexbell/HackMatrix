@@ -243,9 +243,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
 
-  shader->setVec3("lightPos", glm::vec3(0, 0, 0));
-  shader->setVec3("lightColor", glm::vec3(0.5, 0.5, 0.5));
-
   initAppTextures();
 
   shader->setBool("lookedAtValid", false);
@@ -549,26 +546,14 @@ void Renderer::renderLines() {
   shader->setBool("isLine", false);
 }
 
-void Renderer::renderModels(RenderPerspective perspective) {
-  shader->setBool("isModel", true);
-  shader->setVec3("viewPos", camera->position);
-  shader->setBool("isLight", false);
-
-  auto modelView = registry->view<Positionable, Model>();
+void Renderer::lightUniforms(RenderPerspective perspective) {
   auto lightView = registry->view<Light,Positionable>();
-
-
-  entt::entity lightEntity;
-  bool hasLight = false;
-
+  int i = 0;
   for(auto [entity, light, positionable]: lightView.each()) {
-    shader->setVec3("lightPos", positionable.pos);
-    shader->setVec3("lightColor", light.color);
-    shader->setFloat("far_plane", light.farPlane);
-    lightEntity = entity;
-    hasLight = true;
+    shader->setVec3("lightPos[" + std::to_string(i) + "]", positionable.pos);
+    shader->setVec3("lightColor[" + std::to_string(i) + "]", light.color);
+    shader->setFloat("far_plane[" + std::to_string(i) + "]", light.farPlane);
     if(perspective == LIGHT) {
-      cout << "perspective is light" << endl;
       for (unsigned int i = 0; i < 6; ++i) {
             shader->setMatrix4("shadowMatrices[" + std::to_string(i) + "]",
                 light.shadowTransforms[i]);
@@ -577,11 +562,29 @@ void Renderer::renderModels(RenderPerspective perspective) {
     if(perspective == CAMERA) {
       shader->setInt("depthCubeMap", 20);
     }
+    i++;
   }
+}
+
+void Renderer::renderModels(RenderPerspective perspective) {
+  shader->setBool("isModel", true);
+  shader->setVec3("viewPos", camera->position);
+  shader->setBool("isLight", false);
+
+  auto modelView = registry->view<Positionable, Model>();
+
+  bool hasLight = false;
+
+  set<entt::entity> lightEntities;
+  auto lightView = registry->view<Light,Positionable>();
+  for(auto [entity, light, positionable]: lightView.each()) {
+    lightEntities.insert(entity);
+  }
+
 
   for(auto [entity, p, m]: modelView.each()) {
     bool shouldDraw = true;
-    if(hasLight && lightEntity == entity) {
+    if(!lightEntities.empty() && lightEntities.contains(entity)) {
       shader->setBool("isLight", true);
       if(perspective == LIGHT) {
         shouldDraw = false;
@@ -609,6 +612,7 @@ void Renderer::render(RenderPerspective perspective) {
     shader->use();
   }
   updateShaderUniforms();
+  lightUniforms(perspective);
   renderModels(perspective);
   renderApps();
   if(perspective == CAMERA) {

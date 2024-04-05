@@ -97,6 +97,7 @@ class Renderer {
   void genGlResources();
   void fillBuffers();
   void setupVertexAttributePointers();
+  void lightUniforms(RenderPerspective perspective);
 
   int verticesInMesh = 0;
   int verticesInDynamicObjects = 0;

@@ -28,10 +28,10 @@ uniform bool isLight;
 uniform bool appTransparent;
 uniform int totalBlockTypes;
 uniform float time;
-uniform vec3 lightPos;
-uniform vec3 lightColor;
+uniform vec3 lightPos[];
+uniform vec3 lightColor[];
 uniform vec3 viewPos;
-uniform float far_plane;
+uniform float far_plane[];
 
 struct Material {
   vec3 ambient;
@@ -86,11 +86,11 @@ vec4 colorFromTexture(sampler2D tex, vec2 coord) {
 float ShadowCalculation(vec3 fragPos, vec3 norm, vec3 lightDir)
 {
     // get vector between fragment position and light position
-    vec3 fragToLight = fragPos - lightPos;
+    vec3 fragToLight = fragPos - lightPos[0];
     // use the light to fragment vector to sample from the depth map
     float closestDepth = texture(depthCubeMap, fragToLight).r;
     // it is currently in linear range between [0,1]. Re-transform back to original value
-    closestDepth *= far_plane;
+    closestDepth *= far_plane[0];
     // now get current linear depth as the length between the fragment and light position
     float currentDepth = length(fragToLight);
     // now test for shadows
@@ -129,25 +129,25 @@ void main()
   } else if (isModel) {
 
     if(isLight) {
-      FragColor = vec4(lightColor, 1.0);
+      FragColor = vec4(lightColor[0], 1.0);
     } else {
       // ambient
       float ambientStrength = 0.2;
-      vec3 ambient = ambientStrength * lightColor;
+      vec3 ambient = ambientStrength * lightColor[0];
 
       // diffuse
       vec3 norm = normalize(Normal);
-      vec3 lightDir = normalize(lightPos - FragPos);
+      vec3 lightDir = normalize(lightPos[0] - FragPos);
 
       float diff = max(dot(norm, lightDir), 0.0);
-      vec3 diffuse = diff * lightColor;
+      vec3 diffuse = diff * lightColor[0];
 
       float specularStrength = 0.5;
       float shininess = 32;
       vec3 viewDir = normalize(viewPos - FragPos);
       vec3 reflectDir = reflect(-lightDir, norm);
       float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-      vec3 specular = specularStrength * spec * lightColor;
+      vec3 specular = specularStrength * spec * lightColor[0];
 
       // calculate shadow
       float shadow = ShadowCalculation(FragPos, norm, lightDir);                      
