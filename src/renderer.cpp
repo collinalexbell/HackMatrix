@@ -22,6 +22,7 @@
 #include <iomanip>
 
 float HEIGHT = 0.27;
+float MAX_LIGHTS = 5;
 
 float appVertices[] = {
   -0.5f, -HEIGHT, 0, 0.0f, 0.0f,
@@ -550,6 +551,7 @@ void Renderer::lightUniforms(
     RenderPerspective perspective, std::optional<entt::entity> fromLight) {
   auto lightView = registry->view<Light,Positionable>();
   int lightIndex = 0;
+  int lastTextureUnit;
   for(auto [entity, light, positionable]: lightView.each()) {
     shader->setVec3("lightPos[" + std::to_string(lightIndex) + "]", positionable.pos);
     shader->setVec3("lightColor[" + std::to_string(lightIndex) + "]", light.color);
@@ -564,6 +566,13 @@ void Renderer::lightUniforms(
     }
     if(perspective == CAMERA) {
       shader->setInt("depthCubeMap"+ std::to_string(lightIndex), light.textureUnit);
+      // THIS IS A HACK
+      lastTextureUnit = light.textureUnit;
+    }
+
+    // THIS IS A HACK. If I exceed 5 lights, use texture array (proper)
+    for(int i = lightIndex; i < MAX_LIGHTS; i++) {
+      shader->setInt("depthCubeMap"+ std::to_string(i), light.textureUnit);
     }
     lightIndex++;
   }

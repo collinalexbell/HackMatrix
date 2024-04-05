@@ -32,6 +32,9 @@ const int MAX_LIGHTS = 10;
 uniform int numLights;
 uniform samplerCube depthCubeMap0;
 uniform samplerCube depthCubeMap1;
+uniform samplerCube depthCubeMap2;
+uniform samplerCube depthCubeMap3;
+uniform samplerCube depthCubeMap4;
 uniform vec3 lightPos[MAX_LIGHTS];
 uniform vec3 lightColor[MAX_LIGHTS];
 uniform vec3 viewPos;
@@ -104,7 +107,7 @@ float ShadowCalculation(samplerCube depthMap, vec3 fragPos, vec3 norm, vec3 ligh
   return shadow;
 }
 
-vec4 Light(int i) {
+vec4 Light(int i, samplerCube depthMap) {
   // ambient
   float ambientStrength = 0.2;
   vec3 ambient = ambientStrength * lightColor[i];
@@ -126,13 +129,7 @@ vec4 Light(int i) {
   // calculate shadow
   float shadow; 
 
-  if(i == 0) {
-    shadow = ShadowCalculation(depthCubeMap0, FragPos, norm, lightDir, i);                      
-    //shadow = 0;
-  } else if(i == 1) {
-    shadow = ShadowCalculation(depthCubeMap1, FragPos, norm, lightDir, i);                      
-    //shadow = 0;
-  }
+  shadow = ShadowCalculation(depthMap, FragPos, norm, lightDir, i);                      
   //float shadow = 0.0;
   //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
   return vec4(ambient + (1.0-shadow) * diffuse + specular, 1.0);
@@ -143,8 +140,7 @@ void main()
 	// need to pass this in as vertex data, but hold for now
 	if(isApp) {
 		if(BlockType == 0) {
-			FragColor = colorFromTexture(app0, TexCoord);
-		} else if (BlockType == 1) {
+			FragColor = colorFromTexture(app0, TexCoord); } else if (BlockType == 1) {
 			FragColor = colorFromTexture(app1, TexCoord);
 		} else if (BlockType == 2) {
 			FragColor = colorFromTexture(app2, TexCoord);
@@ -170,9 +166,31 @@ void main()
       FragColor = vec4(lightColor[0], 1.0);
     } else {
       vec3 lightOutput = vec3(0.0,0.0,0.0);
-      for(int i = 0; i<numLights; i++) {
-        lightOutput += vec3(Light(i));
+
+      if(numLights == 1) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+      } else if (numLights == 2) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        
+      } else if (numLights == 3) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        lightOutput += vec3(Light(2, depthCubeMap2));
+      } else if (numLights == 4) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        lightOutput += vec3(Light(2, depthCubeMap2));
+        lightOutput += vec3(Light(3, depthCubeMap3));
+      } else if (numLights == 5) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        lightOutput += vec3(Light(2, depthCubeMap2));
+        lightOutput += vec3(Light(3, depthCubeMap3));
+        lightOutput += vec3(Light(4, depthCubeMap4));
       }
+
+
       FragColor = vec4(lightOutput,1) * texture(texture_diffuse1, TexCoord);
     }
 	} else {
