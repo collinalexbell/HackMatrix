@@ -359,7 +359,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::Spacing();
 
     if(copiedPos != positionable.pos || positionable.origin != copiedOrigin || copiedScale != positionable.scale || copiedRotate != positionable.rotate) {
-      systems::update(registry, entity);
+      //systems::update(registry, entity);
+      positionable.damage();
     }
   }
   if(registry->any_of<Model>(entity)) {
