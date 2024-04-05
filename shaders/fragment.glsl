@@ -16,7 +16,8 @@ uniform sampler2D app1;
 uniform sampler2D app2;
 uniform sampler2D app3;
 uniform sampler2D app4;
-uniform sampler2D app5; uniform sampler2D app6;
+uniform sampler2D app5;
+uniform sampler2D app6;
 uniform bool isApp;
 uniform bool isModel;
 uniform bool isLine;
@@ -27,9 +28,17 @@ uniform bool isLight;
 uniform bool appTransparent;
 uniform int totalBlockTypes;
 uniform float time;
-uniform vec3 lightPos;
-uniform vec3 lightColor;
+const int MAX_LIGHTS = 10;
+uniform int numLights;
+uniform samplerCube depthCubeMap0;
+uniform samplerCube depthCubeMap1;
+uniform samplerCube depthCubeMap2;
+uniform samplerCube depthCubeMap3;
+uniform samplerCube depthCubeMap4;
+uniform vec3 lightPos[MAX_LIGHTS];
+uniform vec3 lightColor[MAX_LIGHTS];
 uniform vec3 viewPos;
+uniform float far_plane[MAX_LIGHTS];
 
 struct Material {
   vec3 ambient;
@@ -80,13 +89,58 @@ vec4 colorFromTexture(sampler2D tex, vec2 coord) {
   }
 }
 
+
+float ShadowCalculation(samplerCube depthMap, vec3 fragPos, vec3 norm, vec3 lightDir, int lightIndex)
+{
+  // get vector between fragment position and light position
+  vec3 fragToLight = fragPos - lightPos[lightIndex];
+  // use the light to fragment vector to sample from the depth map
+  float closestDepth = texture(depthMap, fragToLight).r;
+  // it is currently in linear range between [0,1]. Re-transform back to original value
+  closestDepth *= far_plane[lightIndex];
+  // now get current linear depth as the length between the fragment and light position
+  float currentDepth = length(fragToLight);
+  // now test for shadows
+  float bias = max(0.1 * (1.0 - dot(norm, lightDir)), 0.005);
+  float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
+
+  return shadow;
+}
+
+vec4 Light(int i, samplerCube depthMap) {
+  // ambient
+  float ambientStrength = 0.2;
+  vec3 ambient = ambientStrength * lightColor[i];
+
+  // diffuse
+  vec3 norm = normalize(Normal);
+  vec3 lightDir = normalize(lightPos[i] - FragPos);
+
+  float diff = max(dot(norm, lightDir), 0.0);
+  vec3 diffuse = diff * lightColor[i];
+
+  float specularStrength = 0.5;
+  float shininess = 32;
+  vec3 viewDir = normalize(viewPos - FragPos);
+  vec3 reflectDir = reflect(-lightDir, norm);
+  float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+  vec3 specular = specularStrength * spec * lightColor[i];
+
+  // calculate shadow
+  float shadow; 
+
+  shadow = ShadowCalculation(depthMap, FragPos, norm, lightDir, i);                      
+  //float shadow = 0.0;
+  //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
+  return vec4(ambient + (1.0-shadow) * diffuse + specular, 1.0);
+}
+
 void main()
 {
 	// need to pass this in as vertex data, but hold for now
 	if(isApp) {
 		if(BlockType == 0) {
-			FragColor = colorFromTexture(app0, TexCoord);
-		} else if (BlockType == 1) {
+			FragColor = colorFromTexture(app0, TexCoord); } else if (BlockType == 1) {
 			FragColor = colorFromTexture(app1, TexCoord);
 		} else if (BlockType == 2) {
 			FragColor = colorFromTexture(app2, TexCoord);
@@ -109,27 +163,35 @@ void main()
   } else if (isModel) {
 
     if(isLight) {
-      FragColor = vec4(lightColor, 1.0);
+      FragColor = vec4(lightColor[0], 1.0);
     } else {
-      // ambient
-      float ambientStrength = 0.2;
-      vec3 ambient = ambientStrength * lightColor;
+      vec3 lightOutput = vec3(0.0,0.0,0.0);
 
-      // diffuse
-      vec3 norm = normalize(Normal);
-      vec3 lightDir = normalize(lightPos - FragPos);
+      if(numLights == 1) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+      } else if (numLights == 2) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        
+      } else if (numLights == 3) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        lightOutput += vec3(Light(2, depthCubeMap2));
+      } else if (numLights == 4) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        lightOutput += vec3(Light(2, depthCubeMap2));
+        lightOutput += vec3(Light(3, depthCubeMap3));
+      } else if (numLights == 5) {
+        lightOutput += vec3(Light(0, depthCubeMap0));
+        lightOutput += vec3(Light(1, depthCubeMap1));
+        lightOutput += vec3(Light(2, depthCubeMap2));
+        lightOutput += vec3(Light(3, depthCubeMap3));
+        lightOutput += vec3(Light(4, depthCubeMap4));
+      }
 
-      float diff = max(dot(norm, lightDir), 0.0);
-      vec3 diffuse = diff * lightColor;
 
-      float specularStrength = 0.5;
-      float shininess = 32;
-      vec3 viewDir = normalize(viewPos - FragPos);
-      vec3 reflectDir = reflect(-lightDir, norm);
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-      vec3 specular = specularStrength * spec * lightColor;
-
-      FragColor = vec4(ambient + diffuse + specular, 1.0) * texture(texture_diffuse1, TexCoord);
+      FragColor = vec4(lightOutput,1) * texture(texture_diffuse1, TexCoord);
     }
 	} else {
     FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));

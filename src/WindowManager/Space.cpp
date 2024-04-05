@@ -168,6 +168,10 @@ void Space::addApp(entt::entity entity, bool spawnAtCamera) {
     }
     try {
       renderer->registerApp(&app);
+      auto positionable = registry->try_get<Positionable>(entity);
+      if(positionable){
+        positionable->damage();
+      }
     } catch (...) {
       logger->info("accessory app failed to register texture");
       registry->remove<X11App>(entity);

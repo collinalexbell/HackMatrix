@@ -7,6 +7,7 @@
 #include "components/Parent.h"
 #include "components/RotateMovement.h"
 #include "components/Scriptable.h"
+#include "components/Light.h"
 #include "components/TranslateMovement.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
@@ -358,7 +359,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::Spacing();
 
     if(copiedPos != positionable.pos || positionable.origin != copiedOrigin || copiedScale != positionable.scale || copiedRotate != positionable.rotate) {
-      systems::update(registry, entity);
+      //systems::update(registry, entity);
+      positionable.damage();
     }
   }
   if(registry->any_of<Model>(entity)) {
