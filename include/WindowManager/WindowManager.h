@@ -75,6 +75,7 @@ class WindowManager {
 
 
 public:
+  void dMenu();
   void passthroughInput();
   void captureInput();
   void createAndRegisterApps(char **envp);

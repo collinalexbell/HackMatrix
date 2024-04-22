@@ -9,6 +9,7 @@ using namespace blocks;
 shared_ptr<TexturePack> blocks::initializeBasicPack() {
   string textureDir = "/home/collin/matrix/block";
   vector<Block> blocks = {
+    /*
       Block{1, "stone", "stone.png"},
       Block{2, "grass", "images/grass.png", true},
       Block{3, "dirt", "dirt.png"},
@@ -63,6 +64,7 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
       Block{248, "green glazed terracotta", "green__glazed_terracotta.png"},
       Block{251, "white concrete", "white_concrete.png"},
       Block{252, "white concrete powder", "white_concrete_powder.png"}
+      */
   };
   return make_shared<TexturePack>(textureDir, blocks);
 };

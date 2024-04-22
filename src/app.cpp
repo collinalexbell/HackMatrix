@@ -471,7 +471,11 @@ void X11App::resize(int width, int height) {
     y = (SCREEN_HEIGHT - height) / 2;
     XMoveResizeWindow(display, appWindow, x, y, width, height);
   } else {
-    getAbsoluteMousePosition(display, &x, &y);
+    XWindowAttributes attributes;
+    XGetWindowAttributes(display, appWindow, &attributes);
+
+    x = attributes.x;
+    y = attributes.y;
     XMoveResizeWindow(display, appWindow, x,y, width, height);
     y = SCREEN_HEIGHT - y;
     y -= height;
