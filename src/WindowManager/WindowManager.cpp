@@ -22,6 +22,7 @@
 #include <sstream>
 #include <thread>
 #include <unistd.h>
+#include <cstdlib>
 
 #include <dbus-c++-1/dbus-c++/interface.h>
 
@@ -31,6 +32,10 @@
 #define MAGICA false
 
 namespace WindowManager {
+
+void WindowManager::dMenu() {
+ int exitCode = system("dmenu_run"); 
+}
 
 int forkApp(string cmd, char **envp, string args) {
   int pid = fork();
