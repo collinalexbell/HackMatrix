@@ -23,7 +23,7 @@ Move with <br>
 ### Manually focus window
 Look at window and press `r`
 
-![Move](vids/focus.gif)
+<img src="vids/focus.gif" width="420">
 
 ### Exit window
 When focused on window press `Win+e`
