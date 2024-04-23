@@ -1,9 +1,10 @@
 #include "components/Bootable.h"
 #include <optional>
 #include <glm/gtx/transform.hpp>
+#include "screen.h"
 
-int Bootable::DEFAULT_WIDTH = 1920 * 0.85;
-int Bootable::DEFAULT_HEIGHT = 1920 * 0.85 * 0.54;
+int Bootable::DEFAULT_WIDTH = SCREEN_WIDTH * 0.85;
+int Bootable::DEFAULT_HEIGHT = SCREEN_HEIGHT * 0.85;
 
 Bootable::Bootable(std::string cmd, std::string args, bool killOnExit,
                    optional<pid_t> pid, bool transparent,
@@ -54,7 +55,7 @@ void Bootable::resetDefaultXYBySize() {
 }
 
 void Bootable::recomputeHeightScaler() {
-  auto standardRatio = 0.54;
+  auto standardRatio = SCREEN_HEIGHT/SCREEN_WIDTH;
   auto currentRatio = (double)getHeight() / (double)getWidth();
   auto scaleFactor = currentRatio / standardRatio;
   heightScaler = glm::scale(glm::mat4(1.0), glm::vec3(1, scaleFactor, 1));

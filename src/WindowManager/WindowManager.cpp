@@ -4,6 +4,7 @@
 #include "controls.h"
 #include "entity.h"
 #include "renderer.h"
+#include "screen.h"
 #include "systems/Boot.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
@@ -136,8 +137,8 @@ void WindowManager::capture_input(Window window, bool shapeBounding,
   XRectangle rect;
   rect.x = 0;
   rect.y = 0;
-  rect.width = 1920;  // Replace with your window's width
-  rect.height = 1080; // Replace with your window's height
+  rect.width = SCREEN_WIDTH;  // Replace with your window's width
+  rect.height = SCREEN_HEIGHT; // Replace with your window's height
   XFixesSetRegion(display, region, &rect, 1);
 
   if (shapeBounding) {
@@ -451,11 +452,10 @@ void WindowManager::setWMProps(Window root) {
                   XA_ATOM, 32, PropModeReplace,
                   (unsigned char *)net_supported_atoms, num_supported_atoms);
 
-  // Set the work area rectangle (assuming resolution of 1920x1080)
   int workarea_x = 0;
   int workarea_y = 0;
-  int workarea_width = 1920;
-  int workarea_height = 1080;
+  int workarea_width = SCREEN_WIDTH;
+  int workarea_height = SCREEN_HEIGHT;
 
   // Convert the work area rectangle into a format suitable for the
   // _NET_WORKAREA property

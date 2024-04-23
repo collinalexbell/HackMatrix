@@ -13,6 +13,7 @@
 #include <GLFW/glfw3.h>
 #include <thread>
 #include "app.h"
+#include "screen.h"
 #include "logger.h"
 #include <sstream>
 
@@ -430,8 +431,6 @@ void X11App::appTexture() {
   app_logger->info("appTexture() success");
 }
 
-float SCREEN_WIDTH = 1920;
-float SCREEN_HEIGHT = 1080;
 
 void getAbsoluteMousePosition(Display *display, int *x_out, int *y_out) {
   Window root_window = DefaultRootWindow(display);
