@@ -28,6 +28,8 @@ Look at window and press `r`
 ### Exit window
 When focused on window press `Win+e`
 
+<img src="vids/exitWindow.gif" width="420">
+
 ### Window Hotkeys
 `Win+Shift+<num>` to set
 `Win+<num>` to navigate
