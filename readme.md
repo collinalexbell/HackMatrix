@@ -34,6 +34,8 @@ When focused on window press `Win+e`
 `Win+Shift+<num>` to set
 `Win+<num>` to navigate
 
+<img src="vids/hotkey.gif" width="420">
+
 ### Move window
 When focused on window press `Win+m`
 
