@@ -1,3 +1,6 @@
+# HackMatrix
+
+A 3D Linux desktop environment
 
 ## Compilation/Installation
 
@@ -78,6 +81,7 @@ The build process will generate the `matrix` executable in the current directory
 Add the following line at the end of your `~/.xinitrc` file:
 
  ```bash
+ cd ~/<replace with repository directory>
  exec ~/<replace with repository directory>/matrix
  ```
 
@@ -87,6 +91,7 @@ When developing HackMatrix, I frequently quit and rerun the `matrix` program wit
 I wrote a trampoline program that will restart HackMatrix every time you exit.
 
  ```bash
+ cd ~/<replace with repository directory>
  exec ~/<replace with repository directory>/trampoline
  ```
 
