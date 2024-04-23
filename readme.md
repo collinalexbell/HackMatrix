@@ -2,7 +2,7 @@
 
 A 3D Linux desktop environment
 
-[![Donate](images/paypal.svg)](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
+[<img src="path/to/paypal.svg" alt="PayPal Button" width="75">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
 
 ## Compilation/Installation
 
