@@ -1,4 +1,8 @@
-# HackMatrix <br><br> [<img src="images/paypal.svg" alt="PayPal Button" width="125">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
+# HackMatrix 
+
+<img src="images/header_img.png" width="800">
+
+[<img src="images/paypal.svg" alt="PayPal Button" width="125">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
 
 A 3D Linux desktop environment
 
