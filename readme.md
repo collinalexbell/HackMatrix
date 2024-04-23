@@ -48,6 +48,11 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 Once the libraries are installed, you can compile and run the program as described in the compilation and execution sections of this README.
 
+## Prebuilt executable
+
+If you are using an X86 architecture, you can just use the prebuilt `matrix` executable in the root of the repository.
+Or you can still compile from source.
+
 ## Compiling from source
 
 To build the `matrix` executable, navigate to the project directory and run the following command:
@@ -64,14 +69,37 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 The build process will generate the `matrix` executable in the current directory.
 
-If you want to clean the build artifacts and remove the generated executable, you can run:
+## Instalation
 
-```bash
-make clean
-```
+`matrix` is an X11 window manager, so it needs to be added to your X11 startup file
 
-This command will delete the `matrix` executable and any intermediate object files, allowing you to start a fresh build.
+### Standard
 
-Make sure you have the necessary libraries installed, as described in the [Library Installation](#library-installation) section, before running the `make` commands.
+Add the following line at the end of your `~/.xinitrc` file:
 
-Once the program is built successfully, you can proceed to run the `matrix` executable as described in the usage section of this README.
+ ```bash
+ exec ~/<replace with repository directory>/matrix
+ ```
+
+### Developer
+
+When developing HackMatrix, I frequently quit and rerun the `matrix` program without restarting X.
+I wrote a trampoline program that will restart HackMatrix every time you exit.
+
+ ```bash
+ exec ~/<replace with repository directory>/trampoline
+ ```
+
+To restart normally, just press `<esc>`
+To exit to a terminal where you can manually start the program (to see stdout) press `<del>`
+
+
+#### How to use a debugger
+Press `<del>` in `trampoline` mode to escape to terminal
+Open a TTY with CTRL+FN+ALT+2
+Run `tmux` 
+Split the window `CTRL+b %`
+Run `<project root>/devtools/gdb` in one split (and start the program)
+Change to other split `CTLR+b l`. Press `<enter>` to make sure shell is accepting input.
+Run `<project root>/devtools/display` to go back to TTY1 (or CTRL+FN+ALT+1 if your machine lets you do that)
+
