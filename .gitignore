@@ -58,3 +58,4 @@ settings.json
 *.npz
 *.npy
 *.swo
+vids/
