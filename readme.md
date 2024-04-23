@@ -11,7 +11,11 @@ A 3D Linux desktop environment
 ### Navigate the 3d space
 Look around with mouse
 
-`w a s d` for up, left, right, down
+Move with
+```
+  w  
+a s d
+```
 
 ### Manually focus window
 Look at window and press `r`
