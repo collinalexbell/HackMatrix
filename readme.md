@@ -1,8 +1,38 @@
-# HackMatrix
+# HackMatrix 
+
+<img src="images/header_img.png" width="800">
+
 
 A 3D Linux desktop environment
 
-[<img src="images/paypal.svg" alt="PayPal Button" width="175">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
+[<img src="images/paypal.svg" alt="PayPal Button" width="160">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
+
+
+## Usage
+
+### Navigate the 3d space
+Look around with mouse
+
+Move with <br>
+<img src="images/wasd.webp" width="100">
+
+### Manually focus window
+Look at window and press `r`
+
+### Exit window
+When focused on window press `Win+e`
+
+### Window Hotkeys
+`Win+Shift+<num>` to set
+`Win+<num>` to navigate
+
+### Move window
+When focused on window press `Win+m`
+
+### Exit HackMatrix
+When not focued on window press `<esc>`
+
+(press `Win+e` first if focused on window)
 
 ## Compilation/Installation
 
