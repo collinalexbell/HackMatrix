@@ -13,12 +13,12 @@ A 3D Linux desktop environment
 ### Navigate the 3d space
 Look around with mouse
 
-![Look Around](vids/lookAround.gif)
+<img src="vids/lookAround.gif" width="420">
 
 Move with <br>
 <img src="images/wasd.webp" width="100">
 
-![Move](vids/move.gif)
+<img src="vids/move.gif" width="420">
 
 ### Manually focus window
 Look at window and press `r`
