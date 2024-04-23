@@ -3,7 +3,7 @@
 <img src="images/header_img.png" width="800">
 
 
-A 3D Linux desktop environment
+A 3D Linux desktop environment (which can also be a game engine)
 
 [<img src="images/paypal.svg" alt="PayPal Button" width="160">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
 
@@ -13,21 +13,28 @@ A 3D Linux desktop environment
 ### Navigate the 3d space
 Look around with mouse
 
+<img src="vids/lookAround.gif" width="420">
+
 Move with <br>
 <img src="images/wasd.webp" width="100">
+
+<img src="vids/move.gif" width="420">
 
 ### Manually focus window
 Look at window and press `r`
 
+<img src="vids/focus.gif" width="420">
+
 ### Exit window
 When focused on window press `Win+e`
 
+<img src="vids/exitWindow.gif" width="420">
+
 ### Window Hotkeys
-`Win+Shift+<num>` to set
+
 `Win+<num>` to navigate
 
-### Move window
-When focused on window press `Win+m`
+<img src="vids/hotkey.gif" width="420">
 
 ### Exit HackMatrix
 When not focued on window press `<esc>`
