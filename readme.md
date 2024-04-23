@@ -6,6 +6,23 @@
 
 A 3D Linux desktop environment
 
+## Usage
+
+### Manually focus window
+Look at window and press `r`
+
+### Exit window
+When focused on window press `Win+e`
+
+### Window Hotkeys
+`Win+Shift+<num>` to set
+`Win+<num>` to navigate
+
+### Move window
+When focused on window press `Win+m`
+
+### Exit HackMatrix
+When not focued on window press `<esc>`
 
 ## Compilation/Installation
 
