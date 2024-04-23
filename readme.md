@@ -55,22 +55,11 @@ Once the libraries are installed, you can compile and run the program as describ
 
 #### Prebuilt executable
 
-If you are using an X86 architecture, you can just use the prebuilt `matrix` executable in the root of the repository.
-Or you can still compile from source.
+If you are using an X86 architecture, you can grab the latest [release](https://github.com/collinalexbell/HackMatrix/releases) which has the matrix executable prebuilt for you.
 
 #### Compiling from source
 
-To build the `matrix` executable, navigate to the project directory and run the following command:
-
-```bash
-make all
-```
-
-This command will compile the source code and link against the required libraries specified in the `LIBS` variable:
-
-```makefile
-LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
-```
+Clone the project, navigate to the project directory and run `make`:
 
 The build process will generate the `matrix` executable in the current directory.
 
