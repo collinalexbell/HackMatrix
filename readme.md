@@ -30,6 +30,8 @@ When focused on window press `Win+m`
 ### Exit HackMatrix
 When not focued on window press `<esc>`
 
+(press `Win+e` first if focused on window)
+
 ## Compilation/Installation
 
 ### Dependencies
