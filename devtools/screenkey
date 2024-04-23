@@ -1,0 +1,2 @@
+#!/bin/bash
+screenkey -g 900x800 -p top --vis-shift --no-systray
