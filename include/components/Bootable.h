@@ -23,8 +23,6 @@ public:
            optional<int> x = nullopt, optional<int> y = nullopt);
   static int DEFAULT_WIDTH;
   static int DEFAULT_HEIGHT;
-  static constexpr float SCREEN_WIDTH = 1920;
-  static constexpr float SCREEN_HEIGHT = 1080;
 
   // struct members
   std::string cmd;
