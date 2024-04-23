@@ -1,3 +1,5 @@
+# Building
+
 ## Library Installation
 
 Before compiling and running the program, ensure that you have the following libraries installed on your Linux system:
@@ -44,3 +46,31 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 ```
 
 Once the libraries are installed, you can compile and run the program as described in the compilation and execution sections of this README.
+
+## Building the Program
+
+To build the `matrix` executable, navigate to the project directory and run the following command:
+
+```bash
+make all
+```
+
+This command will compile the source code and link against the required libraries specified in the `LIBS` variable:
+
+```makefile
+LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
+```
+
+The build process will generate the `matrix` executable in the current directory.
+
+If you want to clean the build artifacts and remove the generated executable, you can run:
+
+```bash
+make clean
+```
+
+This command will delete the `matrix` executable and any intermediate object files, allowing you to start a fresh build.
+
+Make sure you have the necessary libraries installed, as described in the [Library Installation](#library-installation) section, before running the `make` commands.
+
+Once the program is built successfully, you can proceed to run the `matrix` executable as described in the usage section of this README.
