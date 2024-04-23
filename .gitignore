@@ -57,3 +57,4 @@ settings.json
 
 *.npz
 *.npy
+*.swo
