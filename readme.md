@@ -51,12 +51,14 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 Once the libraries are installed, you can compile and run the program as described in the compilation and execution sections of this README.
 
-## Prebuilt executable
+### Installing
+
+#### Prebuilt executable
 
 If you are using an X86 architecture, you can just use the prebuilt `matrix` executable in the root of the repository.
 Or you can still compile from source.
 
-## Compiling from source
+### Compiling from source
 
 To build the `matrix` executable, navigate to the project directory and run the following command:
 
@@ -72,7 +74,7 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 The build process will generate the `matrix` executable in the current directory.
 
-### Instalation
+## Running
 
 `matrix` is an X11 window manager, so it needs to be added to your X11 startup file
 
@@ -109,3 +111,7 @@ To exit to a terminal where you can manually start the program (to see stdout) o
 - Change to other split `CTLR+b l`. Press `<enter>` to make sure shell is accepting input.
 - Run `<project root>/devtools/display` to go back to TTY1 (or CTRL+FN+ALT+1 if your machine lets you do that)
 
+
+### Start X11
+
+After you have edited your `~/.xinitrc` just run `startx` to boot HackMatrix
