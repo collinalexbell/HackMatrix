@@ -11,11 +11,7 @@ A 3D Linux desktop environment
 ### Navigate the 3d space
 Look around with mouse
 
-Move with
-```
-  w  
-a s d
-```
+Move with <img src="images/wasd.webp" width="100">
 
 ### Manually focus window
 Look at window and press `r`
