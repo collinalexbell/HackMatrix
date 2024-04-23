@@ -92,7 +92,7 @@ I wrote a trampoline program that will restart HackMatrix every time you exit.
 
 To restart normally, just press `<esc>`
 
-To exit to a terminal where you can manually start the program (to see stdout) press `<del>`
+To exit to a terminal where you can manually start the program (to see stdout) or run a debugger press `<del>`
 
 
 #### How to use a debugger
