@@ -72,11 +72,11 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 The build process will generate the `matrix` executable in the current directory.
 
-## Instalation
+### Instalation
 
 `matrix` is an X11 window manager, so it needs to be added to your X11 startup file
 
-### Standard
+#### Standard
 
 Add the following line at the end of your `~/.xinitrc` file:
 
@@ -85,7 +85,7 @@ Add the following line at the end of your `~/.xinitrc` file:
  exec ~/<replace with repository directory>/matrix
  ```
 
-### Developer
+#### Developer
 
 When developing HackMatrix, I frequently quit and rerun the `matrix` program without restarting X.
 I wrote a trampoline program that will restart HackMatrix every time you exit.
@@ -100,7 +100,7 @@ To restart normally, just press `<esc>`
 To exit to a terminal where you can manually start the program (to see stdout) or run a debugger press `<del>`
 
 
-#### How to use a debugger
+##### How to use a debugger
 - Press `<del>` in `trampoline` mode to escape to terminal
 - Open a TTY with CTRL+FN+ALT+2
 - Run `tmux` 
