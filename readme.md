@@ -58,7 +58,7 @@ Once the libraries are installed, you can compile and run the program as describ
 If you are using an X86 architecture, you can just use the prebuilt `matrix` executable in the root of the repository.
 Or you can still compile from source.
 
-### Compiling from source
+#### Compiling from source
 
 To build the `matrix` executable, navigate to the project directory and run the following command:
 
