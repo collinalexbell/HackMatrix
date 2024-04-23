@@ -1,8 +1,9 @@
-# Building
 
-## Library Installation
+## Compilation/Installation
 
-Before compiling and running the program, ensure that you have the following libraries installed on your Linux system:
+### Dependencies
+
+Before compiling or running the program, ensure that you have the following libraries installed on your Linux system:
 
 - ZeroMQ (`libzmq`)
 - X11 (`libX11`)
@@ -21,19 +22,19 @@ Before compiling and running the program, ensure that you have the following lib
 
 To install these libraries, you can use your distribution's package manager. Here are the commands for some common distributions:
 
-### Ubuntu or Debian
+#### Ubuntu or Debian
 
 ```bash
 sudo apt-get install libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev
 ```
 
-### Fedora or CentOS
+#### Fedora or CentOS
 
 ```bash
 sudo dnf install zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
 ```
 
-### Arch Linux
+#### Arch Linux
 
 ```bash
 sudo pacman -S zeromq libx11 libxcomposite libxtst libxext libxfixes protobuf spdlog fmt glfw-x11 mesa assimp sqlite
@@ -47,7 +48,7 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 Once the libraries are installed, you can compile and run the program as described in the compilation and execution sections of this README.
 
-## Building the Program
+## Compiling from source
 
 To build the `matrix` executable, navigate to the project directory and run the following command:
 
