@@ -3,7 +3,7 @@
 <img src="images/header_img.png" width="800">
 
 
-A 3D Linux desktop environment
+A 3D Linux desktop environment (which can also be a game engine)
 
 [<img src="images/paypal.svg" alt="PayPal Button" width="160">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
 
