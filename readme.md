@@ -14,17 +14,16 @@ A 3D Linux desktop environment
 Look around with mouse
 
 ![Look Around](vids/lookAround.gif)
-<img src="vids/lookAround.gif" width="420">
 
 Move with <br>
 <img src="images/wasd.webp" width="100">
 
-<img src="vids/move.gif" width="420">
+![Move](vids/move.gif)
 
 ### Manually focus window
 Look at window and press `r`
 
-<img src="vids/focus.gif" width="420">
+![Move](vids/focus.gif)
 
 ### Exit window
 When focused on window press `Win+e`
