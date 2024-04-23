@@ -96,17 +96,11 @@ To exit to a terminal where you can manually start the program (to see stdout) p
 
 
 #### How to use a debugger
-Press `<del>` in `trampoline` mode to escape to terminal
-
-Open a TTY with CTRL+FN+ALT+2
-
-Run `tmux` 
-
-Split the window `CTRL+b %`
-
-Run `<project root>/devtools/gdb` in one split (and start the program)
-
-Change to other split `CTLR+b l`. Press `<enter>` to make sure shell is accepting input.
-
-Run `<project root>/devtools/display` to go back to TTY1 (or CTRL+FN+ALT+1 if your machine lets you do that)
+- Press `<del>` in `trampoline` mode to escape to terminal
+- Open a TTY with CTRL+FN+ALT+2
+- Run `tmux` 
+- Split the window `CTRL+b %`
+- Run `<project root>/devtools/gdb` in one split (and start the program)
+- Change to other split `CTLR+b l`. Press `<enter>` to make sure shell is accepting input.
+- Run `<project root>/devtools/display` to go back to TTY1 (or CTRL+FN+ALT+1 if your machine lets you do that)
 
