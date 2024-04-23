@@ -18,6 +18,8 @@ Look around with mouse
 Move with <br>
 <img src="images/wasd.webp" width="100">
 
+![Move](vids/move.gif)
+
 ### Manually focus window
 Look at window and press `r`
 
