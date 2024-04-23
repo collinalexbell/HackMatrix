@@ -13,6 +13,8 @@ A 3D Linux desktop environment
 ### Navigate the 3d space
 Look around with mouse
 
+![Look Around](vids/lookAround.gif)
+
 Move with <br>
 <img src="images/wasd.webp" width="100">
 
