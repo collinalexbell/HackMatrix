@@ -8,6 +8,10 @@ A 3D Linux desktop environment
 
 ## Usage
 
+### Navigate the 3d space
+Look around with mouse
+`w a s d` for up, left, right, down
+
 ### Manually focus window
 Look at window and press `r`
 
