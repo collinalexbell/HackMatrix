@@ -72,6 +72,7 @@ class WindowManager {
   void logWaitForRemovalChangeSize(int changeSize);
   void adjustAppsToAddAfterAdditions(vector<X11App*>& waitForRemoval);
   void setWMProps(Window root);
+  void reconfigureWindow(XConfigureEvent);
 
 
 public:
