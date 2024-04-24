@@ -214,11 +214,11 @@ void WindowManager::onMapRequest(XMapRequestEvent event) {
   }
 }
 
-void WindowManager::onDestroyNotify(XDestroyWindowEvent event) {
+void WindowManager::removeAppForWindow(Window window) {
   renderLoopMutex.lock();
-  if (dynamicApps.contains(event.window)) {
-    auto appEntity = dynamicApps.at(event.window);
-    dynamicApps.erase(event.window);
+  if (dynamicApps.contains(window)) {
+    auto appEntity = dynamicApps.at(window);
+    dynamicApps.erase(window);
     appsToRemove.push_back(appEntity);
   }
   renderLoopMutex.unlock();
@@ -281,8 +281,28 @@ void WindowManager::handleSubstructure() {
     case DestroyNotify:
       logger->info("DestroyNotify event");
       logger->flush();
-      onDestroyNotify(e.xdestroywindow);
+      removeAppForWindow(e.xdestroywindow.window);
       break;
+    case UnmapNotify:
+      logger->info("UnmapNotify event");
+      removeAppForWindow(e.xunmap.window);
+      break;
+
+    case MapNotify:
+      {
+        logger->info("MapNotify event");
+        renderLoopMutex.lock();
+        bool alreadyCreated = dynamicApps.contains(e.xmap.window);
+        renderLoopMutex.unlock();
+        XGetWindowAttributes(display, e.xmap.window, &attrs);
+        if (!alreadyCreated && e.xmap.override_redirect == True) {
+          if(attrs.width > 30) {
+            createApp(e.xmap.window, attrs.width,
+                attrs.height);
+          }
+        }
+        break;
+      }
     case MapRequest:
       logger->info("MapRequest event");
       onMapRequest(e.xmaprequest);

@@ -56,7 +56,7 @@ class WindowManager {
                      char **envp, string args = "");
   std::thread substructureThread;
   bool continueRunning = true;
-  void onDestroyNotify(XDestroyWindowEvent);
+  void removeAppForWindow(Window);
   void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
   void onHotkeyPress(XKeyEvent event);
