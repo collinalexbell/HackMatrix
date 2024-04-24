@@ -462,27 +462,89 @@ void X11App::resizeMove(int width, int height, int x, int y) {
   }
 }
 
+std::pair<int, int> getWindowPosition(Window window) {
+    std::stringstream ss;
+    ss << "0x" << std::hex << window;
+    std::string windowId = ss.str();
+
+    std::string command = "xwininfo -id " + windowId;
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Failed to execute xwininfo command." << std::endl;
+        return std::make_pair(-1, -1);
+    }
+
+    char buffer[128];
+    std::string output;
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        output += buffer;
+    }
+    pclose(pipe);
+
+    std::string searchString = "Absolute upper-left X:";
+    size_t pos = output.find(searchString);
+    if (pos != std::string::npos) {
+        pos += searchString.length();
+        int x = std::stoi(output.substr(pos));
+
+        searchString = "Absolute upper-left Y:";
+        pos = output.find(searchString);
+        if (pos != std::string::npos) {
+            pos += searchString.length();
+            int y = std::stoi(output.substr(pos));
+
+            return std::make_pair(x, y);
+        }
+    }
+
+    std::cerr << "Failed to parse xwininfo output." << std::endl;
+    return std::make_pair(-1, -1);
+}
+
 void X11App::resize(int width, int height) {
   this->width = width;
   this->height = height;
+  bool resized = false;
+  XWindowAttributes attributes;
+  XGetWindowAttributes(display, appWindow, &attributes);
   if(!isAccessory()) {
     x = (SCREEN_WIDTH - width) / 2;
     y = (SCREEN_HEIGHT - height) / 2;
-    XMoveResizeWindow(display, appWindow, x, y, width, height);
+    if(attributes.x != x || attributes.y != y ||
+        attributes.width != width || attributes.height != height) {
+      XMoveResizeWindow(display, appWindow, x, y, width, height);
+      resized = true;
+    }
   } else {
-    XWindowAttributes attributes;
-    XGetWindowAttributes(display, appWindow, &attributes);
+    auto position = getWindowPosition(appWindow);
+    int newX;
+    int newY;
+    if(position.first != -1 && position.second != -1) {
+      newX = position.first;
+      newY = position.second;
+    } else {
+      newX = attributes.x;
+      newY = attributes.y;
+    }
+    int invertedY = SCREEN_HEIGHT - newY;
+    invertedY -= height;
 
-    x = attributes.x;
-    y = attributes.y;
-    XMoveResizeWindow(display, appWindow, x,y, width, height);
-    y = SCREEN_HEIGHT - y;
-    y -= height;
+    if(newX != x || invertedY != y ||
+        attributes.width != width || attributes.height != height) {
+      x = newX;
+      y = invertedY;
+      //XMoveResizeWindow(display, appWindow, x,y, width, height);
+      resized = true;
+    }
   }
-  XFlush(display);
-  XSync(display, false);
-  if(textureId != -1) {
-    appTexture();
+  if(resized) {
+    XFlush(display);
+    XSync(display, false);
+    if(textureId != -1) {
+      try {
+        appTexture();
+      } catch(...) {}
+    }
   }
 }
 

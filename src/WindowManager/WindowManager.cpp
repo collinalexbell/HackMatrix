@@ -290,6 +290,19 @@ void WindowManager::handleSubstructure() {
     case KeyPress:
       onHotkeyPress(e.xkey);
       break;
+    case ConfigureNotify:
+      logger->info("ConfigureNotify");
+      reconfigureWindow(e.xconfigure);
+      break;
+    }
+  }
+}
+
+void WindowManager::reconfigureWindow(XConfigureEvent configureEvent) {
+  if(dynamicApps.contains(configureEvent.window)) {
+    auto app = registry->try_get<X11App>(dynamicApps[configureEvent.window]);
+    if(app!=NULL) {
+      app->resize(configureEvent.width, configureEvent.height);
     }
   }
 }

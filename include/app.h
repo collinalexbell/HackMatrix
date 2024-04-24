@@ -37,8 +37,8 @@ class X11App {
   int textureId = -1;
   atomic_bool focused = false;
   X11App(Display *display, int screen);
-  int x;
-  int y;
+  int x = 0;
+  int y = 0;
   size_t appIndex;
 
 public:
@@ -54,8 +54,8 @@ public:
 
   static bool initAppClass(Display * display, int screen);
 
-  int width;
-  int height;
+  int width = 0;
+  int height = 0;
 
   void positionNotify(int x, int y);
   void appTexture();
