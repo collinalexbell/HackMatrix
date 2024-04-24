@@ -142,6 +142,8 @@ The build process will generate the `matrix` executable in the current directory
 
 #### Standard
 
+HackMatrix v1 is prone to crash, so you may want to run in [developer](#developer) mode to auto-restart HackMatrix if it crashes.
+
 Add the following line at the end of your `~/.xinitrc` file:
 
  ```bash
@@ -162,6 +164,8 @@ I wrote a trampoline program that will restart HackMatrix every time you exit.
 To restart normally, just press `<esc>`
 
 To exit to a terminal where you can manually start the program (to see stdout) or run a debugger press `<del>`
+
+To exit the `trampoline`, run `pkill trampoline` in the terminal
 
 
 ##### How to use a debugger
