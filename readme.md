@@ -32,6 +32,8 @@ When focused on window press `Win+e`
 
 ### Window Hotkeys
 
+Windows are auto hotkeyed in the order they are created.
+
 `Win+<num>` to navigate
 
 <img src="vids/hotkey.gif" width="420">
