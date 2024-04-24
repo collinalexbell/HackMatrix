@@ -128,11 +128,9 @@ Once the libraries are installed, you can compile and run the program as describ
 
 ### Installing
 
-#### Prebuilt executable
-
-If you are using an X86 architecture, you can grab the latest [release](https://github.com/collinalexbell/HackMatrix/releases) which has the matrix executable prebuilt for you.
-
 #### Compiling from source
+
+Right now this is the only way to install the project.
 
 Clone the project, navigate to the project directory and run `make`:
 
