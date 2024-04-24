@@ -12,7 +12,7 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 
 all: FLAGS+=-O3 -g
-all: matrix trampoline build/diagnosis
+all: include/protos/api.pb.h matrix trampoline build/diagnosis
 
 matrix: $(ALL_OBJECTS)
 	g++ -std=c++20 $(FLAGS) -g -o matrix $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
