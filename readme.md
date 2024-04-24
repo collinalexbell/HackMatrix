@@ -73,13 +73,13 @@ sudo apt-get install protobuf-compiler build-essential libzmq3-dev libx11-dev li
 #### Fedora or CentOS
 
 ```bash
-sudo dnf install zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
+sudo dnf install protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
 ```
 
 #### Arch Linux
 
 ```bash
-sudo pacman -S zeromq libx11 libxcomposite libxtst libxext libxfixes protobuf spdlog fmt glfw-x11 mesa assimp sqlite
+sudo pacman -S protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes protobuf spdlog fmt glfw-x11 mesa assimp sqlite
 ```
 
 Make sure to install these libraries before proceeding with the compilation and execution of the program. The program's build system will link against these libraries using the provided `LIBS` flags:
