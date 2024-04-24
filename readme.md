@@ -20,6 +20,14 @@ Move with <br>
 
 <img src="vids/move.gif" width="420">
 
+### Open a window
+
+HackMatrix uses `dmenu`.
+
+`d` is mapped to movement, so press `v` without a modifier
+
+<img src="vids/openWindow.gif" width="420">
+
 ### Manually focus window
 Look at window and press `r`
 
