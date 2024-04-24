@@ -57,6 +57,10 @@ When not focued on window press `<esc>`
 
 (press `Win+e` first if focused on window)
 
+### Take a screenshot
+
+Press `p` to save a screenshot into `<project_dir>/screenshots` folder
+
 ## Compilation/Installation
 
 ### Dependencies
