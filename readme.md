@@ -30,6 +30,8 @@ Type your program name and press `<enter>`
 
 The window will open up in the position you are looking at.
 
+Press `r` to [focus](#manually-focus-window) on the window 
+
 <img src="vids/openWindow.gif" width="420">
 
 ### Manually focus window
