@@ -145,6 +145,16 @@ To exit to a terminal where you can manually start the program (to see stdout) o
 - Run `<project root>/devtools/display` to go back to TTY1 (or CTRL+FN+ALT+1 if your machine lets you do that)
 
 
-### Start X11
+### Start X11 with startx
 
-After you have edited your `~/.xinitrc` just run `startx` to boot HackMatrix
+After you have edited your `~/.xinitrc` ([see this](#running)) just run `startx` to boot HackMatrix
+
+### Start X11 with graphical session manager
+
+If you use something like GDM, you will have to create a .desktop file that calls `<project_dir>/matrix` or `<project_dir>`/trampoline.
+
+See [this article](https://www.maketecheasier.com/customize-the-gdm-sessions-list/) for how to do that.
+
+At some point I may install a session manager myself and I'll be able to write this desktop config.
+
+If you create a working config yourself, it would be great if you PR'd it!
