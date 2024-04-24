@@ -25,8 +25,6 @@
 #include <unistd.h>
 #include <cstdlib>
 
-#include <dbus-c++-1/dbus-c++/interface.h>
-
 #define OBS false
 #define EDGE true
 #define TERM false
