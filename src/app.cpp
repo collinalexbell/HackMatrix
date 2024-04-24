@@ -507,13 +507,15 @@ void X11App::resize(int width, int height) {
   bool resized = false;
   XWindowAttributes attributes;
   XGetWindowAttributes(display, appWindow, &attributes);
+  if(attributes.width != width || attributes.height != height) {
+    resized = true;
+  }
   if(!isAccessory()) {
     x = (SCREEN_WIDTH - width) / 2;
     y = (SCREEN_HEIGHT - height) / 2;
     if(attributes.x != x || attributes.y != y ||
         attributes.width != width || attributes.height != height) {
       XMoveResizeWindow(display, appWindow, x, y, width, height);
-      resized = true;
     }
   } else {
     auto position = getWindowPosition(appWindow);
@@ -534,7 +536,6 @@ void X11App::resize(int width, int height) {
       x = newX;
       y = invertedY;
       //XMoveResizeWindow(display, appWindow, x,y, width, height);
-      resized = true;
     }
   }
   if(resized) {
