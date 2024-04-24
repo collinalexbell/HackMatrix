@@ -187,6 +187,11 @@ void WindowManager::createApp(Window window, unsigned int width,
 
   X11App *app = X11App::byWindow(window, display, screen, width, height);
 
+  // some applications grab focus on boot
+  if(!app->isAccessory()) {
+    app->unfocus(matrix);
+  }
+
   entt::entity entity;
 
   auto bootableEntity = systems::matchApp(registry, app);
