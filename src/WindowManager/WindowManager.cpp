@@ -26,7 +26,7 @@
 #include <cstdlib>
 
 #define OBS false
-#define EDGE true
+#define EDGE false
 #define TERM false
 #define MAGICA false
 
