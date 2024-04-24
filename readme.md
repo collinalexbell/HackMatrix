@@ -61,6 +61,19 @@ When not focued on window press `<esc>`
 
 Press `p` to save a screenshot into `<project_dir>/screenshots` folder
 
+### Hackmatrix menu
+There is a small menu up at the top of HackMatrix.
+
+You an use this to inspect and modify entities (the game engine aspect of HackMatrix)
+
+When not focused on an app, press `f` to enter into mouse mode
+
+Click the arrow at the left of the menu
+
+Navigate to the Entity Editor
+
+See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engine) for more info about the game engine and how to use the editor.
+
 ## Compilation/Installation
 
 ### Dependencies
