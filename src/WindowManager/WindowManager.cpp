@@ -79,21 +79,10 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
 void WindowManager::createAndRegisterApps(char **envp) {
   logger->info("enter createAndRegisterApps()");
 
-  if (MAGICA) {
-    forkOrFindApp("/usr/bin/wine", "MagicaVoxel.exe", "magicavoxel.exe",
-                  magicaVoxel, envp,
-                  "/home/collin/magicavoxel/MagicaVoxel.exe");
-  }
   if (EDGE) {
     forkOrFindApp("/usr/bin/microsoft-edge", "msedge", "Microsoft-edge",
                   microsoftEdge, envp);
-  }
-  if (TERM) {
-    forkOrFindApp("/home/collin/.local/kitty.app/bin/kitty", "kitty",
-                  "kitty", terminator, envp);
-  }
-  if (OBS) {
-    forkOrFindApp("/usr/bin/obs", "obs", "obs", obs, envp);
+    appsWithHotKeys.push_back(microsoftEdge);
   }
   auto alreadyBooted = systems::getAlreadyBooted(registry);
   for(auto entityAndPid : alreadyBooted) {
@@ -201,7 +190,9 @@ void WindowManager::createApp(Window window, unsigned int width,
   } else {
     entity = registry->create();
   }
-
+  if(!app->isAccessory()) {
+    appsWithHotKeys.push_back(entity);
+  }
   addApp(app, entity);
 }
 
@@ -224,6 +215,10 @@ void WindowManager::removeAppForWindow(Window window) {
   if (dynamicApps.contains(window)) {
     auto appEntity = dynamicApps.at(window);
     dynamicApps.erase(window);
+    auto hotkey = find(appsWithHotKeys.begin(), appsWithHotKeys.end(), appEntity);
+    if(hotkey != appsWithHotKeys.end()) {
+      appsWithHotKeys.erase(hotkey);
+    }
     appsToRemove.push_back(appEntity);
   }
   renderLoopMutex.unlock();
@@ -232,12 +227,7 @@ void WindowManager::removeAppForWindow(Window window) {
 void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-  if (EDGE) {
-    appsWithHotKeys.push_back(microsoftEdge);
-  }
-  if (TERM) {
-    appsWithHotKeys.push_back(terminator);
-  }
+
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
