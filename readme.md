@@ -32,6 +32,8 @@ The window will open up in the position you are looking at.
 
 Press `r` to [focus](#manually-focus-window) on the window 
 
+__warning__: sometimes this doesn't work because of a bug, just use Win+1 to focus a window and then manual focus will work again.
+
 <img src="vids/openWindow.gif" width="420">
 
 ### Manually focus window
