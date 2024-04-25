@@ -15,7 +15,7 @@ all: FLAGS+=-O3 -g
 all: include/protos/api.pb.h matrix trampoline build/diagnosis
 
 matrix: $(ALL_OBJECTS)
-	g++ -std=c++20 $(FLAGS) -g -o matrix $(ALL_OBJECTS) -labsl_log_internal_check_op -labsl_log_internal_message $(LIBS) $(INCLUDES)
+	g++ -std=c++20 $(FLAGS) -g -o matrix $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
