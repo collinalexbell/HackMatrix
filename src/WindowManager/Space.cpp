@@ -1,3 +1,4 @@
+#include <spdlog/logger.h>
 #include "WindowManager/Space.h"
 #include "app.h"
 #include "components/Bootable.h"

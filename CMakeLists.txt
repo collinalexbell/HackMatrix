@@ -7,9 +7,10 @@ set(CMAKE_CXX_COMPILER g++)
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -funroll-loops")
 
-
+set(OpenGL_GL_PREFERENCE GLVND)
 # Libraries
-find_package(X11 REQUIRED)
+find_package(OpenGL REQUIRED COMPONENTS GLX)
+find_package(X11 REQUIRED COMPONENTS Xfixes Xext Xcomposite Xxf86vm)
 find_package(Protobuf REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
@@ -47,6 +48,8 @@ file(GLOB SOURCES
     "src/WindowManager/*.cpp"
     "src/imgui/*.cpp"
 )
+
+list(APPEND SOURCES "src/glad.c" "src/glad_glx.c")
 list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/catch_amalgamated.cpp")
 list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/x-raise.c")
 list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/trampoline.cpp")
@@ -79,14 +82,17 @@ target_link_libraries(matrix
     protobuf::libprotobuf
     spdlog::spdlog
     fmt::fmt
-    glfw
     Threads::Threads
     assimp::assimp
     SQLite::SQLite3
+    glfw
+    OpenGL::OpenGL
+    OpenGL::GLX
     ${X11_LIBRARIES}
     ${X11_Xfixes_LIB}
     ${X11_Xext_LIB}
     ${X11_Xcomposite_LIB}
+    ${X11_Xxf86vm_LIB}
     ${ZeroMQ_LIBRARY}
 )
 

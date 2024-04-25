@@ -20,6 +20,7 @@
 #include <limits>
 #include <octree/octree.h>
 #include <sstream>
+#include <spdlog/logger.h>
 #include <vector>
 #include "systems/ApplyTranslation.h"
 #include "systems/Intersections.h"

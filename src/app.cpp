@@ -1,3 +1,4 @@
+#include <spdlog/logger.h>
 #include <X11/X.h>
 #include <X11/Xutil.h>
 #include <iostream>
@@ -8,8 +9,8 @@
 #include <optional>
 #include <string>
 #include <functional>
-#include <glad/glad_glx.h>
-#include <glad/glad.h>
+#include "glad/glad_glx.h"
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <thread>
 #include "app.h"

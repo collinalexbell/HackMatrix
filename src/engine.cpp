@@ -17,6 +17,7 @@
 #include "systems/Door.h"
 
 #include <memory>
+#include <spdlog/logger.h>
 #include <spdlog/common.h>
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3.h>

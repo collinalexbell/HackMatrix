@@ -1,7 +1,7 @@
 #pragma once
 
-#include "spdlog/sinks/base_sink.h"
-#include "spdlog/sinks/rotating_file_sink.h"
+#include <spdlog/sinks/base_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 #include <memory>
 #include <vector>
 #include <string>

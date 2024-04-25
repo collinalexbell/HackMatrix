@@ -12,6 +12,7 @@
 #include <iostream>
 #include <memory>
 #include <spdlog/common.h>
+#include <spdlog/logger.h>
 #include <sstream>
 #include <string>
 #include <zmq/zmq.hpp>

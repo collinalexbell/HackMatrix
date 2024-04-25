@@ -1,3 +1,4 @@
+#include <spdlog/logger.h>
 #include "blocks.h"
 #include <cstdio>
 #include <memory>

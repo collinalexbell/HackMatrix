@@ -9,6 +9,7 @@
 #include "app.h"
 #include "screen.h"
 #include "components/Bootable.h"
+#include <spdlog/logger.h>
 #include <iostream>
 #include <vector>
 #include <glad/glad.h>
