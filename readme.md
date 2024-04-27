@@ -39,13 +39,13 @@ Look at window and press `r`
 
 __warning__: sometimes this doesn't work temporarily because of a bug.
 
-If that happens just use Win+1 to focus a window and then manual focus will work again.
+If that happens just use Super+1 to focus a window and then manual focus will work again.
 
 
 <img src="vids/focus.gif" width="420">
 
 ### Exit window
-When focused on window press `Win+e`
+When focused on window press `Super+e`
 
 <img src="vids/exitWindow.gif" width="420">
 
@@ -53,14 +53,14 @@ When focused on window press `Win+e`
 
 Windows are auto hotkeyed in the order they are created.
 
-`Win+<num>` to navigate
+`Super+<num>` to navigate
 
 <img src="vids/hotkey.gif" width="420">
 
 ### Exit HackMatrix
 When not focued on window press `<esc>`
 
-(press `Win+e` first if focused on window)
+(press `Super+e` first if focused on window)
 
 ### Take a screenshot
 
@@ -118,6 +118,9 @@ sudo dnf install xorg-x11-utils protobuf-compiler @development-tools zeromq-deve
 ```
 
 #### Arch Linux
+
+I'm currently working on an issue with protobuf compilation errors for arch. [This PR](https://github.com/collinalexbell/HackMatrix/pull/48) shows how to resolve the issue.
+If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
 sudo pacman -S xorg-xwininfo protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes protobuf spdlog fmt glfw-x11 mesa assimp sqlite
