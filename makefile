@@ -1,12 +1,8 @@
-# Detect the architecture
-ifeq ($(shell uname -s),Linux)
-    ifeq ($(shell lsb_release -i -s 2>/dev/null),Arch)
-        ARCH := Arch
-    endif
-endif
+# Detect if the distro is arch based
+ARCH_CHECK := $(shell grep -q 'arch' /etc/os-release && echo "true" || echo "false")
 
 # Set extra linker flags for Arch Linux
-ifeq ($(ARCH),Arch)
+ifeq ($(ARCH_CHECK),true)
     EXTRA_LDFLAGS := -labsl_log_internal_check_op -labsl_log_internal_message
 endif
 
