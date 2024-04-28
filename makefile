@@ -1,3 +1,11 @@
+# Detect if the distro is arch based
+ARCH_CHECK := $(shell grep -q 'arch' /etc/os-release && echo "true" || echo "false")
+
+# Set extra linker flags for Arch Linux
+ifeq ($(ARCH_CHECK),true)
+    EXTRA_LDFLAGS := -labsl_log_internal_check_op -labsl_log_internal_message
+endif
+
 PROTO_DIR = protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
@@ -15,7 +23,7 @@ all: FLAGS+=-O3 -g
 all: include/protos/api.pb.h matrix trampoline build/diagnosis
 
 matrix: $(ALL_OBJECTS)
-	g++ -std=c++20 $(FLAGS) -g -o matrix $(ALL_OBJECTS) $(LIBS) $(INCLUDES)
+	g++ -std=c++20 $(FLAGS) -g -o matrix $(ALL_OBJECTS) $(LIBS) $(EXTRA_LDFLAGS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
