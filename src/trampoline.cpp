@@ -33,7 +33,7 @@ void terminator() {
 int main(int argc, char** argv, char** envp) {
   int pid ;
   while (true) {
-    std::string execfile = execdir() + "matrix";
+    std::string execfile = execdir() + "/matrix";
     int rv = system(execfile.c_str());
     if (rv != 0) {
       pid = fork();
