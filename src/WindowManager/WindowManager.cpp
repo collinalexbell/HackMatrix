@@ -546,9 +546,6 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
 
   XSelectInput(display, matrix, FocusChangeMask | LeaveWindowMask);
 
-  Atom XdndSelectionAtom = XInternAtom(display, "XdndSelection", False);
-  XSetSelectionOwner(display, overlay, matrix, CurrentTime);
-
   for (int i = 0; i < 10; i++) {
     KeyCode code = XKeysymToKeycode(display, XK_0 + i);
     XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
