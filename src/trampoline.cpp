@@ -1,16 +1,16 @@
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <string>
+#include <limits.h>
 
 std::string execdir() {
     char result[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    std::string executable = std::string(result, (count > 0) ? count : 0);
-    return executable.substr(0, executablePath.find_last_of("/\\"));
+    std::string executablePath = std::string(result, (count > 0) ? count : 0);
+    return executablePath.substr(0, executablePath.find_last_of("/\\"));
 }
 
 void terminator() {
@@ -33,8 +33,8 @@ void terminator() {
 int main(int argc, char** argv, char** envp) {
   int pid ;
   while (true) {
-    std::string execfile = execdir() << "matrix"
-    int rv = system(execfile);
+    std::string execfile = execdir() + "matrix";
+    int rv = system(execfile.c_str());
     if (rv != 0) {
       pid = fork();
       if (pid == 0) {
