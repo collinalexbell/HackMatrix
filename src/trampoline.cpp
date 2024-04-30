@@ -5,6 +5,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+std::string execdir() {
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    std::string executable = std::string(result, (count > 0) ? count : 0);
+    return executable.substr(0, executablePath.find_last_of("/\\"));
+}
+
 void terminator() {
   pid_t pid = fork(); // Create a child process
 
@@ -25,7 +32,8 @@ void terminator() {
 int main(int argc, char** argv, char** envp) {
   int pid ;
   while (true) {
-    int rv = system("/home/collin/matrix/matrix");
+    std::string execfile = execdir() << "matrix"
+    int rv = system(execfile);
     if (rv != 0) {
       pid = fork();
       if (pid == 0) {
