@@ -5,9 +5,6 @@ in vec3 FragPos;
 in vec3 lineColor;
 in vec4 ModelColor;
 in vec3 Normal;
-flat in int BlockType;
-flat in int IsLookedAt;
-flat in int Selection;
 
 uniform sampler2DArray allBlocks;
 uniform sampler2D texture_diffuse1;
@@ -19,6 +16,7 @@ uniform sampler2D app4;
 uniform sampler2D app5;
 uniform sampler2D app6;
 uniform bool isApp;
+uniform int appNumber;
 uniform bool isModel;
 uniform bool isLine;
 uniform bool appSelected;
@@ -26,7 +24,6 @@ uniform bool isMesh;
 uniform bool isDynamicObject;
 uniform bool isLight;
 uniform bool appTransparent;
-uniform int totalBlockTypes;
 uniform float time;
 const int MAX_LIGHTS = 10;
 uniform int numLights;
@@ -139,28 +136,25 @@ void main()
 {
 	// need to pass this in as vertex data, but hold for now
 	if(isApp) {
-		if(BlockType == 0) {
-			FragColor = colorFromTexture(app0, TexCoord); } else if (BlockType == 1) {
+		if(appNumber == 0) {
+			FragColor = colorFromTexture(app0, TexCoord);
+    } else if (appNumber == 1) {
 			FragColor = colorFromTexture(app1, TexCoord);
-		} else if (BlockType == 2) {
+		} else if (appNumber == 2) {
 			FragColor = colorFromTexture(app2, TexCoord);
-		} else if (BlockType == 3) {
+		} else if (appNumber == 3) {
 			FragColor = colorFromTexture(app3, TexCoord);
-		} else if (BlockType == 4) {
+		} else if (appNumber == 4) {
 			FragColor = colorFromTexture(app4, TexCoord);
-		} else if (BlockType == 5) {
+		} else if (appNumber == 5) {
 			FragColor = colorFromTexture(app5, TexCoord);
-		} else if (BlockType == 6) {
+		} else if (appNumber == 6) {
 			FragColor = colorFromTexture(app6, TexCoord);
 		}
 		if(!appSelected) {
 			//FragColor = mix(FragColor, floor(TexCoord), 0.1);
 		}
-	} else if(isLine) {
-		FragColor = vec4(lineColor, lineColor.r);
-  } else if(isDynamicObject) {
-    FragColor = vec4(0.5, 0.5, 0.5, 1.0);
-  } else if (isModel) {
+	} else if (isModel) {
 
     if(isLight) {
       FragColor = vec4(lightColor[0], 1.0);
@@ -193,13 +187,5 @@ void main()
 
       FragColor = vec4(lightOutput,1) * texture(texture_diffuse1, TexCoord);
     }
-	} else {
-    FragColor = texture(allBlocks, vec3(TexCoord.x, TexCoord.y, BlockType));
-	}
-	if(Selection == 1) {
-		FragColor = FragColor * vec4(2.0,1.0,1.0,1.0);
-	}
-	if(IsLookedAt == 1) {
-		FragColor = FragColor * vec4(2.0,2.0,2.0,1.0);
-	}
+	} 
 }

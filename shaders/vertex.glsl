@@ -1,21 +1,13 @@
 #version 330 core
 layout (location = 0) in vec3 position;
-layout (location = 0) in vec3 vertexPositionInModel;
-layout (location = 1) in vec3 lineInstanceColor;
 layout (location = 1) in vec2 texCoord;
-layout (location = 2) in vec3 modelOffset;
-layout (location = 2) in int selection;
 layout (location = 2) in vec3 normal;
-layout (location = 3) in int blockType;
 
 out vec2 TexCoord;
 out vec3 lineColor;
 out vec4 ModelColor;
 out vec3 Normal;
 out vec3 FragPos;
-flat out int BlockType;
-flat out int IsLookedAt;
-flat out int Selection;
 
 uniform mat4 meshModel;
 uniform mat4 model;
@@ -38,22 +30,9 @@ void main()
   // model in this case is used per call to glDrawArraysInstanced
   if(isApp) {
     if(directRender) {
-      gl_Position = model * vec4(vertexPositionInModel, 1.0);
+      gl_Position = model * vec4(position, 1.0);
     } else {
-      gl_Position = projection * view * model * bootableScale * vec4(vertexPositionInModel, 1.0);
-    }
-    BlockType = appNumber;
-    TexCoord = texCoord;
-  } else if(isLine) {
-    gl_Position = projection * view *  vec4(position, 1.0);
-    lineColor = lineInstanceColor;
-  } else if(isDynamicObject) {
-    gl_Position = projection * view * vec4(position, 1.0);
-  } else if(isMesh) {
-    gl_Position = projection * view * meshModel * vec4(position, 1.0);
-    BlockType = blockType;
-    if (selection > 0) {
-      Selection = selection;
+      gl_Position = projection * view * model * bootableScale * vec4(position, 1.0);
     }
     TexCoord = texCoord;
   } else if(isModel) {
@@ -61,11 +40,5 @@ void main()
     FragPos = vec3(model * vec4(position, 1.0));
     TexCoord = texCoord;
     Normal = normalMatrix * normal;
-  }
-
-  IsLookedAt = 0;
-  if(isLookedAt) {
-    IsLookedAt = 1;
-    BlockType = lookedAtBlockType;
   }
 }
