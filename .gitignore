@@ -13,6 +13,7 @@ debian-testing-amd64-netinst.iso
 # executables
 matrix
 trampoline
+x-raise
 
 # ignore jpgs, because they are working images that are really large from Dalle
 images/*.jpg
