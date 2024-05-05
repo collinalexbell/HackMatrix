@@ -2,6 +2,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <optional>
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3native.h>
 
@@ -118,7 +119,10 @@ void Controls::handleSelection(GLFWwindow *window){
 void Controls::handleCodeBlock(GLFWwindow *window) {
   bool shouldOpenCodeBlock = glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS;
   if(shouldOpenCodeBlock && debounce(lastKeyPressTime)) {
-    world->action(OPEN_SELECTION_CODE);
+    auto newPos = camera->position + camera->front * -3.0f;
+    moveTo(newPos, std::nullopt, 0.5, [this]() -> void {
+      world->action(OPEN_SELECTION_CODE);
+    });
   }
 }
 
