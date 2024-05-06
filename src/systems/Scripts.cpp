@@ -26,9 +26,19 @@ void runScript(std::filesystem::path scriptPath, Scriptable &scriptable) {
   }
 
   void editor(std::filesystem::path filePath) {
-    std::string editorCommand =
-        "emacsclient -c " + filePath.string(); // Customize with your editor
-    auto result = system(editorCommand.c_str());     // Blocks until editor closes
+      std::ifstream configFile("editor.conf");
+      std::string editorCommand;
+
+      if (configFile.is_open()) {
+          std::getline(configFile, editorCommand);
+          configFile.close();
+      } else {
+          // Default editor command if config file is not found
+          editorCommand = "kitty vim";
+      }
+
+      editorCommand += " " + filePath.string();
+      auto result = system(editorCommand.c_str()); // Blocks until editor closes
   }
 
   void editScript(std::shared_ptr<EntityRegistry> registry,
