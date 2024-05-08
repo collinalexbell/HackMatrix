@@ -6,6 +6,11 @@
 #include <vector>
 #include <string>
 
+class Loggable {
+  Loggable(std::string loggerName);
+  std::shared_ptr<spdlog::logger> logger;
+};
+
 class LoggerSink : public spdlog::sinks::base_sink<std::mutex> {
 public:
   LoggerSink(spdlog::sink_ptr fileSink, spdlog::sink_ptr imguiSink) : fileSink_(fileSink), imguiSink_(imguiSink) {}
