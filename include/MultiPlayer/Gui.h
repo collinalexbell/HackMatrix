@@ -10,7 +10,11 @@ public:
     Gui();
     ~Gui();
 
-    void Run();
+    void Render();
+
+    bool IsConnectButtonClicked() const;
+    const std::string& GetAddress() const;
+    int GetPort() const;
 
 private:
     bool connect;
