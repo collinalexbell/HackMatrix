@@ -15,7 +15,7 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/screen.o build/systems/Light.o build/components/Light.o build/main.o build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
+ALL_OBJECTS = build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o build/main.o build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS)
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
 
 
@@ -175,6 +175,9 @@ build/systems/Update.o: src/systems/Update.cpp include/systems/Update.h include/
 
 build/systems/Derivative.o: src/systems/Derivative.cpp include/systems/Intersections.h include/entity.h include/model.h include/components/Scriptable.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/Derivative.o -c src/systems/Derivative.cpp $(INCLUDES)
+
+build/MultiPlayer/Gui.o: src/MultiPlayer/Gui.cpp include/MultiPlayer/Gui.h
+	g++ -std=c++20 $(FLAGS) -o build/MultiPlayer/Gui.o -c src/MultiPlayer/Gui.cpp $(INCLUDES)
 
 # SQLite build logic
 build/%.o: src/sqlite/%.cpp
