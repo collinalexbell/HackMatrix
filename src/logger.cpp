@@ -1,7 +1,8 @@
 #include <sstream>
 #include "logger.h"
 
-Loggable::Loggable(std::string loggerName) {
+Loggable::Loggable(std::string loggerName, LoggerSink sink) {
+  logger = make_shared<spdlog::logger>(loggerName, sink);
 }
 
 // TODO:I should make this a rotating log

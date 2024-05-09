@@ -6,11 +6,6 @@
 #include <vector>
 #include <string>
 
-class Loggable {
-  Loggable(std::string loggerName);
-  std::shared_ptr<spdlog::logger> logger;
-};
-
 class LoggerSink : public spdlog::sinks::base_sink<std::mutex> {
 public:
   LoggerSink(spdlog::sink_ptr fileSink, spdlog::sink_ptr imguiSink) : fileSink_(fileSink), imguiSink_(imguiSink) {}
@@ -40,3 +35,10 @@ public:
 };
 
 extern std::shared_ptr<spdlog::sinks::rotating_file_sink_mt> fileSink;
+
+class Loggable {
+  Loggable(std::string loggerName, LoggerSink sink);
+  std::shared_ptr<spdlog::logger> logger;
+};
+
+
