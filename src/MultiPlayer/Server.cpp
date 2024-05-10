@@ -1,4 +1,4 @@
-#include "Server.h"
+#include "MultiPlayer/Server.h"
 #include <iostream>
 
 namespace MultiPlayer {

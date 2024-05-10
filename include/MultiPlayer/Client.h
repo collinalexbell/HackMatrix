@@ -1,21 +1,21 @@
 #pragma once
 
-#include <imgui.h>
+#include <enet/enet.h>
 #include <string>
 
 namespace MultiPlayer {
 
-class Gui {
+class Client {
 public:
-    Gui();
-    ~Gui();
+    Client();
+    ~Client();
 
-    void Run();
+    bool Connect(const std::string& address, int port);
+    void Disconnect();
 
 private:
-    bool connect;
-    std::string address;
-    int port;
+    ENetHost* client;
+    ENetPeer* peer;
 };
 
 }

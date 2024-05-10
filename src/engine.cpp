@@ -24,6 +24,12 @@
 
 #include "imgui/imgui_impl_opengl3.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+#define ENET_IMPLEMENTATION
+#include <enet/enet.h>
+#pragma GCC diagnostic pop
+
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
   Engine *engine = (Engine *)glfwGetWindowUserPointer(window);
