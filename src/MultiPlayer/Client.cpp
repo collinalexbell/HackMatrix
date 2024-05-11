@@ -83,7 +83,7 @@ namespace MultiPlayer {
 
   bool Client::sendPlayer(glm::vec3 position, glm::vec3 front) {
     if (_isConnected) {
-      ENetPacket* packet = enet_packet_create(NULL, sizeof(glm::vec3) * 2, ENET_PACKET_FLAG_RELIABLE);
+      ENetPacket* packet = enet_packet_create(NULL, sizeof(glm::vec3) * 2, ENET_PACKET_FLAG_UNSEQUENCED);
 
       // Copy the player's position and front vector into the packet data
       glm::vec3* data = reinterpret_cast<glm::vec3*>(packet->data);
