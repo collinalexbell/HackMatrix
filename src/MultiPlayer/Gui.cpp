@@ -34,11 +34,7 @@ void Gui::Render() {
     } else {
       if(server.IsRunning()) {
         server.Poll();
-        for(auto client: server.GetClients()) {
-          char ipStr[INET_ADDRSTRLEN];
-          enet_address_get_host_ip(&client->address, ipStr, sizeof(ipStr));
-          ImGui::Text("client: %s", ipStr);
-        }
+        ImGui::Text("clientCount: %d", (int)server.GetClients().size());
         if (ImGui::Button("Stop Server")) {
           server.Stop();
         }

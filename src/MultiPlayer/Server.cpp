@@ -56,6 +56,7 @@ void Server::Poll() {
 }
 
 void Server::Stop() {
+  clients.clear();
   if (server != nullptr) {
     enet_host_destroy(server);
     server = nullptr;
