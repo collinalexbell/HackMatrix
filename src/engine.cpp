@@ -153,6 +153,9 @@ void Engine::loop() {
       if(server) {
         server->Poll(registry);
       }
+      if(client) {
+        client->poll();
+      }
       if(client && frameStart - lastPlayerUpdate > 1.0/20.0) {
         client->sendPlayer(camera->position, camera->front);
         lastPlayerUpdate = frameStart;
@@ -163,7 +166,7 @@ void Engine::loop() {
       glfwSwapBuffers(window);
 
       frameTimes[frameIndex] = glfwGetTime() - frameStart;
-      frameIndex = (frameIndex + 1) % 20;
+      frameIndex = (frameIndex + 1) % 10;
     }
   } catch (const std::exception &e) {
     logger->error(e.what());
