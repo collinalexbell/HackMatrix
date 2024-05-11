@@ -99,7 +99,7 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   wm->createAndRegisterApps(envp);
   registerCursorCallback();
   // Has to be be created after the cursorCallback because gui wraps the callback
-  engineGui = make_shared<EngineGui>(window, registry, loggerVector);
+  engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
 }
 
 Engine::~Engine() {
@@ -142,14 +142,14 @@ void Engine::loop() {
       frameStart = glfwGetTime();
       glfwPollEvents();
 
-      engineGui->render(fps, frameIndex, frameTimes, client, server);
+      engineGui->render(fps, frameIndex, frameTimes);
       world->tick();
       renderer->render();
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
-      if(server.has_value()){
-        server.value()->Poll();
+      if(server){
+        server->Poll();
       }
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -163,4 +163,12 @@ void Engine::loop() {
     logger->error(e.what());
     throw;
   }
+}
+
+void Engine::registerClient(shared_ptr<MultiPlayer::Client> _client) {
+  client = _client;
+}
+
+void Engine::registerServer(shared_ptr<MultiPlayer::Server> _server) {
+  server = _server;
 }

@@ -76,7 +76,7 @@ build/WindowManager/Space.o: src/WindowManager/Space.cpp include/WindowManager/S
 build/logger.o: src/logger.cpp include/logger.h
 	g++ -std=c++20 $(FLAGS) -o build/logger.o -c src/logger.cpp $(INCLUDES)
 
-build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/WindowManager/WindowManager.h include/world.h include/blocks.h include/assets.h include/entity.h include/model.h include/systems/Derivative.h include/components/Light.h
+build/engine.o: src/engine.cpp include/engine.h include/api.h include/app.h include/camera.h include/controls.h include/renderer.h include/WindowManager/WindowManager.h include/world.h include/blocks.h include/assets.h include/entity.h include/model.h include/systems/Derivative.h include/components/Light.h  include/MultiPlayer/Client.h include/MultiPlayer/Server.h
 	g++ -std=c++20 $(FLAGS) -Wdeprecated-enum-enum-conversion -o build/engine.o -c src/engine.cpp $(INCLUDES)
 
 build/cube.o: src/cube.cpp include/cube.h
@@ -112,7 +112,7 @@ build/mesh.o: src/mesh.cpp include/mesh.h
 build/entity.o: src/entity.cpp include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/entity.o -c src/entity.cpp $(INCLUDES)
 
-build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h include/systems/Update.h include/components/Bootable.h include/components/Light.h
+build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h include/systems/Update.h include/components/Bootable.h include/components/Light.h include/engine.h
 	g++ -std=c++20 $(FLAGS) -o build/engineGui.o -c src/engineGui.cpp $(INCLUDES)
 
 build/persister.o: src/persister.cpp include/persister.h
@@ -176,7 +176,7 @@ build/systems/Update.o: src/systems/Update.cpp include/systems/Update.h include/
 build/systems/Derivative.o: src/systems/Derivative.cpp include/systems/Intersections.h include/entity.h include/model.h include/components/Scriptable.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/Derivative.o -c src/systems/Derivative.cpp $(INCLUDES)
 
-build/MultiPlayer/Gui.o: src/MultiPlayer/Gui.cpp include/MultiPlayer/Gui.h
+build/MultiPlayer/Gui.o: src/MultiPlayer/Gui.cpp include/MultiPlayer/Gui.h include/engine.h
 	g++ -std=c++20 $(FLAGS) -o build/MultiPlayer/Gui.o -c src/MultiPlayer/Gui.cpp $(INCLUDES)
 
 build/MultiPlayer/Client.o: src/MultiPlayer/Client.cpp include/MultiPlayer/Client.h

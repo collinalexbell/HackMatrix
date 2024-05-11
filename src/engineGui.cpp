@@ -1,3 +1,4 @@
+#include "engine.h"
 #include "engineGui.h"
 #include "components/Bootable.h"
 #include "components/BoundingSphere.h"
@@ -28,9 +29,9 @@
 
 #include <glm/glm.hpp>
 
-EngineGui::EngineGui(GLFWwindow *window, shared_ptr<EntityRegistry> registry,
+EngineGui::EngineGui(Engine* engine, GLFWwindow *window, shared_ptr<EntityRegistry> registry,
                      shared_ptr<LoggerVector> loggerVector)
-    : registry(registry), loggerVector(loggerVector) {
+    : engine(engine), registry(registry), loggerVector(loggerVector) {
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -46,11 +47,8 @@ EngineGui::EngineGui(GLFWwindow *window, shared_ptr<EntityRegistry> registry,
   ImGui_ImplOpenGL3_Init();
 }
 
-void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes,
-      std::optional<std::shared_ptr<MultiPlayer::Client>>& client,
-      std::optional<std::shared_ptr<MultiPlayer::Server>>& server
-    ) {
-  static MultiPlayer::Gui gui(client, server);
+void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) {
+  static MultiPlayer::Gui gui(engine);
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();

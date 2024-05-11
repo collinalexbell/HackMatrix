@@ -1,3 +1,4 @@
+#include "engine.h"
 #include "MultiPlayer/Gui.h"
 #include "MultiPlayer/Server.h"
 #include "MultiPlayer/Client.h"
@@ -6,11 +7,8 @@
 
 namespace MultiPlayer {
 
-Gui::Gui(
-    std::optional<std::shared_ptr<MultiPlayer::Client>>& client,
-    std::optional<std::shared_ptr<MultiPlayer::Server>>& server
-    ) : connect(false), address("127.0.0.1"), port(7777),
-  client(client), server(server) {}
+Gui::Gui(Engine* engine) : connect(false), address("127.0.0.1"), port(7777),
+  engine(engine) {}
 
 Gui::~Gui() {}
 
@@ -30,29 +28,33 @@ void Gui::Render() {
     ImGui::InputInt("Port", &port);
 
     if (selectedMode == 0) {
-      if(client.has_value() && client.value()->IsConnected()) {
+      if(client && client->IsConnected()) {
         ImGui::Text("connected to server");
         if (ImGui::Button("Disconnect")) {
-            client.value()->Disconnect();
-            client = std::nullopt;
+            client->Disconnect();
+            client = nullptr;
+            engine->registerClient(client);
         }
       } else {
         if (ImGui::Button("Connect as Client")) {
           client = std::make_shared<Client>();
-          client.value()->Connect(address, port);
+          engine->registerClient(client);
+          client->Connect(address, port);
         }
       }
     } else {
-      if(server.has_value() && server.value()->IsRunning()) {
-        ImGui::Text("clientCount: %d", (int)server.value()->GetClients().size());
+      if(server && server->IsRunning()) {
+        ImGui::Text("clientCount: %d", (int)server->GetClients().size());
         if (ImGui::Button("Stop Server")) {
-          server.value()->Stop();
-          server = std::nullopt;
+          server->Stop();
+          server = nullptr;
+          engine->registerServer(server);
         }
       } else {
         if (ImGui::Button("Host as Server")) {
             server = std::make_shared<Server>();
-            server.value()->Start(port);
+            engine->registerServer(server);
+            server->Start(port);
         }
       }
     }

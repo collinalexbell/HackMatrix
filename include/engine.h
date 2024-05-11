@@ -28,8 +28,8 @@ class Engine {
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
   std::shared_ptr<EngineGui> engineGui;
-  std::optional<std::shared_ptr<MultiPlayer::Client>> client;
-  std::optional<std::shared_ptr<MultiPlayer::Server>> server;
+  std::shared_ptr<MultiPlayer::Client> client;
+  std::shared_ptr<MultiPlayer::Server> server;
   spdlog::sink_ptr loggerSink;
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
@@ -42,4 +42,6 @@ public:
   void wire();
   void loop();
   void registerCursorCallback();
+  void registerServer(shared_ptr<MultiPlayer::Server>);
+  void registerClient(shared_ptr<MultiPlayer::Client>);
 };

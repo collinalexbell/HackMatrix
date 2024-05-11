@@ -7,12 +7,12 @@
 #include "./Client.h"
 #include "./Server.h"
 
+class Engine;
 namespace MultiPlayer {
 
 class Gui {
 public:
-    Gui(std::optional<std::shared_ptr<MultiPlayer::Client>>& client,
-        std::optional<std::shared_ptr<MultiPlayer::Server>>& server);
+    Gui(Engine*);
     ~Gui();
 
     void Render();
@@ -25,8 +25,9 @@ private:
     bool connect;
     std::string address;
     int port;
-    std::optional<std::shared_ptr<MultiPlayer::Client>>& client;
-    std::optional<std::shared_ptr<MultiPlayer::Server>>& server;
+    Engine *engine;
+    std::shared_ptr<MultiPlayer::Client> client;
+    std::shared_ptr<MultiPlayer::Server> server;
 };
 
 }

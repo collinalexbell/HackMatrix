@@ -12,7 +12,9 @@
 
 using namespace std;
 
+class Engine;
 class EngineGui {
+  Engine* engine;
   GLFWwindow *window;
   shared_ptr<EntityRegistry> registry;
   shared_ptr<LoggerVector> loggerVector;
@@ -21,10 +23,8 @@ class EngineGui {
   void renderEntities();
 
 public:
-  EngineGui(GLFWwindow* window, shared_ptr<EntityRegistry> registry, shared_ptr<LoggerVector>);
-  void render(double&, int, vector<double>&,
-      std::optional<std::shared_ptr<MultiPlayer::Client>>&,
-      std::optional<std::shared_ptr<MultiPlayer::Server>>&);
+  EngineGui(Engine* engine, GLFWwindow* window, shared_ptr<EntityRegistry> registry, shared_ptr<LoggerVector>);
+  void render(double&, int, vector<double>&);
   shared_ptr<LoggerVector> getLoggerVector();
   void createNewEntity();
 };
