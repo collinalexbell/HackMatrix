@@ -11,11 +11,13 @@ public:
     ~Client();
 
     bool Connect(const std::string& address, int port);
+    bool IsConnected();
     void Disconnect();
 
 private:
     ENetHost* client;
     ENetPeer* peer;
+    bool isConnected = false;
 };
 
 }

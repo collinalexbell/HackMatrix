@@ -28,9 +28,16 @@ void Gui::Render() {
     ImGui::InputInt("Port", &port);
 
     if (selectedMode == 0) {
+      if(client.IsConnected()) {
+        ImGui::Text("connected to server");
+        if (ImGui::Button("Disconnect")) {
+            client.Disconnect();
+        }
+      } else {
         if (ImGui::Button("Connect as Client")) {
             client.Connect(address, port);
         }
+      }
     } else {
       if(server.IsRunning()) {
         server.Poll();

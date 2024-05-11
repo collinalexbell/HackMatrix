@@ -37,6 +37,7 @@ bool Client::Connect(const std::string& address, int port) {
     if (enet_host_service(client, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT) {
         std::cout << "Connected to server." << std::endl;
         enet_host_flush(client);
+        isConnected = true;
         return true;
     } else {
         std::cout << "didn't get response" << std::endl;
@@ -59,6 +60,7 @@ void Client::Disconnect() {
                     break;
                 case ENET_EVENT_TYPE_DISCONNECT:
                     std::cout << "Disconnected from server." << std::endl;
+                    isConnected = false;
                     break;
             }
         }
@@ -69,6 +71,10 @@ void Client::Disconnect() {
         enet_host_destroy(client);
         client = nullptr;
     }
+}
+
+bool Client::IsConnected() {
+  return isConnected;
 }
 
 }
