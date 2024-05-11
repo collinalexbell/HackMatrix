@@ -154,11 +154,8 @@ void Engine::loop() {
         server->Poll(registry);
       }
       if(client && frameStart - lastPlayerUpdate > 1.0/20.0) {
-        std::thread updatePlayerThread([this, position = camera->position, front = camera->front]() {
-            client->SendPlayer(position, front);
-            }); 
+        client->sendPlayer(camera->position, camera->front);
         lastPlayerUpdate = frameStart;
-        updatePlayerThread.detach();
       }
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -180,4 +177,8 @@ void Engine::registerClient(shared_ptr<MultiPlayer::Client> _client) {
 
 void Engine::registerServer(shared_ptr<MultiPlayer::Server> _server) {
   server = _server;
+}
+
+shared_ptr<EntityRegistry> Engine::getRegistry() {
+  return registry;
 }

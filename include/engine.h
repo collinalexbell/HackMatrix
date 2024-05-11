@@ -32,12 +32,14 @@ class Engine {
   std::shared_ptr<MultiPlayer::Server> server;
   spdlog::sink_ptr loggerSink;
 
+
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
   void setupRegistry();
 
 public:
   Engine(GLFWwindow* window, char** envp);
   ~Engine();
+  shared_ptr<EntityRegistry> getRegistry();
   void initialize();
   void wire();
   void loop();

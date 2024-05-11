@@ -12,16 +12,17 @@ public:
     Client(std::shared_ptr<EntityRegistry>);
     ~Client();
 
-    bool Connect(const std::string& address, int port);
-    bool IsConnected();
-    void Disconnect();
-    bool SendPlayer(glm::vec3, glm::vec3);
-    void StartUpdateThread();
+    bool connect(const std::string& address, int port);
+    bool isConnected();
+    void disconnect();
+    bool sendPlayer(glm::vec3, glm::vec3);
+    void startUpdateThread();
+    void updateThreadLoop();
 
 private:
     ENetHost* client;
     ENetPeer* peer;
-    bool isConnected = false;
+    bool _isConnected = false;
     double lastUpdate = 0;
     double UPDATE_EVERY = 1.0/20.0;
     std::shared_ptr<EntityRegistry> registry;

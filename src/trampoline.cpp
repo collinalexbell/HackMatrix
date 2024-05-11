@@ -38,7 +38,7 @@ int main(int argc, char** argv, char** envp) {
     if (rv != 0) {
       pid = fork();
       if (pid == 0) {
-        sleep(2);
+        sleep(5);
         system("xdotool search --class Terminator | xargs ./build/x-raise");
         exit(0);
       }

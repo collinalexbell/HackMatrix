@@ -28,18 +28,18 @@ void Gui::Render() {
     ImGui::InputInt("Port", &port);
 
     if (selectedMode == 0) {
-      if(client && client->IsConnected()) {
+      if(client && client->isConnected()) {
         ImGui::Text("connected to server");
         if (ImGui::Button("Disconnect")) {
-            client->Disconnect();
+            client->disconnect();
             client = nullptr;
             engine->registerClient(client);
         }
       } else {
         if (ImGui::Button("Connect as Client")) {
-          client = std::make_shared<Client>();
+          client = std::make_shared<Client>(engine->getRegistry());
           engine->registerClient(client);
-          client->Connect(address, port);
+          client->connect(address, port);
         }
       }
     } else {
