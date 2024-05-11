@@ -36,6 +36,7 @@ void Server::Poll(std::shared_ptr<EntityRegistry> registry) {
     switch (event.type) {
       case ENET_EVENT_TYPE_CONNECT:
         clients.push_back(event.peer);
+        systems::registerPlayer(registry, event.peer->connectID);
         // You can perform additional actions here, such as sending a welcome message
         // or updating your GUI to display the new connection
         break;

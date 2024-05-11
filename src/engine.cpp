@@ -154,9 +154,11 @@ void Engine::loop() {
         server->Poll(registry);
       }
       if(client && frameStart - lastPlayerUpdate > 1.0/20.0) {
-        auto updatePlayer = std::async(std::launch::async, [this, position = camera->position, front = camera->front]()->void {
-          client->SendPlayer(position, front);
-        });
+        std::thread updatePlayerThread([this, position = camera->position, front = camera->front]() {
+            client->SendPlayer(position, front);
+            }); 
+        lastPlayerUpdate = frameStart;
+        updatePlayerThread.detach();
       }
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
