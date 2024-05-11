@@ -46,8 +46,11 @@ EngineGui::EngineGui(GLFWwindow *window, shared_ptr<EntityRegistry> registry,
   ImGui_ImplOpenGL3_Init();
 }
 
-void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) {
-  static MultiPlayer::Gui gui;
+void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes,
+      std::optional<std::shared_ptr<MultiPlayer::Client>>& client,
+      std::optional<std::shared_ptr<MultiPlayer::Server>>& server
+    ) {
+  static MultiPlayer::Gui gui(client, server);
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();

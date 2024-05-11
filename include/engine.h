@@ -7,6 +7,8 @@
 #include "world.h"
 #include "entity.h"
 #include "engineGui.h"
+#include "MultiPlayer/Client.h"
+#include "MultiPlayer/Server.h"
 
 #include <GLFW/glfw3.h>
 #include <memory>
@@ -26,6 +28,8 @@ class Engine {
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
   std::shared_ptr<EngineGui> engineGui;
+  std::optional<std::shared_ptr<MultiPlayer::Client>> client;
+  std::optional<std::shared_ptr<MultiPlayer::Server>> server;
   spdlog::sink_ptr loggerSink;
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);

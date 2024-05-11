@@ -6,7 +6,11 @@
 
 namespace MultiPlayer {
 
-Gui::Gui() : connect(false), address("127.0.0.1"), port(7777) {}
+Gui::Gui(
+    std::optional<std::shared_ptr<MultiPlayer::Client>>& client,
+    std::optional<std::shared_ptr<MultiPlayer::Server>>& server
+    ) : connect(false), address("127.0.0.1"), port(7777),
+  client(client), server(server) {}
 
 Gui::~Gui() {}
 
@@ -15,8 +19,6 @@ void Gui::Render() {
     static char cAddress[cAddressSize];
     static int selectedMode = 0;
     const char* modes[] = { "Client", "Server" };
-    static auto client = Client();
-    static auto server = Server();
 
     ImGui::Combo("Server/Client", &selectedMode, modes, IM_ARRAYSIZE(modes));
 
@@ -28,26 +30,29 @@ void Gui::Render() {
     ImGui::InputInt("Port", &port);
 
     if (selectedMode == 0) {
-      if(client.IsConnected()) {
+      if(client.has_value() && client.value()->IsConnected()) {
         ImGui::Text("connected to server");
         if (ImGui::Button("Disconnect")) {
-            client.Disconnect();
+            client.value()->Disconnect();
+            client = std::nullopt;
         }
       } else {
         if (ImGui::Button("Connect as Client")) {
-            client.Connect(address, port);
+          client = std::make_shared<Client>();
+          client.value()->Connect(address, port);
         }
       }
     } else {
-      if(server.IsRunning()) {
-        server.Poll();
-        ImGui::Text("clientCount: %d", (int)server.GetClients().size());
+      if(server.has_value() && server.value()->IsRunning()) {
+        ImGui::Text("clientCount: %d", (int)server.value()->GetClients().size());
         if (ImGui::Button("Stop Server")) {
-          server.Stop();
+          server.value()->Stop();
+          server = std::nullopt;
         }
       } else {
         if (ImGui::Button("Host as Server")) {
-            server.Start(port);
+            server = std::make_shared<Server>();
+            server.value()->Start(port);
         }
       }
     }

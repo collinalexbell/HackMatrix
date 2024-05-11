@@ -1,3 +1,10 @@
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+#define ENET_IMPLEMENTATION
+#include <enet/enet.h>
+#pragma GCC diagnostic pop
+
+
 #include "engine.h"
 #include "components/Bootable.h"
 #include "components/Key.h"
@@ -23,12 +30,6 @@
 #include <GLFW/glfw3native.h>
 
 #include "imgui/imgui_impl_opengl3.h"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
-#define ENET_IMPLEMENTATION
-#include <enet/enet.h>
-#pragma GCC diagnostic pop
 
 
 void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
@@ -141,13 +142,15 @@ void Engine::loop() {
       frameStart = glfwGetTime();
       glfwPollEvents();
 
-      engineGui->render(fps, frameIndex, frameTimes);
+      engineGui->render(fps, frameIndex, frameTimes, client, server);
       world->tick();
       renderer->render();
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
-
+      if(server.has_value()){
+        server.value()->Poll();
+      }
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

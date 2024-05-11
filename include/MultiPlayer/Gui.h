@@ -2,12 +2,17 @@
 
 #include <imgui.h>
 #include <string>
+#include <optional>
+#include <memory>
+#include "./Client.h"
+#include "./Server.h"
 
 namespace MultiPlayer {
 
 class Gui {
 public:
-    Gui();
+    Gui(std::optional<std::shared_ptr<MultiPlayer::Client>>& client,
+        std::optional<std::shared_ptr<MultiPlayer::Server>>& server);
     ~Gui();
 
     void Render();
@@ -20,6 +25,8 @@ private:
     bool connect;
     std::string address;
     int port;
+    std::optional<std::shared_ptr<MultiPlayer::Client>>& client;
+    std::optional<std::shared_ptr<MultiPlayer::Server>>& server;
 };
 
 }

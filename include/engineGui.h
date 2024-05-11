@@ -1,4 +1,6 @@
 #pragma once
+#include "MultiPlayer/Client.h"
+#include "MultiPlayer/Server.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
@@ -20,7 +22,9 @@ class EngineGui {
 
 public:
   EngineGui(GLFWwindow* window, shared_ptr<EntityRegistry> registry, shared_ptr<LoggerVector>);
-  void render(double&, int, vector<double>&);
+  void render(double&, int, vector<double>&,
+      std::optional<std::shared_ptr<MultiPlayer::Client>>&,
+      std::optional<std::shared_ptr<MultiPlayer::Server>>&);
   shared_ptr<LoggerVector> getLoggerVector();
   void createNewEntity();
 };
