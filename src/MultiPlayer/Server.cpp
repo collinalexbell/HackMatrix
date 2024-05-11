@@ -35,10 +35,13 @@ void Server::Poll(std::shared_ptr<EntityRegistry> registry) {
   while (enet_host_service(server, &event, 0) > 0) {
     switch (event.type) {
       case ENET_EVENT_TYPE_CONNECT:
-        clients.push_back(event.peer->connectID);
-        systems::registerPlayer(registry, event.peer->connectID);
-        // You can perform additional actions here, such as sending a welcome message
-        // or updating your GUI to display the new connection
+        {
+          uint32_t playerId = event.peer->connectID;
+          clients.push_back(playerId);
+          ENetPacket* packet = enet_packet_create(NULL, sizeof(uint32_t) , ENET_PACKET_FLAG_RELIABLE);
+          memcpy(packet->data, &playerId, sizeof(uint32_t));
+          enet_host_broadcast(server, 2, packet);
+        }
         break;
       case ENET_EVENT_TYPE_RECEIVE:
         // Handle received data
@@ -46,10 +49,16 @@ void Server::Poll(std::shared_ptr<EntityRegistry> registry) {
           glm::vec3* data = reinterpret_cast<glm::vec3*>(event.packet->data);
           glm::vec3 position = data[0];
           glm::vec3 front = data[1];
-
           uint32_t playerID = event.peer->connectID;
-          systems::movePlayer(registry, playerID, position, front, 1.0 / 20.0);
 
+          ENetPacket* packet = enet_packet_create(NULL, sizeof(glm::vec3) * 2 + sizeof(uint32_t) , ENET_PACKET_FLAG_UNSEQUENCED);
+
+          memcpy(packet->data, &position, sizeof(glm::vec3));
+          memcpy(static_cast<unsigned char*>(packet->data) + sizeof(glm::vec3), &front, sizeof(glm::vec3));
+          memcpy(static_cast<unsigned char*>(packet->data) + sizeof(glm::vec3) * 2, &playerID, sizeof(uint32_t));
+
+
+          enet_host_broadcast(server, 1, packet);
         }
 
         enet_packet_destroy(event.packet);

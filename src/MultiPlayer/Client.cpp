@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include "camera.h"
 #include <GLFW/glfw3.h>
+#include "systems/Player.h"
 
 namespace MultiPlayer {
 
@@ -53,9 +54,45 @@ namespace MultiPlayer {
   }
 
   void Client::poll() {
-    ENetEvent event;
-    while (enet_host_service(client, &event, 0) > 0) {
-      // do nothing for now. just recieve ack packets
+    if(isConnected()){
+      ENetEvent event;
+      while (enet_host_service(client, &event, 0) > 0) {
+        switch(event.type) {
+          case ENET_EVENT_TYPE_RECEIVE:
+            if (event.channelID == 1) {  // Player data channel
+                                         // Get the packet data
+              unsigned const char* packetData = static_cast<unsigned const char*>(event.packet->data);
+
+              // Extract position from the packet
+              glm::vec3 position;
+              memcpy(&position, packetData, sizeof(glm::vec3));
+
+              // Extract front from the packet
+              glm::vec3 front;
+              memcpy(&front, packetData + sizeof(glm::vec3), sizeof(glm::vec3));
+
+              // Extract playerID from the packet
+              uint32_t playerID;
+              memcpy(&playerID, packetData + sizeof(glm::vec3) * 2, sizeof(uint32_t));
+
+              if(peer->connectID != playerID) {
+                systems::movePlayer(registry, playerID, position, front, 1.0 / 20.0);
+              }
+            }
+            if(event.channelID == 2) {
+              auto packetData = static_cast<unsigned const char*>(event.packet->data);
+              uint32_t playerID;
+              memcpy(&playerID, packetData, sizeof(uint32_t));
+              if(peer->connectID != playerID) {
+                systems::registerPlayer(registry, playerID);
+              }
+            }
+            enet_packet_destroy(event.packet);
+            break;
+          default:
+            break;
+        }
+      }
     }
   }
 

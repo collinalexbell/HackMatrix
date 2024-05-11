@@ -55,6 +55,9 @@ void Gui::Render() {
             server = std::make_shared<Server>();
             engine->registerServer(server);
             server->Start(port);
+            client = std::make_shared<Client>(engine->getRegistry());
+            client->connect("127.0.0.1", port);
+            engine->registerClient(client);
         }
       }
     }
