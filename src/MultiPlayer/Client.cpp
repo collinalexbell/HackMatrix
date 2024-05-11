@@ -2,10 +2,11 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include "camera.h"
+#include <GLFW/glfw3.h>
 
 namespace MultiPlayer {
 
-Client::Client() : client(nullptr), peer(nullptr) {
+Client::Client(shared_ptr<EntityRegistry> registry): registry(registry) {
     if (enet_initialize() != 0) {
         std::cout << "Failed to initialize enet." << std::endl;
     }
@@ -97,6 +98,13 @@ bool Client::SendPlayer(glm::vec3 position, glm::vec3 front) {
     }
 
     return false;
+}
+
+void Client::StartUpdateThread() {
+  auto curTime = glfwGetTime();
+  if(curTime - lastUpdate > UPDATE_EVERY) {
+    lastUpdate = curTime;
+  }
 }
 
 }
