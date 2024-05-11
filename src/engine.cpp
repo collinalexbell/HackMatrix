@@ -1,3 +1,4 @@
+#include <future>
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
 #define ENET_IMPLEMENTATION
@@ -136,6 +137,7 @@ void Engine::loop() {
   double frameStart;
   int frameIndex = 0;
   double fps;
+  double lastPlayerUpdate = 0;
   systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
@@ -148,8 +150,13 @@ void Engine::loop() {
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
-      if(server){
-        server->Poll();
+      if(server) {
+        server->Poll(registry);
+      }
+      if(client && frameStart - lastPlayerUpdate > 1.0/20.0) {
+        auto updatePlayer = std::async(std::launch::async, [this, position = camera->position, front = camera->front]()->void {
+          client->SendPlayer(position, front);
+        });
       }
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

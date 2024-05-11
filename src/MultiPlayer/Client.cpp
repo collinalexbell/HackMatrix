@@ -1,5 +1,7 @@
 #include "MultiPlayer/Client.h"
 #include <iostream>
+#include <glm/glm.hpp>
+#include "camera.h"
 
 namespace MultiPlayer {
 
@@ -75,6 +77,26 @@ void Client::Disconnect() {
 
 bool Client::IsConnected() {
   return isConnected;
+}
+
+
+bool Client::SendPlayer(glm::vec3 position, glm::vec3 front) {
+    if (isConnected) {
+        ENetPacket* packet = enet_packet_create(NULL, sizeof(glm::vec3) * 2, ENET_PACKET_FLAG_RELIABLE);
+
+        // Copy the player's position and front vector into the packet data
+        glm::vec3* data = reinterpret_cast<glm::vec3*>(packet->data);
+        data[0] = position;
+        data[1] = front;
+
+        // Send the packet on the dedicated channel for players
+        enet_peer_send(peer, 1, packet);
+        enet_host_flush(client);
+
+        return true;
+    }
+
+    return false;
 }
 
 }

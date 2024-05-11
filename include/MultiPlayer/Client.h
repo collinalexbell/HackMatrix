@@ -2,6 +2,7 @@
 
 #include <enet/enet.h>
 #include <string>
+#include <glm/glm.hpp>
 
 namespace MultiPlayer {
 
@@ -13,6 +14,7 @@ public:
     bool Connect(const std::string& address, int port);
     bool IsConnected();
     void Disconnect();
+    bool SendPlayer(glm::vec3, glm::vec3);
 
 private:
     ENetHost* client;

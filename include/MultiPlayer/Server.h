@@ -2,6 +2,7 @@
 
 #include <enet/enet.h>
 #include <vector>
+#include "entity.h"
 
 namespace MultiPlayer {
 
@@ -13,7 +14,7 @@ public:
 
     bool Start(int port);
     void Stop();
-    void Poll();
+    void Poll(std::shared_ptr<EntityRegistry>);
     bool IsRunning();
     const std::vector<ENetPeer*> GetClients();
 

@@ -1,6 +1,8 @@
 #include "MultiPlayer/Server.h"
 #include <iostream>
 #include <algorithm>
+#include "glm/glm.hpp"
+#include "systems/Player.h"
 
 namespace MultiPlayer {
 
@@ -28,7 +30,7 @@ bool Server::Start(int port) {
   return true;
 }
 
-void Server::Poll() {
+void Server::Poll(std::shared_ptr<EntityRegistry> registry) {
   ENetEvent event;
   while (enet_host_service(server, &event, 0) > 0) {
     switch (event.type) {
@@ -39,6 +41,16 @@ void Server::Poll() {
         break;
       case ENET_EVENT_TYPE_RECEIVE:
         // Handle received data
+        if (event.channelID == 1) {  // Player data channel
+          glm::vec3* data = reinterpret_cast<glm::vec3*>(event.packet->data);
+          glm::vec3 position = data[0];
+          glm::vec3 front = data[1];
+
+          uint32_t playerID = event.peer->connectID;
+          systems::movePlayer(registry, playerID, position, front, 1.0 / 20.0);
+
+        }
+
         enet_packet_destroy(event.packet);
         break;
       case ENET_EVENT_TYPE_DISCONNECT:
