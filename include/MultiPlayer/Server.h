@@ -16,11 +16,11 @@ public:
     void Stop();
     void Poll(std::shared_ptr<EntityRegistry>);
     bool IsRunning();
-    const std::vector<ENetPeer*> GetClients();
+    const std::vector<uint32_t> GetClients();
 
 private:
     ENetHost* server;
-    std::vector<ENetPeer*> clients;
+    std::vector<uint32_t> clients;
     bool isRunning;
 };
 

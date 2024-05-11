@@ -18,6 +18,7 @@ public:
     bool sendPlayer(glm::vec3, glm::vec3);
     void startUpdateThread();
     void updateThreadLoop();
+    void poll();
 
 private:
     ENetHost* client;

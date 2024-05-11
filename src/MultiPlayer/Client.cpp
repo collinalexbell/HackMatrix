@@ -52,6 +52,13 @@ namespace MultiPlayer {
     }
   }
 
+  void Client::poll() {
+    ENetEvent event;
+    while (enet_host_service(client, &event, 0) > 0) {
+      // do nothing for now. just recieve ack packets
+    }
+  }
+
   void Client::disconnect() {
     if (peer != nullptr) {
       enet_peer_disconnect(peer, 0);
@@ -83,6 +90,7 @@ namespace MultiPlayer {
 
   bool Client::sendPlayer(glm::vec3 position, glm::vec3 front) {
     if (_isConnected) {
+
       ENetPacket* packet = enet_packet_create(NULL, sizeof(glm::vec3) * 2, ENET_PACKET_FLAG_UNSEQUENCED);
 
       // Copy the player's position and front vector into the packet data

@@ -35,7 +35,7 @@ void Server::Poll(std::shared_ptr<EntityRegistry> registry) {
   while (enet_host_service(server, &event, 0) > 0) {
     switch (event.type) {
       case ENET_EVENT_TYPE_CONNECT:
-        clients.push_back(event.peer);
+        clients.push_back(event.peer->connectID);
         systems::registerPlayer(registry, event.peer->connectID);
         // You can perform additional actions here, such as sending a welcome message
         // or updating your GUI to display the new connection
@@ -56,7 +56,7 @@ void Server::Poll(std::shared_ptr<EntityRegistry> registry) {
         break;
       case ENET_EVENT_TYPE_DISCONNECT:
         {
-          auto toRemove = std::find(clients.begin(), clients.end(), event.peer);
+          auto toRemove = std::find(clients.begin(), clients.end(), event.peer->connectID);
           if(toRemove != clients.end()){
             clients.erase(toRemove);
           }
@@ -81,7 +81,7 @@ bool Server::IsRunning() {
   return isRunning;
 }
 
-const std::vector<ENetPeer*> Server::GetClients() {
+const std::vector<uint32_t> Server::GetClients() {
   return clients;
 }
 
