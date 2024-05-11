@@ -12,7 +12,7 @@ Gui::~Gui() {}
 
 void Gui::Render() {
     const int cAddressSize = 1024;
-    char cAddress[cAddressSize];
+    static char cAddress[cAddressSize];
     static int selectedMode = 0;
     const char* modes[] = { "Client", "Server" };
     static auto client = Client();
