@@ -38,6 +38,7 @@ bool Client::Connect(const std::string& address, int port) {
         std::cout << "Connected to server." << std::endl;
         return true;
     } else {
+      std::cout << "didn't get response" << std::endl;
         enet_peer_reset(peer);
         peer = nullptr;
         enet_host_destroy(client);
