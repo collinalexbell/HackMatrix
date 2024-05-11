@@ -36,6 +36,7 @@ bool Client::Connect(const std::string& address, int port) {
     ENetEvent event;
     if (enet_host_service(client, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT) {
         std::cout << "Connected to server." << std::endl;
+        enet_host_flush(client);
         return true;
     } else {
         std::cout << "didn't get response" << std::endl;
