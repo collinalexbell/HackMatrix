@@ -22,7 +22,7 @@ bool Server::Start(int port) {
   address.host = ENET_HOST_ANY;
   address.port = port;
 
-  server = enet_host_create(&address, 32, 2, 0, 0);
+  server = enet_host_create(&address, 32, 10, 0, 0);
   if (server == NULL) {
     return false;
   }

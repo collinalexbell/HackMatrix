@@ -19,7 +19,7 @@ namespace MultiPlayer {
   }
 
   bool Client::connect(const std::string& address, int port) {
-    client = enet_host_create(NULL, 1, 2, 0, 0);
+    client = enet_host_create(NULL, 1, 10, 0, 0);
     if (client == NULL) {
       std::cout << "Failed to create client." << std::endl;
       return false;
@@ -29,7 +29,7 @@ namespace MultiPlayer {
     enet_address_set_host(&enetAddress, address.c_str());
     enetAddress.port = port;
 
-    peer = enet_host_connect(client, &enetAddress, 2, 0);
+    peer = enet_host_connect(client, &enetAddress, 10, 0);
     if (peer == NULL) {
       std::cout << "Failed to connect to server." << std::endl;
       enet_host_destroy(client);
