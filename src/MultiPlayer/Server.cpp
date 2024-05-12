@@ -1,6 +1,7 @@
 #include "MultiPlayer/Server.h"
 #include <iostream>
 #include <glm/glm.hpp>
+#include <vector>
 
 namespace MultiPlayer {
 
@@ -34,10 +35,10 @@ bool Server::Start(int port) {
 }
 
 void Server::Poll() {
+  std::vector<uint32_t> clients;
   ENetEvent event;
   while(isRunning) {
     if (enet_host_service(server, &event, 0) > 0) {
-      std::cout << "event" << std::endl;
       switch (event.type) {
         case ENET_EVENT_TYPE_CONNECT:
           {
@@ -46,6 +47,13 @@ void Server::Poll() {
             ENetPacket* packet = enet_packet_create(&playerId, sizeof(uint32_t) , ENET_PACKET_FLAG_RELIABLE);
             enet_host_broadcast(server, 2, packet);
             enet_host_flush(server);
+
+            for(auto client: clients) {
+              ENetPacket* packet = enet_packet_create(&client, sizeof(uint32_t) , ENET_PACKET_FLAG_RELIABLE);
+              enet_peer_send(event.peer, 2, packet);
+            }
+            enet_host_flush(server);
+            clients.push_back(playerId);
           }
           break;
         case ENET_EVENT_TYPE_RECEIVE:

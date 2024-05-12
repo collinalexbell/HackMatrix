@@ -64,6 +64,7 @@ namespace MultiPlayer {
   }
 
   void Client::poll() {
+    vector<uint32_t> clients;
     if(isConnected()){
       ENetEvent event;
       while (enet_host_service(client, &event, 0) > 0) {
