@@ -7,7 +7,8 @@
 
 namespace MultiPlayer {
 
-  Client::Client(shared_ptr<EntityRegistry> registry): registry(registry) {
+  Client::Client(shared_ptr<EntityRegistry> registry):
+    registry(registry), client(nullptr), peer(nullptr) {
     if (enet_initialize() != 0) {
       std::cout << "Failed to initialize enet." << std::endl;
     }
@@ -19,6 +20,15 @@ namespace MultiPlayer {
   }
 
   bool Client::connect(const std::string& address, int port) {
+    if(peer != nullptr) {
+      enet_peer_reset(peer);
+      peer = nullptr;
+    }
+    if(client != nullptr) {
+      enet_host_destroy(client);
+      client = nullptr;
+
+    }
     client = enet_host_create(NULL, 1, 10, 0, 0);
     if (client == NULL) {
       std::cout << "Failed to create client." << std::endl;

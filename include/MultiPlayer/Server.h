@@ -1,8 +1,8 @@
 #pragma once
 
 #include <enet/enet.h>
-#include <vector>
-#include "entity.h"
+#include <thread>
+#include <atomic>
 
 namespace MultiPlayer {
 
@@ -14,14 +14,14 @@ public:
 
     bool Start(int port);
     void Stop();
-    void Poll(std::shared_ptr<EntityRegistry>);
+    void Poll();
     bool IsRunning();
-    const std::vector<uint32_t> GetClients();
 
 private:
     ENetHost* server;
-    std::vector<uint32_t> clients;
-    bool isRunning;
+    std::atomic<bool> isRunning;
+    std::thread pollThread;
+
 };
 
 }

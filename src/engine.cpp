@@ -150,12 +150,11 @@ void Engine::loop() {
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
-      if(server) {
-        server->Poll(registry);
-      }
+
       if(client) {
         client->poll();
       }
+
       if(client && frameStart - lastPlayerUpdate > 1.0/20.0) {
         client->sendPlayer(camera->position, camera->front);
         lastPlayerUpdate = frameStart;

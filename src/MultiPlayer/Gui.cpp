@@ -44,17 +44,19 @@ void Gui::Render() {
       }
     } else {
       if(server && server->IsRunning()) {
-        ImGui::Text("clientCount: %d", (int)server->GetClients().size());
         if (ImGui::Button("Stop Server")) {
           server->Stop();
           server = nullptr;
           engine->registerServer(server);
+          client = nullptr;
+          engine->registerClient(client);
         }
       } else {
         if (ImGui::Button("Host as Server")) {
             server = std::make_shared<Server>();
             engine->registerServer(server);
             server->Start(port);
+            sleep(4);
             client = std::make_shared<Client>(engine->getRegistry());
             client->connect("127.0.0.1", port);
             engine->registerClient(client);
