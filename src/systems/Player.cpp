@@ -16,7 +16,7 @@ namespace systems {
   void registerPlayer(std::shared_ptr<EntityRegistry> registry,
       uint32_t connectionId)  {
     auto entity = registry->create();
-    registry->emplace<Positionable>(entity, glm::vec3(0), glm::vec3(0, 1.0, 0), glm::vec3(0), 0.3);
+    registry->emplace<Positionable>(entity, glm::vec3(0), glm::vec3(0, 0.8, 0), glm::vec3(0), 0.3);
     registry->emplace<Model>(entity, "vox/hacker.obj");
     registeredPlayers.insert(std::make_pair(connectionId, entity));
   }
