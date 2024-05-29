@@ -8,7 +8,7 @@ A 3D Linux desktop environment (which can also be a game engine)
 [<img src="images/paypal.svg" alt="PayPal Button" width="160">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
 
 
-[Join the discord](https://discord.gg/4CD4zbHC)
+[Join the discord](https://discord.gg/Kx2rbJ8JCM)
 
 
 ## Usage
