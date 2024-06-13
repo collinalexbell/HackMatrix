@@ -17,12 +17,13 @@ uniform sampler2D app5;
 uniform sampler2D app6;
 uniform bool isApp;
 uniform int appNumber;
-uniform bool isModel;
-uniform bool isLine;
-uniform bool appSelected;
-uniform bool isMesh;
 uniform bool isDynamicObject;
 uniform bool isLight;
+uniform bool isLine;
+uniform bool isModel;
+uniform bool isMesh;
+uniform bool isSparkly;
+uniform bool appSelected;
 uniform bool appTransparent;
 uniform float time;
 const int MAX_LIGHTS = 10;
@@ -151,8 +152,8 @@ void main()
 		} else if (appNumber == 6) {
 			FragColor = colorFromTexture(app6, TexCoord);
 		}
-		if(!appSelected) {
-			//FragColor = mix(FragColor, floor(TexCoord), 0.1);
+		if(isSparkly) {
+			FragColor = mix(FragColor, floor(TexCoord), 0.1);
 		}
 	} else if (isModel) {
 

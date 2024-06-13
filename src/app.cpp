@@ -584,6 +584,14 @@ bool X11App::isAccessory() {
     return false;
 }
 
+bool X11App::isPortaling() {
+ return _isPortaling;
+}
+
+void X11App::portal() {
+ _isPortaling = true;
+}
+
 int X11App::getPID() {
   auto pid = ::getPID(display, appWindow);
   if(pid.has_value()) {

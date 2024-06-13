@@ -508,11 +508,17 @@ void Renderer::renderApps() {
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setMatrix4("bootableScale", bootable.getHeightScaler());
     shader->setInt("appNumber", app.getAppIndex());
+    shader->setBool("isSparkly", false);
     if(bootable.transparent) {
       shader->setBool("appTransparent", true);
     } else {
       shader->setBool("appTransparent", false);
     }
+
+    if(app.isPortaling()) {
+     shader->setBool("isSparkly", true);
+    }
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
   }
 

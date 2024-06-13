@@ -36,6 +36,7 @@ class X11App {
   int textureUnit = -1;
   int textureId = -1;
   atomic_bool focused = false;
+  atomic_bool _isPortaling = false;
   X11App(Display *display, int screen);
   int x = 0;
   int y = 0;
@@ -65,8 +66,12 @@ public:
   void unfocus(Window matrix);
   void resize(int width, int height);
   void resizeMove(int width, int height, int x, int y);
-  bool isFocused();
   bool isAccessory();
+  bool isFocused();
+
+  bool isPortaling();
+  void portal();
+
   int getPID();
   string getWindowName();
   Window getWindow();
