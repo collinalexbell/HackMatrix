@@ -28,6 +28,7 @@
 #define OBS false
 #define EDGE false
 #define TERM false
+// todo: Magica still doesn't work with dynamic loading
 #define MAGICA false
 
 namespace WindowManager {

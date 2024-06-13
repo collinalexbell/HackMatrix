@@ -508,6 +508,9 @@ void Renderer::renderApps() {
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setMatrix4("bootableScale", bootable.getHeightScaler());
     shader->setInt("appNumber", app.getAppIndex());
+    if(app.isSelected()) {
+     shader->setBool("appSelected", true);
+    }
     if(bootable.transparent) {
       shader->setBool("appTransparent", true);
     } else {
@@ -520,9 +523,9 @@ void Renderer::renderApps() {
     auto bootable = registry->try_get<Bootable>(lookedAtAppEntity.value());
     auto &app = registry->get<X11App>(lookedAtAppEntity.value());
     if(app.isFocused() && (!bootable || !bootable->transparent)) {
-      shader->setBool("appSelected", app.isFocused());
+      shader->setBool("appFocused", app.isFocused());
       drawAppDirect(&app);
-      shader->setBool("appSelected", false);
+      shader->setBool("appFocused", false);
     }
   }
 
@@ -620,12 +623,11 @@ void Renderer::render(
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(perspective == CAMERA) {
     shader = cameraShader;
-    shader->use();
     view = camera->tick();
   } else {
     shader = depthShader;
-    shader->use();
   }
+  shader->use();
   updateShaderUniforms();
   lightUniforms(perspective, fromLight);
   renderModels(perspective);

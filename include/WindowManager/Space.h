@@ -39,5 +39,6 @@ namespace WindowManager {
 
     void addApp(entt::entity, bool = false);
     void removeApp(entt::entity);
+    void toggleAppSelect(entt::entity);
   };
 }
