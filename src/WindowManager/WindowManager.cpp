@@ -28,7 +28,9 @@
 #define OBS false
 #define EDGE false
 #define TERM false
-#define MAGICA false
+
+// fix dynamic Magica voxel loadin
+define MAGICA true
 
 namespace WindowManager {
 
