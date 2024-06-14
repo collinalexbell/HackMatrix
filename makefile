@@ -20,13 +20,17 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 
 all: FLAGS+=-O3 -g
-all: include/protos/api.pb.h matrix trampoline build/diagnosis
+all: include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
 
 matrix: $(ALL_OBJECTS)
 	g++ -std=c++20 $(FLAGS) -g -o matrix $(ALL_OBJECTS) $(LIBS) $(EXTRA_LDFLAGS) $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
+
+tools/deployTools/bootServer: build/MultiPlayer/Server.o
+	g++ -std=c++20 $(FLAGS) -o build/deployTools/bootServer.o -c src/MultiPlayer/bootServer.cpp $(INCLUDES)
+	g++ -o tools/deployTools/bootServer build/deployTools/bootServer.o build/MultiPlayer/Server.o $(INCLUDES) $(LIBS)
 
 build/enkimi.o: src/enkimi.c
 	g++ $(FLAGS) $(LOADER_FLAGS) -o build/enkimi.o -c src/enkimi.c $(INCLUDES) -lm -Wno-unused-result
