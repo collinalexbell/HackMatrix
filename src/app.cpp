@@ -602,3 +602,15 @@ string X11App::getWindowName() {
   }
   return "";
 }
+
+bool X11App::isSelected() {
+ return selected;
+}
+
+void X11App::select() {
+ selected = true;
+}
+
+void X11App::deselect() {
+  selected = false;
+}

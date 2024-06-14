@@ -8,6 +8,9 @@ A 3D Linux desktop environment (which can also be a game engine)
 [<img src="images/paypal.svg" alt="PayPal Button" width="160">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
 
 
+[Join the discord](https://discord.gg/Kx2rbJ8JCM)
+
+
 ## Usage
 
 ### Navigate the 3d space
@@ -124,7 +127,7 @@ I'm currently working on an issue with protobuf compilation errors for arch. [Th
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
-sudo pacman -S xdotool xorg-xwininfo protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes protobuf spdlog fmt glfw-x11 mesa assimp sqlite
+sudo pacman -S xdotool dmenu xorg-server xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```
 
 Make sure to install these libraries before proceeding with the compilation and execution of the program. The program's build system will link against these libraries using the provided `LIBS` flags:

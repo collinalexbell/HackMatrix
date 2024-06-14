@@ -179,4 +179,21 @@ void Space::addApp(entt::entity entity, bool spawnAtCamera) {
     }
   } catch(...) {}
 }
+
+void Space::toggleAppSelect(entt::entity appEntt) {
+  auto app = registry->try_get<X11App>(appEntt);
+  if(app) {
+    std::stringstream ss;
+    ss << "selecting app: " << (int)appEntt << endl;
+    logger->info("selecting app");
+    if(app->isSelected()) {
+      app->deselect();
+    } else {
+      app->select();
+    }
+
+  } else {
+    logger->error("attempted to select a non existent app");
+  }
+}
 } // namespace WindowManager

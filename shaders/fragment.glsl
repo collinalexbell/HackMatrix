@@ -20,6 +20,7 @@ uniform int appNumber;
 uniform bool isModel;
 uniform bool isLine;
 uniform bool appSelected;
+uniform bool appFocused;
 uniform bool isMesh;
 uniform bool isDynamicObject;
 uniform bool isLight;
@@ -151,8 +152,8 @@ void main()
 		} else if (appNumber == 6) {
 			FragColor = colorFromTexture(app6, TexCoord);
 		}
-		if(!appSelected) {
-			//FragColor = mix(FragColor, floor(TexCoord), 0.1);
+		if(appSelected) {
+			FragColor = mix(FragColor, floor(TexCoord), 0.1);
 		}
 	} else if (isModel) {
 

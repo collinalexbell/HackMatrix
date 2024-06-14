@@ -222,6 +222,16 @@ void Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
   }
 }
 
+void Controls::handleSelectApp(GLFWwindow* window) {
+  auto app = windowManagerSpace->getLookedAtApp();
+  if(app) {
+    int keyPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
+    if(keyPressed && debounce(lastKeyPressTime)) {
+      windowManagerSpace->toggleAppSelect(*app);
+    }
+  }
+}
+
 void Controls::doAfter(shared_ptr<bool> isDone, function<void()> actionFn) {
   DeferedAction action;
   action.isDone = isDone;
@@ -258,6 +268,7 @@ void Controls::handleToggleFocus(GLFWwindow* window) {
     }
   }
 }
+
 
 void Controls::wireWindowManager
     (shared_ptr<WindowManager::Space> windowManagerSpace) {

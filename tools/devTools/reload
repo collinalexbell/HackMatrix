@@ -1,0 +1,4 @@
+#!/bin/bash
+
+scp collin@hackrpg.com:~/HackMatrix/matrix ~/HackRPG/HackMatrix/_matrix
+mv _matrix matrix
