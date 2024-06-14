@@ -60,3 +60,4 @@ settings.json
 *.npy
 *.swo
 vids/
+tools/*
