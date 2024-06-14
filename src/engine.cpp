@@ -1,3 +1,11 @@
+#include <future>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-enum-enum-conversion"
+#define ENET_IMPLEMENTATION
+#include <enet/enet.h>
+#pragma GCC diagnostic pop
+
+
 #include "engine.h"
 #include "components/Bootable.h"
 #include "components/Key.h"
@@ -92,7 +100,7 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   wm->createAndRegisterApps(envp);
   registerCursorCallback();
   // Has to be be created after the cursorCallback because gui wraps the callback
-  engineGui = make_shared<EngineGui>(window, registry, loggerVector);
+  engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
 }
 
 Engine::~Engine() {
@@ -129,6 +137,7 @@ void Engine::loop() {
   double frameStart;
   int frameIndex = 0;
   double fps;
+  double lastPlayerUpdate = 0;
   systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
@@ -142,16 +151,36 @@ void Engine::loop() {
       wm->tick();
       controls->poll(window, camera, world);
 
+      if(client) {
+        client->poll();
+      }
+
+      if(client && frameStart - lastPlayerUpdate > 1.0/20.0) {
+        client->sendPlayer(camera->position, camera->front);
+        lastPlayerUpdate = frameStart;
+      }
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       glfwSwapBuffers(window);
 
       frameTimes[frameIndex] = glfwGetTime() - frameStart;
-      frameIndex = (frameIndex + 1) % 20;
+      frameIndex = (frameIndex + 1) % 10;
     }
   } catch (const std::exception &e) {
     logger->error(e.what());
     throw;
   }
+}
+
+void Engine::registerClient(shared_ptr<MultiPlayer::Client> _client) {
+  client = _client;
+}
+
+void Engine::registerServer(shared_ptr<MultiPlayer::Server> _server) {
+  server = _server;
+}
+
+shared_ptr<EntityRegistry> Engine::getRegistry() {
+  return registry;
 }

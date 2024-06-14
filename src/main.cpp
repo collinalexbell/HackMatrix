@@ -5,15 +5,16 @@
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <X11/Xlib.h>
 
 #include "screen.h"
-
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
 GLFWwindow* initGraphics() {
+  XSetErrorHandler(NULL);
   glfwInit();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -57,10 +58,12 @@ int main(int argc, char** argv, char** envp) {
     Engine *engine = new Engine(window, envp);
     engine->loop();
     cleanup(engine);
+    glfwTerminate();
 
   } catch (const std::exception &e) {
     // signal error to the trampoline
     //return -1;
+    glfwTerminate();
     throw;
   }
 }

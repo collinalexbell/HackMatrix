@@ -7,6 +7,8 @@
 #include "world.h"
 #include "entity.h"
 #include "engineGui.h"
+#include "MultiPlayer/Client.h"
+#include "MultiPlayer/Server.h"
 
 #include <GLFW/glfw3.h>
 #include <memory>
@@ -26,7 +28,10 @@ class Engine {
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
   std::shared_ptr<EngineGui> engineGui;
+  std::shared_ptr<MultiPlayer::Client> client;
+  std::shared_ptr<MultiPlayer::Server> server;
   spdlog::sink_ptr loggerSink;
+
 
   friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
   void setupRegistry();
@@ -34,8 +39,11 @@ class Engine {
 public:
   Engine(GLFWwindow* window, char** envp);
   ~Engine();
+  shared_ptr<EntityRegistry> getRegistry();
   void initialize();
   void wire();
   void loop();
   void registerCursorCallback();
+  void registerServer(shared_ptr<MultiPlayer::Server>);
+  void registerClient(shared_ptr<MultiPlayer::Client>);
 };

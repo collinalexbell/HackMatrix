@@ -1,3 +1,4 @@
+#include "engine.h"
 #include "engineGui.h"
 #include "components/Bootable.h"
 #include "components/BoundingSphere.h"
@@ -9,6 +10,7 @@
 #include "components/Scriptable.h"
 #include "components/Light.h"
 #include "components/TranslateMovement.h"
+#include "MultiPlayer/Gui.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui/imgui.h"
 #include "logger.h"
@@ -27,9 +29,9 @@
 
 #include <glm/glm.hpp>
 
-EngineGui::EngineGui(GLFWwindow *window, shared_ptr<EntityRegistry> registry,
+EngineGui::EngineGui(Engine* engine, GLFWwindow *window, shared_ptr<EntityRegistry> registry,
                      shared_ptr<LoggerVector> loggerVector)
-    : registry(registry), loggerVector(loggerVector) {
+    : engine(engine), registry(registry), loggerVector(loggerVector) {
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -46,6 +48,7 @@ EngineGui::EngineGui(GLFWwindow *window, shared_ptr<EntityRegistry> registry,
 }
 
 void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) {
+  static MultiPlayer::Gui gui(engine);
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
@@ -82,6 +85,10 @@ void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) 
         registry->saveAll();
       }
       renderEntities();
+      ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem("Multiplayer")) {
+      gui.Render();
       ImGui::EndTabItem();
     }
     ImGui::EndTabBar(); // Close the tab bar

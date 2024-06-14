@@ -1,0 +1,10 @@
+## Networking
+### Library
+ENet: battle tested UDP for real time multiplayer
+### Client Server Architecture for conneting players
+#### first version
+3 modules: client.cpp, server.cpp, gui.cpp
+## Screen Sharing
+## Player Movement Synchronization
+## Voice Chat
+## Server & Party Management

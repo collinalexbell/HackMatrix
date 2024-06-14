@@ -1,0 +1,1 @@
+remmina --disable-toolbar --disable-news --disable-stats --no-tray-icon --enable-extra-hardening -c vnc://$1
