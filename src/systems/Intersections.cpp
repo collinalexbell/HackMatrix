@@ -48,4 +48,30 @@ namespace systems {
     float fartherRoot = (-b + sqrtDiscriminant) / (2.0f * a);
     return fartherRoot >= 0.0f && fartherRoot <= maxDistance;
   }
+
+  bool isOnFrustum(std::shared_ptr<EntityRegistry> registry, entt::entity entity, const Frustum& camFrustum) {
+    auto boundingSphere = registry->try_get<BoundingSphere>(entity);
+    if(!boundingSphere) {
+      emplaceBoundingSphere(registry, entity);
+      boundingSphere = registry->try_get<BoundingSphere>(entity);
+    }
+    //Check Firstly the result that have the most chance
+    //to faillure to avoid to call all functions.
+    if(boundingSphere) {
+      return (isOnOrForwardPlane(boundingSphere, camFrustum.leftFace) &&
+          isOnOrForwardPlane(boundingSphere, camFrustum.rightFace) &&
+          isOnOrForwardPlane(boundingSphere, camFrustum.farFace) &&
+          isOnOrForwardPlane(boundingSphere, camFrustum.nearFace) &&
+          isOnOrForwardPlane(boundingSphere, camFrustum.topFace) &&
+          isOnOrForwardPlane(boundingSphere, camFrustum.bottomFace));
+    } else {
+      return false;
+      // this shouldn't happen
+    }
+  }
+
+  bool isOnOrForwardPlane(BoundingSphere *sphere, Plane plane)
+  {
+    return plane.getSignedDistanceToPlane(sphere->center) > -sphere->radius;
+  }
 }

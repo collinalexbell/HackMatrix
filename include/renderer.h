@@ -64,7 +64,6 @@ class Renderer {
   std::map<string, Texture*> textures;
   void initAppTextures();
   glm::mat4 trans;
-  glm::mat4 meshModel;
   glm::mat4 view;
   glm::mat4 orthographicMatrix;
   void updateTransformMatrices();

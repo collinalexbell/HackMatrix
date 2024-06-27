@@ -2,6 +2,7 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "model.h"
 #include "components/Light.h"
+#include "systems/Intersections.h"
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
@@ -218,7 +219,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   this->world = world;
 
   logger = make_shared<spdlog::logger>("Renderer", fileSink);
-  logger->set_level(spdlog::level::debug);
+  logger->set_level(spdlog::level::info);
 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
@@ -261,10 +262,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   glClearColor(163.0/255.0, 163.0/255.0, 167.0/255.0, 1.0f);
   glLineWidth(10.0);
 
-  view = view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
-  projection =
-      glm::perspective(glm::radians(45.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.02f, 100.0f);
-  meshModel = glm::scale(glm::mat4(1.0f), glm::vec3(world->CUBE_SIZE));
 }
 
 void Renderer::initAppTextures() {
@@ -279,14 +276,14 @@ void Renderer::initAppTextures() {
 }
 
 void Renderer::updateTransformMatrices() {
-  unsigned int modelLoc = glGetUniformLocation(shader->ID, "meshModel");
-  glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meshModel));
-
-  unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
-  glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-  unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
-  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+  if(camera->viewMatrixUpdated()) {
+    unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera->getViewMatrix()));
+  }
+  if(camera->projectionMatrixUpdated()) {
+    unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(camera->getProjectionMatrix(true)));
+  }
 }
 
 void Renderer::updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes) {
@@ -469,8 +466,6 @@ void Renderer::updateShaderUniforms() {
   shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
   shader->setBool("isLine", false);
-
-  updateTransformMatrices();
 }
 
 
@@ -584,6 +579,7 @@ void Renderer::lightUniforms(
 }
 
 void Renderer::renderModels(RenderPerspective perspective) {
+  auto frustum = camera->createFrustum();
   shader->setBool("isModel", true);
   shader->setVec3("viewPos", camera->position);
   shader->setBool("isLight", false);
@@ -599,8 +595,13 @@ void Renderer::renderModels(RenderPerspective perspective) {
   }
 
 
+  static int lastCount = 0;
+  int count = 0;
   for(auto [entity, p, m]: modelView.each()) {
-    bool shouldDraw = true;
+    bool shouldDraw = systems::isOnFrustum(registry,entity,frustum);
+    if(!shouldDraw) {
+      continue;
+    }
     if(!lightEntities.empty() && lightEntities.contains(entity)) {
       shader->setBool("isLight", true);
       if(perspective == LIGHT) {
@@ -611,9 +612,16 @@ void Renderer::renderModels(RenderPerspective perspective) {
     shader->setMatrix4("model", p.modelMatrix);
 
     if(shouldDraw) {
+      count++;
       m.Draw(*shader);
     }
     shader->setBool("isLight", false);
+  }
+  if(count != lastCount) {
+    stringstream countSS;
+    countSS << "model render count: " << count;
+    logger->debug(countSS.str());
+    lastCount = count;
   }
   shader->setBool("isModel", false);
 }
@@ -623,17 +631,19 @@ void Renderer::render(
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(perspective == CAMERA) {
     shader = cameraShader;
-    view = camera->tick();
+    shader->use();
+    // must use prior to updating uniforms
+   
+    camera->tick();
+    updateTransformMatrices();
   } else {
     shader = depthShader;
+    shader->use();
   }
-  shader->use();
   updateShaderUniforms();
   lightUniforms(perspective, fromLight);
   renderModels(perspective);
   renderApps();
-  if(perspective == CAMERA) {
-  }
 }
 
 Camera *Renderer::getCamera() { return camera; }

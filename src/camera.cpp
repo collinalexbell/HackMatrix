@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "screen.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -17,7 +18,13 @@ Camera::Camera() {
   pitch =  0.0f;
   lastX =  800.0f / 2.0;
   lastY =  600.0 / 2.0;
-
+  viewUpdated = true;
+  _projectionMatrixUpdated = true;
+  zFar = 100.0f;
+  zNear = 0.02f;
+  yFov = glm::radians(45.0f);
+  projectionMatrix =
+      glm::perspective(yFov, SCREEN_WIDTH / SCREEN_HEIGHT, zNear, zFar);
 }
 
 Camera::~Camera() {
@@ -36,6 +43,7 @@ void Camera::handleTranslateForce(bool up, bool down, bool left, bool right) {
   if (right)
     position += glm::normalize(glm::cross(front, this->up)) *
       cameraSpeed;
+  viewUpdated = true;
 }
 
 void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffset) {
@@ -53,17 +61,18 @@ void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffse
   front.y = sin(glm::radians(pitch));
   front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
   this->front = glm::normalize(front);
+  viewUpdated = true;
 }
 
-glm::mat4 Camera::tick() {
+void Camera::tick() {
   if(movements.size() > 0){
     Movement& currentMovement = movements.front();
     interpolateMovement(currentMovement);
     if(*currentMovement.isDone) {
       movements.pop();
     }
+    viewUpdated = true;
   }
-  return getViewMatrix();
 }
 
 void Camera::interpolateMovement(Movement& movement) {
@@ -82,8 +91,27 @@ void Camera::interpolateMovement(Movement& movement) {
     ((movement.finishFront-movement.startFront) * completionRatio);
 }
 
-glm::mat4 Camera::getViewMatrix() {
-  return glm::lookAt(position, position + front, up);
+glm::mat4 &Camera::getViewMatrix() {
+  if(viewMatrixUpdated()) {
+    viewMatrix =  glm::lookAt(position, position + front, up);
+    viewUpdated = false;
+  }
+  return viewMatrix;
+}
+
+bool Camera::viewMatrixUpdated() {
+  return viewUpdated;
+}
+
+glm::mat4 &Camera::getProjectionMatrix(bool isRenderLoop) {
+  if(isRenderLoop) {
+    _projectionMatrixUpdated = false;
+  }
+  return projectionMatrix;
+}
+
+bool Camera::projectionMatrixUpdated() {
+  return _projectionMatrixUpdated;
 }
 
 std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetFront,
@@ -107,4 +135,25 @@ std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetF
 
 bool Camera::isMoving() {
   return movements.size() > 0;
+}
+
+Frustum Camera::createFrustum() {
+  Frustum frustum;
+  const float halfVSide = zFar * tanf(yFov * .5f);
+  const float halfHSide = halfVSide * ((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT);
+  const glm::vec3 frontMultFar = zFar * front;
+  glm::vec3 right = glm::normalize(glm::cross(front, up));
+
+  frustum.nearFace = { position + zNear * front, front };
+  frustum.farFace = { position + frontMultFar, -front };
+  frustum.rightFace = { position,
+    glm::cross(frontMultFar - right * halfHSide, up) };
+  frustum.leftFace = { position,
+    glm::cross(up,frontMultFar + right * halfHSide) };
+  frustum.topFace = { position,
+    glm::cross(right, frontMultFar - up * halfVSide) };
+  frustum.bottomFace = { position,
+    glm::cross(frontMultFar + up * halfVSide, right) };
+
+  return frustum;
 }
