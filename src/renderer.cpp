@@ -470,7 +470,6 @@ void Renderer::updateShaderUniforms() {
   shader->setBool("isApp", false);
   shader->setBool("isLine", false);
 
-  updateTransformMatrices();
 }
 
 
@@ -624,6 +623,7 @@ void Renderer::render(
   if(perspective == CAMERA) {
     shader = cameraShader;
     view = camera->tick();
+    updateTransformMatrices();
   } else {
     shader = depthShader;
   }
