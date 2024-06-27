@@ -20,8 +20,11 @@ Camera::Camera() {
   lastY =  600.0 / 2.0;
   viewUpdated = true;
   _projectionMatrixUpdated = true;
+  zFar = 100.0f;
+  zNear = 0.02f;
+  yFov = glm::radians(45.0f);
   projectionMatrix =
-      glm::perspective(glm::radians(45.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.02f, 100.0f);
+      glm::perspective(yFov, SCREEN_WIDTH / SCREEN_HEIGHT, zNear, zFar);
 }
 
 Camera::~Camera() {
@@ -132,4 +135,25 @@ std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetF
 
 bool Camera::isMoving() {
   return movements.size() > 0;
+}
+
+Frustum Camera::createFrustum() {
+  Frustum frustum;
+  const float halfVSide = zFar * tanf(yFov * .5f);
+  const float halfHSide = halfVSide * ((float)SCREEN_WIDTH / (float)SCREEN_HEIGHT);
+  const glm::vec3 frontMultFar = zFar * front;
+  glm::vec3 right = glm::normalize(glm::cross(front, up));
+
+  frustum.nearFace = { position + zNear * front, front };
+  frustum.farFace = { position + frontMultFar, -front };
+  frustum.rightFace = { position,
+    glm::cross(frontMultFar - right * halfHSide, up) };
+  frustum.leftFace = { position,
+    glm::cross(up,frontMultFar + right * halfHSide) };
+  frustum.topFace = { position,
+    glm::cross(right, frontMultFar - up * halfVSide) };
+  frustum.bottomFace = { position,
+    glm::cross(frontMultFar + up * halfVSide, right) };
+
+  return frustum;
 }

@@ -2,6 +2,7 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "model.h"
 #include "components/Light.h"
+#include "systems/Intersections.h"
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
@@ -218,7 +219,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   this->world = world;
 
   logger = make_shared<spdlog::logger>("Renderer", fileSink);
-  logger->set_level(spdlog::level::debug);
+  logger->set_level(spdlog::level::info);
 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
@@ -578,6 +579,7 @@ void Renderer::lightUniforms(
 }
 
 void Renderer::renderModels(RenderPerspective perspective) {
+  auto frustum = camera->createFrustum();
   shader->setBool("isModel", true);
   shader->setVec3("viewPos", camera->position);
   shader->setBool("isLight", false);
@@ -593,8 +595,13 @@ void Renderer::renderModels(RenderPerspective perspective) {
   }
 
 
+  static int lastCount = 0;
+  int count = 0;
   for(auto [entity, p, m]: modelView.each()) {
-    bool shouldDraw = true;
+    bool shouldDraw = systems::isOnFrustum(registry,entity,frustum);
+    if(!shouldDraw) {
+      continue;
+    }
     if(!lightEntities.empty() && lightEntities.contains(entity)) {
       shader->setBool("isLight", true);
       if(perspective == LIGHT) {
@@ -605,9 +612,16 @@ void Renderer::renderModels(RenderPerspective perspective) {
     shader->setMatrix4("model", p.modelMatrix);
 
     if(shouldDraw) {
+      count++;
       m.Draw(*shader);
     }
     shader->setBool("isLight", false);
+  }
+  if(count != lastCount) {
+    stringstream countSS;
+    countSS << "model render count: " << count;
+    logger->debug(countSS.str());
+    lastCount = count;
   }
   shader->setBool("isModel", false);
 }
