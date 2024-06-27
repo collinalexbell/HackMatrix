@@ -58,7 +58,7 @@ float Space::getViewDistanceForWindowSize(entt::entity entity) {
   float target = glVertexX;
   for (float z = 0.0; z <= 10.5; z = z + 0.001) {
     glm::vec4 candidate;
-    candidate = renderer->projection * glm::vec4(0.5, 0, -z, 1);
+    candidate = camera->getProjectionMatrix() * glm::vec4(0.5, 0, -z, 1);
     candidate = candidate / candidate.w;
     if (abs(candidate.x - target) < abs(gl_pos.x - target)) {
       gl_pos = candidate;

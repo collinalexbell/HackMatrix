@@ -1,4 +1,5 @@
 #include "camera.h"
+#include "screen.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,7 +19,9 @@ Camera::Camera() {
   lastX =  800.0f / 2.0;
   lastY =  600.0 / 2.0;
   viewUpdated = true;
-
+  _projectionMatrixUpdated = true;
+  projectionMatrix =
+      glm::perspective(glm::radians(45.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.02f, 100.0f);
 }
 
 Camera::~Camera() {
@@ -95,6 +98,17 @@ glm::mat4 &Camera::getViewMatrix() {
 
 bool Camera::viewMatrixUpdated() {
   return viewUpdated;
+}
+
+glm::mat4 &Camera::getProjectionMatrix(bool isRenderLoop) {
+  if(isRenderLoop) {
+    _projectionMatrixUpdated = false;
+  }
+  return projectionMatrix;
+}
+
+bool Camera::projectionMatrixUpdated() {
+  return _projectionMatrixUpdated;
 }
 
 std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetFront,

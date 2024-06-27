@@ -261,8 +261,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry, Camera *camera, World *w
   glClearColor(163.0/255.0, 163.0/255.0, 167.0/255.0, 1.0f);
   glLineWidth(10.0);
 
-  projection =
-      glm::perspective(glm::radians(45.0f), SCREEN_WIDTH / SCREEN_HEIGHT, 0.02f, 100.0f);
 }
 
 void Renderer::initAppTextures() {
@@ -281,9 +279,10 @@ void Renderer::updateTransformMatrices() {
     unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(camera->getViewMatrix()));
   }
-
-  unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
-  glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+  if(camera->projectionMatrixUpdated()) {
+    unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
+    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(camera->getProjectionMatrix(true)));
+  }
 }
 
 void Renderer::updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes) {
@@ -466,7 +465,6 @@ void Renderer::updateShaderUniforms() {
   shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
   shader->setBool("isLine", false);
-
 }
 
 
@@ -619,18 +617,19 @@ void Renderer::render(
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(perspective == CAMERA) {
     shader = cameraShader;
+    shader->use();
+    // must use prior to updating uniforms
+   
     camera->tick();
     updateTransformMatrices();
   } else {
     shader = depthShader;
+    shader->use();
   }
-  shader->use();
   updateShaderUniforms();
   lightUniforms(perspective, fromLight);
   renderModels(perspective);
   renderApps();
-  if(perspective == CAMERA) {
-  }
 }
 
 Camera *Renderer::getCamera() { return camera; }

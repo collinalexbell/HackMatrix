@@ -25,6 +25,7 @@ class Camera {
   glm::vec3 up;
   bool firstMouse;
   bool viewUpdated = true;
+  bool _projectionMatrixUpdated = true;
   float lastX;
   float lastY;
   float yaw;
@@ -32,6 +33,7 @@ class Camera {
   queue<Movement> movements;
   void interpolateMovement(Movement& movement);
   glm::mat4 viewMatrix;
+  glm::mat4 projectionMatrix;
 public:
   glm::vec3 front;
   glm::vec3 position;
@@ -46,6 +48,8 @@ public:
   float getPitch() {return pitch;}
   glm::mat4 &getViewMatrix();
   bool viewMatrixUpdated();
+  glm::mat4 &getProjectionMatrix(bool isRenderLoop=false);
+  bool projectionMatrixUpdated();
 };
 
 
