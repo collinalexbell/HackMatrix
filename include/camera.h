@@ -24,13 +24,14 @@ struct Movement {
 class Camera {
   glm::vec3 up;
   bool firstMouse;
+  bool viewUpdated = true;
   float lastX;
   float lastY;
   float yaw;
   float pitch;
   queue<Movement> movements;
-  glm::mat4 getViewMatrix();
   void interpolateMovement(Movement& movement);
+  glm::mat4 viewMatrix;
 public:
   glm::vec3 front;
   glm::vec3 position;
@@ -38,11 +39,13 @@ public:
   void handleTranslateForce(bool up, bool down, bool left, bool right);
   void handleRotateForce(GLFWwindow* window, double xoffset, double yoffset);
   ~Camera();
-  glm::mat4 tick();
+  void tick();
   bool isMoving();
   std::shared_ptr<bool> moveTo(glm::vec3 position, glm::vec3 front, float moveSeconds);
   float getYaw() {return yaw;}
   float getPitch() {return pitch;}
+  glm::mat4 &getViewMatrix();
+  bool viewMatrixUpdated();
 };
 
 

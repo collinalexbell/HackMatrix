@@ -17,6 +17,7 @@ Camera::Camera() {
   pitch =  0.0f;
   lastX =  800.0f / 2.0;
   lastY =  600.0 / 2.0;
+  viewUpdated = true;
 
 }
 
@@ -36,6 +37,7 @@ void Camera::handleTranslateForce(bool up, bool down, bool left, bool right) {
   if (right)
     position += glm::normalize(glm::cross(front, this->up)) *
       cameraSpeed;
+  viewUpdated = true;
 }
 
 void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffset) {
@@ -53,17 +55,18 @@ void Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffse
   front.y = sin(glm::radians(pitch));
   front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
   this->front = glm::normalize(front);
+  viewUpdated = true;
 }
 
-glm::mat4 Camera::tick() {
+void Camera::tick() {
   if(movements.size() > 0){
     Movement& currentMovement = movements.front();
     interpolateMovement(currentMovement);
     if(*currentMovement.isDone) {
       movements.pop();
     }
+    viewUpdated = true;
   }
-  return getViewMatrix();
 }
 
 void Camera::interpolateMovement(Movement& movement) {
@@ -82,8 +85,16 @@ void Camera::interpolateMovement(Movement& movement) {
     ((movement.finishFront-movement.startFront) * completionRatio);
 }
 
-glm::mat4 Camera::getViewMatrix() {
-  return glm::lookAt(position, position + front, up);
+glm::mat4 &Camera::getViewMatrix() {
+  if(viewMatrixUpdated()) {
+    viewMatrix =  glm::lookAt(position, position + front, up);
+    viewUpdated = false;
+  }
+  return viewMatrix;
+}
+
+bool Camera::viewMatrixUpdated() {
+  return viewUpdated;
 }
 
 std::shared_ptr<bool> Camera::moveTo(glm::vec3 targetPosition, glm::vec3 targetFront,
