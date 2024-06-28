@@ -17,6 +17,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "tracy/TracyOpenGL.hpp"
+#include "tracy/Tracy.hpp"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
@@ -480,6 +482,7 @@ void Renderer::renderChunkMesh() {
 }
 
 void Renderer::renderApps() {
+  TracyGpuZone("render apps");
   auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
   shader->setBool("appSelected", false);
 
@@ -579,6 +582,7 @@ void Renderer::lightUniforms(
 }
 
 void Renderer::renderModels(RenderPerspective perspective) {
+  TracyGpuZone("render models");
   auto frustum = camera->createFrustum();
   shader->setBool("isModel", true);
   shader->setVec3("viewPos", camera->position);
@@ -628,6 +632,8 @@ void Renderer::renderModels(RenderPerspective perspective) {
 
 void Renderer::render(
     RenderPerspective perspective, std::optional<entt::entity> fromLight) {
+  ZoneScoped;
+  TracyGpuZone("render");
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   if(perspective == CAMERA) {
     shader = cameraShader;

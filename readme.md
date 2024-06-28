@@ -144,7 +144,7 @@ Once the libraries are installed, you can compile and run the program as describ
 
 Right now this is the only way to install the project.
 
-Clone the project, navigate to the project directory and run `make`:
+Clone the project (with submodules `git clone --recurse-submodules`), navigate to the project directory and run `make`:
 
 The build process will generate the `matrix` executable in the current directory.
 

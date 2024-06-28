@@ -23,6 +23,8 @@
 #include "WindowManager/WindowManager.h"
 #include "blocks.h"
 #include "systems/Door.h"
+#include "tracy/Tracy.hpp"
+#include "tracy/TracyOpenGL.hpp"
 
 #include <memory>
 #include <spdlog/common.h>
@@ -96,6 +98,7 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   logger->set_level(spdlog::level::debug);
   initialize();
   glfwFocusWindow(window);
+  TracyGpuContext;
   wire();
   wm->createAndRegisterApps(envp);
   registerCursorCallback();
@@ -141,6 +144,7 @@ void Engine::loop() {
   systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
+      TracyGpuZone("loop");
       frameStart = glfwGetTime();
       glfwPollEvents();
 
@@ -163,6 +167,8 @@ void Engine::loop() {
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       glfwSwapBuffers(window);
+      TracyGpuCollect;
+      FrameMark;
 
       frameTimes[frameIndex] = glfwGetTime() - frameStart;
       frameIndex = (frameIndex + 1) % 10;
