@@ -23,6 +23,7 @@
 #include "WindowManager/WindowManager.h"
 #include "blocks.h"
 #include "systems/Door.h"
+#include "tracy/Tracy.hpp"
 
 #include <memory>
 #include <spdlog/common.h>
@@ -163,6 +164,7 @@ void Engine::loop() {
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       glfwSwapBuffers(window);
+      FrameMark;
 
       frameTimes[frameIndex] = glfwGetTime() - frameStart;
       frameIndex = (frameIndex + 1) % 10;

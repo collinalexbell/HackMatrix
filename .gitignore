@@ -61,3 +61,5 @@ settings.json
 *.swo
 vids/
 tools/*
+
+traces/*
