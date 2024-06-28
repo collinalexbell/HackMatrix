@@ -2,6 +2,7 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <vector>
+#include <unistd.h>
 
 namespace MultiPlayer {
 
@@ -11,8 +12,7 @@ Server::Server() : server(nullptr), isRunning(false) {
   }
 }
 
-Server::~Server() {
-  Stop();
+Server::~Server() { Stop();
   enet_deinitialize();
 }
 
@@ -84,7 +84,9 @@ void Server::Poll() {
         default:
           break;
       }
-    }
+    } else {
+			usleep(10000);
+		}
   }
 }
 
