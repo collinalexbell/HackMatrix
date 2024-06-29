@@ -270,4 +270,4 @@ cloc:
 	sed -i '/github.com\/AlDanial\/cloc/d' line-count
 
 clean:
-	rm build/*.o 2> /dev/null || true
+	find build -name "*.o" -type f -delete
