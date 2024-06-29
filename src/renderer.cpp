@@ -613,8 +613,10 @@ void Renderer::renderModels(RenderPerspective perspective) {
         shouldDraw = false;
       }
     }
-    shader->setMatrix3("normalMatrix", p.normalMatrix);
-    shader->setMatrix4("model", p.modelMatrix);
+    auto normalMatrix = p.normalMatrix;
+    auto modelMatrix = p.modelMatrix;
+    shader->setMatrix3("normalMatrix", normalMatrix);
+    shader->setMatrix4("model", modelMatrix);
 
     if(shouldDraw) {
       count++;

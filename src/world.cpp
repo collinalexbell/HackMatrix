@@ -29,6 +29,7 @@
 #include <csignal>
 #include "memory.h"
 #include "systems/ApplyRotation.h"
+#include "tracy/Tracy.hpp"
 
 using namespace std;
 
@@ -904,7 +905,7 @@ void World::loadLatest() {
 }
 
 void World::tick(){
-  //loadChunksIfNeccissary();
+  ZoneScoped;
   systems::applyRotation(registry);
   systems::applyTranslations(registry);
   systems::updateAll(registry, renderer);

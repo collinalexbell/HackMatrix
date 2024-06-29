@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include "stb/stb_image_write.h"
+#include "tracy/TracyOpenGL.hpp"
 
 unsigned int Light::nextTextureUnit = 20;
 
@@ -51,6 +52,7 @@ void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene
   glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
+  TracyGpuZone("renderDepthMap");
   renderScene();
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);

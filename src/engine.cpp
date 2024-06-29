@@ -104,6 +104,8 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   registerCursorCallback();
   // Has to be be created after the cursorCallback because gui wraps the callback
   engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
+  // turn off vsync
+  // glfwSwapInterval(0);
 }
 
 Engine::~Engine() {
@@ -145,12 +147,11 @@ void Engine::loop() {
   try {
     while (!glfwWindowShouldClose(window)) {
       TracyGpuZone("loop");
-      frameStart = glfwGetTime();
       glfwPollEvents();
-
+      frameStart = glfwGetTime();
+      renderer->render();
       engineGui->render(fps, frameIndex, frameTimes);
       world->tick();
-      renderer->render();
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
@@ -164,8 +165,8 @@ void Engine::loop() {
         lastPlayerUpdate = frameStart;
       }
 
-      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
       glfwSwapBuffers(window);
       TracyGpuCollect;
       FrameMark;
