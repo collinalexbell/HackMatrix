@@ -26,6 +26,7 @@
 #include "systems/KeyAndLock.h"
 #include "systems/Scripts.h"
 #include "systems/Update.h"
+#include "tracy/Tracy.hpp"
 
 #include <glm/glm.hpp>
 
@@ -48,6 +49,7 @@ EngineGui::EngineGui(Engine* engine, GLFWwindow *window, shared_ptr<EntityRegist
 }
 
 void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) {
+  ZoneScoped;
   static MultiPlayer::Gui gui(engine);
   ImGui_ImplOpenGL3_NewFrame();
   ImGui_ImplGlfw_NewFrame();
