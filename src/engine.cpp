@@ -149,9 +149,13 @@ void Engine::loop() {
       TracyGpuZone("loop");
       glfwPollEvents();
       frameStart = glfwGetTime();
+
       renderer->render();
       engineGui->render(fps, frameIndex, frameTimes);
+
+      // this has the potential to make OpenGL calls (for lighting; 1 render call per light)
       world->tick();
+
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
@@ -164,7 +168,6 @@ void Engine::loop() {
         client->sendPlayer(camera->position, camera->front);
         lastPlayerUpdate = frameStart;
       }
-
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
       glfwSwapBuffers(window);
