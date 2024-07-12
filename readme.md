@@ -1,11 +1,12 @@
 # HackMatrix 
 
-<img src="images/header_img.png" width="800">
+[![HackMatrix demo](https://img.youtube.com/vi/L6xDqNhGeEM/0.jpg)](https://www.youtube.com/watch?v=L6xDqNhGeEM)
 
 
 A 3D Linux desktop environment (which can also be a game engine)
 
 [<img src="images/paypal.svg" alt="PayPal Button" width="160">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
+
 
 
 [Join the discord](https://discord.gg/Kx2rbJ8JCM)
