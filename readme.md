@@ -2,7 +2,7 @@
 
 <img src="images/header_img.png" width="800">
 
-<a style="font-size:1em;" href="https://www.youtube.com/watch?v=L6xDqNhGeEM">Watch a demo</a>
+<span style="font-size:1em;"><a href="https://www.youtube.com/watch?v=L6xDqNhGeEM">Watch a demo</a></span>
 
 
 A 3D Linux desktop environment (which can also be a game engine)
