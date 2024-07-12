@@ -2,17 +2,11 @@
 
 <img src="images/header_img.png" width="800">
 
-<span style="font-size:1em;"><a href="https://www.youtube.com/watch?v=L6xDqNhGeEM">Watch a demo</a></span>
-
-
 A 3D Linux desktop environment (which can also be a game engine)
 
-[<img src="images/paypal.svg" alt="PayPal Button" width="160">](https://paypal.me/HackMatrix?country.x=US&locale.x=en_US)
-
-
+<a href="https://www.youtube.com/watch?v=L6xDqNhGeEM">Watch a demo</a>
 
 [Join the discord](https://discord.gg/Kx2rbJ8JCM)
-
 
 ## Usage
 
