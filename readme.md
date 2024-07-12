@@ -1,6 +1,6 @@
 # HackMatrix 
 
-[![HackMatrix demo](https://img.youtube.com/vi/L6xDqNhGeEM/0.jpg)](https://www.youtube.com/watch?v=L6xDqNhGeEM)
+[![HackMatrix demo]("images/header_img.png")](https://www.youtube.com/watch?v=L6xDqNhGeEM)
 
 
 A 3D Linux desktop environment (which can also be a game engine)
