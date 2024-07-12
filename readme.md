@@ -1,6 +1,6 @@
 # HackMatrix 
 
-[![HackMatrix demo]("images/header_img.png")](https://www.youtube.com/watch?v=L6xDqNhGeEM)
+<img src="images/header_img.png" width="800">
 
 
 A 3D Linux desktop environment (which can also be a game engine)
