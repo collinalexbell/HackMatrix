@@ -5,7 +5,6 @@
 #include <enet/enet.h>
 #pragma GCC diagnostic pop
 
-
 #include "engine.h"
 #include "components/Bootable.h"
 #include "components/Key.h"
@@ -34,18 +33,23 @@
 
 #include "imgui/imgui_impl_opengl3.h"
 
-
-void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
-  Engine *engine = (Engine *)glfwGetWindowUserPointer(window);
+void
+mouseCallback(GLFWwindow* window, double xpos, double ypos)
+{
+  Engine* engine = (Engine*)glfwGetWindowUserPointer(window);
   engine->controls->mouseCallback(window, xpos, ypos);
 }
 
-void Engine::registerCursorCallback() {
-  glfwSetWindowUserPointer(window, (void *)this);
+void
+Engine::registerCursorCallback()
+{
+  glfwSetWindowUserPointer(window, (void*)this);
   glfwSetCursorPosCallback(window, mouseCallback);
 }
 
-void Engine::setupRegistry() {
+void
+Engine::setupRegistry()
+{
   registry = make_shared<EntityRegistry>();
 
   shared_ptr<SQLPersister> postionablePersister =
@@ -64,12 +68,10 @@ void Engine::setupRegistry() {
     make_shared<systems::DoorPersister>(registry);
   registry->addPersister(doorPersister);
 
-  shared_ptr<SQLPersister> keyPersister =
-    make_shared<KeyPersister>(registry);
+  shared_ptr<SQLPersister> keyPersister = make_shared<KeyPersister>(registry);
   registry->addPersister(keyPersister);
 
-  shared_ptr<SQLPersister> lockPersister =
-    make_shared<LockPersister>(registry);
+  shared_ptr<SQLPersister> lockPersister = make_shared<LockPersister>(registry);
   registry->addPersister(lockPersister);
 
   shared_ptr<SQLPersister> parentPersister =
@@ -77,17 +79,19 @@ void Engine::setupRegistry() {
   registry->addPersister(parentPersister);
 
   shared_ptr<SQLPersister> scriptablePersister =
-      make_shared<ScriptablePersister>(registry);
+    make_shared<ScriptablePersister>(registry);
   registry->addPersister(scriptablePersister);
 
   shared_ptr<SQLPersister> bootablePersister =
-      make_shared<BootablePersister>(registry);
+    make_shared<BootablePersister>(registry);
   registry->addPersister(bootablePersister);
 
   registry->createTablesIfNeeded();
 }
 
-Engine::Engine(GLFWwindow* window, char** envp): window(window) {
+Engine::Engine(GLFWwindow* window, char** envp)
+  : window(window)
+{
   setupRegistry();
   registry->loadAll();
   systems::createDerivativeComponents(registry);
@@ -102,13 +106,15 @@ Engine::Engine(GLFWwindow* window, char** envp): window(window) {
   wire();
   wm->createAndRegisterApps(envp);
   registerCursorCallback();
-  // Has to be be created after the cursorCallback because gui wraps the callback
+  // Has to be be created after the cursorCallback because gui wraps the
+  // callback
   engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
   // turn off vsync
   // glfwSwapInterval(0);
 }
 
-Engine::~Engine() {
+Engine::~Engine()
+{
   // may want to remove this because it might be slow on shutdown
   // when trying to get fast dev time
   delete wm;
@@ -120,24 +126,31 @@ Engine::~Engine() {
   registry->saveAll();
 }
 
-void Engine::initialize(){
+void
+Engine::initialize()
+{
   auto texturePack = blocks::initializeBasicPack();
-  wm = new WindowManager::WindowManager(registry, glfwGetX11Window(window), loggerSink);
+  wm = new WindowManager::WindowManager(
+    registry, glfwGetX11Window(window), loggerSink);
   camera = new Camera();
-  world = new World(registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
+  world = new World(
+    registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
   api = new Api("tcp://*:3333", registry, controls);
   wm->registerControls(controls);
 }
 
-
-void Engine::wire() {
+void
+Engine::wire()
+{
   world->attachRenderer(renderer);
   wm->wire(camera, renderer);
 }
 
-void Engine::loop() {
+void
+Engine::loop()
+{
   vector<double> frameTimes(20, 0);
   double frameStart;
   int frameIndex = 0;
@@ -153,18 +166,19 @@ void Engine::loop() {
       renderer->render();
       engineGui->render(fps, frameIndex, frameTimes);
 
-      // this has the potential to make OpenGL calls (for lighting; 1 render call per light)
+      // this has the potential to make OpenGL calls (for lighting; 1 render
+      // call per light)
       world->tick();
 
       api->mutateEntities();
       wm->tick();
       controls->poll(window, camera, world);
 
-      if(client) {
+      if (client) {
         client->poll();
       }
 
-      if(client && frameStart - lastPlayerUpdate > 1.0/20.0) {
+      if (client && frameStart - lastPlayerUpdate > 1.0 / 20.0) {
         client->sendPlayer(camera->position, camera->front);
         lastPlayerUpdate = frameStart;
       }
@@ -177,20 +191,26 @@ void Engine::loop() {
       frameTimes[frameIndex] = glfwGetTime() - frameStart;
       frameIndex = (frameIndex + 1) % 10;
     }
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     logger->error(e.what());
     throw;
   }
 }
 
-void Engine::registerClient(shared_ptr<MultiPlayer::Client> _client) {
+void
+Engine::registerClient(shared_ptr<MultiPlayer::Client> _client)
+{
   client = _client;
 }
 
-void Engine::registerServer(shared_ptr<MultiPlayer::Server> _server) {
+void
+Engine::registerServer(shared_ptr<MultiPlayer::Server> _server)
+{
   server = _server;
 }
 
-shared_ptr<EntityRegistry> Engine::getRegistry() {
+shared_ptr<EntityRegistry>
+Engine::getRegistry()
+{
   return registry;
 }

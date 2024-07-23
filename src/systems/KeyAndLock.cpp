@@ -4,24 +4,26 @@
 #include "model.h"
 #include "systems/Door.h"
 
-void systems::turnKey(std::shared_ptr<EntityRegistry> registry, entt::entity entity) {
+void
+systems::turnKey(std::shared_ptr<EntityRegistry> registry, entt::entity entity)
+{
   auto key = registry->try_get<Key>(entity);
-  if(key != NULL) {
+  if (key != NULL) {
     if (key->state == UNTURNED) {
       auto movement = key->turnMovement;
       movement.onFinish = [registry, entity]() -> void {
         auto [key, keyPos] = registry->get<Key, Positionable>(entity);
         key.state = TURNED;
         auto lockView = registry->view<Persistable, Lock, Positionable>();
-        for(auto [entity, persistable, lock, positionable]: lockView.each()) {
-          if(persistable.entityId == key.lockable) {
+        for (auto [entity, persistable, lock, positionable] : lockView.each()) {
+          if (persistable.entityId == key.lockable) {
 
             // The lock.position may need to be rotated since it is local
             // and positionable.pos is global
 
-            auto distances = glm::abs((lock.position + positionable.pos) - keyPos.pos);
-            if (lock.state == LOCKED &&
-                distances.x <= lock.tolerance.x &&
+            auto distances =
+              glm::abs((lock.position + positionable.pos) - keyPos.pos);
+            if (lock.state == LOCKED && distances.x <= lock.tolerance.x &&
                 distances.y <= lock.tolerance.y &&
                 distances.z <= lock.tolerance.z) {
               lock.state = UNLOCKED;
@@ -35,9 +37,12 @@ void systems::turnKey(std::shared_ptr<EntityRegistry> registry, entt::entity ent
     }
   }
 }
-void systems::unturnKey(std::shared_ptr<EntityRegistry> registry, entt::entity entity) {
+void
+systems::unturnKey(std::shared_ptr<EntityRegistry> registry,
+                   entt::entity entity)
+{
   auto key = registry->try_get<Key>(entity);
-  if(key != NULL) {
+  if (key != NULL) {
     if (key->state == TURNED) {
       auto movement = key->unturnMovement;
       movement.onFinish = [registry, entity]() -> void {

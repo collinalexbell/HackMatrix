@@ -30,25 +30,32 @@
 
 #include <glm/glm.hpp>
 
-EngineGui::EngineGui(Engine* engine, GLFWwindow *window, shared_ptr<EntityRegistry> registry,
+EngineGui::EngineGui(Engine* engine,
+                     GLFWwindow* window,
+                     shared_ptr<EntityRegistry> registry,
                      shared_ptr<LoggerVector> loggerVector)
-    : engine(engine), registry(registry), loggerVector(loggerVector) {
+  : engine(engine)
+  , registry(registry)
+  , loggerVector(loggerVector)
+{
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
+  ImGuiIO& io = ImGui::GetIO();
   io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
   io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+    ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
   // Setup Platform/Renderer backends
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init();
 }
 
-void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) {
+void
+EngineGui::render(double& fps, int frameIndex, vector<double>& frameTimes)
+{
   ZoneScoped;
   static MultiPlayer::Gui gui(engine);
   ImGui_ImplOpenGL3_NewFrame();
@@ -73,7 +80,7 @@ void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) 
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Debug Log")) {
-      for (const auto &msg : debugMessages) {
+      for (const auto& msg : debugMessages) {
         ImGui::TextWrapped("%s", msg.c_str());
       }
       ImGui::EndTabItem();
@@ -99,14 +106,15 @@ void EngineGui::render(double &fps, int frameIndex, vector<double> &frameTimes) 
   ImGui::Render();
 }
 
-
-
-void EngineGui::createNewEntity() {
+void
+EngineGui::createNewEntity()
+{
   entt::entity newEntity = registry->createPersistent();
 }
 
-void EngineGui::addComponentPanel(entt::entity entity,
-                                  bool &showAddComponentPanel) {
+void
+EngineGui::addComponentPanel(entt::entity entity, bool& showAddComponentPanel)
+{
   static int LIGHT_TYPE = 0;
   static int POSITIONABLE_TYPE = 1; // Adjusted indexes
   static int MODEL_TYPE = 2;
@@ -120,13 +128,15 @@ void EngineGui::addComponentPanel(entt::entity entity,
   static int BOOTABLE_TYPE = 10;
   static int selectedComponentType = LIGHT_TYPE; // Initialize
 
-  ImGui::Combo("Component Type", &selectedComponentType,
-               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Parent\0Scriptable\0TranslateMovement\0Bootable\0");
+  ImGui::Combo("Component Type",
+               &selectedComponentType,
+               "Light\0Positionable\0Model\0RotateMovement\0Door\0Key\0Lock\0Pa"
+               "rent\0Scriptable\0TranslateMovement\0Bootable\0");
 
   if (selectedComponentType == LIGHT_TYPE) {
     static glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Default color
 
-    ImGui::ColorEdit3("Color", (float *)&lightColor);
+    ImGui::ColorEdit3("Color", (float*)&lightColor);
 
     if (ImGui::Button("Add Light Component")) {
       registry->emplace<Light>(entity, lightColor);
@@ -138,13 +148,14 @@ void EngineGui::addComponentPanel(entt::entity entity,
     static glm::vec3 rotation = glm::vec3(0.0f);
     static float scale = 1.0f;
 
-    ImGui::InputFloat3("Position", (float *)&position);
-    ImGui::InputFloat3("Origin", (float *)&origin);
-    ImGui::InputFloat3("Rotation", (float *)&rotation);
+    ImGui::InputFloat3("Position", (float*)&position);
+    ImGui::InputFloat3("Origin", (float*)&origin);
+    ImGui::InputFloat3("Rotation", (float*)&rotation);
     ImGui::InputFloat("Scale", &scale);
 
     if (ImGui::Button("Add Positionable Component")) {
-      registry->emplace<Positionable>(entity, position, origin, rotation, scale);
+      registry->emplace<Positionable>(
+        entity, position, origin, rotation, scale);
       showAddComponentPanel = false;
     }
   } else if (selectedComponentType == MODEL_TYPE) {
@@ -164,11 +175,11 @@ void EngineGui::addComponentPanel(entt::entity entity,
     ImGui::InputFloat3("Rotation Axis", glm::value_ptr(axis));
 
     if (ImGui::Button("Add RotateMovement Component")) {
-      registry->emplace<RotateMovement>
-        (entity, degreesToRotate, degreesPerSecond, axis);
+      registry->emplace<RotateMovement>(
+        entity, degreesToRotate, degreesPerSecond, axis);
       showAddComponentPanel = false;
     }
-  } else if(selectedComponentType == DOOR_TYPE) {
+  } else if (selectedComponentType == DOOR_TYPE) {
     static float openDegreesToRotate = 0;
     static float openDegreesPerSecond = 0;
     static float closeDegreesToRotate = 0;
@@ -187,16 +198,19 @@ void EngineGui::addComponentPanel(entt::entity entity,
     ImGui::InputFloat("Degrees/s##toClose", &closeDegreesPerSecond);
     ImGui::InputFloat3("Rotation Axis##toClose", glm::value_ptr(closeAxis));
 
-    ImGui::RadioButton("Open",  (int*) &doorState, (int)DoorState::OPEN);
-    ImGui::RadioButton("Closed", (int*) &doorState, (int)DoorState::CLOSED);
+    ImGui::RadioButton("Open", (int*)&doorState, (int)DoorState::OPEN);
+    ImGui::RadioButton("Closed", (int*)&doorState, (int)DoorState::CLOSED);
 
     if (ImGui::Button("Add Door Component")) {
-      auto open = RotateMovement{openDegreesToRotate, openDegreesPerSecond, openAxis};
-      auto close = RotateMovement{closeDegreesToRotate, closeDegreesPerSecond, closeAxis};
+      auto open =
+        RotateMovement{ openDegreesToRotate, openDegreesPerSecond, openAxis };
+      auto close = RotateMovement{ closeDegreesToRotate,
+                                   closeDegreesPerSecond,
+                                   closeAxis };
       registry->emplace<Door>(entity, open, close, doorState);
       showAddComponentPanel = false;
     }
-  } else if(selectedComponentType == KEY_TYPE) {
+  } else if (selectedComponentType == KEY_TYPE) {
     static float turnDegreesToRotate = 0;
     static float turnDegreesPerSecond = 0;
     static float unturnDegreesToRotate = 0;
@@ -218,12 +232,15 @@ void EngineGui::addComponentPanel(entt::entity entity,
     ImGui::InputFloat("Degrees/s##toUnturn", &unturnDegreesPerSecond);
     ImGui::InputFloat3("Rotation Axis##toUnturn", glm::value_ptr(unturnAxis));
 
-    ImGui::RadioButton("Turned",  (int*) &turnState, (int)TurnState::TURNED);
-    ImGui::RadioButton("Unturned", (int*) &turnState, (int)TurnState::UNTURNED);
+    ImGui::RadioButton("Turned", (int*)&turnState, (int)TurnState::TURNED);
+    ImGui::RadioButton("Unturned", (int*)&turnState, (int)TurnState::UNTURNED);
 
     if (ImGui::Button("Add Turn Component")) {
-      auto turn = RotateMovement{turnDegreesToRotate, turnDegreesPerSecond, turnAxis};
-      auto unturn = RotateMovement{unturnDegreesToRotate, unturnDegreesPerSecond, unturnAxis};
+      auto turn =
+        RotateMovement{ turnDegreesToRotate, turnDegreesPerSecond, turnAxis };
+      auto unturn = RotateMovement{ unturnDegreesToRotate,
+                                    unturnDegreesPerSecond,
+                                    unturnAxis };
       registry->emplace<Key>(entity, lockable, turnState, turn, unturn);
       showAddComponentPanel = false;
     }
@@ -232,17 +249,17 @@ void EngineGui::addComponentPanel(entt::entity entity,
     static glm::vec3 lockTolerance = glm::vec3(0.0f);
     static LockState lockState;
 
-    ImGui::InputFloat3("Position", (float *)&lockPosition);
-    ImGui::InputFloat3("Tolerance", (float *)&lockTolerance);
+    ImGui::InputFloat3("Position", (float*)&lockPosition);
+    ImGui::InputFloat3("Tolerance", (float*)&lockTolerance);
 
-    ImGui::RadioButton("Locked", (int *)&lockState, (int)LockState::LOCKED);
-    ImGui::RadioButton("Unlocked", (int *)&lockState, (int)LockState::UNLOCKED);
+    ImGui::RadioButton("Locked", (int*)&lockState, (int)LockState::LOCKED);
+    ImGui::RadioButton("Unlocked", (int*)&lockState, (int)LockState::UNLOCKED);
 
     if (ImGui::Button("Add Lock Component")) {
       registry->emplace<Lock>(entity, lockPosition, lockTolerance, lockState);
       showAddComponentPanel = false;
     }
-  } else if(selectedComponentType == PARENT_TYPE) {
+  } else if (selectedComponentType == PARENT_TYPE) {
     static vector<int> childrenIds;
     for (int i = 0; i < childrenIds.size(); i++) {
       ImGui::InputInt(("Children ID##" + std::to_string(i)).c_str(),
@@ -254,19 +271,19 @@ void EngineGui::addComponentPanel(entt::entity entity,
     if (childrenIds.size() > 0 && ImGui::Button("+ Remove Child")) {
       childrenIds.pop_back();
     }
-    if(ImGui::Button("Add Parent Component")) {
+    if (ImGui::Button("Add Parent Component")) {
       registry->emplace<Parent>(entity, childrenIds);
       childrenIds = vector<int>();
       showAddComponentPanel = false;
     }
-  } else if(selectedComponentType == SCRIPTABLE_TYPE) {
+  } else if (selectedComponentType == SCRIPTABLE_TYPE) {
     static ScriptLanguage scriptLanguage;
-    ImGui::RadioButton("C++", (int *)&scriptLanguage, (int)CPP);
-    ImGui::RadioButton("Javascript", (int *)&scriptLanguage, (int)JAVASCRIPT);
-    ImGui::RadioButton("Python", (int *)&scriptLanguage, (int)PYTHON);
+    ImGui::RadioButton("C++", (int*)&scriptLanguage, (int)CPP);
+    ImGui::RadioButton("Javascript", (int*)&scriptLanguage, (int)JAVASCRIPT);
+    ImGui::RadioButton("Python", (int*)&scriptLanguage, (int)PYTHON);
 
     if (ImGui::Button("Add Scriptable Component")) {
-      registry->emplace<Scriptable>(entity,"", scriptLanguage);
+      registry->emplace<Scriptable>(entity, "", scriptLanguage);
       systems::emplaceBoundingSphere(registry, entity);
       showAddComponentPanel = false;
     }
@@ -278,8 +295,8 @@ void EngineGui::addComponentPanel(entt::entity entity,
     ImGui::InputFloat("Units/s", &unitsPerSecond);
 
     if (ImGui::Button("Add TranslateMovement Component")) {
-      registry->emplace<TranslateMovement>(entity, translateDelta,
-                                           unitsPerSecond);
+      registry->emplace<TranslateMovement>(
+        entity, translateDelta, unitsPerSecond);
       showAddComponentPanel = false;
     }
   } else if (selectedComponentType == BOOTABLE_TYPE) {
@@ -307,10 +324,12 @@ void EngineGui::addComponentPanel(entt::entity entity,
     if (ImGui::Button("Add Bootable Component")) {
       std::string strName = name;
       optional<std::string> optname;
-      if(strName.length() > 0) {
+      if (strName.length() > 0) {
         optname = strName;
       }
-      registry->emplace<Bootable>(entity, cmd, args,
+      registry->emplace<Bootable>(entity,
+                                  cmd,
+                                  args,
                                   killOnExit == 1 ? true : false,
                                   nullopt,
                                   transparent == 1 ? true : false,
@@ -321,29 +340,34 @@ void EngineGui::addComponentPanel(entt::entity entity,
   }
 }
 
-function<string(string)> makeLabeler(entt::entity entity, string component = "") {
+function<string(string)>
+makeLabeler(entt::entity entity, string component = "")
+{
   return [entity, component](string name) -> string {
     stringstream rv;
-    rv << name << "##" << to_string((int) entity) << "#" << component;
+    rv << name << "##" << to_string((int)entity) << "#" << component;
     return rv.str();
   };
 }
 
-void EngineGui::renderComponentPanel(entt::entity entity) {
-  if(registry->any_of<Light>(entity)) {
-    auto &light = registry->get<Light>(entity);
+void
+EngineGui::renderComponentPanel(entt::entity entity)
+{
+  if (registry->any_of<Light>(entity)) {
+    auto& light = registry->get<Light>(entity);
     ImGui::Text("Light Component:");
     ImGui::BeginGroup();
     ImGui::ColorEdit3(("Color##" + to_string((int)entity)).c_str(),
-                      (float *)&light.color);
-    if(ImGui::Button(("Delete Component##Light" + to_string((int)entity)).c_str())) {
+                      (float*)&light.color);
+    if (ImGui::Button(
+          ("Delete Component##Light" + to_string((int)entity)).c_str())) {
       registry->removePersistent<Light>(entity);
     }
     ImGui::EndGroup();
     ImGui::Spacing();
   }
-  if(registry->any_of<Positionable>(entity)) {
-    auto &positionable = registry->get<Positionable>(entity);
+  if (registry->any_of<Positionable>(entity)) {
+    auto& positionable = registry->get<Positionable>(entity);
 
     auto copiedPos = positionable.pos;
     auto copiedOrigin = positionable.origin;
@@ -353,41 +377,44 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::Text("Positioner Component:");
     ImGui::BeginGroup();
     ImGui::InputFloat3(("Position##" + to_string((int)entity)).c_str(),
-                       (float *)&positionable.pos);
+                       (float*)&positionable.pos);
     ImGui::InputFloat3(("Origin##" + to_string((int)entity)).c_str(),
-                       (float *)&positionable.origin);
+                       (float*)&positionable.origin);
     ImGui::InputFloat3(("Rotation##" + to_string((int)entity)).c_str(),
-                       (float *)&positionable.rotate);
+                       (float*)&positionable.rotate);
     ImGui::InputFloat(("Scale##" + to_string((int)entity)).c_str(),
                       &positionable.scale);
     if (ImGui::Button(
-            ("Delete Component##Positioner" + to_string((int)entity)).c_str())) {
+          ("Delete Component##Positioner" + to_string((int)entity)).c_str())) {
       registry->removePersistent<Positionable>(entity);
     }
     ImGui::EndGroup();
     ImGui::Spacing();
 
-    if(copiedPos != positionable.pos || positionable.origin != copiedOrigin || copiedScale != positionable.scale || copiedRotate != positionable.rotate) {
-      //systems::update(registry, entity);
+    if (copiedPos != positionable.pos || positionable.origin != copiedOrigin ||
+        copiedScale != positionable.scale ||
+        copiedRotate != positionable.rotate) {
+      // systems::update(registry, entity);
       positionable.damage();
     }
   }
-  if(registry->any_of<Model>(entity)) {
-    auto &model = registry->get<Model>(entity);
+  if (registry->any_of<Model>(entity)) {
+    auto& model = registry->get<Model>(entity);
     char modelPath[128] = "";
     strcpy(modelPath, model.path.c_str());
     ImGui::Text("Model Component:");
     ImGui::BeginGroup();
-    ImGui::InputText(("Model Path##" + to_string((int)entity)).c_str(), modelPath,
+    ImGui::InputText(("Model Path##" + to_string((int)entity)).c_str(),
+                     modelPath,
                      IM_ARRAYSIZE(modelPath));
     if (ImGui::Button(
-            ("Delete Component##Model" + to_string((int)entity)).c_str())) {
+          ("Delete Component##Model" + to_string((int)entity)).c_str())) {
       registry->removePersistent<Model>(entity);
     }
     ImGui::EndGroup();
     ImGui::Spacing();
   }
-  if(registry->any_of<RotateMovement>(entity)) {
+  if (registry->any_of<RotateMovement>(entity)) {
     // not a reference, because I'm just displaying text
     auto rotateMovement = registry->get<RotateMovement>(entity);
     ImGui::Text("RotateMovement Component");
@@ -396,7 +423,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     auto axis = rotateMovement.axis;
     ImGui::Text("Axis: (%f, %f, %f)", axis.x, axis.y, axis.z);
     if (ImGui::Button(
-            ("Delete Component##RotateMovement" + to_string((int)entity)).c_str())) {
+          ("Delete Component##RotateMovement" + to_string((int)entity))
+            .c_str())) {
       registry->remove<RotateMovement>(entity);
     }
     ImGui::Spacing();
@@ -406,20 +434,22 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     auto translateMovement = registry->get<TranslateMovement>(entity);
 
     ImGui::Text("TranslateMovement Component");
-    ImGui::Text("Delta: (%.2f, %.2f, %.2f)", translateMovement.delta.x,
-                translateMovement.delta.y, translateMovement.delta.z);
+    ImGui::Text("Delta: (%.2f, %.2f, %.2f)",
+                translateMovement.delta.x,
+                translateMovement.delta.y,
+                translateMovement.delta.z);
     ImGui::Text("Units/s: %.2f", translateMovement.unitsPerSecond);
 
     if (ImGui::Button(
-            ("Delete Component##TranslateMovement" + to_string((int)entity))
-                .c_str())) {
+          ("Delete Component##TranslateMovement" + to_string((int)entity))
+            .c_str())) {
       registry->remove<TranslateMovement>(entity);
     }
 
     ImGui::Spacing();
   }
-  if(registry->any_of<Door>(entity)) {
-    auto &door = registry->get<Door>(entity);
+  if (registry->any_of<Door>(entity)) {
+    auto& door = registry->get<Door>(entity);
 
     ImGui::Text("Door Component");
     ImGui::Text("Open RotateMovement");
@@ -427,20 +457,24 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
                        &door.openMovement.degrees);
     ImGui::InputDouble(("Degrees/s##toOpen" + to_string((int)entity)).c_str(),
                        &door.openMovement.degreesPerSecond);
-    ImGui::InputFloat3(("Rotation Axis##toOpen" + to_string((int)entity)).c_str(),
-        glm::value_ptr(door.openMovement.axis));
+    ImGui::InputFloat3(
+      ("Rotation Axis##toOpen" + to_string((int)entity)).c_str(),
+      glm::value_ptr(door.openMovement.axis));
 
     ImGui::Text("Close RotateMovement");
     ImGui::InputDouble(("Degrees##toClose" + to_string((int)entity)).c_str(),
                        &door.closeMovement.degrees);
     ImGui::InputDouble(("Degrees/s##toClose" + to_string((int)entity)).c_str(),
                        &door.closeMovement.degreesPerSecond);
-    ImGui::InputFloat3(("Rotation Axis##toClose" + to_string((int)entity)).c_str(),
-        glm::value_ptr(door.closeMovement.axis));
+    ImGui::InputFloat3(
+      ("Rotation Axis##toClose" + to_string((int)entity)).c_str(),
+      glm::value_ptr(door.closeMovement.axis));
 
-    ImGui::RadioButton(("Open" + to_string((int)entity)).c_str(), (int *)&door.state,
+    ImGui::RadioButton(("Open" + to_string((int)entity)).c_str(),
+                       (int*)&door.state,
                        (int)DoorState::OPEN);
-    ImGui::RadioButton(("Closed" + to_string((int)entity)).c_str(), (int *)&door.state,
+    ImGui::RadioButton(("Closed" + to_string((int)entity)).c_str(),
+                       (int*)&door.state,
                        (int)DoorState::CLOSED);
 
     if (ImGui::Button(("Open Door##" + to_string((int)entity)).c_str())) {
@@ -449,35 +483,41 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     if (ImGui::Button(("Close Door##" + to_string((int)entity)).c_str())) {
       systems::closeDoor(registry, entity);
     }
-    if (ImGui::Button(("Delete Component##Door" + to_string((int)entity))
-                .c_str())) {registry->removePersistent<Door>(entity);
+    if (ImGui::Button(
+          ("Delete Component##Door" + to_string((int)entity)).c_str())) {
+      registry->removePersistent<Door>(entity);
     }
     ImGui::Spacing();
   }
-  if(registry->any_of<Key>(entity)) {
-    auto &key = registry->get<Key>(entity);
+  if (registry->any_of<Key>(entity)) {
+    auto& key = registry->get<Key>(entity);
 
     ImGui::Text("Key Component");
-    ImGui::InputInt(("Lockable##" + to_string((int)entity)).c_str(), &key.lockable);
+    ImGui::InputInt(("Lockable##" + to_string((int)entity)).c_str(),
+                    &key.lockable);
     ImGui::Text("Open RotateMovement##Key");
     ImGui::InputDouble(("Degrees##toTurn" + to_string((int)entity)).c_str(),
                        &key.turnMovement.degrees);
     ImGui::InputDouble(("Degrees/s##toTurn" + to_string((int)entity)).c_str(),
                        &key.turnMovement.degreesPerSecond);
-    ImGui::InputFloat3(("Rotation Axis##toTurn" + to_string((int)entity)).c_str(),
-        glm::value_ptr(key.turnMovement.axis));
+    ImGui::InputFloat3(
+      ("Rotation Axis##toTurn" + to_string((int)entity)).c_str(),
+      glm::value_ptr(key.turnMovement.axis));
 
     ImGui::Text("Close RotateMovement");
     ImGui::InputDouble(("Degrees##toUnturn" + to_string((int)entity)).c_str(),
                        &key.unturnMovement.degrees);
     ImGui::InputDouble(("Degrees/s##toUnturn" + to_string((int)entity)).c_str(),
                        &key.unturnMovement.degreesPerSecond);
-    ImGui::InputFloat3(("Rotation Axis##toUnturn" + to_string((int)entity)).c_str(),
-        glm::value_ptr(key.unturnMovement.axis));
+    ImGui::InputFloat3(
+      ("Rotation Axis##toUnturn" + to_string((int)entity)).c_str(),
+      glm::value_ptr(key.unturnMovement.axis));
 
-    ImGui::RadioButton(("Turned##" + to_string((int)entity)).c_str(), (int *)&key.state,
+    ImGui::RadioButton(("Turned##" + to_string((int)entity)).c_str(),
+                       (int*)&key.state,
                        (int)TurnState::TURNED);
-    ImGui::RadioButton(("Unturned##" + to_string((int)entity)).c_str(), (int *)&key.state,
+    ImGui::RadioButton(("Unturned##" + to_string((int)entity)).c_str(),
+                       (int*)&key.state,
                        (int)TurnState::UNTURNED);
 
     if (ImGui::Button(("Turn Key##" + to_string((int)entity)).c_str())) {
@@ -486,44 +526,48 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     if (ImGui::Button(("Unturn Key##" + to_string((int)entity)).c_str())) {
       systems::unturnKey(registry, entity);
     }
-    if (ImGui::Button(("Delete Component##Key" + to_string((int)entity))
-                .c_str())) {registry->removePersistent<Key>(entity);
+    if (ImGui::Button(
+          ("Delete Component##Key" + to_string((int)entity)).c_str())) {
+      registry->removePersistent<Key>(entity);
     }
     ImGui::Spacing();
   }
-  if(registry->any_of<Lock>(entity)) {
-    auto &lock = registry->get<Lock>(entity);
+  if (registry->any_of<Lock>(entity)) {
+    auto& lock = registry->get<Lock>(entity);
 
     ImGui::Text("Positioner Component:");
     ImGui::BeginGroup();
     ImGui::InputFloat3(("Position##Lock" + to_string((int)entity)).c_str(),
-                       (float *)&lock.position);
+                       (float*)&lock.position);
     ImGui::InputFloat3(("Tolerance##Lock" + to_string((int)entity)).c_str(),
-                       (float *)&lock.tolerance);
+                       (float*)&lock.tolerance);
     ImGui::RadioButton(("Locked##" + to_string((int)entity)).c_str(),
-                       (int *)&lock.state, (int)LockState::LOCKED);
+                       (int*)&lock.state,
+                       (int)LockState::LOCKED);
     ImGui::RadioButton(("Unlocked##" + to_string((int)entity)).c_str(),
-                       (int *)&lock.state, (int)LockState::UNLOCKED);
+                       (int*)&lock.state,
+                       (int)LockState::UNLOCKED);
     if (ImGui::Button(("Lock##" + to_string((int)entity)).c_str())) {
-      //lock
+      // lock
     }
     if (ImGui::Button(("Unlock##" + to_string((int)entity)).c_str())) {
-      //unlock
+      // unlock
     }
 
     if (ImGui::Button(
-            ("Delete Component##Lock" + to_string((int)entity)).c_str())) {
+          ("Delete Component##Lock" + to_string((int)entity)).c_str())) {
       registry->removePersistent<Lock>(entity);
     }
     ImGui::EndGroup();
     ImGui::Spacing();
   }
-  if(registry->any_of<Parent>(entity)) {
-    auto &parent = registry->get<Parent>(entity);
+  if (registry->any_of<Parent>(entity)) {
+    auto& parent = registry->get<Parent>(entity);
     ImGui::Text("Parent Component:");
-    for(int i = 0; i < parent.childrenIds.size(); i++) {
-      ImGui::InputInt(("Child Id##" + to_string(i) + to_string((int)entity)).c_str(),
-                      &parent.childrenIds[i]);
+    for (int i = 0; i < parent.childrenIds.size(); i++) {
+      ImGui::InputInt(
+        ("Child Id##" + to_string(i) + to_string((int)entity)).c_str(),
+        &parent.childrenIds[i]);
     }
     if (ImGui::Button(("- Remove Child##" + to_string((int)entity)).c_str())) {
       parent.childrenIds.pop_back();
@@ -531,24 +575,24 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     if (ImGui::Button(("+ Add Child##" + to_string((int)entity)).c_str())) {
       parent.childrenIds.push_back(0);
     }
-    if (ImGui::Button(("Delete Component##Parent" + to_string((int)entity))
-                          .c_str())) {
+    if (ImGui::Button(
+          ("Delete Component##Parent" + to_string((int)entity)).c_str())) {
       registry->removePersistent<Positionable>(entity);
     }
     ImGui::Spacing();
   }
-  if(registry->any_of<Scriptable>(entity)) {
+  if (registry->any_of<Scriptable>(entity)) {
     ImGui::Text("Scriptable Component:");
-    auto &scriptable = registry->get<Scriptable>(entity);
+    auto& scriptable = registry->get<Scriptable>(entity);
 
     auto label = makeLabeler(entity);
 
-    ImGui::RadioButton(label("C++").c_str(),
-                       (int *)&scriptable.language, (int)CPP);
-    ImGui::RadioButton(label("Javascript").c_str(),
-                       (int *)&scriptable.language, (int)JAVASCRIPT);
-    ImGui::RadioButton(label("Python").c_str(),
-                       (int *)&scriptable.language, (int)PYTHON);
+    ImGui::RadioButton(
+      label("C++").c_str(), (int*)&scriptable.language, (int)CPP);
+    ImGui::RadioButton(
+      label("Javascript").c_str(), (int*)&scriptable.language, (int)JAVASCRIPT);
+    ImGui::RadioButton(
+      label("Python").c_str(), (int*)&scriptable.language, (int)PYTHON);
     if (ImGui::Button(label("Edit Script").c_str())) {
       systems::editScript(registry, entity);
     }
@@ -573,7 +617,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
 
   if (registry->any_of<Bootable>(entity)) {
     ImGui::Text("Bootable Component:");
-    auto &bootable = registry->get<Bootable>(entity);
+    auto& bootable = registry->get<Bootable>(entity);
     auto label = makeLabeler(entity, "Bootable");
 
     char cmd[128] = "";
@@ -587,9 +631,9 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
       strcpy(name, bootable.name.value().c_str());
     }
 
-    int killOnExit = bootable.killOnExit ? 1:0;
-    int transparent = bootable.transparent ? 1:0;
-    int bootOnStartup = bootable.bootOnStartup ? 1:0;
+    int killOnExit = bootable.killOnExit ? 1 : 0;
+    int transparent = bootable.transparent ? 1 : 0;
+    int bootOnStartup = bootable.bootOnStartup ? 1 : 0;
     int width = bootable.getWidth();
     int height = bootable.getHeight();
     int oldWidth = width;
@@ -609,7 +653,7 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::Text("Kill on Exit:");
     ImGui::RadioButton(label("True##KillOnExit").c_str(), &killOnExit, 1);
     ImGui::RadioButton(label("False##KillOnExit").c_str(), &killOnExit, 0);
-    if(bootable.pid.has_value()) {
+    if (bootable.pid.has_value()) {
       ImGui::Text("PID: %d", bootable.pid.value());
     } else {
       ImGui::Text("PID: N/A");
@@ -619,12 +663,13 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     ImGui::RadioButton(label("False##Transparent").c_str(), &transparent, 0);
     ImGui::Text("Boot on Startup");
     ImGui::RadioButton(label("True##BootOnStartup").c_str(), &bootOnStartup, 1);
-    ImGui::RadioButton(label("False##BootOnStartup").c_str(), &bootOnStartup, 0);
+    ImGui::RadioButton(
+      label("False##BootOnStartup").c_str(), &bootOnStartup, 0);
     ImGui::Spacing();
 
     bootable.cmd = cmd;
     bootable.args = args;
-    if(string(name) != "") {
+    if (string(name) != "") {
       bootable.name = name;
     } else {
       bootable.name = nullopt;
@@ -632,7 +677,8 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
     bootable.killOnExit = killOnExit == 1 ? true : false;
     bootable.transparent = transparent == 1 ? true : false;
     bootable.bootOnStartup = bootOnStartup == 1 ? true : false;
-    if(oldWidth != width || oldHeight != height || oldX != xy[0] || oldY != xy[1]) {
+    if (oldWidth != width || oldHeight != height || oldX != xy[0] ||
+        oldY != xy[1]) {
       bootable.x = xy[0];
       bootable.y = xy[1];
       systems::resizeBootable(registry, entity, width, height);
@@ -640,7 +686,9 @@ void EngineGui::renderComponentPanel(entt::entity entity) {
   }
 }
 
-void EngineGui::renderEntities() {
+void
+EngineGui::renderEntities()
+{
   auto view = registry->view<Persistable>();
   // Hashmap Declaration
   static std::unordered_map<entt::entity, bool> componentOptionsState;
@@ -649,17 +697,18 @@ void EngineGui::renderEntities() {
     ImGui::Spacing();
     ImGui::Text("Entity ID: %s", std::to_string(persistable.entityId).c_str());
     ImGui::Text("Raw Entity ID: %s", std::to_string((int)entity).c_str());
-    bool &showAddComponentPanel = componentOptionsState[entity];
+    bool& showAddComponentPanel = componentOptionsState[entity];
     if (ImGui::Button("- Delete Entity")) {
       registry->depersist(entity);
     }
-    if(!showAddComponentPanel) {
-      if (ImGui::Button(("+ Add Component##" + to_string((int)entity)).c_str())) {
+    if (!showAddComponentPanel) {
+      if (ImGui::Button(
+            ("+ Add Component##" + to_string((int)entity)).c_str())) {
         showAddComponentPanel = true; // Show the options on button press
       }
     }
     if (showAddComponentPanel) { // Only display the combo and fields if active
-      if((ImGui::Button(("Go Back##" + to_string((int)entity)).c_str()))) {
+      if ((ImGui::Button(("Go Back##" + to_string((int)entity)).c_str()))) {
         showAddComponentPanel = false;
       }
       addComponentPanel(entity, showAddComponentPanel);
@@ -669,6 +718,8 @@ void EngineGui::renderEntities() {
   }
 }
 
-shared_ptr<LoggerVector> EngineGui::getLoggerVector() {
+shared_ptr<LoggerVector>
+EngineGui::getLoggerVector()
+{
   return loggerVector;
 }

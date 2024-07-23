@@ -13,9 +13,10 @@
 using namespace std;
 
 class Engine;
-class EngineGui {
+class EngineGui
+{
   Engine* engine;
-  GLFWwindow *window;
+  GLFWwindow* window;
   shared_ptr<EntityRegistry> registry;
   shared_ptr<LoggerVector> loggerVector;
   void addComponentPanel(entt::entity, bool&);
@@ -23,7 +24,10 @@ class EngineGui {
   void renderEntities();
 
 public:
-  EngineGui(Engine* engine, GLFWwindow* window, shared_ptr<EntityRegistry> registry, shared_ptr<LoggerVector>);
+  EngineGui(Engine* engine,
+            GLFWwindow* window,
+            shared_ptr<EntityRegistry> registry,
+            shared_ptr<LoggerVector>);
   void render(double&, int, vector<double>&);
   shared_ptr<LoggerVector> getLoggerVector();
   void createNewEntity();

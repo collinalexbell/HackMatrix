@@ -9,7 +9,9 @@
 #include <glm/gtc/quaternion.hpp>
 
 double MIN_DELTA = 0.0001;
-void systems::applyTranslations(std::shared_ptr<EntityRegistry> registry) {
+void
+systems::applyTranslations(std::shared_ptr<EntityRegistry> registry)
+{
   // initialize to current time on first call
   static double lastTranslated = glfwGetTime();
 
@@ -20,7 +22,7 @@ void systems::applyTranslations(std::shared_ptr<EntityRegistry> registry) {
 
     glm::vec3 direction = glm::normalize(translateMovement.delta);
     float distance =
-        translateMovement.unitsPerSecond * (curTime - lastTranslated);
+      translateMovement.unitsPerSecond * (curTime - lastTranslated);
     glm::vec3 delta = direction * distance;
 
     // Ensure degrees are always positive for 'min' calculation
@@ -34,8 +36,9 @@ void systems::applyTranslations(std::shared_ptr<EntityRegistry> registry) {
 
     positionable.pos += delta;
 
-    if (glm::length(translateMovement.delta) < MIN_DELTA) { // Account for negatives
-      if(translateMovement.onFinish.has_value()) {
+    if (glm::length(translateMovement.delta) <
+        MIN_DELTA) { // Account for negatives
+      if (translateMovement.onFinish.has_value()) {
         (*translateMovement.onFinish)();
       }
       registry->remove<TranslateMovement>(entity);
@@ -46,9 +49,9 @@ void systems::applyTranslations(std::shared_ptr<EntityRegistry> registry) {
     if (parent != NULL) {
       for (auto childId : parent->childrenIds) {
         auto childEntityOpt = registry->locateEntity(childId);
-        if(childEntityOpt.has_value()) {
+        if (childEntityOpt.has_value()) {
           auto childEntity = childEntityOpt.value();
-          auto &childPositionable = registry->get<Positionable>(childEntity);
+          auto& childPositionable = registry->get<Positionable>(childEntity);
           childPositionable.pos += delta;
           childPositionable.damage();
         }

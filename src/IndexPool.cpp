@@ -1,13 +1,17 @@
 #include "IndexPool.h"
 
-IndexPool::IndexPool(int maxIndex): maxIndex(maxIndex) {
+IndexPool::IndexPool(int maxIndex)
+  : maxIndex(maxIndex)
+{
   // Initialize the available indices
   for (int i = 0; i <= maxIndex; ++i) {
     availableIndices.push_back(i);
   }
 }
 
-int IndexPool::acquireIndex() {
+int
+IndexPool::acquireIndex()
+{
   if (availableIndices.empty()) {
     // No available indices
     return -1;
@@ -20,7 +24,9 @@ int IndexPool::acquireIndex() {
   return index;
 }
 
-void IndexPool::relinquishIndex(int index) {
+void
+IndexPool::relinquishIndex(int index)
+{
   // Check if the index is valid
   if (index < 0 || index > maxIndex) {
     return;

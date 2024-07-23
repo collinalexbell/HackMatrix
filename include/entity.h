@@ -7,14 +7,15 @@
 #include <memory>
 #include <optional>
 
-class EntityRegistry : public entt::registry {
+class EntityRegistry : public entt::registry
+{
   SQLite::Database db;
   std::vector<std::shared_ptr<SQLPersister>> persisters;
   std::map<int, entt::entity> entityLocator;
 
 public:
   EntityRegistry();
-  SQLite::Database &getDatabase();
+  SQLite::Database& getDatabase();
   void addPersister(std::shared_ptr<SQLPersister>);
   void depersist(entt::entity);
   entt::entity createPersistent();
@@ -23,8 +24,9 @@ public:
   void save(entt::entity);
   void loadAll();
   void load(entt::entity);
-  template <typename T>
-  void removePersistent(entt::entity entity) {
+  template<typename T>
+  void removePersistent(entt::entity entity)
+  {
     remove<T>(entity);
     for (auto persister : persisters) {
       persister->depersistIfGone(entity);

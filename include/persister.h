@@ -3,12 +3,14 @@
 #include <memory.h>
 #include <string>
 
-struct Persistable {
+struct Persistable
+{
   int64_t entityId;
 };
 
-class SQLPersister {
- public:
+class SQLPersister
+{
+public:
   virtual void createTablesIfNeeded() = 0;
   virtual void saveAll() = 0;
   virtual void save(entt::entity) = 0;
@@ -17,4 +19,3 @@ class SQLPersister {
   virtual void depersist(entt::entity) = 0;
   virtual void depersistIfGone(entt::entity) = 0;
 };
-

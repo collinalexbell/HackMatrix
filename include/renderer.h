@@ -20,17 +20,19 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-enum RenderPerspective {
-  CAMERA, LIGHT
+enum RenderPerspective
+{
+  CAMERA,
+  LIGHT
 };
 
 class Cube;
 class World;
-class Renderer {
+class Renderer
+{
   shared_ptr<blocks::TexturePack> texturePack;
   unsigned int APP_VBO;
   unsigned int APP_VAO;
@@ -73,11 +75,11 @@ class Renderer {
 
   unsigned int emacsID;
 
-  float deltaTime = 0.0f;	// Time between current frame and last frame
+  float deltaTime = 0.0f; // Time between current frame and last frame
   float lastFrame = 0.0f; // Time of last frame
 
   unordered_map<int, unsigned int> frameBuffers;
-  void drawAppDirect(X11App* app, Bootable* bootable=NULL);
+  void drawAppDirect(X11App* app, Bootable* bootable = NULL);
   void updateShaderUniforms();
   void renderChunkMesh();
   void renderApps();
@@ -96,9 +98,8 @@ class Renderer {
   void genGlResources();
   void fillBuffers();
   void setupVertexAttributePointers();
-  void lightUniforms(
-      RenderPerspective perspective,
-      std::optional<entt::entity> fromLight);
+  void lightUniforms(RenderPerspective perspective,
+                     std::optional<entt::entity> fromLight);
 
   int verticesInMesh = 0;
   int verticesInDynamicObjects = 0;
@@ -106,14 +107,17 @@ class Renderer {
   IndexPool appIndexPool;
 
 public:
-  Renderer(shared_ptr<EntityRegistry> registry, Camera*, World*, shared_ptr<blocks::TexturePack>);
+  Renderer(shared_ptr<EntityRegistry> registry,
+           Camera*,
+           World*,
+           shared_ptr<blocks::TexturePack>);
   ~Renderer();
   shared_ptr<EntityRegistry> registry;
   Camera* getCamera();
   void render(RenderPerspective = CAMERA,
-      std::optional<entt::entity> = std::nullopt);
+              std::optional<entt::entity> = std::nullopt);
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
-  void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>> &meshes);
+  void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>>& meshes);
   void addLine(int index, Line line);
   void registerApp(X11App* app);
   void deregisterApp(int index);

@@ -14,28 +14,29 @@ class Shader
   void createShaders();
   void deleteShaders();
   void createShaderProgram();
-  void loadCode(std::string, std::string, std::optional<std::string> = std::nullopt);
+  void loadCode(std::string,
+                std::string,
+                std::optional<std::string> = std::nullopt);
   std::string vertexCode;
   std::string fragmentCode;
   std::optional<std::string> geometryCode;
 
-
- public:
+public:
   // the program ID
   unsigned int ID;
   // constructor reads and builds the shader
   Shader(std::string vertexPath, std::string fragmentPath);
   Shader(std::string vertexPath,
-      std::string geometryShader,
-      std::string fragmentPath);
+         std::string geometryShader,
+         std::string fragmentPath);
   // use/activate the shader
   void use();
   // utility uniform functions
-  void setBool(const std::string &name, bool value) const;
-  void setInt(const std::string &name, int value) const;
-  void setFloat(const std::string &name, float value) const;
-  void setVec3(const std::string &name, const glm::vec3 &value) const;
-  void setMatrix4(const std::string &name, const glm::mat4 &value) const;
-  void setMatrix3(const std::string &name, const glm::mat3 &value) const;
+  void setBool(const std::string& name, bool value) const;
+  void setInt(const std::string& name, int value) const;
+  void setFloat(const std::string& name, float value) const;
+  void setVec3(const std::string& name, const glm::vec3& value) const;
+  void setMatrix4(const std::string& name, const glm::mat4& value) const;
+  void setMatrix3(const std::string& name, const glm::mat3& value) const;
 };
 #endif

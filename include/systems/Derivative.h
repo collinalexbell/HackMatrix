@@ -4,5 +4,5 @@
 #include <memory>
 
 namespace systems {
-  void createDerivativeComponents(std::shared_ptr<EntityRegistry>);
+void createDerivativeComponents(std::shared_ptr<EntityRegistry>);
 }

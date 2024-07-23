@@ -1,4 +1,5 @@
 
 #pragma once
 
-void observe(void *obj);
+void
+observe(void* obj);

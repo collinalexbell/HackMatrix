@@ -22,7 +22,12 @@ using namespace std;
 
 int BatchedRequest::nextId = 0;
 
-Api::Api(std::string bindAddress, shared_ptr<EntityRegistry> registry, Controls* controls): registry(registry), controls(controls) {
+Api::Api(std::string bindAddress,
+         shared_ptr<EntityRegistry> registry,
+         Controls* controls)
+  : registry(registry)
+  , controls(controls)
+{
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
   logger->set_level(spdlog::level::debug);
@@ -30,19 +35,23 @@ Api::Api(std::string bindAddress, shared_ptr<EntityRegistry> registry, Controls*
   offRenderThread = thread(&Api::poll, this);
 }
 
-
-CommandServer::CommandServer(Api* api, std::string bindAddress, zmq::context_t& context): api(api) {
+CommandServer::CommandServer(Api* api,
+                             std::string bindAddress,
+                             zmq::context_t& context)
+  : api(api)
+{
   logger = make_shared<spdlog::logger>("CommandServer", fileSink);
   logger->set_level(spdlog::level::info);
   socket = zmq::socket_t(context, zmq::socket_type::rep);
-  socket.bind (bindAddress);
+  socket.bind(bindAddress);
 }
 
-void Api::ProtobufCommandServer::poll() {
+void
+Api::ProtobufCommandServer::poll()
+{
   try {
     zmq::message_t recv;
     zmq::recv_result_t result = socket.recv(recv);
-
 
     if (result >= 0) {
       ApiRequest apiRequest;
@@ -63,15 +72,18 @@ void Api::ProtobufCommandServer::poll() {
 
       // Create a zmq::message_t object from the serialized data
       zmq::message_t reply(serializedResponse.size());
-      memcpy(reply.data(), serializedResponse.c_str(),
-             serializedResponse.size());
+      memcpy(
+        reply.data(), serializedResponse.c_str(), serializedResponse.size());
 
       socket.send(reply, zmq::send_flags::none);
     }
-  } catch (zmq::error_t &e) {}
+  } catch (zmq::error_t& e) {
+  }
 }
 
-void Api::poll() {
+void
+Api::poll()
+{
   while (continuePolling) {
     if (commandServer != NULL) {
       commandServer->poll();
@@ -79,41 +91,46 @@ void Api::poll() {
   }
 }
 
-void Api::processBatchedRequest(BatchedRequest batchedRequest) {
+void
+Api::processBatchedRequest(BatchedRequest batchedRequest)
+{
   auto entityId = (entt::entity)batchedRequest.request.entityid();
-  switch(batchedRequest.request.type()) {
-  case MOVE: {
-    auto move = batchedRequest.request.move();
-    systems::translate(registry, entityId,
-                       glm::vec3(move.xdelta(), move.ydelta(), move.zdelta()),
-                       move.unitspersecond());
-    break;
-  }
-  case TURN_KEY: {
-    auto turnKey = batchedRequest.request.turnkey();
-    if (turnKey.on()) {
-      systems::turnKey(registry, entityId);
-    } else {
-      systems::unturnKey(registry, entityId);
+  switch (batchedRequest.request.type()) {
+    case MOVE: {
+      auto move = batchedRequest.request.move();
+      systems::translate(registry,
+                         entityId,
+                         glm::vec3(move.xdelta(), move.ydelta(), move.zdelta()),
+                         move.unitspersecond());
+      break;
     }
-    break;
-  }
-  case PLAYER_MOVE: {
-    auto playerMove = batchedRequest.request.playermove();
-    glm::vec3 pos(playerMove.position().x(),
-                  playerMove.position().y(),
-                  playerMove.position().z());
-    glm::vec3 rotation(playerMove.rotation().x(),
-                    playerMove.rotation().y(),
-                    playerMove.rotation().z());
-    controls->moveTo(pos, rotation, playerMove.unitspersecond());
-  }
-  default:
-    break;
+    case TURN_KEY: {
+      auto turnKey = batchedRequest.request.turnkey();
+      if (turnKey.on()) {
+        systems::turnKey(registry, entityId);
+      } else {
+        systems::unturnKey(registry, entityId);
+      }
+      break;
+    }
+    case PLAYER_MOVE: {
+      auto playerMove = batchedRequest.request.playermove();
+      glm::vec3 pos(playerMove.position().x(),
+                    playerMove.position().y(),
+                    playerMove.position().z());
+      glm::vec3 rotation(playerMove.rotation().x(),
+                         playerMove.rotation().y(),
+                         playerMove.rotation().z());
+      controls->moveTo(pos, rotation, playerMove.unitspersecond());
+    }
+    default:
+      break;
   }
 }
 
-void Api::mutateEntities() {
+void
+Api::mutateEntities()
+{
   long time = glfwGetTime();
   long target = time + 0.005;
   grabBatched();
@@ -125,17 +142,26 @@ void Api::mutateEntities() {
   releaseBatched();
 }
 
-void Api::grabBatched() {
+void
+Api::grabBatched()
+{
   renderMutex.lock();
 }
 
-void Api::releaseBatched() { renderMutex.unlock(); }
+void
+Api::releaseBatched()
+{
+  renderMutex.unlock();
+}
 
-queue<BatchedRequest> *Api::getBatchedRequests() {
+queue<BatchedRequest>*
+Api::getBatchedRequests()
+{
   return &batchedRequests;
 }
 
-Api::~Api() {
+Api::~Api()
+{
   continuePolling = false;
   context.shutdown();
   offRenderThread.join();

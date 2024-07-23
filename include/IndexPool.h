@@ -3,11 +3,13 @@
 #include <vector>
 #include <algorithm>
 
-class IndexPool {
+class IndexPool
+{
 public:
   IndexPool(int maxIndex);
   int acquireIndex();
   void relinquishIndex(int index);
+
 private:
   int maxIndex;
   std::vector<int> availableIndices;

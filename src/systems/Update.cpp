@@ -4,27 +4,30 @@
 #include "systems/Intersections.h"
 #include "systems/Light.h"
 
-void systems::updateAll(
-    std::shared_ptr<EntityRegistry> registry, Renderer* renderer) {
+void
+systems::updateAll(std::shared_ptr<EntityRegistry> registry, Renderer* renderer)
+{
   bool updatedSomething = false;
   auto view = registry->view<Positionable>();
-  for(auto [entity, positionable]: view.each()) {
-    if(positionable.damaged) {
+  for (auto [entity, positionable] : view.each()) {
+    if (positionable.damaged) {
       systems::update(registry, entity);
       updatedSomething = true;
     }
   }
-  if(updatedSomething) {
+  if (updatedSomething) {
     systems::updateLighting(registry, renderer);
   }
 }
 
-void systems::update(std::shared_ptr<EntityRegistry> registry, entt::entity entity) {
-  auto &positionable = registry->get<Positionable>(entity);
+void
+systems::update(std::shared_ptr<EntityRegistry> registry, entt::entity entity)
+{
+  auto& positionable = registry->get<Positionable>(entity);
   positionable.update();
 
   auto hasBoundingSphere = registry->all_of<BoundingSphere>(entity);
-  if(hasBoundingSphere) {
+  if (hasBoundingSphere) {
     emplaceBoundingSphere(registry, entity);
   }
 }

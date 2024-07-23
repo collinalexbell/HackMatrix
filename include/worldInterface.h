@@ -21,12 +21,14 @@
 
 class Renderer;
 
-struct Line {
+struct Line
+{
   glm::vec3 points[2];
   glm::vec3 color;
 };
 
-enum Action {
+enum Action
+{
   PLACE_CUBE,
   REMOVE_CUBE,
   SELECT_CUBE,
@@ -34,10 +36,11 @@ enum Action {
   LOG_BLOCK_TYPE
 };
 
-class WorldInterface {
+class WorldInterface
+{
 public:
   virtual void tick() = 0;
-  virtual void attachRenderer(Renderer *renderer) = 0;
+  virtual void attachRenderer(Renderer* renderer) = 0;
   virtual Position getLookedAtCube() = 0;
 
   virtual void addCube(int x, int y, int z, int blockType) = 0;
@@ -52,7 +55,7 @@ public:
   virtual void loadRegion(Coordinate regionCoordinate) = 0;
   virtual void loadMinecraft() = 0;
   virtual void initLoader(string folderName,
-                  shared_ptr<blocks::TexturePack> texturePack) = 0;
+                          shared_ptr<blocks::TexturePack> texturePack) = 0;
   virtual void loadLatest() = 0;
 
   virtual void mesh(bool realTime = true) = 0;

@@ -6,19 +6,20 @@
 
 using namespace std;
 
-class Texture {
+class Texture
+{
   int width, height, nrChannels;
   void loadTextureData(std::string);
   void loadTextureArrayData(vector<string> fnames);
   void initAndBindGlTexture(GLenum unit);
   void initAndBindGlTextureArray(GLenum unit);
   void blankData();
- public:
+
+public:
   Texture(string, GLenum unit);
   Texture(vector<string>, GLenum);
   Texture(GLenum unit);
   unsigned int ID;
-
 };
 
 #endif

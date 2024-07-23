@@ -1,7 +1,9 @@
 #include "Multiplayer/Client.h"
 #include "entity.h"
 
-int main() {
+int
+main()
+{
   auto registry = make_shared<EntityRegistry>();
   auto client = Client(registry);
   // hardcoded, lfg :(

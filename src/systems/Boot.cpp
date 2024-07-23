@@ -8,7 +8,9 @@
 #include <fstream>
 #include <thread>
 
-bool isShellScript(const std::string &filename) {
+bool
+isShellScript(const std::string& filename)
+{
   size_t len = filename.length();
   if (len >= 3 && filename.substr(len - 3) == ".sh") {
     return true;
@@ -17,7 +19,9 @@ bool isShellScript(const std::string &filename) {
   }
 }
 
-int getShPID(char* pidfile) {
+int
+getShPID(char* pidfile)
+{
   const int timeoutSeconds = 5;
   // Open the file for reading
   cout << "opening " << pidfile << endl;
@@ -35,7 +39,7 @@ int getShPID(char* pidfile) {
       return pid;
     }
     std::this_thread::sleep_for(
-        std::chrono::milliseconds(100)); // Wait for 100 milliseconds
+      std::chrono::milliseconds(100)); // Wait for 100 milliseconds
     file = std::ifstream(pidfile);
   }
 
@@ -43,7 +47,9 @@ int getShPID(char* pidfile) {
   return -1;
 }
 
-int forkApp(string cmd, char **envp, string args) {
+int
+forkApp(string cmd, char** envp, string args)
+{
 
   char pidfile[] = "/tmp/pid.XXXXXX"; // Template for temporary file name
   if (isShellScript(cmd)) {
@@ -56,9 +62,8 @@ int forkApp(string cmd, char **envp, string args) {
   if (pid == 0) {
     setsid();
 
-
     if (args != "") {
-      std::vector<char *> argv;
+      std::vector<char*> argv;
       std::istringstream iss(args);
       std::vector<std::string> tokens;
       std::string token;
@@ -67,9 +72,9 @@ int forkApp(string cmd, char **envp, string args) {
       }
 
       // Prepare array of C-style strings
-      argv.push_back(const_cast<char *>(cmd.c_str())); // Command itself
-      for (const auto &arg : tokens) {
-        argv.push_back(const_cast<char *>(arg.c_str()));
+      argv.push_back(const_cast<char*>(cmd.c_str())); // Command itself
+      for (const auto& arg : tokens) {
+        argv.push_back(const_cast<char*>(arg.c_str()));
       }
       argv.push_back(nullptr); // Null-terminate the array
 
@@ -80,7 +85,7 @@ int forkApp(string cmd, char **envp, string args) {
     }
     exit(0);
   } else {
-    if(isShellScript(cmd)) {
+    if (isShellScript(cmd)) {
       auto shellPid = getShPID(pidfile);
       return shellPid;
     } else {
@@ -89,16 +94,20 @@ int forkApp(string cmd, char **envp, string args) {
   }
 }
 
-bool pidIsRunning(int pid) {
+bool
+pidIsRunning(int pid)
+{
   return kill(pid, 0) == 0;
 }
 
-void systems::boot(std::shared_ptr<EntityRegistry> registry,
-                   entt::entity entity,
-                   char** envp) {
+void
+systems::boot(std::shared_ptr<EntityRegistry> registry,
+              entt::entity entity,
+              char** envp)
+{
   auto bootable = registry->try_get<Bootable>(entity);
 
-  if(bootable && bootable->bootOnStartup) {
+  if (bootable && bootable->bootOnStartup) {
     if (bootable->pid != std::nullopt && !bootable->killOnExit) {
       // Check if the process exists
       if (pidIsRunning(bootable->pid.value())) {
@@ -107,20 +116,24 @@ void systems::boot(std::shared_ptr<EntityRegistry> registry,
     }
 
     bootable->pid = forkApp(bootable->cmd, envp, bootable->args);
-    if(bootable->pid == -1) {
+    if (bootable->pid == -1) {
       bootable->pid = nullopt;
     }
   }
 }
 
-void systems::bootAll(std::shared_ptr<EntityRegistry> registry, char** envp) {
+void
+systems::bootAll(std::shared_ptr<EntityRegistry> registry, char** envp)
+{
   auto bootables = registry->view<Bootable>();
-  for(auto [entity, bootable]: bootables.each()) {
+  for (auto [entity, bootable] : bootables.each()) {
     boot(registry, entity, envp);
   }
 }
 
-void systems::killBootablesOnExit(std::shared_ptr<EntityRegistry> registry) {
+void
+systems::killBootablesOnExit(std::shared_ptr<EntityRegistry> registry)
+{
   auto bootables = registry->view<Bootable>();
   for (auto [entity, bootable] : bootables.each()) {
     if (bootable.killOnExit && bootable.pid.has_value()) {
@@ -131,39 +144,43 @@ void systems::killBootablesOnExit(std::shared_ptr<EntityRegistry> registry) {
 }
 
 std::vector<std::pair<entt::entity, int>>
-systems::getAlreadyBooted(std::shared_ptr<EntityRegistry> registry) {
+systems::getAlreadyBooted(std::shared_ptr<EntityRegistry> registry)
+{
 
   std::vector<std::pair<entt::entity, int>> rv;
   auto bootables = registry->view<Bootable>();
   for (auto [entity, bootable] : bootables.each()) {
-    if (!bootable.killOnExit &&
-        bootable.pid.has_value() &&
+    if (!bootable.killOnExit && bootable.pid.has_value() &&
         pidIsRunning(bootable.pid.value())) {
-      rv.push_back(std::make_pair(entity,bootable.pid.value()));
+      rv.push_back(std::make_pair(entity, bootable.pid.value()));
     }
   }
   return rv;
 }
 
-
-void systems::resizeBootable(std::shared_ptr<EntityRegistry> registry, entt::entity entity, int width, int height) {
+void
+systems::resizeBootable(std::shared_ptr<EntityRegistry> registry,
+                        entt::entity entity,
+                        int width,
+                        int height)
+{
   auto app = registry->try_get<X11App>(entity);
-  auto &bootable = registry->get<Bootable>(entity);
+  auto& bootable = registry->get<Bootable>(entity);
   bootable.resize(width, height);
   if (app) {
     app->resizeMove(width, height, bootable.x, bootable.y);
   }
 }
 
-optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,
-                                         X11App *app) {
+optional<entt::entity>
+systems::matchApp(shared_ptr<EntityRegistry> registry, X11App* app)
+{
   auto bootableView = registry->view<Bootable>();
   entt::entity entity;
   bool foundEntity = false;
 
   for (auto [candidateEntity, bootable] : bootableView.each()) {
-    if (bootable.name.has_value() &&
-        app != NULL &&
+    if (bootable.name.has_value() && app != NULL &&
         bootable.name.value() == app->getWindowName()) {
       bootable.pid = app->getPID();
       foundEntity = true;
@@ -171,7 +188,7 @@ optional<entt::entity> systems::matchApp(shared_ptr<EntityRegistry> registry,
     if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
       foundEntity = true;
     }
-    if(foundEntity) {
+    if (foundEntity) {
       app->resize(bootable.getWidth(), bootable.getHeight());
       return candidateEntity;
     }

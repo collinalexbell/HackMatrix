@@ -4,10 +4,10 @@
 #include <pqxx/pqxx>
 #include <sstream>
 
-int main()
+int
+main()
 {
-  try
-  {
+  try {
     // Connect to the database.  In practice we may have to pass some
     // arguments to say where the database server is, and so on.
     // The constructor parses options exactly like libpq's
@@ -16,12 +16,12 @@ int main()
 
     std::ifstream ifs("secrets/db-pass");
     std::string password((std::istreambuf_iterator<char>(ifs)),
-                        (std::istreambuf_iterator<char>()));
+                         (std::istreambuf_iterator<char>()));
 
     std::stringstream connectionParams;
     connectionParams
-        << "postgresql://localhost/matrix?user=collinalexbell&password="
-        << password;
+      << "postgresql://localhost/matrix?user=collinalexbell&password="
+      << password;
     pqxx::connection c(connectionParams.str());
     // Start a transaction.  In libpqxx, you always work in one.
     pqxx::work w(c);
@@ -40,9 +40,7 @@ int main()
     // function template to convert its contents from their string format
     // to a type of your choice.
     std::cout << r[0].as<int>() << std::endl;
-  }
-  catch (std::exception const &e)
-  {
+  } catch (std::exception const& e) {
     std::cerr << e.what() << std::endl;
     return 1;
   }

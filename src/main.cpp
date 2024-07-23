@@ -9,16 +9,22 @@
 
 #include "screen.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+void
+framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
   glViewport(0, 0, width, height);
 }
 
-GLFWwindow* initGraphics() {
+GLFWwindow*
+initGraphics()
+{
   XSetErrorHandler(NULL);
   glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "matrix", NULL, NULL);
+  GLFWwindow* window =
+    glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "matrix", NULL, NULL);
   if (window == NULL) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -36,33 +42,40 @@ GLFWwindow* initGraphics() {
   return window;
 }
 
-void waitForTTYSwitch() {
+void
+waitForTTYSwitch()
+{
   sleep(5);
 }
 
-void cleanup(Engine* engine) {
+void
+cleanup(Engine* engine)
+{
   glfwTerminate();
   delete engine;
 }
 
-int main(int argc, char** argv, char** envp) {
-  if(argc > 1) {
-    if(argv[1] == "--debug") {
+int
+main(int argc, char** argv, char** envp)
+{
+  if (argc > 1) {
+    if (argv[1] == "--debug") {
       waitForTTYSwitch();
     }
   }
   try {
-    GLFWwindow *window = initGraphics();
-    if(window == NULL) return -1;
+    GLFWwindow* window = initGraphics();
+    if (window == NULL)
+      return -1;
 
-    Engine *engine = new Engine(window, envp);
+    Engine* engine = new Engine(window, envp);
     engine->loop();
     cleanup(engine);
     glfwTerminate();
 
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     // signal error to the trampoline
-    //return -1;
+    // return -1;
     glfwTerminate();
     throw;
   }

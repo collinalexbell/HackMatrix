@@ -1,7 +1,9 @@
 #include "utility.h"
 #include "chunk.h"
 
-WorldPosition translateToWorldPosition(int x, int y, int z) {
+WorldPosition
+translateToWorldPosition(int x, int y, int z)
+{
   WorldPosition rv;
   auto chunkSize = Chunk::getSize();
 
