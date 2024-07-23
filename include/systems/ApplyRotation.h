@@ -5,5 +5,5 @@
 #include <memory>
 
 namespace systems {
-  void applyRotation(std::shared_ptr<EntityRegistry>);
+void applyRotation(std::shared_ptr<EntityRegistry>);
 };

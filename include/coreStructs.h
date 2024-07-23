@@ -1,13 +1,15 @@
 #pragma once
 #include <glm/glm.hpp>
 
-struct AbsolutePosition {
+struct AbsolutePosition
+{
   int x;
   int y;
   int z;
 };
 
-struct Position {
+struct Position
+{
   int x;
   int y;
   int z;
@@ -15,7 +17,8 @@ struct Position {
   glm::vec3 normal;
 };
 
-struct WorldPosition {
+struct WorldPosition
+{
   int x;
   int y;
   int z;

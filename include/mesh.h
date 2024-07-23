@@ -6,28 +6,32 @@
 
 using namespace std;
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 Position;
   glm::vec2 TexCoords;
   glm::vec3 Normal;
 };
 
-struct MeshTexture {
+struct MeshTexture
+{
   unsigned int id;
   string type;
   string path;
 };
 
-class Mesh {
+class Mesh
+{
 public:
   // mesh data
   vector<Vertex> vertices;
   vector<unsigned int> indices;
   vector<MeshTexture> textures;
 
-  Mesh(vector<Vertex> vertices, vector<unsigned int> indices,
+  Mesh(vector<Vertex> vertices,
+       vector<unsigned int> indices,
        vector<MeshTexture> textures);
-  void Draw(Shader &shader);
+  void Draw(Shader& shader);
 
 private:
   //  render data

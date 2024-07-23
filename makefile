@@ -271,3 +271,8 @@ cloc:
 
 clean:
 	find build -name "*.o" -type f -delete
+
+format:
+	clang-format -i src/*.cpp include/*.h	
+	clang-format -i src/systems/*.cpp include/systems/*.h
+	clang-format -i src/MultiPlayer/*.cpp include/MultiPlayer/*.h

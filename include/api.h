@@ -15,36 +15,43 @@ using namespace std;
 
 class Controls;
 class Api;
-class CommandServer {
+class CommandServer
+{
 protected:
-  Api *api;
+  Api* api;
   shared_ptr<spdlog::logger> logger;
   zmq::socket_t socket;
 
 public:
-  CommandServer(Api *api, std::string bindAddress, zmq::context_t &context);
+  CommandServer(Api* api, std::string bindAddress, zmq::context_t& context);
   virtual void poll() = 0;
 };
 
-struct ApiCube {
+struct ApiCube
+{
   float x;
   float y;
   float z;
   int blockType;
 };
 
-struct BatchedRequest {
+struct BatchedRequest
+{
   static int nextId;
-  BatchedRequest(ApiRequest request): request(request) {
+  BatchedRequest(ApiRequest request)
+    : request(request)
+  {
     id = nextId++;
   }
   int64_t id;
   ApiRequest request;
 };
 
-class Api {
+class Api
+{
 
-  class ProtobufCommandServer : public CommandServer {
+  class ProtobufCommandServer : public CommandServer
+  {
     using CommandServer::CommandServer;
     void poll() override;
   };
@@ -55,7 +62,7 @@ class Api {
   shared_ptr<EntityRegistry> registry;
 
   zmq::context_t context;
-  CommandServer *commandServer;
+  CommandServer* commandServer;
 
   queue<BatchedRequest> batchedRequests;
 
@@ -71,7 +78,7 @@ protected:
   void processBatchedRequest(BatchedRequest);
 
 public:
-  Api(std::string bindAddress, shared_ptr<EntityRegistry>, Controls *controls);
+  Api(std::string bindAddress, shared_ptr<EntityRegistry>, Controls* controls);
   ~Api();
   void poll();
   void mutateEntities();

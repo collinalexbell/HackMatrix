@@ -6,7 +6,9 @@
 
 using namespace blocks;
 
-shared_ptr<TexturePack> blocks::initializeBasicPack() {
+shared_ptr<TexturePack>
+blocks::initializeBasicPack()
+{
   string textureDir = "/home/collin/matrix/block";
   vector<Block> blocks = {
     /*
@@ -69,7 +71,9 @@ shared_ptr<TexturePack> blocks::initializeBasicPack() {
   return make_shared<TexturePack>(textureDir, blocks);
 };
 
-bool isTransparent(string filename) {
+bool
+isTransparent(string filename)
+{
   std::string cmd = "identify -format '%[channels]' " + filename;
   std::array<char, 128> buffer;
   std::string result;
@@ -87,17 +91,20 @@ bool isTransparent(string filename) {
   return result.find("srgba") != std::string::npos;
 }
 
-TexturePack::TexturePack(string textureDir, vector<Block> blocks) : blocks(blocks), textureDir(textureDir) {
-  for(int i = 0; i < blocks.size(); i++) {
+TexturePack::TexturePack(string textureDir, vector<Block> blocks)
+  : blocks(blocks)
+  , textureDir(textureDir)
+{
+  for (int i = 0; i < blocks.size(); i++) {
     idToIndex[blocks[i].id] = i;
   }
 
   logger = make_shared<spdlog::logger>("TexturePack", fileSink);
   logger->set_level(spdlog::level::debug);
 
-  for(auto name: imageNames()) {
+  for (auto name : imageNames()) {
     auto transparent = isTransparent(name);
-    if(transparent) {
+    if (transparent) {
       stringstream ss;
       ss << name << " is transparent";
       logger->debug(ss.str());
@@ -106,7 +113,9 @@ TexturePack::TexturePack(string textureDir, vector<Block> blocks) : blocks(block
   }
 };
 
-int TexturePack::textureIndexFromId(int id) {
+int
+TexturePack::textureIndexFromId(int id)
+{
   /*
   if(idToCounts.contains(id)) {
       countsMutex.lock();
@@ -125,11 +134,13 @@ int TexturePack::textureIndexFromId(int id) {
   }
 }
 
-vector<string> TexturePack::imageNames() {
+vector<string>
+TexturePack::imageNames()
+{
   vector<string> imageNames;
-  for(auto block: blocks) {
+  for (auto block : blocks) {
     stringstream ss;
-    if(!block.localFileName) {
+    if (!block.localFileName) {
       ss << textureDir << "/" << block.fileName;
       imageNames.push_back(ss.str());
     } else {
@@ -139,17 +150,21 @@ vector<string> TexturePack::imageNames() {
   return imageNames;
 }
 
-void TexturePack::logCounts() {
-  std::vector<std::pair<int, int>> sortedCounts(idToCounts.begin(), idToCounts.end());
+void
+TexturePack::logCounts()
+{
+  std::vector<std::pair<int, int>> sortedCounts(idToCounts.begin(),
+                                                idToCounts.end());
 
-  sort(sortedCounts.begin(), sortedCounts.end(),
-       [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
+  sort(sortedCounts.begin(),
+       sortedCounts.end(),
+       [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
          return a.second > b.second;
        });
 
   stringstream msg;
   msg << "block counts" << endl;
-  for(auto count: sortedCounts) {
+  for (auto count : sortedCounts) {
     msg << "{blockId:" << count.first << ", count:" << count.second << endl;
   }
   logger->debug(msg.str());

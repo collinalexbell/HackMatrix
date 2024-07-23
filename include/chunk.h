@@ -5,22 +5,24 @@
 #include <vector>
 #include "mesher.h"
 
-
 // TODO: rename, this is coords in chunk
-struct ChunkCoords {
+struct ChunkCoords
+{
   int x;
   int y;
   int z;
 };
 
-struct ChunkPosition {
+struct ChunkPosition
+{
   int x;
   int y;
   int z;
 };
 
-class Chunk {
-  int posX,posY,posZ;
+class Chunk
+{
+  int posX, posY, posZ;
   static int findNeighborFaceIndex(Face face);
   static const vector<int> size;
   vector<shared_ptr<Cube>> data;
@@ -38,7 +40,7 @@ class Chunk {
 public:
   Chunk();
   Chunk(int x, int y, int z);
-  Chunk(const Chunk &ther);
+  Chunk(const Chunk& ther);
   shared_ptr<Cube> getCube(int x, int y, int z);
   shared_ptr<Cube> getCube_(int x, int y, int z);
   void removeCube(int x, int y, int z);

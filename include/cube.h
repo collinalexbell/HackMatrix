@@ -8,15 +8,17 @@
 #include <glm/glm.hpp>
 using namespace std;
 
-struct CubeBuffer {
-  glm::vec3 *vecs;
-  int *ints;
+struct CubeBuffer
+{
+  glm::vec3* vecs;
+  int* ints;
   int damageIndex;
   int damageSize;
   int totalSize;
 };
 
-class Cube {
+class Cube
+{
   static glm::vec3 zeroVec;
   static int zeroBlock;
   static int zeroSelected;
@@ -30,20 +32,20 @@ class Cube {
 
 public:
   Cube();
-  Cube(const Cube &cpy);
+  Cube(const Cube& cpy);
   Cube(glm::vec3 position, int blockType);
   Cube(glm::vec3 position, int blockType, int selected);
   ~Cube();
-  Cube &operator=(const Cube &other);
-  bool operator==(const Cube &cmp);
+  Cube& operator=(const Cube& other);
+  bool operator==(const Cube& cmp);
 
   // TODO: remove position, uneeded ATM;
   glm::vec3 position() const;
-  glm::vec3 &position();
+  glm::vec3& position();
 
   int blockType() const;
-  int &blockType();
+  int& blockType();
   int selected() const;
-  int &selected();
+  int& selected();
   void toggleSelect();
 };

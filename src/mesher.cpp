@@ -5,33 +5,37 @@
 #include "glm/geometric.hpp"
 #include "mesher.h"
 
-shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk* chunk) {
+shared_ptr<ChunkMesh>
+Mesher::simpleMesh(Chunk* chunk)
+{
   auto rv = make_shared<ChunkMesh>(ChunkMesh());
   rv->type = SIMPLE;
   auto size = chunk->getSize();
 
   int totalSize = size[0] * size[1] * size[2];
-  glm::vec3 offset(size[0]*chunkX, 0, size[2]*chunkZ);
+  glm::vec3 offset(size[0] * chunkX, 0, size[2] * chunkZ);
   ChunkCoords neighborCoords;
   shared_ptr<Cube> neighbor;
-  for(int i = 0; i<totalSize; i++) {
-    if(chunk->data[i] != NULL) {
+  for (int i = 0; i < totalSize; i++) {
+    if (chunk->data[i] != NULL) {
       ChunkCoords ci = chunk->getCoords(i);
       ChunkCoords neighbors[6] = {
-          ChunkCoords{ci.x, ci.y, ci.z - 1},
-          ChunkCoords{ci.x, ci.y, ci.z + 1},
-          ChunkCoords{ci.x - 1, ci.y, ci.z},
-          ChunkCoords{ci.x + 1, ci.y, ci.z},
-          ChunkCoords{ci.x, ci.y - 1, ci.z},
-          ChunkCoords{ci.x, ci.y + 1, ci.z},
+        ChunkCoords{ ci.x, ci.y, ci.z - 1 },
+        ChunkCoords{ ci.x, ci.y, ci.z + 1 },
+        ChunkCoords{ ci.x - 1, ci.y, ci.z },
+        ChunkCoords{ ci.x + 1, ci.y, ci.z },
+        ChunkCoords{ ci.x, ci.y - 1, ci.z },
+        ChunkCoords{ ci.x, ci.y + 1, ci.z },
       };
 
-      for(int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
+      for (int neighborIndex = 0; neighborIndex < 6; neighborIndex++) {
         neighborCoords = neighbors[neighborIndex];
-        neighbor = chunk->getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
-        if(neighbor == NULL) {
-          for(int vertex = 0; vertex < 6; vertex++) {
-            rv->positions.push_back(glm::vec3(ci.x, ci.y, ci.z) + faceModels[neighborIndex][vertex] + offset);
+        neighbor =
+          chunk->getCube_(neighborCoords.x, neighborCoords.y, neighborCoords.z);
+        if (neighbor == NULL) {
+          for (int vertex = 0; vertex < 6; vertex++) {
+            rv->positions.push_back(glm::vec3(ci.x, ci.y, ci.z) +
+                                    faceModels[neighborIndex][vertex] + offset);
             rv->texCoords.push_back(texModels[neighborIndex][vertex]);
             rv->blockTypes.push_back(chunk->data[i]->blockType());
             rv->selects.push_back(chunk->data[i]->selected());
@@ -43,7 +47,9 @@ shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk* chunk) {
   return rv;
 }
 
-PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
+PartitionedChunkMeshes
+Mesher::meshGreedy(Chunk* chunk)
+{
   double currentTime = glfwGetTime();
   PartitionedChunkMeshes meshes;
   int i, j, k, l, w, h, u, v;
@@ -52,12 +58,14 @@ PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
   int du[3];
   int dv[3];
   bool blockCurrent, blockCompare, done;
-  int chunkOffset[3] = {chunkX * chunk->getSize()[0], 0, chunkZ*chunk->getSize()[2]};
+  int chunkOffset[3] = { chunkX * chunk->getSize()[0],
+                         0,
+                         chunkZ * chunk->getSize()[2] };
 
   auto partitions = partitioner.partition(chunk);
 
   int partitionNo = 0;
-  for(auto partition: partitions) {
+  for (auto partition : partitions) {
     if (partitionsDamaged[partitionNo++]) {
       auto yOff = partition.y();
       auto mesh = make_shared<ChunkMesh>(ChunkMesh());
@@ -87,12 +95,12 @@ PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
             for (x[u] = 0; x[u] < partitionSizes[u]; ++x[u]) {
               shared_ptr<Cube> a = chunk->getCube_(x[0], x[1] + yOff, x[2]);
               shared_ptr<Cube> b =
-                  chunk->getCube_(x[0] + q[0], x[1] + q[1] + yOff, x[2] + q[2]);
+                chunk->getCube_(x[0] + q[0], x[1] + q[1] + yOff, x[2] + q[2]);
               blockCurrent = 0 <= x[dimension] ? a != NULL : false;
 
               blockCompare = x[dimension] < partitionSizes[dimension] - 1
-                                 ? b != NULL
-                                 : false;
+                               ? b != NULL
+                               : false;
 
               // only one face is valid
               // I will want to check block opacity
@@ -115,8 +123,8 @@ PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
                 x[u] = i;
                 x[v] = j;
 
-                shared_ptr<Cube> c = chunk->getCube_(
-                    x[0] - q[0], x[1] - q[1] + yOff, x[2] - q[2]);
+                shared_ptr<Cube> c =
+                  chunk->getCube_(x[0] - q[0], x[1] - q[1] + yOff, x[2] - q[2]);
                 if (c == NULL) {
                   c = chunk->getCube_(x[0], x[1] + yOff, x[2]);
                 }
@@ -130,7 +138,7 @@ PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
                   int tmp = x[u];
                   x[u] = x[u] + w;
                   shared_ptr<Cube> next = chunk->getCube_(
-                      x[0] - q[0], x[1] - q[1] + yOff, x[2] - q[2]);
+                    x[0] - q[0], x[1] - q[1] + yOff, x[2] - q[2]);
                   if (next == NULL) {
                     next = chunk->getCube_(x[0], x[1] + yOff, x[2]);
                   }
@@ -158,7 +166,7 @@ PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
                     int tmp = x[v];
                     x[v] = x[v] + h;
                     shared_ptr<Cube> next = chunk->getCube_(
-                        x[0] - q[0], x[1] - q[1] + yOff, x[2] - q[2]);
+                      x[0] - q[0], x[1] - q[1] + yOff, x[2] - q[2]);
                     if (next == NULL) {
                       next = chunk->getCube_(x[0], x[1] + yOff, x[2]);
                     }
@@ -189,40 +197,36 @@ PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
                 // not stored in this block vertex format.
 
                 glm::vec3 offset =
-                    glm::vec3(-0.5, -0.5, -0.5) +
-                    glm::vec3(chunkOffset[0], chunkOffset[1], chunkOffset[2]) +
-                    glm::vec3(0, yOff, 0);
+                  glm::vec3(-0.5, -0.5, -0.5) +
+                  glm::vec3(chunkOffset[0], chunkOffset[1], chunkOffset[2]) +
+                  glm::vec3(0, yOff, 0);
 
                 mesh->positions.push_back(offset + glm::vec3(x[0], x[1], x[2]));
-                mesh->positions.push_back(offset + glm::vec3(x[0] + du[0],
-                                                             x[1] + du[1],
-                                                             x[2] + du[2]));
-                mesh->positions.push_back(offset + glm::vec3(x[0] + dv[0],
-                                                             x[1] + dv[1],
-                                                             x[2] + dv[2]));
+                mesh->positions.push_back(
+                  offset + glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+                mesh->positions.push_back(
+                  offset + glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
-                mesh->positions.push_back(offset + glm::vec3(x[0] + du[0],
-                                                             x[1] + du[1],
-                                                             x[2] + du[2]));
+                mesh->positions.push_back(
+                  offset + glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
                 mesh->positions.push_back(offset +
                                           glm::vec3(x[0] + du[0] + dv[0],
                                                     x[1] + du[1] + dv[1],
                                                     x[2] + du[2] + dv[2]));
-                mesh->positions.push_back(offset + glm::vec3(x[0] + dv[0],
-                                                             x[1] + dv[1],
-                                                             x[2] + dv[2]));
+                mesh->positions.push_back(
+                  offset + glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
                 for (int i = 0; i < 6; i++) {
                   mesh->blockTypes.push_back(c->blockType());
                   mesh->selects.push_back(0);
                 }
                 float yTexDist = glm::distance(
-                    glm::vec3(x[0], x[1], x[2]),
-                    glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
+                  glm::vec3(x[0], x[1], x[2]),
+                  glm::vec3(x[0] + du[0], x[1] + du[1], x[2] + du[2]));
 
                 float xTexDist = glm::distance(
-                    glm::vec3(x[0], x[1], x[2]),
-                    glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
+                  glm::vec3(x[0], x[1], x[2]),
+                  glm::vec3(x[0] + dv[0], x[1] + dv[1], x[2] + dv[2]));
 
                 mesh->texCoords.push_back(glm::vec2(0.0f, 0.0f));
                 mesh->texCoords.push_back(glm::vec2(0.0f, yTexDist));
@@ -258,8 +262,9 @@ PartitionedChunkMeshes Mesher::meshGreedy(Chunk* chunk) {
   return meshes;
 }
 
-
-ChunkMesh Mesher::meshedFaceFromPosition(Position position) {
+ChunkMesh
+Mesher::meshedFaceFromPosition(Position position)
+{
   ChunkMesh rv;
   shared_ptr<Cube> c = chunk->getCube_(position.x, position.y, position.z);
   if (c != NULL) {
@@ -270,8 +275,8 @@ ChunkMesh Mesher::meshedFaceFromPosition(Position position) {
     auto size = chunk->getSize();
     for (int i = 0; i < offsets.size(); i++) {
       rv.positions.push_back(
-          offsets[i] + glm::vec3(position.x, position.y, position.z) +
-          glm::vec3(chunkX * size[0], 0 * size[1], chunkZ * size[2]));
+        offsets[i] + glm::vec3(position.x, position.y, position.z) +
+        glm::vec3(chunkX * size[0], 0 * size[1], chunkZ * size[2]));
       rv.blockTypes.push_back(c->blockType());
       rv.selects.push_back(c->selected());
       rv.texCoords.push_back(texCoords[i]);
@@ -280,11 +285,14 @@ ChunkMesh Mesher::meshedFaceFromPosition(Position position) {
   return rv;
 }
 
-shared_ptr<ChunkMesh> Mesher::mesh() {
-  PartitionedChunkMeshes completeSet = vector<shared_ptr<ChunkMesh>>(partitionsDamaged.size());
+shared_ptr<ChunkMesh>
+Mesher::mesh()
+{
+  PartitionedChunkMeshes completeSet =
+    vector<shared_ptr<ChunkMesh>>(partitionsDamaged.size());
   auto promisedCache = cachedGreedyMesh.get();
-  for(int i = 0; i < partitionsDamaged.size(); i++) {
-    if(i < promisedCache.size()) {
+  for (int i = 0; i < partitionsDamaged.size(); i++) {
+    if (i < promisedCache.size()) {
       completeSet[i] = promisedCache[i];
     }
   }
@@ -301,28 +309,37 @@ shared_ptr<ChunkMesh> Mesher::mesh() {
     damagedGreedy = false;
     promisedMeshes.set_value(completeSet);
     cachedGreedyMesh = promisedMeshes.get_future();
-    }
-    // no damage, no update, just use cache
-    return mergePartitionedChunkMeshes(completeSet);
+  }
+  // no damage, no update, just use cache
+  return mergePartitionedChunkMeshes(completeSet);
 }
 
-void Mesher::meshAsync() {
+void
+Mesher::meshAsync()
+{
   Chunk* copiedChunk = new Chunk(*chunk);
-  cachedGreedyMesh = async(launch::async, [copiedChunk, this]() -> PartitionedChunkMeshes {
-    auto rv = meshGreedy(copiedChunk);
-    delete copiedChunk;
-    return rv;
-  });
+  cachedGreedyMesh =
+    async(launch::async, [copiedChunk, this]() -> PartitionedChunkMeshes {
+      auto rv = meshGreedy(copiedChunk);
+      delete copiedChunk;
+      return rv;
+    });
 }
 
-void Mesher::meshDamaged(array<int, 3> pos) {
+void
+Mesher::meshDamaged(array<int, 3> pos)
+{
   damagedSimple = true;
   damagedGreedy = true;
   int partitionDamaged = pos[1] / partitioner.getPartitionHeight();
   partitionsDamaged[partitionDamaged] = true;
 }
 
-Mesher::Mesher(Chunk* chunk, int chunkX, int chunkZ) : chunk(chunk), chunkX(chunkX), chunkZ(chunkZ) {
+Mesher::Mesher(Chunk* chunk, int chunkX, int chunkZ)
+  : chunk(chunk)
+  , chunkX(chunkX)
+  , chunkZ(chunkZ)
+{
   promise<PartitionedChunkMeshes> emptyMesh;
   auto mesh = make_shared<ChunkMesh>();
   vector<shared_ptr<ChunkMesh>> meshes;
@@ -332,9 +349,11 @@ Mesher::Mesher(Chunk* chunk, int chunkX, int chunkZ) : chunk(chunk), chunkX(chun
   damagedGreedy = false;
 }
 
-vector<glm::vec2> Mesher::getTexCoordsFromFace(Face face) {
+vector<glm::vec2>
+Mesher::getTexCoordsFromFace(Face face)
+{
   int index = findNeighborFaceIndex(face);
-  glm::vec2 *coords = texModels[index];
+  glm::vec2* coords = texModels[index];
   vector<glm::vec2> rv;
   for (int i = 0; i < 6; i++) {
     rv.push_back(coords[i]);
@@ -342,7 +361,9 @@ vector<glm::vec2> Mesher::getTexCoordsFromFace(Face face) {
   return rv;
 }
 
-int Mesher::findNeighborFaceIndex(Face face) {
+int
+Mesher::findNeighborFaceIndex(Face face)
+{
   int index = 0;
   for (index = 0; index < 6; index++) {
     if (neighborFaces[index] == face) {
@@ -356,9 +377,11 @@ int Mesher::findNeighborFaceIndex(Face face) {
   return index;
 }
 
-vector<glm::vec3> Mesher::getOffsetsFromFace(Face face) {
+vector<glm::vec3>
+Mesher::getOffsetsFromFace(Face face)
+{
   int index = findNeighborFaceIndex(face);
-  glm::vec3 *offsets = faceModels[index];
+  glm::vec3* offsets = faceModels[index];
   vector<glm::vec3> rv;
   for (int i = 0; i < 6; i++) {
     rv.push_back(offsets[i]);
@@ -366,7 +389,9 @@ vector<glm::vec3> Mesher::getOffsetsFromFace(Face face) {
   return rv;
 }
 
-Face Mesher::getFaceFromNormal(glm::vec3 normal) {
+Face
+Mesher::getFaceFromNormal(glm::vec3 normal)
+{
   // TBI
   if (normal.x < 0)
     return LEFT;
@@ -386,40 +411,59 @@ Face Mesher::getFaceFromNormal(glm::vec3 normal) {
   return FRONT;
 }
 
+glm::vec2 Mesher::texModels[6][6] = { { glm::vec2(0.0f, 0.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(0.0f, 0.0f) },
 
-glm::vec2 Mesher::texModels[6][6] = {
-    {glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f),
-     glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+                                      { glm::vec2(0.0f, 0.0f),
+                                        glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(0.0f, 0.0f) },
 
-    {glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f),
-     glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f)},
+                                      { glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(0.0f, 0.0f),
+                                        glm::vec2(1.0f, 0.0f) },
 
-    {glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
-     glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 0.0f)},
+                                      { glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(0.0f, 0.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(1.0f, 0.0f) },
 
-    {glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f),
-     glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f)},
+                                      { glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(0.0f, 0.0f),
+                                        glm::vec2(0.0f, 1.0f) },
 
-    {glm::vec2(0.0f, 1.0f), glm::vec2(1.0f, 1.0f), glm::vec2(1.0f, 0.0f),
-     glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+                                      { glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(1.0f, 1.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(1.0f, 0.0f),
+                                        glm::vec2(0.0f, 1.0f),
+                                        glm::vec2(0.0f, 0.0f) } };
 
-    {glm::vec2(1.0f, 0.0f), glm::vec2(1.0f, 1.0f), glm::vec2(0.0f, 1.0f),
-     glm::vec2(1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, 0.0f)}
-};
-
-Face Mesher::neighborFaces[] = {FRONT, BACK, LEFT, RIGHT, BOTTOM, TOP};
+Face Mesher::neighborFaces[] = { FRONT, BACK, LEFT, RIGHT, BOTTOM, TOP };
 
 glm::vec3 Mesher::faceModels[6][6] = {
 
   // front
-  {
-   glm::vec3(-0.5f, -0.5f, -0.5f),
-   glm::vec3(-0.5f, 0.5f, -0.5f),
-   glm::vec3(0.5f, 0.5f, -0.5f),
-   glm::vec3(0.5f, 0.5f, -0.5f),
-   glm::vec3(0.5f, -0.5f, -0.5f),
-   glm::vec3(-0.5f, -0.5f, -0.5f)
-  },
+  { glm::vec3(-0.5f, -0.5f, -0.5f),
+    glm::vec3(-0.5f, 0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, -0.5f),
+    glm::vec3(0.5f, 0.5f, -0.5f),
+    glm::vec3(0.5f, -0.5f, -0.5f),
+    glm::vec3(-0.5f, -0.5f, -0.5f) },
 
   // back
   {
@@ -432,49 +476,52 @@ glm::vec3 Mesher::faceModels[6][6] = {
   },
 
   // left
-  {
-    glm::vec3(-0.5f, 0.5f, 0.5f),
+  { glm::vec3(-0.5f, 0.5f, 0.5f),
     glm::vec3(-0.5f, 0.5f, -0.5f),
     glm::vec3(-0.5f, -0.5f, -0.5f),
     glm::vec3(-0.5f, -0.5f, -0.5f),
     glm::vec3(-0.5f, -0.5f, 0.5f),
-    glm::vec3(-0.5f, 0.5f, 0.5f)
-  },
+    glm::vec3(-0.5f, 0.5f, 0.5f) },
 
   // right
-  {
-    glm::vec3(0.5f, 0.5f, 0.5f),
+  { glm::vec3(0.5f, 0.5f, 0.5f),
     glm::vec3(0.5f, -0.5f, 0.5f),
     glm::vec3(0.5f, -0.5f, -0.5f),
     glm::vec3(0.5f, -0.5f, -0.5f),
     glm::vec3(0.5f, 0.5f, -0.5f),
-    glm::vec3(0.5f, 0.5f, 0.5f)
-  },
+    glm::vec3(0.5f, 0.5f, 0.5f) },
 
   // down
-  {
-    glm::vec3(-0.5f, -0.5f, -0.5f),
+  { glm::vec3(-0.5f, -0.5f, -0.5f),
     glm::vec3(0.5f, -0.5f, -0.5f),
     glm::vec3(0.5f, -0.5f, 0.5f),
     glm::vec3(0.5f, -0.5f, 0.5f),
     glm::vec3(-0.5f, -0.5f, 0.5f),
-    glm::vec3(-0.5f, -0.5f, -0.5f)
-  },
+    glm::vec3(-0.5f, -0.5f, -0.5f) },
 
   // up
-  {
-    glm::vec3(0.5f, 0.5f, 0.5f),
+  { glm::vec3(0.5f, 0.5f, 0.5f),
     glm::vec3(0.5f, 0.5f, -0.5f),
     glm::vec3(-0.5f, 0.5f, -0.5f),
     glm::vec3(0.5f, 0.5f, 0.5f),
     glm::vec3(-0.5f, 0.5f, -0.5f),
-    glm::vec3(-0.5f, 0.5f, 0.5f)
-  }};
+    glm::vec3(-0.5f, 0.5f, 0.5f) }
+};
 
-
-ChunkPartition::ChunkPartition(Chunk* chunk, int y, int ySize): chunk(chunk), _y(y), ySize(ySize) {}
-int ChunkPartition::y() {return _y;}
-array<int, 3> ChunkPartition::getSize() {
+ChunkPartition::ChunkPartition(Chunk* chunk, int y, int ySize)
+  : chunk(chunk)
+  , _y(y)
+  , ySize(ySize)
+{
+}
+int
+ChunkPartition::y()
+{
+  return _y;
+}
+array<int, 3>
+ChunkPartition::getSize()
+{
   array<int, 3> size;
   auto chunkSize = chunk->getSize();
   size[0] = chunkSize[0];
@@ -483,13 +530,16 @@ array<int, 3> ChunkPartition::getSize() {
   return size;
 }
 
+ChunkPartitioner::ChunkPartitioner(unsigned int partitionHeight)
+  : partitionHeight(partitionHeight)
+{
+}
 
-ChunkPartitioner::ChunkPartitioner(unsigned int partitionHeight): partitionHeight(partitionHeight){}
-
-
-vector<ChunkPartition> ChunkPartitioner::partition(Chunk *chunk) {
+vector<ChunkPartition>
+ChunkPartitioner::partition(Chunk* chunk)
+{
   vector<ChunkPartition> rv;
-  for(int y = 0; y < chunk->getSize()[1]; y+=partitionHeight) {
+  for (int y = 0; y < chunk->getSize()[1]; y += partitionHeight) {
     // at the end, may need to be smaller than paritionHeight
     int height = min(chunk->getSize()[1] - y, int(partitionHeight));
     rv.push_back(ChunkPartition(chunk, y, height));
@@ -497,19 +547,21 @@ vector<ChunkPartition> ChunkPartitioner::partition(Chunk *chunk) {
   return rv;
 }
 
-shared_ptr<ChunkMesh> Mesher::mergePartitionedChunkMeshes(PartitionedChunkMeshes meshes) {
+shared_ptr<ChunkMesh>
+Mesher::mergePartitionedChunkMeshes(PartitionedChunkMeshes meshes)
+{
   auto rv = make_shared<ChunkMesh>();
-  for(auto mesh: meshes) {
-    for(auto position: mesh->positions) {
+  for (auto mesh : meshes) {
+    for (auto position : mesh->positions) {
       rv->positions.push_back(position);
     }
-    for(auto texCoord: mesh->texCoords) {
+    for (auto texCoord : mesh->texCoords) {
       rv->texCoords.push_back(texCoord);
     }
-    for(auto blockType: mesh->blockTypes) {
+    for (auto blockType : mesh->blockTypes) {
       rv->blockTypes.push_back(blockType);
     }
-    for(auto select: mesh->selects) {
+    for (auto select : mesh->selects) {
       rv->selects.push_back(select);
     }
   }

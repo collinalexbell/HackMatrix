@@ -14,17 +14,18 @@
 #include <memory>
 #include <spdlog/common.h>
 
+void
+mouseCallback(GLFWwindow* window, double xpos, double ypos);
 
-void mouseCallback(GLFWwindow *window, double xpos, double ypos);
-
-class Engine {
-  World *world;
-  Api *api;
-  Renderer *renderer;
-  Controls *controls;
-  Camera *camera;
-  WindowManager::WindowManager *wm;
-  GLFWwindow *window;
+class Engine
+{
+  World* world;
+  Api* api;
+  Renderer* renderer;
+  Controls* controls;
+  Camera* camera;
+  WindowManager::WindowManager* wm;
+  GLFWwindow* window;
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
   std::shared_ptr<EngineGui> engineGui;
@@ -32,8 +33,7 @@ class Engine {
   std::shared_ptr<MultiPlayer::Server> server;
   spdlog::sink_ptr loggerSink;
 
-
-  friend void mouseCallback(GLFWwindow *window, double xpos, double ypos);
+  friend void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void setupRegistry();
 
 public:

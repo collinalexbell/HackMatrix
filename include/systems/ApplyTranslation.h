@@ -5,5 +5,5 @@
 #include <memory>
 
 namespace systems {
-  void applyTranslations(std::shared_ptr<EntityRegistry>);
+void applyTranslations(std::shared_ptr<EntityRegistry>);
 };

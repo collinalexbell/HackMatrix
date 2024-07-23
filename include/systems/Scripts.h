@@ -5,5 +5,5 @@
 #include <memory>
 
 namespace systems {
-  void editScript(std::shared_ptr<EntityRegistry>, entt::entity);
+void editScript(std::shared_ptr<EntityRegistry>, entt::entity);
 }

@@ -10,13 +10,24 @@ using namespace std;
 class Chunk;
 class Position;
 
-enum Face { LEFT, RIGHT, BOTTOM, TOP, FRONT, BACK };
-
-enum MESH_TYPE {
-  SIMPLE, GREEDY
+enum Face
+{
+  LEFT,
+  RIGHT,
+  BOTTOM,
+  TOP,
+  FRONT,
+  BACK
 };
 
-class ChunkPartition {
+enum MESH_TYPE
+{
+  SIMPLE,
+  GREEDY
+};
+
+class ChunkPartition
+{
   Chunk* chunk;
   int _y, ySize;
 
@@ -26,17 +37,18 @@ public:
   array<int, 3> getSize();
 };
 
-class ChunkPartitioner {
+class ChunkPartitioner
+{
   unsigned int partitionHeight;
+
 public:
   ChunkPartitioner(unsigned int partitionHeight);
   vector<ChunkPartition> partition(Chunk*);
-  unsigned int getPartitionHeight() {
-    return partitionHeight;
-  }
+  unsigned int getPartitionHeight() { return partitionHeight; }
 };
 
-struct ChunkMesh {
+struct ChunkMesh
+{
   MESH_TYPE type;
   vector<glm::vec3> positions;
   vector<glm::vec2> texCoords;
@@ -47,7 +59,8 @@ struct ChunkMesh {
 
 typedef vector<shared_ptr<ChunkMesh>> PartitionedChunkMeshes;
 
-class Mesher {
+class Mesher
+{
   unsigned int DEFAULT_PARTITION_HEIGHT = 20;
   int chunkX, chunkZ;
   Chunk* chunk;
@@ -64,6 +77,7 @@ class Mesher {
   vector<glm::vec3> getOffsetsFromFace(Face face);
   Face getFaceFromNormal(glm::vec3 normal);
   shared_ptr<ChunkMesh> mergePartitionedChunkMeshes(PartitionedChunkMeshes);
+
 public:
   Mesher(Chunk* chunk, int chunkX, int chunkZ);
   ChunkMesh meshedFaceFromPosition(Position position);

@@ -5,8 +5,9 @@
 #include <memory>
 
 namespace systems {
-  void translate(std::shared_ptr<EntityRegistry> registry,
-                 entt::entity entity,
-                 glm::vec3 delta,
-                 double unitsPerSecond) ;
+void
+translate(std::shared_ptr<EntityRegistry> registry,
+          entt::entity entity,
+          glm::vec3 delta,
+          double unitsPerSecond);
 }

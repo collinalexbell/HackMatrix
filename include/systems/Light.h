@@ -4,5 +4,6 @@
 
 class Renderer;
 namespace systems {
-  void updateLighting(std::shared_ptr<EntityRegistry>, Renderer *renderer);
+void
+updateLighting(std::shared_ptr<EntityRegistry>, Renderer* renderer);
 }

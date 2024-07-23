@@ -4,9 +4,11 @@
 #include "model.h"
 #include "systems/Intersections.h"
 
-void systems::createDerivativeComponents(std::shared_ptr<EntityRegistry> registry) {
+void
+systems::createDerivativeComponents(std::shared_ptr<EntityRegistry> registry)
+{
   auto boundable = registry->view<Positionable, Scriptable>();
-  for(auto [entity, _positionable, _scriptable]: boundable.each()) {
+  for (auto [entity, _positionable, _scriptable] : boundable.each()) {
     systems::emplaceBoundingSphere(registry, entity);
   }
 }

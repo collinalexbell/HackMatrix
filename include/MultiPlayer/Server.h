@@ -6,22 +6,21 @@
 
 namespace MultiPlayer {
 
-
-class Server {
+class Server
+{
 public:
-    Server();
-    ~Server();
+  Server();
+  ~Server();
 
-    bool Start(int port);
-    void Stop();
-    void Poll();
-    bool IsRunning();
+  bool Start(int port);
+  void Stop();
+  void Poll();
+  bool IsRunning();
 
 private:
-    ENetHost* server;
-    std::atomic<bool> isRunning;
-    std::thread pollThread;
-
+  ENetHost* server;
+  std::atomic<bool> isRunning;
+  std::thread pollThread;
 };
 
 }

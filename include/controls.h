@@ -10,17 +10,19 @@
 #include "world.h"
 #include "WindowManager/WindowManager.h"
 
-struct DeferedAction {
+struct DeferedAction
+{
   shared_ptr<bool> isDone;
   function<void()> fn;
 };
 
-class Controls {
+class Controls
+{
   shared_ptr<blocks::TexturePack> texturePack;
   WindowManager::WindowManager* wm;
-  World *world;
-  Camera *camera;
-  Renderer *renderer;
+  World* world;
+  Camera* camera;
+  Renderer* renderer;
   bool grabbedCursor = true;
   bool appFocused = false;
   double lastClickTime = 0;
@@ -39,26 +41,41 @@ class Controls {
   void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
   void handleSelectApp(GLFWwindow* window);
   void handleDMenu(GLFWwindow* window, World* world);
-  void handleScreenshot(GLFWwindow *window);
-  void handleSave(GLFWwindow *window);
-  void handleSelection(GLFWwindow *window);
-  void handleCodeBlock(GLFWwindow *window);
-  void handleDebug(GLFWwindow *window);
-  void handleToggleMeshing(GLFWwindow *window);
-  void handleToggleWireframe(GLFWwindow *window);
-  void handleLogBlockCounts(GLFWwindow *window);
-  void handleLogBlockType(GLFWwindow *window);
+  void handleScreenshot(GLFWwindow* window);
+  void handleSave(GLFWwindow* window);
+  void handleSelection(GLFWwindow* window);
+  void handleCodeBlock(GLFWwindow* window);
+  void handleDebug(GLFWwindow* window);
+  void handleToggleMeshing(GLFWwindow* window);
+  void handleToggleWireframe(GLFWwindow* window);
+  void handleLogBlockCounts(GLFWwindow* window);
+  void handleLogBlockType(GLFWwindow* window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleClicks(GLFWwindow* window, World* world);
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
+
 public:
-  Controls(WindowManager::WindowManager *wm, World *world, Camera *camera, Renderer* renderer, shared_ptr<blocks::TexturePack> texturePack) : wm(wm), world(world), camera(camera), renderer(renderer), texturePack(texturePack) {}
+  Controls(WindowManager::WindowManager* wm,
+           World* world,
+           Camera* camera,
+           Renderer* renderer,
+           shared_ptr<blocks::TexturePack> texturePack)
+    : wm(wm)
+    , world(world)
+    , camera(camera)
+    , renderer(renderer)
+    , texturePack(texturePack)
+  {
+  }
   void poll(GLFWwindow* window, Camera* camera, World* world);
-  void mouseCallback (GLFWwindow* window, double xpos, double ypos);
+  void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void goToApp(entt::entity);
-  void moveTo(glm::vec3 pos, optional<glm::vec3> rotation, float secs, optional<function<void()>> = nullopt);
+  void moveTo(glm::vec3 pos,
+              optional<glm::vec3> rotation,
+              float secs,
+              optional<function<void()>> = nullopt);
   void disable();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
 };

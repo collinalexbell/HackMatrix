@@ -13,33 +13,36 @@ using namespace std;
 
 struct Plane
 {
-    glm::vec3 normal = { 0.f, 1.f, 0.f };
-    float distance = 0.f;
+  glm::vec3 normal = { 0.f, 1.f, 0.f };
+  float distance = 0.f;
 
-    Plane() = default;
-    Plane(const glm::vec3& p1, const glm::vec3& norm)
-		: normal(glm::normalize(norm)),
-    distance(glm::dot(normal, p1)) {}
+  Plane() = default;
+  Plane(const glm::vec3& p1, const glm::vec3& norm)
+    : normal(glm::normalize(norm))
+    , distance(glm::dot(normal, p1))
+  {
+  }
 
-    float getSignedDistanceToPlane(const glm::vec3& point) const
-    {
-      return glm::dot(normal, point) - distance;
-    }
+  float getSignedDistanceToPlane(const glm::vec3& point) const
+  {
+    return glm::dot(normal, point) - distance;
+  }
 };
 
-struct Frustum {
-    Plane topFace;
-    Plane bottomFace;
+struct Frustum
+{
+  Plane topFace;
+  Plane bottomFace;
 
-    Plane rightFace;
-    Plane leftFace;
+  Plane rightFace;
+  Plane leftFace;
 
-    Plane farFace;
-    Plane nearFace;
+  Plane farFace;
+  Plane nearFace;
 };
 
-
-struct Movement {
+struct Movement
+{
   glm::vec3 startPosition;
   glm::vec3 finishPosition;
   glm::vec3 startFront;
@@ -49,7 +52,8 @@ struct Movement {
   shared_ptr<bool> isDone;
 };
 
-class Camera {
+class Camera
+{
   glm::vec3 up;
   bool firstMouse;
   bool viewUpdated = true;
@@ -65,6 +69,7 @@ class Camera {
   float zFar;
   float zNear;
   float yFov;
+
 public:
   glm::vec3 front;
   glm::vec3 position;
@@ -74,15 +79,16 @@ public:
   ~Camera();
   void tick();
   bool isMoving();
-  std::shared_ptr<bool> moveTo(glm::vec3 position, glm::vec3 front, float moveSeconds);
-  float getYaw() {return yaw;}
-  float getPitch() {return pitch;}
-  glm::mat4 &getViewMatrix();
+  std::shared_ptr<bool> moveTo(glm::vec3 position,
+                               glm::vec3 front,
+                               float moveSeconds);
+  float getYaw() { return yaw; }
+  float getPitch() { return pitch; }
+  glm::mat4& getViewMatrix();
   bool viewMatrixUpdated();
-  glm::mat4 &getProjectionMatrix(bool isRenderLoop=false);
+  glm::mat4& getProjectionMatrix(bool isRenderLoop = false);
   bool projectionMatrixUpdated();
   Frustum createFrustum();
 };
-
 
 #endif

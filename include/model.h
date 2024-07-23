@@ -8,10 +8,11 @@
 #include <assimp/scene.h>
 #include "entity.h"
 
-unsigned int TextureFromFile(const char *path, const string &directory,
-                             bool gamma = false);
+unsigned int
+TextureFromFile(const char* path, const string& directory, bool gamma = false);
 
-struct Positionable {
+struct Positionable
+{
   Positionable(glm::vec3 pos, glm::vec3 origin, glm::vec3 rotate, float scale);
   glm::vec3 pos;
   glm::vec3 origin;
@@ -24,7 +25,8 @@ struct Positionable {
   void damage();
 };
 
-class PositionablePersister : public SQLPersisterImpl {
+class PositionablePersister : public SQLPersisterImpl
+{
 public:
   PositionablePersister(std::shared_ptr<EntityRegistry> registry)
     : SQLPersisterImpl("Positionable", registry){};
@@ -36,11 +38,12 @@ public:
   void depersistIfGone(entt::entity) override;
 };
 
-class Model {
+class Model
+{
 public:
   string path;
   Model(string path);
-  void Draw(Shader &shader);
+  void Draw(Shader& shader);
 
   BoundingSphere getBoundingSphere(float scale);
 
@@ -52,16 +55,18 @@ private:
 
   vector<Vertex> getAllVertices();
   void loadModel(string path);
-  void processNode(aiNode *node, const aiScene *scene);
-  Mesh processMesh(aiMesh *mesh, const aiScene *scene);
-  vector<MeshTexture> loadMaterialTextures(aiMaterial *mat, aiTextureType type,
-                                       string typeName);
+  void processNode(aiNode* node, const aiScene* scene);
+  Mesh processMesh(aiMesh* mesh, const aiScene* scene);
+  vector<MeshTexture> loadMaterialTextures(aiMaterial* mat,
+                                           aiTextureType type,
+                                           string typeName);
 };
 
-class ModelPersister : public SQLPersisterImpl {
+class ModelPersister : public SQLPersisterImpl
+{
 public:
-  ModelPersister(std::shared_ptr<EntityRegistry> registry):
-    SQLPersisterImpl("Model", registry){};
+  ModelPersister(std::shared_ptr<EntityRegistry> registry)
+    : SQLPersisterImpl("Model", registry){};
   void createTablesIfNeeded() override;
   void saveAll() override;
   void save(entt::entity) override;

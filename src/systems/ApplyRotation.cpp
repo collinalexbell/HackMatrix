@@ -8,7 +8,9 @@
 #include <glm/gtc/quaternion.hpp>
 
 double MIN_ROTATION = 0.0001;
-void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
+void
+systems::applyRotation(std::shared_ptr<EntityRegistry> registry)
+{
   // initialize to current time on first call
   static double lastRotated = glfwGetTime();
 
@@ -17,7 +19,7 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
   auto toRotate = registry->view<Positionable, RotateMovement>();
   for (auto [entity, positionable, rotateMovement] : toRotate.each()) {
     auto degreesToRotate =
-        rotateMovement.degreesPerSecond * (curTime - lastRotated);
+      rotateMovement.degreesPerSecond * (curTime - lastRotated);
 
     // Ensure degrees are always positive for 'min' calculation
     degreesToRotate = fabs(degreesToRotate);
@@ -30,14 +32,14 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
 
     rotateMovement.degrees -= degreesToRotate;
 
-    glm::quat rotation = glm::angleAxis(glm::radians((float)degreesToRotate),
-                                        rotateMovement.axis);
+    glm::quat rotation =
+      glm::angleAxis(glm::radians((float)degreesToRotate), rotateMovement.axis);
     glm::quat curQuat(glm::radians(positionable.rotate));
     auto newQuat = curQuat * rotation;
     positionable.rotate = glm::degrees(glm::eulerAngles(newQuat));
 
     if (fabs(rotateMovement.degrees) < MIN_ROTATION) { // Account for negatives
-      if(rotateMovement.onFinish.has_value()) {
+      if (rotateMovement.onFinish.has_value()) {
         (*rotateMovement.onFinish)();
       }
       registry->remove<RotateMovement>(entity);
@@ -48,25 +50,25 @@ void systems::applyRotation(std::shared_ptr<EntityRegistry> registry) {
     if (parent != NULL) {
       for (auto childId : parent->childrenIds) {
         auto childEntityOpt = registry->locateEntity(childId);
-        if(childEntityOpt.has_value()) {
+        if (childEntityOpt.has_value()) {
           auto childEntity = childEntityOpt.value();
 
-          auto &childPositionable = registry->get<Positionable>(childEntity);
+          auto& childPositionable = registry->get<Positionable>(childEntity);
 
           // Calculate child's position relative to parent
-          glm::vec3 relativePosition =
-              childPositionable.pos - positionable.pos;
-          auto rotationMatrix = glm::rotate(glm::radians((float)degreesToRotate),
-                                            rotateMovement.axis);
-          glm::vec3 rotatedPosition = rotationMatrix * glm::vec4(relativePosition, 1.0f);
+          glm::vec3 relativePosition = childPositionable.pos - positionable.pos;
+          auto rotationMatrix = glm::rotate(
+            glm::radians((float)degreesToRotate), rotateMovement.axis);
+          glm::vec3 rotatedPosition =
+            rotationMatrix * glm::vec4(relativePosition, 1.0f);
 
           // Calculate child's new world position
-          childPositionable.pos =
-              rotatedPosition + positionable.pos;
+          childPositionable.pos = rotatedPosition + positionable.pos;
 
           glm::quat childQuat(glm::radians(childPositionable.rotate));
           auto newChildQuat = rotation * childQuat;
-          childPositionable.rotate = glm::degrees(glm::eulerAngles(newChildQuat));
+          childPositionable.rotate =
+            glm::degrees(glm::eulerAngles(newChildQuat));
 
           childPositionable.damage();
         }

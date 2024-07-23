@@ -8,51 +8,65 @@
 
 using namespace std;
 
-struct Renderable {
+struct Renderable
+{
   vector<glm::vec3> vertices;
 };
 
-class DynamicObject {
+class DynamicObject
+{
   int _id;
   static std::atomic_int nextId;
+
 public:
-  DynamicObject() : _id(nextId.fetch_add(1)) {}
+  DynamicObject()
+    : _id(nextId.fetch_add(1))
+  {
+  }
   virtual Renderable makeRenderable() = 0;
   virtual bool damaged() = 0;
   virtual void move(glm::vec3) = 0;
-  virtual glm::vec3 getPosition() {return glm::vec3(0,0,0);};
+  virtual glm::vec3 getPosition() { return glm::vec3(0, 0, 0); };
   int id();
 };
 
-struct DynamicObjectIntersection {
+struct DynamicObjectIntersection
+{
   float distance;
   shared_ptr<DynamicObject> object;
   glm::vec3 point;
 };
 
-class DynamicObjectSpace: public DynamicObject {
+class DynamicObjectSpace : public DynamicObject
+{
   vector<shared_ptr<DynamicObject>> objects;
   bool _damaged = true;
   shared_mutex readWriteMutex;
+
 public:
   void addObject(shared_ptr<DynamicObject> obj);
   Renderable makeRenderable() override;
   bool damaged() override;
-  void move(glm::vec3) override {
+  void move(glm::vec3) override
+  {
     throw "DynamicObjectSpace.move() unimplemented";
   }
   shared_ptr<DynamicObject> getObjectById(int id);
   vector<int> getObjectIds();
-  shared_ptr<DynamicObject> getLookedAtObject(glm::vec3 position, glm::vec3 direction);
-  vector<DynamicObjectIntersection> findIntersections(glm::vec3 position, glm::vec3 direction);
+  shared_ptr<DynamicObject> getLookedAtObject(glm::vec3 position,
+                                              glm::vec3 direction);
+  vector<DynamicObjectIntersection> findIntersections(glm::vec3 position,
+                                                      glm::vec3 direction);
 };
 
-class DynamicCube: public DynamicObject {
+class DynamicCube : public DynamicObject
+{
   glm::vec3 _position;
   glm::vec3 size;
   atomic_bool _damaged = true;
   void setPosition(glm::vec3 newPos);
   shared_mutex readWriteMutex;
+
 public:
   DynamicCube(glm::vec3 position, glm::vec3 size);
   Renderable makeRenderable() override;

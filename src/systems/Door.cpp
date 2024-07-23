@@ -3,12 +3,14 @@
 #include "systems/Door.h"
 #include <utility>
 
-void systems::openDoor(std::shared_ptr<EntityRegistry> registry, entt::entity entity) {
-  auto &door = registry->get<Door>(entity);
-  if(door.state == CLOSED) {
+void
+systems::openDoor(std::shared_ptr<EntityRegistry> registry, entt::entity entity)
+{
+  auto& door = registry->get<Door>(entity);
+  if (door.state == CLOSED) {
     auto movement = door.openMovement;
     movement.onFinish = [registry, entity]() -> void {
-      auto &door = registry->get<Door>(entity);
+      auto& door = registry->get<Door>(entity);
       door.state = OPEN;
     };
     registry->emplace<RotateMovement>(entity, movement);
@@ -16,12 +18,15 @@ void systems::openDoor(std::shared_ptr<EntityRegistry> registry, entt::entity en
   }
 }
 
-void systems::closeDoor(std::shared_ptr<EntityRegistry> registry, entt::entity entity) {
-  auto &door = registry->get<Door>(entity);
-  if(door.state == OPEN) {
+void
+systems::closeDoor(std::shared_ptr<EntityRegistry> registry,
+                   entt::entity entity)
+{
+  auto& door = registry->get<Door>(entity);
+  if (door.state == OPEN) {
     auto movement = door.closeMovement;
     movement.onFinish = [registry, entity]() -> void {
-      auto &door = registry->get<Door>(entity);
+      auto& door = registry->get<Door>(entity);
       door.state = CLOSED;
     };
     registry->emplace<RotateMovement>(entity, movement);
@@ -29,9 +34,10 @@ void systems::closeDoor(std::shared_ptr<EntityRegistry> registry, entt::entity e
   }
 }
 
-
-void systems::DoorPersister::createTablesIfNeeded() {
-  SQLite::Database &db = registry->getDatabase();
+void
+systems::DoorPersister::createTablesIfNeeded()
+{
+  SQLite::Database& db = registry->getDatabase();
 
   db.exec("CREATE TABLE IF NOT EXISTS RotateMovement ( "
           "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -54,11 +60,13 @@ void systems::DoorPersister::createTablesIfNeeded() {
           ")");
 }
 
-
-void updateDoor(SQLite::Database &db, int entityId,  DoorState state) {
-  SQLite::Statement updateDoor(db, "UPDATE Door SET "
-                                   "state = ? "
-                                   "WHERE entity_id = ?");
+void
+updateDoor(SQLite::Database& db, int entityId, DoorState state)
+{
+  SQLite::Statement updateDoor(db,
+                               "UPDATE Door SET "
+                               "state = ? "
+                               "WHERE entity_id = ?");
 
   updateDoor.bind(1, (int)state);
   updateDoor.bind(2, entityId);
@@ -66,9 +74,13 @@ void updateDoor(SQLite::Database &db, int entityId,  DoorState state) {
   updateDoor.exec();
 }
 
-void insertDoor(SQLite::Database &db, int entityId,
-                                        int openMovementId, int closeMovementId,
-                                        DoorState state) {
+void
+insertDoor(SQLite::Database& db,
+           int entityId,
+           int openMovementId,
+           int closeMovementId,
+           DoorState state)
+{
   std::stringstream insertDoorQuery;
   insertDoorQuery << "INSERT INTO Door (entity_id, open_movement_id, "
                      "close_movement_id, state) "
@@ -83,80 +95,95 @@ void insertDoor(SQLite::Database &db, int entityId,
   insertDoorStmt.exec();
 }
 
-void systems::DoorPersister::saveAll() {
-    auto view = registry->view<Persistable, Door>();
-    SQLite::Database &db = registry->getDatabase();
+void
+systems::DoorPersister::saveAll()
+{
+  auto view = registry->view<Persistable, Door>();
+  SQLite::Database& db = registry->getDatabase();
 
-    db.exec("BEGIN TRANSACTION");
-    for (auto [entity, persist, door] : view.each()) {
-      // Check if Door exists
-      SQLite::Statement checkDoor(db, "SELECT id, open_movement_id, close_movement_id FROM Door WHERE entity_id = ?");
-      checkDoor.bind(1, persist.entityId);
+  db.exec("BEGIN TRANSACTION");
+  for (auto [entity, persist, door] : view.each()) {
+    // Check if Door exists
+    SQLite::Statement checkDoor(
+      db,
+      "SELECT id, open_movement_id, close_movement_id FROM Door WHERE "
+      "entity_id = ?");
+    checkDoor.bind(1, persist.entityId);
 
-      if (checkDoor.executeStep()) {
-        int openMovementId = checkDoor.getColumn(1).getInt();
-        int closeMovementId = checkDoor.getColumn(2).getInt();
+    if (checkDoor.executeStep()) {
+      int openMovementId = checkDoor.getColumn(1).getInt();
+      int closeMovementId = checkDoor.getColumn(2).getInt();
 
-        updateMovement(db, openMovementId, door.openMovement);
-        updateMovement(db, closeMovementId, door.closeMovement);
+      updateMovement(db, openMovementId, door.openMovement);
+      updateMovement(db, closeMovementId, door.closeMovement);
 
-        updateDoor(db, persist.entityId, door.state);
-      } else {
-        int openMovementId = insertMovement(db, door.openMovement);
-        int closeMovementId = insertMovement(db, door.closeMovement);
-        insertDoor(db, persist.entityId, openMovementId, closeMovementId,
-                   door.state);
-      }
+      updateDoor(db, persist.entityId, door.state);
+    } else {
+      int openMovementId = insertMovement(db, door.openMovement);
+      int closeMovementId = insertMovement(db, door.closeMovement);
+      insertDoor(
+        db, persist.entityId, openMovementId, closeMovementId, door.state);
     }
-    db.exec("COMMIT");
+  }
+  db.exec("COMMIT");
 }
 
-void systems::DoorPersister::save(entt::entity) {
+void
+systems::DoorPersister::save(entt::entity)
+{
 }
 
-void systems::DoorPersister::loadAll() {
-    auto view = registry->view<Persistable>();
-    SQLite::Database& db = registry->getDatabase();
+void
+systems::DoorPersister::loadAll()
+{
+  auto view = registry->view<Persistable>();
+  SQLite::Database& db = registry->getDatabase();
 
-    // Cache query data
-    std::unordered_map<int, Door> doorDataCache;
+  // Cache query data
+  std::unordered_map<int, Door> doorDataCache;
 
-    // Prepare the query
-    SQLite::Statement query(db, "SELECT entity_id, open_movement_id, close_movement_id, state FROM Door");
+  // Prepare the query
+  SQLite::Statement query(
+    db,
+    "SELECT entity_id, open_movement_id, close_movement_id, state FROM Door");
 
-    // Fetch results from the database
-    while (query.executeStep()) {
-        int entityId = query.getColumn(0).getInt();
-        int openMovementId = query.getColumn(1).getInt();
-        int closeMovementId = query.getColumn(2).getInt();
-        DoorState state = static_cast<DoorState>(query.getColumn(3).getInt());
+  // Fetch results from the database
+  while (query.executeStep()) {
+    int entityId = query.getColumn(0).getInt();
+    int openMovementId = query.getColumn(1).getInt();
+    int closeMovementId = query.getColumn(2).getInt();
+    DoorState state = static_cast<DoorState>(query.getColumn(3).getInt());
 
-        auto openMovement = getMovementData(db, openMovementId);
-        auto closeMovement = getMovementData(db, closeMovementId);
-        auto pair = std::pair(entityId, Door{openMovement, closeMovement, state});
-        doorDataCache.insert(pair);
+    auto openMovement = getMovementData(db, openMovementId);
+    auto closeMovement = getMovementData(db, closeMovementId);
+    auto pair = std::pair(entityId, Door{ openMovement, closeMovement, state });
+    doorDataCache.insert(pair);
+  }
+
+  // Construct Door Components
+  for (auto [entity, persist] : view.each()) {
+    auto it = doorDataCache.find(persist.entityId);
+    if (it != doorDataCache.end()) {
+      auto& [openMovement, closeMovement, state] = it->second;
+      registry->emplace<Door>(entity, openMovement, closeMovement, state);
     }
-
-    // Construct Door Components
-    for (auto [entity, persist] : view.each()) {
-        auto it = doorDataCache.find(persist.entityId);
-        if (it != doorDataCache.end()) {
-          auto& [openMovement, closeMovement, state] = it->second;
-          registry->emplace<Door>(entity, openMovement, closeMovement, state);
-        }
-    }
+  }
 }
 
-
-void systems::DoorPersister::load(entt::entity) {
+void
+systems::DoorPersister::load(entt::entity)
+{
 }
 
-void systems::DoorPersister::depersistIfGone(entt::entity entity) {
+void
+systems::DoorPersister::depersistIfGone(entt::entity entity)
+{
   auto persistable = registry->get<Persistable>(entity);
-  auto &db = registry->getDatabase();
+  auto& db = registry->getDatabase();
   try {
-    SQLite::Statement query(db, "SELECT open_movement_id, close_movement_id "
-                                "FROM Door where entity_id = ?");
+    SQLite::Statement query(db,
+                            "SELECT open_movement_id, close_movement_id "
+                            "FROM Door where entity_id = ?");
     query.bind(1, persistable.entityId);
     query.executeStep();
     int64_t open_movement_id = query.getColumn(0).getInt64();

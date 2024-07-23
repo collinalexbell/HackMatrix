@@ -6,16 +6,18 @@
 
 #include <iostream>
 
-aiMesh* loadFbx(string modelPath) {
+aiMesh*
+loadFbx(string modelPath)
+{
   Assimp::Importer importer; // Create an Assimp importer object
 
-  const aiScene *scene = importer.ReadFile(
-      modelPath,
-      aiProcess_Triangulate |      // Triangulate all faces
-          aiProcess_GenNormals |   // Generate normals if missing
-          aiProcess_FlipUVs |      // Flip UVs if necessary
-          aiProcess_OptimizeMeshes // Optimize the meshes
-  );
+  const aiScene* scene =
+    importer.ReadFile(modelPath,
+                      aiProcess_Triangulate |    // Triangulate all faces
+                        aiProcess_GenNormals |   // Generate normals if missing
+                        aiProcess_FlipUVs |      // Flip UVs if necessary
+                        aiProcess_OptimizeMeshes // Optimize the meshes
+    );
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       !scene->mRootNode) {
@@ -26,7 +28,7 @@ aiMesh* loadFbx(string modelPath) {
 
   // Process the loaded scene (meshes, materials, etc.)
   // Example: Accessing the first mesh:
-  aiMesh *mesh = scene->mMeshes[0];
+  aiMesh* mesh = scene->mMeshes[0];
 
   return mesh;
   // ... (Your code to process mesh data, materials, etc.)

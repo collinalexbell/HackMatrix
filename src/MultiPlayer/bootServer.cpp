@@ -2,9 +2,10 @@
 #include "MultiPlayer/Server.h"
 #include <unistd.h>
 
-int main() {
+int
+main()
+{
   auto server = MultiPlayer::Server();
   server.Start(1234);
-	server.Poll();
+  server.Poll();
 }
-
