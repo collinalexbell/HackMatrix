@@ -20,7 +20,7 @@ ARCH
 
 sudo pacman -S xdotool dmenu xorg-server xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 
-Clone the project (with submodules `git clone --recurse-submodules`), navigate to the project directory and run `make`:
+Clone the project (`with submodules `git clone --recurse-submodules https://github.com/RatWyfe/HackMatrix.git`), navigate to the project directory and run `make`:
 
 Add the following line at the end of your `~/.xinitrc` file:
 
