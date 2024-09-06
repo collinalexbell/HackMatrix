@@ -9,6 +9,8 @@
 #include <memory>
 #include <queue>
 
+using namespace std;
+
 struct Plane
 {
   glm::vec3 normal = { 0.f, 1.f, 0.f };
@@ -88,3 +90,5 @@ public:
   bool projectionMatrixUpdated();
   Frustum createFrustum();
 };
+
+#endif
