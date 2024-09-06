@@ -9,22 +9,6 @@
 #include <memory>
 #include <queue>
 
-#include <stdio.h>
-
-void error_callback(int error, const char* description) {
-    fprintf(stderr, "Error %d: %s\n", error, description);
-}
-
-int main() {
-    // Set the error callback
-    glfwSetErrorCallback(error_callback);
-
-    // Initialize GLFW
-    if (!glfwInit()) {
-        return -1;
-    }
-using namespace std;
-
 struct Plane
 {
   glm::vec3 normal = { 0.f, 1.f, 0.f };
@@ -104,14 +88,3 @@ public:
   bool projectionMatrixUpdated();
   Frustum createFrustum();
 };
-    // Your GLFW code here...
-
-    // Terminate GLFW
-    glfwTerminate();
-    return 0;
-}
-
-
-
-
-#endif
