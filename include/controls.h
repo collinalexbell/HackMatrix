@@ -10,22 +10,6 @@
 #include "world.h"
 #include "WindowManager/WindowManager.h"
 
-#include <stdio.h>
-
-void error_callback(int error, const char* description) {
-    fprintf(stderr, "Error %d: %s\n", error, description);
-}
-
-int main() {
-    // Set the error callback
-    glfwSetErrorCallback(error_callback);
-
-    // Initialize GLFW
-    if (!glfwInit()) {
-        return -1;
-    }
-
-    // Your GLFW code here...
 struct DeferedAction
 {
   shared_ptr<bool> isDone;
@@ -94,10 +78,4 @@ public:
               optional<function<void()>> = nullopt);
   void disable();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
-    // Terminate GLFW
-    glfwTerminate();
-    return 0;
-}
-
-
 };
