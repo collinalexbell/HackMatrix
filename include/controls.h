@@ -26,12 +26,6 @@ int main() {
     }
 
     // Your GLFW code here...
-
-    // Terminate GLFW
-    glfwTerminate();
-    return 0;
-}
-
 struct DeferedAction
 {
   shared_ptr<bool> isDone;
@@ -100,4 +94,10 @@ public:
               optional<function<void()>> = nullopt);
   void disable();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
+    // Terminate GLFW
+    glfwTerminate();
+    return 0;
+}
+
+
 };
