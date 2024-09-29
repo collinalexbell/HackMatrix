@@ -164,6 +164,7 @@ Add the following line at the end of your `~/.xinitrc` file:
 
 When developing HackMatrix, I frequently quit and rerun the `matrix` program without restarting X.
 I wrote a trampoline program that will restart HackMatrix every time you exit.
+Unfortunately, if you use a bleeding edge distro like Arch, there is a resource leak in GLFW that prevents you from using this. I've submit a patch PR and you can compile and install my [fork of GLFW](https://github.com/collinalexbell/glfw/tree/fixleak) if you wish to use the `trampoline`. Be sure to compile the `fixleak` branch, not `master`.
 
  ```bash
  cd ~/<replace with repository directory>
