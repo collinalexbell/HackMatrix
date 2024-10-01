@@ -577,7 +577,9 @@ Renderer::renderApps()
   if (lookedAtAppEntity.has_value()) {
     auto bootable = registry->try_get<Bootable>(lookedAtAppEntity.value());
     auto& app = registry->get<X11App>(lookedAtAppEntity.value());
-    if (app.isFocused() && (!bootable || !bootable->transparent)) {
+    if (wm->getCurrentlyFocusedApp().has_value()
+        && wm->getCurrentlyFocusedApp().value() == lookedAtAppEntity.value()
+        && (!bootable || !bootable->transparent)) {
       shader->setBool("appFocused", app.isFocused());
       drawAppDirect(&app);
       shader->setBool("appFocused", false);
@@ -774,9 +776,10 @@ Renderer::toggleMeshing()
 }
 
 void
-Renderer::wireWindowManagerSpace(
-  shared_ptr<WindowManager::Space> windowManagerSpace)
+Renderer::wireWindowManager(shared_ptr<WindowManager::WindowManager> wm,
+                            shared_ptr<WindowManager::Space> windowManagerSpace)
 {
+  this->wm = wm;
   this->windowManagerSpace = windowManagerSpace;
 }
 

@@ -82,8 +82,9 @@ public:
   void createAndRegisterApps(char **envp);
   WindowManager(shared_ptr<EntityRegistry>, Window, spdlog::sink_ptr);
   ~WindowManager();
+  optional<entt::entity> getCurrentlyFocusedApp();
   void focusApp(entt::entity);
-  void wire(Camera *camera, Renderer *renderer);
+  void wire(shared_ptr<WindowManager>, Camera *camera, Renderer *renderer);
   void handleSubstructure();
   void goToLookedAtApp();
   void registerControls(Controls *controls);

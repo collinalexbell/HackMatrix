@@ -19,7 +19,7 @@ struct DeferedAction
 class Controls
 {
   shared_ptr<blocks::TexturePack> texturePack;
-  WindowManager::WindowManager* wm;
+  shared_ptr<WindowManager::WindowManager> wm;
   World* world;
   Camera* camera;
   Renderer* renderer;
@@ -57,7 +57,7 @@ class Controls
   void doDeferedActions();
 
 public:
-  Controls(WindowManager::WindowManager* wm,
+  Controls(shared_ptr<WindowManager::WindowManager> wm,
            World* world,
            Camera* camera,
            Renderer* renderer,

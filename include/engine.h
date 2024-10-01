@@ -24,7 +24,7 @@ class Engine
   Renderer* renderer;
   Controls* controls;
   Camera* camera;
-  WindowManager::WindowManager* wm;
+  shared_ptr<WindowManager::WindowManager> wm;
   GLFWwindow* window;
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;

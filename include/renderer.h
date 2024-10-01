@@ -1,6 +1,7 @@
 #ifndef __RENDERER_H__
 #define __RENDERER_H__
 #include "IndexPool.h"
+#include "WindowManager/WindowManager.h"
 #include "blocks.h"
 #include "dynamicObject.h"
 #include "entity.h"
@@ -72,6 +73,7 @@ class Renderer
   Camera* camera = NULL;
   World* world = NULL;
   shared_ptr<WindowManager::Space> windowManagerSpace;
+  shared_ptr<WindowManager::WindowManager> wm;
 
   unsigned int emacsID;
 
@@ -125,7 +127,7 @@ public:
   void screenshot();
   void toggleMeshing();
   void toggleWireframe();
-  void wireWindowManagerSpace(shared_ptr<WindowManager::Space>);
+  void wireWindowManager(shared_ptr<WindowManager::WindowManager>, shared_ptr<WindowManager::Space>);
 
   glm::mat4 projection;
 };

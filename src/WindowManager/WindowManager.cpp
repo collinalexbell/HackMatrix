@@ -34,7 +34,7 @@
 namespace WindowManager {
 
 void WindowManager::dMenu() {
- int exitCode = system("dmenu_run"); 
+ int exitCode = system("dmenu_run");
 }
 
 int forkApp(string cmd, char **envp, string args) {
@@ -159,11 +159,15 @@ void WindowManager::addApps() {
   }
 }
 
-void WindowManager::wire(Camera *camera, Renderer *renderer) {
+  void WindowManager::wire(shared_ptr<WindowManager> sharedThis ,Camera *camera, Renderer *renderer) {
   space = make_shared<Space>(registry, renderer, camera, logSink);
-  renderer->wireWindowManagerSpace(space);
+  renderer->wireWindowManager(sharedThis, space);
   controls->wireWindowManager(space);
 }
+
+  optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {
+    return currentlyFocusedApp;
+ }
 
 void WindowManager::addApp(X11App *app, entt::entity entity) {
   std::lock_guard<std::mutex> lock(renderLoopMutex);

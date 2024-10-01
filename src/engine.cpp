@@ -117,7 +117,6 @@ Engine::~Engine()
 {
   // may want to remove this because it might be slow on shutdown
   // when trying to get fast dev time
-  delete wm;
   delete controls;
   delete renderer;
   delete world;
@@ -130,7 +129,7 @@ void
 Engine::initialize()
 {
   auto texturePack = blocks::initializeBasicPack();
-  wm = new WindowManager::WindowManager(
+  wm = make_shared<WindowManager::WindowManager>(
     registry, glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(
@@ -145,7 +144,7 @@ void
 Engine::wire()
 {
   world->attachRenderer(renderer);
-  wm->wire(camera, renderer);
+  wm->wire(wm, camera, renderer);
 }
 
 void
