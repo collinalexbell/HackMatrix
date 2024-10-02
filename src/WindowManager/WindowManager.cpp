@@ -186,6 +186,11 @@ void WindowManager::createApp(Window window, unsigned int width,
     app->unfocus(matrix);
   }
 
+  if(currentlyFocusedApp.has_value()) {
+    auto& app = registry->get<X11App>(currentlyFocusedApp.value());
+    app.focus(matrix);
+  }
+
   entt::entity entity;
 
   auto bootableEntity = systems::matchApp(registry, app);
