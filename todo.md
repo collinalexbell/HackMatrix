@@ -14,6 +14,8 @@ issues, but in a simple txt file
 - fix lighting acne (distanced)
 - fix lighting distance (it creates a circle pattern (look at the key area))
 
+- implement some sort of gravity
+
 ## In Progress
 
 ## Done
