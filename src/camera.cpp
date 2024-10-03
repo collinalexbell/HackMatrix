@@ -23,7 +23,7 @@ Camera::Camera()
   lastY = 600.0 / 2.0;
   viewUpdated = true;
   _projectionMatrixUpdated = true;
-  zFar = 100.0f;
+  zFar = 400.0f;
   zNear = 0.02f;
   yFov = glm::radians(45.0f);
   projectionMatrix =
