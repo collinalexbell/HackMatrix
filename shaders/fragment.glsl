@@ -152,15 +152,21 @@ void main()
 			FragColor = colorFromTexture(app4, TexCoord);
 		} else if (appNumber == 5) {
 			FragColor = colorFromTexture(app5, TexCoord);
-		} else if (appNumber == 6) {
+		} 
+
+		else if (appNumber == 6) {
 			FragColor = colorFromTexture(app6, TexCoord);
 		} else if (appNumber == 7) {
 			FragColor = colorFromTexture(app7, TexCoord);
 		} else if (appNumber == 8) {
 			FragColor = colorFromTexture(app8, TexCoord);
-		} else if (appNumber == 9) {
+		} 
+
+		/*
+		else if (appNumber == 9) {
 			FragColor = colorFromTexture(app9, TexCoord);
 		} 
+		*/
 		if(appSelected) {
 			FragColor = mix(FragColor, floor(TexCoord), 0.1);
 		}
