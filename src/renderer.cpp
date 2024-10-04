@@ -230,7 +230,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
                    shared_ptr<blocks::TexturePack> texturePack)
   : texturePack(texturePack)
   , registry(registry)
-  , appIndexPool(IndexPool(10))
+  , appIndexPool(IndexPool(17))
 {
   this->camera = camera;
   this->world = world;

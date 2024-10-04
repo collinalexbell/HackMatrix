@@ -15,6 +15,9 @@ uniform sampler2D app3;
 uniform sampler2D app4;
 uniform sampler2D app5;
 uniform sampler2D app6;
+uniform sampler2D app7;
+uniform sampler2D app8;
+uniform sampler2D app9;
 uniform bool isApp;
 uniform int appNumber;
 uniform bool isModel;
@@ -151,7 +154,13 @@ void main()
 			FragColor = colorFromTexture(app5, TexCoord);
 		} else if (appNumber == 6) {
 			FragColor = colorFromTexture(app6, TexCoord);
-		}
+		} else if (appNumber == 7) {
+			FragColor = colorFromTexture(app7, TexCoord);
+		} else if (appNumber == 8) {
+			FragColor = colorFromTexture(app8, TexCoord);
+		} else if (appNumber == 9) {
+			FragColor = colorFromTexture(app9, TexCoord);
+		} 
 		if(appSelected) {
 			FragColor = mix(FragColor, floor(TexCoord), 0.1);
 		}
