@@ -686,6 +686,7 @@ EngineGui::renderComponentPanel(entt::entity entity)
   }
 }
 
+/*
 void
 EngineGui::renderEntities()
 {
@@ -716,6 +717,79 @@ EngineGui::renderEntities()
 
     renderComponentPanel(entity);
   }
+}
+*/
+
+bool
+entityMatchesComponentFilter(shared_ptr<EntityRegistry> registry,
+                                        entt::entity entity,
+                                        const std::string& filter)
+{
+  auto model = registry->try_get<Model>(entity);
+  if(model != NULL && model->path.find(filter) != std::string::npos) {
+    return true;
+  }
+
+  return false; // Return true if any component attribute matches the filter
+}
+
+void
+EngineGui::renderEntities()
+{
+    auto view = registry->view<Persistable>();
+    static std::unordered_map<entt::entity, bool> componentOptionsState;
+
+    // Filter variables
+    static char filterBuffer[256] = "";
+    static std::string currentFilter = "";
+
+    // Filter input
+    ImGui::InputText("Filter Entities", filterBuffer, IM_ARRAYSIZE(filterBuffer));
+    if (ImGui::IsItemDeactivatedAfterEdit()) {
+        currentFilter = std::string(filterBuffer);
+    }
+
+    for (auto [entity, persistable] : view.each()) {
+        // Apply filter
+        if (!currentFilter.empty()) {
+            bool matchesFilter = false;
+
+            // Check if entity ID matches filter
+            if (std::to_string(persistable.entityId).find(currentFilter) != std::string::npos) {
+                matchesFilter = true;
+            }
+
+            // Check if any component attribute matches filter
+            // This is a placeholder - you'll need to implement this based on your component structure
+            if (!matchesFilter && entityMatchesComponentFilter(registry, entity, currentFilter)) {
+                matchesFilter = true;
+            }
+
+            if (!matchesFilter) continue; // Skip this entity if it doesn't match the filter
+        }
+
+        ImGui::Spacing();
+        ImGui::Spacing();
+        ImGui::Text("Entity ID: %s", std::to_string(persistable.entityId).c_str());
+        ImGui::Text("Raw Entity ID: %s", std::to_string((int)entity).c_str());
+
+        bool& showAddComponentPanel = componentOptionsState[entity];
+        if (ImGui::Button("- Delete Entity")) {
+            registry->depersist(entity);
+        }
+        if (!showAddComponentPanel) {
+            if (ImGui::Button(("+ Add Component##" + std::to_string((int)entity)).c_str())) {
+                showAddComponentPanel = true; // Show the options on button press
+            }
+        }
+        if (showAddComponentPanel) { // Only display the combo and fields if active
+            if ((ImGui::Button(("Go Back##" + std::to_string((int)entity)).c_str()))) {
+                showAddComponentPanel = false;
+            }
+            addComponentPanel(entity, showAddComponentPanel);
+        }
+        renderComponentPanel(entity);
+    }
 }
 
 shared_ptr<LoggerVector>
