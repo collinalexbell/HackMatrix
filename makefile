@@ -33,6 +33,7 @@ trampoline: src/trampoline.cpp build/x-raise
 tools/deployTools/bootServer: build/MultiPlayer/Server.o
 	mkdir -p tools
 	mkdir -p deployTools
+	mkdir -p build/deployTools
 	g++ -std=c++20 $(FLAGS) -o build/deployTools/bootServer.o -c src/MultiPlayer/bootServer.cpp $(INCLUDES)
 	g++ -o tools/deployTools/bootServer build/deployTools/bootServer.o build/MultiPlayer/Server.o $(INCLUDES) $(LIBS)
 
