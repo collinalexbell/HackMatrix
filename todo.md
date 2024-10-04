@@ -13,6 +13,7 @@ issues, but in a simple txt file
 - fix the need to press hotkey to focus after app creation sometimes bug
 - fix lighting acne (distanced)
 - fix lighting distance (it creates a circle pattern (look at the key area))
+- can only display 10 apps concurrently bug
 
 - implement some sort of gravity
 
