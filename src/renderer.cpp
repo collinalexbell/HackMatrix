@@ -474,8 +474,8 @@ Renderer::screenshot()
   string filename = filenameSS.str();
 
   // Capture the screenshot and save it as a PNG file
-  int width = 1920;  // Width of your rendering area
-  int height = 1080; // Height of your rendering area
+  int width = getScreenWidth();  // Width of your rendering area
+  int height = getScreenHeight(); // Height of your rendering area
   int channels = 4;  // 4 for RGBA
   unsigned char* data = new unsigned char[width * height * channels];
   glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
