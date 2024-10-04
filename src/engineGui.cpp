@@ -774,6 +774,18 @@ EngineGui::renderEntities()
         ImGui::Text("Raw Entity ID: %s", std::to_string((int)entity).c_str());
 
         bool& showAddComponentPanel = componentOptionsState[entity];
+        if (ImGui::Button("++ Copy Entity")) {
+          auto duplicate = registry->createPersistent();
+          auto model = registry->try_get<Model>(entity);
+          if(model) {
+            // TODO: This is terrible code. I have duplicates of models this way. I need to load the model once and reuse it.
+            registry->emplace<Model>(duplicate, model->path);
+          }
+          auto positionable = registry->try_get<Positionable>(entity);
+          if(positionable) {
+            registry->emplace<Positionable>(duplicate, positionable);
+          }
+        }
         if (ImGui::Button("- Delete Entity")) {
             registry->depersist(entity);
         }

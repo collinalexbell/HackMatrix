@@ -14,6 +14,7 @@ TextureFromFile(const char* path, const string& directory, bool gamma = false);
 struct Positionable
 {
   Positionable(glm::vec3 pos, glm::vec3 origin, glm::vec3 rotate, float scale);
+  Positionable(Positionable* p);
   glm::vec3 pos;
   glm::vec3 origin;
   glm::vec3 rotate;

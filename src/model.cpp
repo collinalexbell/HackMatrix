@@ -275,6 +275,10 @@ Positionable::Positionable(glm::vec3 pos,
 {
 }
 
+Positionable::Positionable(Positionable* p) {
+  Positionable(p->pos, p->origin, p->rotate, p->scale);
+}
+
 void
 PositionablePersister::createTablesIfNeeded()
 {
