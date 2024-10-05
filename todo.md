@@ -4,6 +4,7 @@ issues, but in a simple txt file
 
 ## Planned
 
+- Demo full speed, real time, networked multiplayer, add video link to readme
 - Enable rearranging of hotkeys
   - proposal 1: swapping system
 - Fix crashes (TBC)
@@ -14,6 +15,9 @@ issues, but in a simple txt file
 - fix lighting acne (distanced)
 - fix lighting distance (it creates a circle pattern (look at the key area))
 - can only display 10 apps concurrently bug
+- fix load app spun around bug
+- fix how transparent objects work with apps
+- keep list of unsupported applications
 
 - implement some sort of gravity
 
