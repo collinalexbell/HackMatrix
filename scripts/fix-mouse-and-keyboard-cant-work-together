@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+# ireproducable λ xinput --set-prop 12 350 0
+
+# https://askubuntu.com/questions/1263698/cant-use-both-mouse-and-keyboard-at-the-same-time
+
+```
+xinput --list-props "DEVICE"
+```
