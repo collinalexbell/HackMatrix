@@ -4,6 +4,7 @@ issues, but in a simple txt file
 
 ## Planned
 
+- Add music overlay so that if I listen to copywritten music, stream viewers can listen along to the same music synced with the silent video
 - Demo full speed, real time, networked multiplayer, add video link to readme
 - Enable rearranging of hotkeys
   - proposal 1: swapping system
