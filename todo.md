@@ -4,6 +4,9 @@ issues, but in a simple txt file
 
 ## Planned
 
+### Priority
+- click to focus
+### Opposite of Priority
 - Add music overlay so that if I listen to copywritten music, stream viewers can listen along to the same music synced with the silent video
 - Demo full speed, real time, networked multiplayer, add video link to readme
 - Enable rearranging of hotkeys
@@ -20,6 +23,7 @@ issues, but in a simple txt file
 - fix how transparent objects work with apps
 - keep list of unsupported applications
 
+- STACK for hotkey, top of stack is "1".
 - implement some sort of gravity
 
 ## In Progress
