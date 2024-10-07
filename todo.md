@@ -20,6 +20,7 @@ issues, but in a simple txt file
 - fix how transparent objects work with apps
 - keep list of unsupported applications
 
+- STACK for hotkey, top of stack is "1".
 - implement some sort of gravity
 
 ## In Progress
