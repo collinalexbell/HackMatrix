@@ -61,6 +61,7 @@ Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
   handleLogBlockCounts(window);
   handleLogBlockType(window);
   handleDMenu(window, world);
+  handleWindowFlop(window);
 }
 
 double DEBOUNCE_TIME = 0.1;
@@ -240,6 +241,20 @@ Controls::moveTo(glm::vec3 pos,
 }
 
 void
+Controls::handleWindowFlop(GLFWwindow* window) {
+  if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
+    windowFlop += windowFlop_dt;
+  }
+  if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
+    windowFlop -= windowFlop_dt;
+  }
+  if(windowFlop <= 0.01) {
+    windowFlop = 0.01;
+  }
+}
+
+
+void
 Controls::goToApp(entt::entity app)
 {
   wm->passthroughInput();
@@ -249,8 +264,7 @@ Controls::goToApp(entt::entity app)
 
   glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
   targetPosition = targetPosition + rotationQuat * glm::vec3(0, 0, deltaZ);
-  float moveSeconds = 0.25;
-  moveTo(targetPosition, rotationDegrees, moveSeconds, [app, this]() {
+  moveTo(targetPosition, rotationDegrees, windowFlop, [app, this]() {
     wm->focusApp(app);
   });
 }

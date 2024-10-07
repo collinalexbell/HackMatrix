@@ -20,6 +20,8 @@ class Controls
 {
   shared_ptr<blocks::TexturePack> texturePack;
   shared_ptr<WindowManager::WindowManager> wm;
+  float windowFlop = 0.25;
+  float windowFlop_dt = 0.002;
   World* world;
   Camera* camera;
   Renderer* renderer;
@@ -50,6 +52,7 @@ class Controls
   void handleToggleWireframe(GLFWwindow* window);
   void handleLogBlockCounts(GLFWwindow* window);
   void handleLogBlockType(GLFWwindow* window);
+  void handleWindowFlop(GLFWwindow* window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleClicks(GLFWwindow* window, World* world);
