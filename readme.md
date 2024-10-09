@@ -128,10 +128,10 @@ sudo pacman -S xdotool dmenu xorg-server xorg-xwininfo xorg-xrandr protobuf base
 ```
 #### Gentoo
 ```bash
- sudo emerge net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool  protobuf dev-libs/pthreadpool media-libs/libass media-lib/assimp
+ sudo emerge net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool  protobuf dev-libs/pthreadpool media-libs/libass media-lib/assimp dmenu
 ```
 > [!NOTE]
-> you may have some isses with use flags and or masked packages. you will have to figer that out on your own system.
+> you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.
 
 Make sure to install these libraries before proceeding with the compilation and execution of the program. The program's build system will link against these libraries using the provided `LIBS` flags:
 
