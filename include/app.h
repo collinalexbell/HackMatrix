@@ -28,6 +28,7 @@ struct Identifier
 };
 
 class X11App
+// the monster X11 Interface App class!!
 {
 
   Display* display;
