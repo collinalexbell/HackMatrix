@@ -203,6 +203,9 @@ At some point I may install a session manager myself and I'll be able to write t
 If you create a working config yourself, it would be great if you PR'd it!
 
 ### How to get the client_libraries working
+run `scripts/install-python-clientlib.sh` from the HackMatrix root to do an automated install
+
+see the script below for what it runs
 #### Python
 ```bash
 # Install python hackMatrix lib
