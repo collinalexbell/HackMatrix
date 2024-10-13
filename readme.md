@@ -201,3 +201,19 @@ See [this article](https://www.maketecheasier.com/customize-the-gdm-sessions-lis
 At some point I may install a session manager myself and I'll be able to write this desktop config.
 
 If you create a working config yourself, it would be great if you PR'd it!
+
+### How to get the client_libraries working
+#### Python
+```bash
+# Install python hackMatrix lib
+python -m venv hackmatrix_python
+cd hackmatrix_python
+source bin/activate
+cd client_libs/python
+pip install .
+cd ../..
+
+# Testing
+python scripts/player-move.py
+```
+
