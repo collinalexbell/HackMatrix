@@ -2,6 +2,28 @@
 
 issues, but in a simple txt file
 
+# Visions
+- An in game bot that represents the HackRPG server!
+  - Also, an in game bot that represents the stream!
+
+# Milestones
+- A person can feel the investment in their workspace group patterns
+  - consistency in the workspace (all components work)
+  - anytime access to any workspace (dynamically booted when needed)
+  - workspace flow:
+    - persist dynamic app
+    - select workspace
+    - select app in workspace (maybe we already have this for free)
+    - resize app
+    - move app
+      ? have it follow my mouse
+    - kill app
+    - name the workspace
+    - click to focus
+
+
+# Tasks
+
 ## Planned
 
 ### Priority
