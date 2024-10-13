@@ -14,7 +14,7 @@ public:
 
   bool Start(int port);
   void Stop();
-  void Poll();
+  void PollLoop();
   bool IsRunning();
 
 private:

@@ -35,14 +35,14 @@ Server::Start(int port)
   isRunning = true;
   enet_host_flush(server);
 
-  pollThread = std::thread([this]() { Poll(); });
+  pollThread = std::thread([this]() { PollLoop(); });
   pollThread.detach();
 
   return true;
 }
 
 void
-Server::Poll()
+Server::PollLoop()
 {
   std::vector<uint32_t> clients;
   ENetEvent event;
