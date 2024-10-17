@@ -13,18 +13,24 @@ issues, but in a simple txt file
   - workspace flow:
     - persist dynamic app
     - select workspace
-    - select app in workspace (maybe we already have this for free)
+    * select app in workspace (maybe we already have this for free)
     - resize app
     - move app
-      ? have it follow my mouse
+      - register control keys
+        - start move
+        - stop move (can probably be the same key)
+      - have app blit to the screen when moving
+      - update the app coordinates
     - kill app
     - name the workspace
     - click to focus
 
 
+
 # Tasks
 
 ## Planned
+- get blender objs rendering textures properly
 
 ### Priority
 - click to focus
