@@ -4,7 +4,10 @@ enum MessageType {
   MOVE = 0;
   TURN_KEY = 1;
   PLAYER_MOVE = 2;
+  UNFOCUS_WINDOW = 3;
 }
+
+message NoPayload {}
 
 message Vector {
   float x = 1;
@@ -17,6 +20,7 @@ message PlayerMove {
   Vector rotation = 2;
   float unitsPerSecond = 3;
 }
+
 
 message Move {
   float xDelta = 1;
@@ -36,6 +40,7 @@ message ApiRequest {
     Move move = 3;
     TurnKey turnKey = 4;
     PlayerMove playerMove = 5;
+    NoPayload noPayload = 6;
   }
 }
 

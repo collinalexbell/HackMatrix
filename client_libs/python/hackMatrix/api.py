@@ -39,9 +39,13 @@ def player_move(position, rotation, unitsPerSecond):
     socket.recv()
 
 
+noPayload = api_pb2.NoPayload()
 
-
-
+def unfocus_app():
+    api_pb2.NoPayload()
+    apiRequest = api_pb2.ApiRequest(entityId=0,
+                                    type="UNFOCUS_WINDOW",
+                                    noPayload=noPayload)
 
 if __name__ == "__main__":
     pass

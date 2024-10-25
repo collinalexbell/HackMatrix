@@ -24,9 +24,11 @@ int BatchedRequest::nextId = 0;
 
 Api::Api(std::string bindAddress,
          shared_ptr<EntityRegistry> registry,
-         Controls* controls)
+         Controls* controls,
+         shared_ptr<WindowManager::WindowManager> wm)
   : registry(registry)
   , controls(controls)
+  , wm(wm)
 {
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
@@ -122,6 +124,10 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
                          playerMove.rotation().y(),
                          playerMove.rotation().z());
       controls->moveTo(pos, rotation, playerMove.unitspersecond());
+      break;
+    }
+    case UNFOCUS_WINDOW: {
+      wm->unfocusApp();
     }
     default:
       break;
