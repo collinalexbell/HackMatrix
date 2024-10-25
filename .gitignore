@@ -63,3 +63,5 @@ vids/
 tools/*
 
 traces/*
+
+pyenv/*
