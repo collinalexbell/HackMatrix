@@ -31,6 +31,7 @@ issues, but in a simple txt file
 
 ## Planned
 - get blender objs rendering textures properly
+- exit window mode  (super + e functionality, but zmqapi call)
 
 ### Priority
 - click to focus
@@ -43,7 +44,6 @@ issues, but in a simple txt file
 - fix lighting distance (it creates a circle pattern (look at the key area))
 - fix load app spun around bug
 - fix how transparent objects work with apps
-
 
 # Maybe not bugs
 - Add music overlay so that if I listen to copywritten music, stream viewers can listen along to the same music synced with the silent video
