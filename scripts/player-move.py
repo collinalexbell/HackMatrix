@@ -2,8 +2,8 @@ import hackMatrix.api as matrix
 import player.shake as shake
 import time
 
+matrix.unfocus_app()
 scale = 300 
-time.sleep(1)
 burst_margin_t = 3
 matrix.player_move((scale/5, 0, 0), (0, 180, 0), 7)
 time.sleep(7+burst_margin_t)
