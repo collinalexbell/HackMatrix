@@ -435,6 +435,7 @@ void WindowManager::focusApp(entt::entity appEntity) {
 }
 
 void WindowManager::unfocusApp() {
+  logger->debug("unfocusing app");
   if (currentlyFocusedApp.has_value()) {
     auto &app = registry->get<X11App>(currentlyFocusedApp.value());
     app.unfocus(matrix);

@@ -13,6 +13,9 @@
 
 using namespace std;
 
+namespace WindowManager {
+  class WindowManager;
+}
 class Controls;
 class Api;
 class CommandServer
@@ -57,6 +60,7 @@ class Api
   };
 
   Controls* controls;
+  shared_ptr<WindowManager::WindowManager> wm;
 
   shared_ptr<spdlog::logger> logger;
   shared_ptr<EntityRegistry> registry;
@@ -78,7 +82,7 @@ protected:
   void processBatchedRequest(BatchedRequest);
 
 public:
-  Api(std::string bindAddress, shared_ptr<EntityRegistry>, Controls* controls);
+  Api(std::string bindAddress, shared_ptr<EntityRegistry>, Controls* controls, shared_ptr<WindowManager::WindowManager>);
   ~Api();
   void poll();
   void mutateEntities();

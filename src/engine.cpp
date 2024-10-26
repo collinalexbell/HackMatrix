@@ -136,7 +136,7 @@ Engine::initialize()
     registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
-  api = new Api("tcp://*:3333", registry, controls);
+  api = new Api("tcp://*:3333", registry, controls, wm);
   wm->registerControls(controls);
 }
 

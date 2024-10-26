@@ -60,7 +60,6 @@ class WindowManager {
   void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
   void onHotkeyPress(XKeyEvent event);
-  void unfocusApp();
   void createApp(Window window, unsigned int width = Bootable::DEFAULT_WIDTH,
                  unsigned int height = Bootable::DEFAULT_HEIGHT);
   void addApp(X11App *, entt::entity);
@@ -74,8 +73,8 @@ class WindowManager {
   void setWMProps(Window root);
   void reconfigureWindow(XConfigureEvent);
 
-
 public:
+  void unfocusApp();
   void dMenu();
   void passthroughInput();
   void captureInput();
