@@ -725,12 +725,19 @@ entityMatchesComponentFilter(shared_ptr<EntityRegistry> registry,
                                         entt::entity entity,
                                         const std::string& filter)
 {
+  auto rv = false;
+
   auto model = registry->try_get<Model>(entity);
-  if(model != NULL && model->path.find(filter) != std::string::npos) {
-    return true;
+  if (model != NULL && model->path.find(filter) != std::string::npos) {
+    rv = true;
   }
 
-  return false; // Return true if any component attribute matches the filter
+  auto bootable = registry->try_get<Bootable>(entity);
+  if (bootable != NULL && bootable->cmd.find(filter) != std::string::npos) {
+    rv = true;
+  }
+
+  return rv;
 }
 
 void
