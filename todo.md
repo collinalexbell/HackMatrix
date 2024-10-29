@@ -32,6 +32,7 @@ issues, but in a simple txt file
 ## Planned
 - get blender objs rendering textures properly
 - exit window mode  (super + e functionality, but zmqapi call)
+- create positionable at camera position ("spawn Positionables where I'm at")
 
 ### Priority
 - click to focus
