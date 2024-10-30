@@ -652,7 +652,9 @@ void
 Renderer::renderModels(RenderPerspective perspective)
 {
   TracyGpuZone("render models");
-  glEnable(GL_CULL_FACE);
+  if(perspective != LIGHT) {
+    glEnable(GL_CULL_FACE);
+  }
   auto frustum = camera->createFrustum();
   shader->setBool("isModel", true);
   shader->setVec3("viewPos", camera->position);
