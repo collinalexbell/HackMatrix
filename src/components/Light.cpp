@@ -11,7 +11,7 @@ unsigned int Light::nextTextureUnit = 20;
 Light::Light(glm::vec3 color): color(color) {
   textureUnit = nextTextureUnit++;
   std::cout << "textureUnit: " << textureUnit << std::endl;
-  farPlane = 25.0f;
+  farPlane = 50.0f;
   nearPlane = 0.02f;
 
   glGenFramebuffers(1, &depthMapFBO);
