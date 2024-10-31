@@ -30,6 +30,7 @@ issues, but in a simple txt file
 # Tasks
 
 ## Planned
+- controls for player speed in game
 - get blender objs rendering textures properly
 - exit window mode  (super + e functionality, but zmqapi call)
 - create positionable at camera position ("spawn Positionables where I'm at")
