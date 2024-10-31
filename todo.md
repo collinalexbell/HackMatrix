@@ -31,6 +31,7 @@ issues, but in a simple txt file
 
 ## Planned
 - controls for player speed in game
+- (there are too many controls, maybe I need a menu)
 - get blender objs rendering textures properly
 - exit window mode  (super + e functionality, but zmqapi call)
 - create positionable at camera position ("spawn Positionables where I'm at")
