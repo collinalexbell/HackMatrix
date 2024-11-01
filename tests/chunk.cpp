@@ -23,8 +23,8 @@ TEST(CHUNK, addCube_getCube) {
   cube.position() = glm::vec3(3,2,1);
   cube.selected() = 0;
   chunk.addCube(cube, cube.position().x, cube.position().y, cube.position().z);
-  auto got = chunk.getCube(cube.position().x, cube.position().y, cube.position().z);
-  ASSERT_EQ(cube.position(), got->position());
+  auto got = chunk.getCube(cube.position().x, cube.position().y,
+cube.position().z); ASSERT_EQ(cube.position(), got->position());
   ASSERT_EQ(cube.blockType(), got->blockType());
   ASSERT_EQ(cube.selected(), got->selected());
 }
@@ -52,4 +52,18 @@ TEST(CHUNK, mesh) {
   ASSERT_EQ(mesh->positions.size(), 36 * 2);
   ASSERT_EQ(mesh->blockTypes.size(), 36 * 2);
   ASSERT_EQ(mesh->selects.size(), 36 * 2);
+}
+
+TEST(CHUNK, meshEmptyChunk)
+{
+  auto chunk = Chunk(0, 0, 0);
+  auto cube = Cube();
+  cube.blockType() = 0;
+  cube.position() = glm::vec3(3, 2, 1);
+  cube.selected() = 0;
+
+  auto mesh = chunk.mesh();
+  ASSERT_EQ(mesh->positions.size(), 0);
+  ASSERT_EQ(mesh->blockTypes.size(), 0);
+  ASSERT_EQ(mesh->selects.size(), 0);
 }

@@ -1,7 +1,6 @@
 #include "chunk.h"
 #include <cassert>
 #include <memory>
-#include <iostream>
 #include <vector>
 
 Chunk::Chunk(int x, int y, int z)
@@ -61,6 +60,7 @@ Chunk::removeCube(int x, int y, int z)
   array<int, 3> pos = { x, y, z };
   mesher->meshDamaged(pos);
   data[index(x, y, z)].reset();
+  count--;
 }
 void
 Chunk::addCube(Cube c, int x, int y, int z)
@@ -68,6 +68,7 @@ Chunk::addCube(Cube c, int x, int y, int z)
   array<int, 3> pos = { x, y, z };
   mesher->meshDamaged(pos);
   data[index(x, y, z)] = make_shared<Cube>(c);
+  count++;
 }
 
 ChunkMesh
@@ -76,7 +77,7 @@ Chunk::meshedFaceFromPosition(Position position)
   return mesher->meshedFaceFromPosition(position);
 }
 
-shared_ptr<ChunkMesh> getChunkMesh() {
+shared_ptr<ChunkMesh> getEmptyChunkMesh() {
   static std::vector<glm::vec3> positions;
   static std::vector<glm::vec2> texCoords;
   static std::vector<int> blockTypes;
@@ -90,9 +91,11 @@ shared_ptr<ChunkMesh> getChunkMesh() {
 shared_ptr<ChunkMesh>
 Chunk::mesh()
 {
-  //return mesher->mesh();
-  return getChunkMesh();
-  
+  if(count > 0) {
+    return mesher->mesh();
+  } else {
+    return getEmptyChunkMesh();
+  }
 }
 
 void
