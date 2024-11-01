@@ -76,16 +76,22 @@ Chunk::meshedFaceFromPosition(Position position)
   return mesher->meshedFaceFromPosition(position);
 }
 
+shared_ptr<ChunkMesh> getChunkMesh() {
+  static std::vector<glm::vec3> positions;
+  static std::vector<glm::vec2> texCoords;
+  static std::vector<int> blockTypes;
+  static std::vector<int> selects;
+  static shared_ptr<ChunkMesh> rv = std::make_shared<ChunkMesh>(
+    SIMPLE, positions, texCoords, blockTypes, selects);
+
+  return rv;
+}
+
 shared_ptr<ChunkMesh>
 Chunk::mesh()
 {
   //return mesher->mesh();
-  std::vector<glm::vec3> positions;
-  std::vector<glm::vec2> texCoords;
-  std::vector<int> blockTypes;
-  std::vector<int> selects;
-
-  return std::make_shared<ChunkMesh>(SIMPLE, positions, texCoords, blockTypes, selects);
+  return getChunkMesh();
   
 }
 
