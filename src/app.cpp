@@ -437,6 +437,9 @@ X11App::unfocus(Window matrix)
   Window root = DefaultRootWindow(display);
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   XUngrabKey(display, eKeyCode, AnyModifier, root);
+  KeyCode bKeyCode = XKeysymToKeycode(display, XK_b);
+  XUngrabKey(display, bKeyCode, AnyModifier, root);
+
   XSetInputFocus(display, matrix, RevertToParent, CurrentTime);
   XSync(display, False);
   XFlush(display);
@@ -481,6 +484,10 @@ X11App::focus(Window matrix)
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   XGrabKey(
     display, eKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+  KeyCode bKeyCode = XKeysymToKeycode(display, XK_b);
+  XGrabKey(
+    display, bKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+
   XSync(display, False);
   XFlush(display);
 }
