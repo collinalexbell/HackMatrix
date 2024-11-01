@@ -725,6 +725,7 @@ Renderer::render(RenderPerspective perspective,
   lightUniforms(perspective, fromLight);
   renderModels(perspective);
   renderApps();
+  //renderChunkMesh();
 }
 
 Camera*
