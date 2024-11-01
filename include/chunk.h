@@ -34,6 +34,7 @@ class Chunk
   bool damagedSimple = true;
   bool damagedGreedy = true;
   void setDamaged();
+  int count = 0;
 
   friend shared_ptr<ChunkMesh> Mesher::simpleMesh(Chunk* chunk);
 
