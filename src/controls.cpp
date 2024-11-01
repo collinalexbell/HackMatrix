@@ -341,3 +341,8 @@ Controls::wireWindowManager(shared_ptr<WindowManager::Space> windowManagerSpace)
 {
   this->windowManagerSpace = windowManagerSpace;
 }
+
+
+void Controls::handleMakeWindowBootable(GLFWwindow* window) {
+
+}
