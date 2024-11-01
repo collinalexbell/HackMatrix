@@ -120,6 +120,8 @@ World::initChunks()
   */
 
   middleIndex = calculateMiddleIndex();
+  Cube c;
+  chunks[middleIndex.x][middleIndex.z]->addCube(c, 0,10,0);
 }
 
 World::~World() {}
@@ -136,7 +138,7 @@ World::mesh(bool realTime)
       m.push_back(chunks[x][z]->mesh());
     }
   }
-  //renderer->updateChunkMeshBuffers(m);
+  renderer->updateChunkMeshBuffers(m);
 }
 
 const vector<shared_ptr<Cube>>
