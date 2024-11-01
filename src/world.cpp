@@ -45,7 +45,7 @@ World::World(shared_ptr<EntityRegistry> registry,
   initLogger(loggerSink);
   logger->debug("Hello World!");
   // initLoader(minecraftFolder, texturePack);
-  // initChunks();
+  initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
   dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f),
                                          glm::vec3(0.1f, 0.1f, 0.1f));
@@ -93,6 +93,7 @@ World::initChunks()
     }
   }
 
+  /*
   // SOUTH
   preloadedChunks[SOUTH] = deque<future<deque<shared_ptr<Chunk>>>>();
   for (int z = zMax + 1; z < zMax + 1 + PRELOAD_SIZE; z++) {
@@ -116,6 +117,7 @@ World::initChunks()
   for (int x = xMin - 1; x > xMin - 1 - PRELOAD_SIZE; x--) {
     loadNextPreloadedChunkDeque(WEST, true);
   }
+  */
 
   middleIndex = calculateMiddleIndex();
 }
@@ -134,7 +136,7 @@ World::mesh(bool realTime)
       m.push_back(chunks[x][z]->mesh());
     }
   }
-  renderer->updateChunkMeshBuffers(m);
+  //renderer->updateChunkMeshBuffers(m);
 }
 
 const vector<shared_ptr<Cube>>
@@ -1004,4 +1006,5 @@ World::tick()
     renderer->updateDynamicObjects(dynamicObjects);
   }
   dynamicCube->move(glm::vec3(0.0f, 0.0f, 0.01f));
+  mesh();
 }

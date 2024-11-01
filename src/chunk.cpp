@@ -1,6 +1,8 @@
 #include "chunk.h"
 #include <cassert>
 #include <memory>
+#include <iostream>
+#include <vector>
 
 Chunk::Chunk(int x, int y, int z)
   : posX(x)
@@ -77,7 +79,14 @@ Chunk::meshedFaceFromPosition(Position position)
 shared_ptr<ChunkMesh>
 Chunk::mesh()
 {
-  return mesher->mesh();
+  //return mesher->mesh();
+  std::vector<glm::vec3> positions;
+  std::vector<glm::vec2> texCoords;
+  std::vector<int> blockTypes;
+  std::vector<int> selects;
+
+  return std::make_shared<ChunkMesh>(SIMPLE, positions, texCoords, blockTypes, selects);
+  
 }
 
 void
