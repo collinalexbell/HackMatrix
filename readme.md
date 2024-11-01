@@ -11,7 +11,7 @@ A 3D Linux desktop environment (which can also be a game engine)
 ## Usage
 
 ### Navigate the 3d space
-Look around with a mouse
+Look around with the mouse
 
 <img src="vids/lookAround.gif" width="420">
 
