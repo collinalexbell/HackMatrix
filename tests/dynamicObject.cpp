@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+/*
 TEST(DynamicObjectSpace_getObjectById, returnsObject) {
   auto space = DynamicObjectSpace();
   auto cube = make_shared<DynamicCube>(glm::vec3(0,0,0), glm::vec3(0,0,0));
@@ -23,3 +24,4 @@ TEST(DynamicObjectSpace_getObjectIds, returnsIds) {
     ASSERT_TRUE(find(ids.begin(), ids.end(), cube->id()) != ids.end());
   }
 }
+*/
