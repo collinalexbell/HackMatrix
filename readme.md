@@ -11,7 +11,7 @@ A 3D Linux desktop environment (which can also be a game engine)
 ## Usage
 
 ### Navigate the 3d space
-Look around with mouse
+Look around with the mouse
 
 <img src="vids/lookAround.gif" width="420">
 
@@ -35,7 +35,7 @@ Press `r` to [focus](#manually-focus-window) on the window
 <img src="vids/openWindow.gif" width="420">
 
 ### Manually focus window
-Look at window and press `r`
+Look at the window and press `r`
 
 __warning__: sometimes this doesn't work temporarily because of a bug.
 
@@ -45,7 +45,7 @@ If that happens just use Super+1 to focus a window and then manual focus will wo
 <img src="vids/focus.gif" width="420">
 
 ### Exit window
-When focused on window press `Super+e`
+When focused on a window press `Super+e`
 
 <img src="vids/exitWindow.gif" width="420">
 
@@ -58,18 +58,18 @@ Windows are auto hotkeyed in the order they are created.
 <img src="vids/hotkey.gif" width="420">
 
 ### Exit HackMatrix
-When not focued on window press `<esc>`
+When not focused on a window press `<esc>`
 
-(press `Super+e` first if focused on window)
+(press `Super+e` first if focused on a window)
 
 ### Take a screenshot
 
-Press `p` to save a screenshot into `<project_dir>/screenshots` folder
+Press `p` to save a screenshot into the `<project_dir>/screenshots` folder
 
 ### Hackmatrix menu
-There is a small menu up at the top of HackMatrix.
+There is a small menu at the top of HackMatrix.
 
-You an use this to inspect and modify entities (the game engine aspect of HackMatrix)
+You can use this to inspect and modify entities (the game engine aspect of HackMatrix)
 
 When not focused on an app, press `f` to enter into mouse mode
 
@@ -120,12 +120,18 @@ sudo dnf install xdotool xorg-x11-utils protobuf-compiler @development-tools zer
 
 #### Arch Linux
 
-I'm currently working on an issue with protobuf compilation errors for arch. [This PR](https://github.com/collinalexbell/HackMatrix/pull/48) shows how to resolve the issue.
+I'm currently working on an issue with protobuf compilation errors for Arch. [This PR](https://github.com/collinalexbell/HackMatrix/pull/48) shows how to resolve the issue.
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
 sudo pacman -S xdotool dmenu xorg-server xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```
+#### Gentoo
+```bash
+ sudo emerge net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool  protobuf dev-libs/pthreadpool media-libs/libass media-lib/assimp dmenu
+```
+> [!NOTE]
+> you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.
 
 Make sure to install these libraries before proceeding with the compilation and execution of the program. The program's build system will link against these libraries using the provided `LIBS` flags:
 
@@ -164,7 +170,7 @@ Add the following line at the end of your `~/.xinitrc` file:
 
 When developing HackMatrix, I frequently quit and rerun the `matrix` program without restarting X.
 I wrote a trampoline program that will restart HackMatrix every time you exit.
-Unfortunately, if you use a bleeding edge distro like Arch, there is a resource leak in GLFW that prevents you from using this. I've submit a patch PR and you can compile and install my [fork of GLFW](https://github.com/collinalexbell/glfw/tree/fixleak) if you wish to use the `trampoline`. Be sure to compile the `fixleak` branch, not `master`.
+Unfortunately, if you use a bleeding edge distro like Arch, there is a resource leak in GLFW that prevents you from using this. I've submitted a patch PR and you can compile and install my [fork of GLFW](https://github.com/collinalexbell/glfw/tree/fixleak) if you wish to use the `trampoline`. Be sure to compile the `fixleak` branch, not `master`.
 
  ```bash
  cd ~/<replace with repository directory>
@@ -184,7 +190,7 @@ To exit the `trampoline`, run `pkill trampoline` in the terminal
 - Run `tmux` 
 - Split the window `CTRL+b %`
 - Run `<project root>/devtools/gdb` in one split (and start the program)
-- Change to other split `CTLR+b <right arrow>`. Press `<enter>` to make sure shell is accepting input.
+- Change to other split `CTLR+b <right arrow>`. Press `<enter>` to make sure the shell is accepting input.
 - Run `<project root>/devtools/display` to go back to TTY1 (or CTRL+FN+ALT+1 if your machine lets you do that)
 
 
@@ -192,7 +198,7 @@ To exit the `trampoline`, run `pkill trampoline` in the terminal
 
 After you have edited your `~/.xinitrc` ([see this](#running)) just run `startx` to boot HackMatrix
 
-### Start X11 with graphical session manager
+### Start X11 with a graphical session manager
 
 If you use something like GDM, you will have to create a .desktop file that calls `<project_dir>/matrix` or `<project_dir>`/trampoline.
 
