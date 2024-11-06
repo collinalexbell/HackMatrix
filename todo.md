@@ -66,3 +66,6 @@ issues, but in a simple txt file
 
 ## Done
 - Fix the unfocused screen direct draw bug
+
+## Suggested
+- add HackMatrix to apt and pacman repos (aur should be simple)
