@@ -1,11 +1,3 @@
-# Detect if the distro is arch based
-ARCH_CHECK := $(shell grep -q 'arch' /etc/os-release && echo "true" || echo "false")
-
-# Set extra linker flags for Arch Linux
-ifeq ($(ARCH_CHECK),true)
-    EXTRA_LDFLAGS := -labsl_log_internal_check_op -labsl_log_internal_message
-endif
-
 PROTO_DIR = protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
@@ -16,7 +8,7 @@ LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
 ALL_OBJECTS = build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp
-LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw3 -lGL -lpthread -lassimp -lsqlite3
+LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw3 -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
 all: FLAGS+=-O3 -g
 all: include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
@@ -25,7 +17,7 @@ profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
 
 matrix: $(ALL_OBJECTS) build/main.o
-	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) $(EXTRA_LDFLAGS) $(INCLUDES)
+	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) -Wl,--as-needed $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
