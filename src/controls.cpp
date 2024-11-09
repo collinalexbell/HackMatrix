@@ -178,12 +178,12 @@ Controls::handleClicks(GLFWwindow* window, World* world)
 {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    world->action(PLACE_CUBE);
+    //world->action(PLACE_CUBE);
   }
 
   state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    world->action(REMOVE_CUBE);
+    //world->action(REMOVE_CUBE);
   }
 }
 
