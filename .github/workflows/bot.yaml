@@ -1,0 +1,13 @@
+name: HackMatrix Bot Issues cmp
+run-name: ${{ github.actor }}  cmp
+on: [push]
+jobs:
+  RunHackMatrixBot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: collinalexbell/AnonTheHackMatrixBot
+        with: 
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          repo-owner: "collinalexbell"
+          repo-name: "HackMatrix"
+        
