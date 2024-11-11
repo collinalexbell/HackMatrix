@@ -1,3 +1,11 @@
+# Detect if the distro is one that uses external fmt
+EXTERNAL_FMT_CHECK := $(shell grep -q 'void' /etc/os-release && echo "true" || echo "false")
+
+# Set extra compiler flags for Arch Linux
+ifeq ($(EXTERNAL_FMT_CHECK),true)
+    FLAGS+= -D SPDLOG_FMT_EXTERNAL
+endif
+
 PROTO_DIR = protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
