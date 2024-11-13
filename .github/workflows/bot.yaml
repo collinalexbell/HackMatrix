@@ -5,7 +5,7 @@ jobs:
   RunHackMatrixBot:
     runs-on: ubuntu-latest
     steps:
-      - uses: collinalexbell/AnonTheHackMatrixBot@v1
+      - uses: collinalexbell/AnonTheHackMatrixBot@v2
         with: 
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           repo-owner: "collinalexbell"
