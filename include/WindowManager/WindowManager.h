@@ -12,6 +12,7 @@
 #include <memory>
 #include <spdlog/common.h>
 #include <thread>
+#include <optional>
 
 class Controls;
 
@@ -41,7 +42,7 @@ class WindowManager {
 
   IdeSelection ideSelection;
 
-  vector<entt::entity> appsWithHotKeys;
+  vector<optional<entt::entity>> appsWithHotKeys;
   optional<entt::entity> currentlyFocusedApp;
   shared_ptr<Space> space;
   Window matrix;
@@ -72,6 +73,8 @@ class WindowManager {
   void adjustAppsToAddAfterAdditions(vector<X11App*>& waitForRemoval);
   void setWMProps(Window root);
   void reconfigureWindow(XConfigureEvent);
+  void swapHotKeys(int a, int b);
+  int findAppsHotKey(entt::entity theApp);
 
 public:
   void unfocusApp();
