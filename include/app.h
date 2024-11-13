@@ -95,6 +95,7 @@ public:
   void select();
   void deselect();
   bool isSelected();
+  void close();
 };
 
 #endif

@@ -236,11 +236,19 @@ void WindowManager::removeAppForWindow(Window window) {
 
 void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+  KeyCode qKeyCode = XKeysymToKeycode(display, XK_q);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
 
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
+  }
+  if (event.keycode == qKeyCode && event.state & Mod4Mask) {
+    // Windows Key (Super_L) + Ctrl + E is pressed
+    if (currentlyFocusedApp.has_value()) {
+      auto& app = registry->get<X11App>(currentlyFocusedApp.value());
+      app.close();
+    }
   }
   for (int i = 0; i < min((int)appsWithHotKeys.size(), 9); i++) {
     KeyCode code = XKeysymToKeycode(display, XK_1 + i);
