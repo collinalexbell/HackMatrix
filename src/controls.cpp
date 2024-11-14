@@ -135,7 +135,7 @@ Controls::handleSelection(GLFWwindow* window)
 {
   bool shouldSelect = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
   if (shouldSelect && debounce(lastKeyPressTime)) {
-    world->action(SELECT_CUBE);
+    //world->action(SELECT_CUBE);
   }
 }
 
