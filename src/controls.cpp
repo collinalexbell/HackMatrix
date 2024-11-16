@@ -178,7 +178,10 @@ Controls::handleClicks(GLFWwindow* window, World* world)
 {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    //world->action(PLACE_CUBE);
+	  auto app = windowManagerSpace->getLookedAtApp();
+	  if(app) {
+		  goToApp(app.value());
+	  }
   }
 
   state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
