@@ -69,6 +69,8 @@ class Camera
   float zFar;
   float zNear;
   float yFov;
+  static float DEFAULT_CAMERA_SPEED;
+  float cameraSpeed = DEFAULT_CAMERA_SPEED;
 
 public:
   glm::vec3 front;
@@ -89,6 +91,8 @@ public:
   glm::mat4& getProjectionMatrix(bool isRenderLoop = false);
   bool projectionMatrixUpdated();
   Frustum createFrustum();
+  void changeSpeed(float delta);
+  void resetSpeed();
 };
 
 #endif

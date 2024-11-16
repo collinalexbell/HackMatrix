@@ -9,6 +9,8 @@
 #include <memory>
 #include <iostream>
 
+float Camera::DEFAULT_CAMERA_SPEED = 0.03f;
+
 Camera::Camera()
 {
   position = glm::vec3(0.0f, 1.5f, 1.8f);
@@ -35,7 +37,6 @@ Camera::~Camera() {}
 void
 Camera::handleTranslateForce(bool up, bool down, bool left, bool right)
 {
-  const float cameraSpeed = 0.03f; // adjust accordingly
   if (up)
     position += cameraSpeed * front;
   if (down)
@@ -177,4 +178,15 @@ Camera::createFrustum()
                          glm::cross(frontMultFar + up * halfVSide, right) };
 
   return frustum;
+}
+
+void Camera::changeSpeed(float delta) {
+  auto newSpeed = cameraSpeed + delta;
+  if (newSpeed > 0) {
+    cameraSpeed = newSpeed;
+  }
+}
+
+void Camera::resetSpeed() {
+  cameraSpeed = DEFAULT_CAMERA_SPEED;
 }
