@@ -20,6 +20,7 @@ uniform sampler2D app8;
 uniform sampler2D app9;
 uniform bool isApp;
 uniform int appNumber;
+uniform bool SHADOWS_ENABLED;
 uniform bool isModel;
 uniform bool isLine;
 uniform bool appSelected;
@@ -128,9 +129,11 @@ vec4 Light(int i, samplerCube depthMap) {
   vec3 specular = specularStrength * spec * lightColor[i];
 
   // calculate shadow
-  float shadow; 
+  float shadow = 0; 
 
-  shadow = ShadowCalculation(depthMap, FragPos, norm, lightDir, i);                      
+  if(SHADOWS_ENABLED) {
+    shadow = ShadowCalculation(depthMap, FragPos, norm, lightDir, i);                      
+  }
   //float shadow = 0.0;
   //vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;
   return vec4(ambient + (1.0-shadow) * diffuse + specular, 1.0);

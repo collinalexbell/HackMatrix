@@ -25,6 +25,8 @@
 #include <ctime>
 #include <iomanip>
 
+#define SHADOWS_ENABLED true
+
 float HEIGHT = SCREEN_HEIGHT / SCREEN_WIDTH / 2.0;
 float MAX_LIGHTS = 5;
 
@@ -261,6 +263,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
 
   shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
+  shader->setBool("SHADOWS_ENABLED", SHADOWS_ENABLED);
 
   initAppTextures();
 
