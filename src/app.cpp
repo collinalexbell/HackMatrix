@@ -481,12 +481,18 @@ X11App::focus(Window matrix)
                   1);
 
   takeInputFocus();
+
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   XGrabKey(
     display, eKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+
   KeyCode bKeyCode = XKeysymToKeycode(display, XK_b);
   XGrabKey(
     display, bKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+
+  KeyCode qKeyCode = XKeysymToKeycode(display, XK_q);
+  XGrabKey(
+    display, qKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
 
   XSync(display, False);
   XFlush(display);
@@ -753,4 +759,42 @@ void
 X11App::deselect()
 {
   selected = false;
+}
+
+void X11App::close() {
+    XEvent ev = {0};
+    Atom *protocols = NULL;
+    int num_protocols = 0;
+    Atom wm_delete_window = XInternAtom(display, "WM_DELETE_WINDOW", False);
+
+    // Check if the window supports WM_DELETE_WINDOW protocol
+    if (XGetWMProtocols(display, appWindow, &protocols, &num_protocols)) {
+        int i;
+        int supports_wm_delete = 0;
+        for (i = 0; i < num_protocols; i++) {
+            if (protocols[i] == wm_delete_window) {
+                supports_wm_delete = 1;
+                break;
+            }
+        }
+
+        XFree(protocols);
+
+        if (supports_wm_delete) {
+            // Send WM_DELETE_WINDOW client message
+            ev.type = ClientMessage;
+            ev.xclient.window = appWindow;
+            ev.xclient.message_type = XInternAtom(display, "WM_PROTOCOLS", True);
+            ev.xclient.format = 32;
+            ev.xclient.data.l[0] = wm_delete_window;
+            ev.xclient.data.l[1] = CurrentTime;
+            XSendEvent(display, appWindow, False, NoEventMask, &ev);
+            XFlush(display);
+        }
+    }
+
+    // If WM_DELETE_WINDOW isn't supported, destroy the window directly
+    XDestroyWindow(display, appWindow);
+    XFlush(display);
+
 }

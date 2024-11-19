@@ -52,6 +52,7 @@ class Controls
   void handleToggleWireframe(GLFWwindow* window);
   void handleLogBlockCounts(GLFWwindow* window);
   void handleLogBlockType(GLFWwindow* window);
+  void handleChangePlayerSpeed(GLFWwindow* window);
   void handleWindowFlop(GLFWwindow* window);
   void handleMakeWindowBootable(GLFWwindow* window);
 

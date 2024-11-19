@@ -234,19 +234,56 @@ void WindowManager::removeAppForWindow(Window window) {
   renderLoopMutex.unlock();
 }
 
+void WindowManager::swapHotKeys(int a, int b) {
+  if(a < appsWithHotKeys.size() && b < appsWithHotKeys.size()) {
+    auto aOpt = appsWithHotKeys[a];
+    appsWithHotKeys[a] = appsWithHotKeys[b];
+    appsWithHotKeys[b] = aOpt;
+  }
+}
+
+
+int WindowManager::findAppsHotKey(entt::entity theApp)
+{
+  for (size_t i = 0; i < appsWithHotKeys.size(); i++) {
+    if (appsWithHotKeys[i].has_value() &&
+        appsWithHotKeys[i].value() == theApp) {
+      return static_cast<int>(i);
+    }
+  }
+  return -1;
+}
+
 void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
+  KeyCode qKeyCode = XKeysymToKeycode(display, XK_q);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
 
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
   }
+  if (event.keycode == qKeyCode && event.state & Mod4Mask) {
+    // Windows Key (Super_L) + Ctrl + E is pressed
+    if (currentlyFocusedApp.has_value()) {
+      auto& app = registry->get<X11App>(currentlyFocusedApp.value());
+      app.close();
+    }
+  }
   for (int i = 0; i < min((int)appsWithHotKeys.size(), 9); i++) {
     KeyCode code = XKeysymToKeycode(display, XK_1 + i);
+    if (event.keycode == code && event.state & Mod4Mask && event.state & ShiftMask) {
+      if (currentlyFocusedApp.has_value()) {
+        int source = findAppsHotKey(currentlyFocusedApp.value());
+        swapHotKeys(source, i);
+        return;
+      }
+    }
     if (event.keycode == code && event.state & Mod4Mask) {
       unfocusApp();
-      controls->goToApp(appsWithHotKeys[i]);
+      if(appsWithHotKeys[i]) {
+        controls->goToApp(appsWithHotKeys[i].value());
+      }
     }
   }
   KeyCode code = XKeysymToKeycode(display, XK_0);
@@ -560,6 +597,7 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
   for (int i = 0; i < 10; i++) {
     KeyCode code = XKeysymToKeycode(display, XK_0 + i);
     XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, code, Mod4Mask | ShiftMask, root, true, GrabModeAsync, GrabModeAsync);
   }
   XSync(display, false);
   XFlush(display);

@@ -57,6 +57,10 @@ Windows are auto hotkeyed in the order they are created.
 
 <img src="vids/hotkey.gif" width="420">
 
+### Close a window
+
+When window has focus, press `Super+q`
+
 ### Exit HackMatrix
 When not focused on a window press `<esc>`
 
