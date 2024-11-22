@@ -30,19 +30,16 @@ issues, but in a simple txt file
 # Tasks
 
 ## Planned
-- controls for player speed in game
 - (there are too many controls, maybe I need a menu)
 - get blender objs rendering textures properly
 - exit window mode  (super + e functionality, but zmqapi call)
 - create positionable at camera position ("spawn Positionables where I'm at")
 
 ### Priority
-- click to focus
 ### Opposite of Priority
 
 # Bugs
 - Fix crashes (TBC)
-- fix the need to press hotkey to focus after app creation sometimes bug
 - fix lighting acne (distanced)
 - fix lighting distance (it creates a circle pattern (look at the key area))
 - fix load app spun around bug
@@ -51,8 +48,6 @@ issues, but in a simple txt file
 # Maybe not bugs
 - Add music overlay so that if I listen to copywritten music, stream viewers can listen along to the same music synced with the silent video
 - Demo full speed, real time, networked multiplayer, add video link to readme
-- Enable rearranging of hotkeys
-  - proposal 1: swapping system
 - Reload dynamically created windows
 - Intuitive window repositioning
 - VR
@@ -66,6 +61,11 @@ issues, but in a simple txt file
 
 ## Done
 - Fix the unfocused screen direct draw bug
+- controls for player speed in game
+- click to focus
+- fix the need to press hotkey to focus after app creation sometimes bug (kind of fixed, just use mouse click)
+- Enable rearranging of hotkeys
+  - proposal 1: swapping system
 
 ## Suggested
 - add HackMatrix to apt and pacman repos (aur should be simple)
