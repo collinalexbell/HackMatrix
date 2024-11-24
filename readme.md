@@ -230,3 +230,12 @@ cd ../..
 python scripts/player-move.py
 ```
 
+
+# Problems
+
+## Trackpad disabled while typing (moving)
+```
+xinput list | grep -i touchpad
+# grab the id and replace <id> below with it
+xinput set-prop <id> "libinput Disable While Typing Enabled" 0
+```
