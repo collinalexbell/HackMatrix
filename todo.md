@@ -21,10 +21,7 @@ issues, but in a simple txt file
         - stop move (can probably be the same key)
       - have app blit to the screen when moving
       - update the app coordinates
-    - kill app
     - name the workspace
-    - click to focus
-
 
 
 # Tasks

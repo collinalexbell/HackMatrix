@@ -41,6 +41,37 @@ Server::Start(int port)
   return true;
 }
 
+PlayerUpdate
+Server::getPlayerUpdateFromEvent(ENetEvent& event)
+{
+  PlayerUpdate update;
+  glm::vec3* data = reinterpret_cast<glm::vec3*>(event.packet->data);
+  update.position = data[0];
+  update.front = data[1];
+  update.playerID = event.peer->connectID;
+  return update;
+}
+
+void
+Server::broadcastPlayerUpdate(PlayerUpdate& update)
+{
+  ENetPacket* packet =
+    enet_packet_create(NULL,
+                       sizeof(glm::vec3) * 2 + sizeof(uint32_t),
+                       ENET_PACKET_FLAG_UNSEQUENCED);
+
+  memcpy(packet->data, &update.position, sizeof(glm::vec3));
+  memcpy(static_cast<unsigned char*>(packet->data) + sizeof(glm::vec3),
+         &update.front,
+         sizeof(glm::vec3));
+  memcpy(static_cast<unsigned char*>(packet->data) + sizeof(glm::vec3) * 2,
+         &update.playerID,
+         sizeof(uint32_t));
+
+  enet_host_broadcast(server, 1, packet);
+  enet_host_flush(server);
+}
+
 void
 Server::PollLoop()
 {
@@ -66,30 +97,9 @@ Server::PollLoop()
           clients.push_back(playerId);
         } break;
         case ENET_EVENT_TYPE_RECEIVE:
-          // Handle received data
-          if (event.channelID == 1) { // Player data channel
-            glm::vec3* data = reinterpret_cast<glm::vec3*>(event.packet->data);
-            glm::vec3 position = data[0];
-            glm::vec3 front = data[1];
-            uint32_t playerID = event.peer->connectID;
-
-            ENetPacket* packet =
-              enet_packet_create(NULL,
-                                 sizeof(glm::vec3) * 2 + sizeof(uint32_t),
-                                 ENET_PACKET_FLAG_UNSEQUENCED);
-
-            memcpy(packet->data, &position, sizeof(glm::vec3));
-            memcpy(static_cast<unsigned char*>(packet->data) +
-                     sizeof(glm::vec3),
-                   &front,
-                   sizeof(glm::vec3));
-            memcpy(static_cast<unsigned char*>(packet->data) +
-                     sizeof(glm::vec3) * 2,
-                   &playerID,
-                   sizeof(uint32_t));
-
-            enet_host_broadcast(server, 1, packet);
-            enet_host_flush(server);
+          if (event.channelID == PLAYER_UPDATE) {
+            auto update = getPlayerUpdateFromEvent(event);
+            broadcastPlayerUpdate(update);
           }
 
           enet_packet_destroy(event.packet);
