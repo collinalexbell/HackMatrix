@@ -217,6 +217,10 @@ build/x-raise: src/x-raise.c
 build/diagnosis: src/diagnosis.cpp
 	g++ -o build/diagnosis src/diagnosis.cpp
 
+install:
+	install -d $(DESTDIR)bin
+	install -m 755 matrix $(DESTDIR)bin
+
 docs: game-design.md
 	pandoc -s game-design.md -o index.html
 	python -m http.server
