@@ -1,0 +1,22 @@
+pkgname=hackmatrix
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A 3d openworld desktop engine"
+arch=('x86_64')
+url="https://github.com/collinalexbell/HackMatrix"
+license=('MIT')
+depends=('xdotool' 'dmenu' 'xorg-server' 'xorg-xinit' 'xorg-xwininfo' 'xorg-xrandr' 'protobuf' 'base-devel' 'zeromq' 'libx11' 'libxcomposite' 'libxtst' 'libxext' 'libxfixes' 'spdlog' 'fmt' 'glfw-x11' 'mesa' 'assimp' 'sqlite')
+makedepends=('git' 'base-devel')
+source=("git+https://github.com/collinalexbell/HackMatrix.git")
+sha256sums=('SKIP')
+
+build() {
+    cd "HackMatrix"
+    git submodule update --init
+    make
+}
+
+package() {
+    cd "HackMatrix"
+    make DESTDIR="$pkgdir/usr/" install
+}
