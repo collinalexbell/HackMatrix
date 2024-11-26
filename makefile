@@ -21,10 +21,13 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 
 
 all: FLAGS+=-O3 -g
-all: include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
+all: tracy include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
 
 profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
+
+tracy:
+	git submodule update --init
 
 matrix: $(ALL_OBJECTS) build/main.o
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) -Wl,--as-needed $(INCLUDES)
