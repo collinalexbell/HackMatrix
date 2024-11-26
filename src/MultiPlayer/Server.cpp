@@ -53,7 +53,7 @@ Server::getPlayerUpdateFromEvent(ENetEvent& event)
 }
 
 void
-Server::broadcastPlayerUpdate(PlayerUpdate& update)
+Server::broadcastPlayerUpdate(PlayerUpdate update)
 {
   ENetPacket* packet =
     enet_packet_create(NULL,

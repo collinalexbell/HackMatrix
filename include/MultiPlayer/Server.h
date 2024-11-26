@@ -35,7 +35,7 @@ private:
   std::atomic<bool> isRunning;
   std::thread pollThread;
   PlayerUpdate getPlayerUpdateFromEvent(ENetEvent&);
-  void broadcastPlayerUpdate(PlayerUpdate&);
+  void broadcastPlayerUpdate(PlayerUpdate);
 };
 
 }
