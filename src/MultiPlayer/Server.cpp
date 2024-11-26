@@ -101,8 +101,6 @@ Server::PollLoop()
             auto update = getPlayerUpdateFromEvent(event);
             broadcastPlayerUpdate(update);
           }
-
-          enet_packet_destroy(event.packet);
           break;
         case ENET_EVENT_TYPE_DISCONNECT: {
           break;
