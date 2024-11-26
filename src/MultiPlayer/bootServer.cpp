@@ -7,5 +7,7 @@ main()
 {
   auto server = MultiPlayer::Server();
   server.Start(1234);
-  server.PollLoop();
+  while(true) {
+    sleep(5);
+  }
 }
