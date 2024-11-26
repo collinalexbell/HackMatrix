@@ -3,7 +3,9 @@
 #include <glm/glm.hpp>
 #include "camera.h"
 #include <GLFW/glfw3.h>
+#include <type_traits>
 #include "systems/Player.h"
+#include <GLFW/glfw3.h>
 
 namespace MultiPlayer {
 
@@ -152,10 +154,18 @@ Client::isConnected()
 }
 
 bool
+Client::shouldSendPlayerPacket() {
+  return glfwGetTime()-lastUpdate >= UPDATE_EVERY;
+}
+
+void Client::justSentPlayerPacket() {
+  lastUpdate = glfwGetTime();
+}
+
+bool
 Client::sendPlayer(glm::vec3 position, glm::vec3 front)
 {
-  if (_isConnected) {
-
+  if (_isConnected && shouldSendPlayerPacket()) {
     ENetPacket* packet = enet_packet_create(
       NULL, sizeof(glm::vec3) * 2, ENET_PACKET_FLAG_UNSEQUENCED);
 
@@ -168,6 +178,7 @@ Client::sendPlayer(glm::vec3 position, glm::vec3 front)
     enet_peer_send(peer, 1, packet);
     enet_host_flush(client);
 
+    justSentPlayerPacket();
     return true;
   }
 

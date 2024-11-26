@@ -20,13 +20,15 @@ public:
   void startUpdateThread();
   void updateThreadLoop();
   void poll();
+  bool shouldSendPlayerPacket();
+  void justSentPlayerPacket();
 
 private:
   ENetHost* client;
   ENetPeer* peer;
   bool _isConnected = false;
   double lastUpdate = 0;
-  double UPDATE_EVERY = 1.0 / 20.0;
+  double UPDATE_EVERY = 1.0 / 5.0;
   std::shared_ptr<EntityRegistry> registry;
 };
 

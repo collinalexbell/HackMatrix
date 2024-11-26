@@ -151,7 +151,15 @@ Once the libraries are installed, you can compile and run the program as describ
 
 Right now this is the only way to install the project.
 
+#### Tracy submodule
 Clone the project (with submodules `git clone --recurse-submodules`), navigate to the project directory and run `make`:
+
+or
+
+if you have already cloned the project, use 
+```
+git submodule update --init
+```
 
 The build process will generate the `matrix` executable in the current directory.
 
