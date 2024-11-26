@@ -28,7 +28,7 @@ private:
   ENetPeer* peer;
   bool _isConnected = false;
   double lastUpdate = 0;
-  double UPDATE_EVERY = 1.0 / 5.0;
+  double UPDATE_EVERY = 1.0 / 20.0;
   std::shared_ptr<EntityRegistry> registry;
 };
 
