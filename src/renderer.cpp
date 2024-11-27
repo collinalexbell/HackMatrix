@@ -26,6 +26,7 @@
 #include <iomanip>
 
 #define SHADOWS_ENABLED true
+#define DISABLE_CULLING true
 
 float HEIGHT = SCREEN_HEIGHT / SCREEN_WIDTH / 2.0;
 float MAX_LIGHTS = 5;
@@ -677,6 +678,9 @@ Renderer::renderModels(RenderPerspective perspective)
   int count = 0;
   for (auto [entity, p, m] : modelView.each()) {
     bool shouldDraw = systems::isOnFrustum(registry, entity, frustum);
+    if(DISABLE_CULLING) {
+      shouldDraw = true;
+    }
     if (!shouldDraw) {
       continue;
     }
