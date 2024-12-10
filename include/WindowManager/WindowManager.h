@@ -8,6 +8,7 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
 #include <atomic>
+#include <string>
 #include <map>
 #include <memory>
 #include <spdlog/common.h>
@@ -39,6 +40,7 @@ class WindowManager {
   entt::entity microsoftEdge;
   entt::entity obs;
   entt::entity terminator;
+  std::string menuProgram;
 
   IdeSelection ideSelection;
 
@@ -78,7 +80,7 @@ class WindowManager {
 
 public:
   void unfocusApp();
-  void dMenu();
+  void menu();
   void passthroughInput();
   void captureInput();
   void createAndRegisterApps(char **envp);

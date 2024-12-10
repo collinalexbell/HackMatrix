@@ -81,7 +81,7 @@ Controls::handleDMenu(GLFWwindow* window, World* world)
   // its V menu for now :(
   bool dMenuActive = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
   if (dMenuActive && debounce(lastKeyPressTime)) {
-    wm->dMenu();
+    wm->menu();
   }
 }
 

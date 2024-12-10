@@ -1,0 +1,2 @@
+#menu_program: 'rofi -show drun'
+menu_program: dmenu_run

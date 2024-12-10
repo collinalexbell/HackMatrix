@@ -24,6 +24,8 @@
 #include <thread>
 #include <unistd.h>
 #include <cstdlib>
+#include <fstream>
+#include "fkYAML/node.hpp"
 
 #define OBS false
 #define EDGE false
@@ -33,8 +35,8 @@
 
 namespace WindowManager {
 
-void WindowManager::dMenu() {
- int exitCode = system("dmenu_run");
+void WindowManager::menu() {
+  std::thread([this] { std::system(menuProgram.c_str()); }).detach();
 }
 
 int forkApp(string cmd, char **envp, string args) {
@@ -570,6 +572,10 @@ void WindowManager::setWMProps(Window root) {
 WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
                              spdlog::sink_ptr loggerSink)
     : matrix(matrix), logSink(loggerSink), registry(registry) {
+
+  std::ifstream ifs("config.yaml");
+  fkyaml::node config = fkyaml::node::deserialize(ifs);
+  menuProgram = config["menu_program"].get_value<std::string>();
   logger = make_shared<spdlog::logger>("wm", loggerSink);
   logger->set_level(spdlog::level::debug);
   logger->flush_on(spdlog::level::info);
