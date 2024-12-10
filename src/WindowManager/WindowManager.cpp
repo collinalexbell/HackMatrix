@@ -6,6 +6,7 @@
 #include "renderer.h"
 #include "screen.h"
 #include "systems/Boot.h"
+#include "Config.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -24,8 +25,6 @@
 #include <thread>
 #include <unistd.h>
 #include <cstdlib>
-#include <fstream>
-#include "fkYAML/node.hpp"
 
 #define OBS false
 #define EDGE false
@@ -573,9 +572,7 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
                              spdlog::sink_ptr loggerSink)
     : matrix(matrix), logSink(loggerSink), registry(registry) {
 
-  std::ifstream ifs("config.yaml");
-  fkyaml::node config = fkyaml::node::deserialize(ifs);
-  menuProgram = config["menu_program"].get_value<std::string>();
+  menuProgram = Config::singleton()->get<std::string>("menu_program");
   logger = make_shared<spdlog::logger>("wm", loggerSink);
   logger->set_level(spdlog::level::debug);
   logger->flush_on(spdlog::level::info);
