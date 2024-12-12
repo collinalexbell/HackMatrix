@@ -13,15 +13,15 @@ public:
   static std::shared_ptr<Config> _singleton;
   Config();
 
-  template<typename T>
+  template <typename T>
   T get(std::string key)
   {
-    return config[key.c_str()].get_value<T>();
+    return config[key.c_str()].get_value<std::string>();
   }
 
-  template<typename T>
+  template <typename T>
   T get(const char* key)
   {
-    return config[key].get_value<T>();
+    return config[key].get_value<std::string>();
   }
 };
