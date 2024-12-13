@@ -9,13 +9,13 @@
 
 class EntityRegistry : public entt::registry
 {
-  SQLite::Database db;
+  std::shared_ptr<SQLite::Database> db;
   std::vector<std::shared_ptr<SQLPersister>> persisters;
   std::map<int, entt::entity> entityLocator;
 
 public:
   EntityRegistry();
-  SQLite::Database& getDatabase();
+  SQLite::Database &getDatabase();
   void addPersister(std::shared_ptr<SQLPersister>);
   void depersist(entt::entity);
   entt::entity createPersistent();

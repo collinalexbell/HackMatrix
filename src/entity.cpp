@@ -3,21 +3,20 @@
 #include "persister.h"
 #include <iostream>
 
-EntityRegistry::EntityRegistry()
-  : db("./db/matrix.db", SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE)
-{
+EntityRegistry::EntityRegistry() {
+  db = std::make_shared<SQLite::Database>("./db/matrix.db",
+                                          SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
 }
 
-SQLite::Database&
-EntityRegistry::getDatabase()
+SQLite::Database &EntityRegistry::getDatabase()
 {
-  return db;
+  return *db;
 }
 
 void
 EntityRegistry::createTablesIfNeeded()
 {
-  db.exec("CREATE TABLE IF NOT EXISTS Entity "
+  db->exec("CREATE TABLE IF NOT EXISTS Entity "
           "(id INTEGER PRIMARY KEY)");
 
   for (auto persister : persisters) {
@@ -44,7 +43,7 @@ EntityRegistry::save(entt::entity e)
 void
 EntityRegistry::loadAll()
 {
-  SQLite::Statement query(db, "SELECT * FROM Entity");
+  SQLite::Statement query(*db, "SELECT * FROM Entity");
   while (query.executeStep()) {
     int entityId = query.getColumn(0).getInt();
     entt::entity newEntity = create();
@@ -74,9 +73,9 @@ EntityRegistry::addPersister(std::shared_ptr<SQLPersister> p)
 entt::entity
 EntityRegistry::createPersistent()
 {
-  SQLite::Statement query(db, "INSERT INTO Entity (id) VALUES (NULL)");
+  SQLite::Statement query(*db, "INSERT INTO Entity (id) VALUES (NULL)");
   query.exec();
-  int64_t id = db.getLastInsertRowid();
+  int64_t id = db->getLastInsertRowid();
   auto rv = this->create();
   emplace<Persistable>(rv, id);
   entityLocator[id] = rv;
@@ -91,7 +90,7 @@ EntityRegistry::depersist(entt::entity entity)
   for (auto persister : persisters) {
     persister->depersist(entity);
   }
-  SQLite::Statement query(db, "DELETE FROM Entity WHERE id = ?");
+  SQLite::Statement query(*db, "DELETE FROM Entity WHERE id = ?");
   query.bind(1, persistable.entityId);
   query.exec();
   destroy(entity);
