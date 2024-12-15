@@ -11,7 +11,6 @@ class Bootable {
   int height;
 
   glm::mat4 heightScaler;
-  void recomputeHeightScaler();
   int defaultXBySize;
   int defaultYBySize;
   void resetDefaultXYBySize();

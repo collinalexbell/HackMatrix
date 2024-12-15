@@ -10,6 +10,7 @@
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <algorithm>
 #include <cstddef>
 #include <glm/glm.hpp>
@@ -260,6 +261,9 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode qKeyCode = XKeysymToKeycode(display, XK_q);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
 
+  KeyCode windowLargerCode = XKeysymToKeycode(display, XK_equal);
+  KeyCode windowSmallerCode = XKeysymToKeycode(display, XK_minus);
+
   if (event.keycode == eKeyCode && event.state & Mod4Mask) {
     // Windows Key (Super_L) + Ctrl + E is pressed
     unfocusApp();
@@ -271,6 +275,21 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
       app.close();
     }
   }
+
+  if (event.keycode == windowLargerCode && event.state & Mod4Mask) {
+    if (currentlyFocusedApp.has_value()) {
+      lock_guard<mutex> lock(renderLoopMutex);
+      events.push_back(WindowEvent{ LARGER, currentlyFocusedApp.value() });
+    }
+  }
+
+  if (event.keycode == windowSmallerCode && event.state & Mod4Mask) {
+    if (currentlyFocusedApp.has_value()) {
+      lock_guard<mutex> lock(renderLoopMutex);
+      events.push_back(WindowEvent{ SMALLER, currentlyFocusedApp.value() });
+    }
+  }
+
   for (int i = 0; i < min((int)appsWithHotKeys.size(), 9); i++) {
     KeyCode code = XKeysymToKeycode(display, XK_1 + i);
     if (event.keycode == code && event.state & Mod4Mask && event.state & ShiftMask) {
@@ -417,6 +436,18 @@ void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemova
 
 void WindowManager::tick() {
   lock_guard<mutex> lock(renderLoopMutex);
+
+  for (auto it = events.begin(); it != events.end(); it++) {
+    auto app = registry->try_get<X11App>(it->window);
+    if(it->type == SMALLER) {
+      app->smaller();
+    }
+    if(it->type == LARGER) {
+      app->larger();
+    }
+  }
+  events.clear();
+
   for (auto it = appsToRemove.begin(); it != appsToRemove.end(); it++) {
     try {
       if (currentlyFocusedApp == *it) {

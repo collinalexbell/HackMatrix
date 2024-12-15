@@ -16,6 +16,7 @@
 #include "screen.h"
 #include "logger.h"
 #include <sstream>
+#include <glm/gtx/transform.hpp>
 
 #include <X11/extensions/Xfixes.h>
 #include <X11/extensions/xfixeswire.h>
@@ -494,6 +495,14 @@ X11App::focus(Window matrix)
   XGrabKey(
     display, qKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
 
+  KeyCode equalKeyCode = XKeysymToKeycode(display, XK_equal);
+  XGrabKey(
+    display, equalKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+
+  KeyCode minusKeyCode = XKeysymToKeycode(display, XK_minus);
+  XGrabKey(
+    display, minusKeyCode, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
+
   XSync(display, False);
   XFlush(display);
 }
@@ -626,6 +635,21 @@ getWindowPosition(Window window)
 }
 
 void
+X11App::smaller(){
+  auto dSize = 10;
+  if(this->width - dSize >= 10 && this->height - dSize >= 10) {
+    resize(this->width - dSize, this->height - dSize);
+  }
+}
+
+void
+X11App::larger()
+{
+  auto dSize = 10;
+  resize(this->width + dSize, this->height + dSize);
+}
+
+void
 X11App::resize(int width, int height)
 {
   this->width = width;
@@ -643,6 +667,7 @@ X11App::resize(int width, int height)
         attributes.height != height) {
       XMoveResizeWindow(display, appWindow, x, y, width, height);
     }
+    heightScalar = recomputeHeightScaler(width, height);
   } else {
     auto position = getWindowPosition(appWindow);
     int newX;
@@ -797,4 +822,13 @@ void X11App::close() {
     XDestroyWindow(display, appWindow);
     XFlush(display);
 
+}
+
+glm::mat4
+X11App::recomputeHeightScaler(double width, double height)
+{
+  auto standardRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
+  auto currentRatio = height / width;
+  auto scaleFactor = currentRatio / standardRatio;
+  return glm::scale(glm::mat4(1.0), glm::vec3(1, scaleFactor, 1));
 }

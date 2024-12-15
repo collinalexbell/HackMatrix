@@ -8,6 +8,7 @@
 #include <X11/extensions/Xcomposite.h>
 #include <X11/XKBlib.h>
 #include <glad/glad_glx.h>
+#include <glm/glm.hpp>
 
 using namespace std;
 
@@ -76,7 +77,8 @@ public:
 
   int width = 0;
   int height = 0;
-
+  glm::mat4 heightScalar = glm::mat4(1.0);
+  static glm::mat4 recomputeHeightScaler(double width, double height);
   void positionNotify(int x, int y);
   void appTexture();
   void attachTexture(int textureUnit, int textureId, size_t appIndex);
@@ -96,6 +98,8 @@ public:
   void deselect();
   bool isSelected();
   void close();
+  void larger();
+  void smaller();
 };
 
 #endif

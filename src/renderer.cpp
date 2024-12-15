@@ -556,7 +556,10 @@ Renderer::renderApps()
     registry->view<X11App, Positionable>(entt::exclude<Bootable>);
   for (auto [entity, app, positionable] : positionableNonBootable.each()) {
     shader->setMatrix4("model", positionable.modelMatrix);
-    shader->setMatrix4("bootableScale", glm::mat4(1.0));
+
+    // OPTIMIZATION
+    // TODO: cache the recomputeHeightScaler into the app itself and don't recompute it every render
+    shader->setMatrix4("bootableScale", app.heightScalar);
     shader->setInt("appNumber", app.getAppIndex());
     shader->setBool("appTransparent", false);
     glDrawArrays(GL_TRIANGLES, 0, 6);

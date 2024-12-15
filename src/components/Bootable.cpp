@@ -15,7 +15,7 @@ Bootable::Bootable(std::string cmd, std::string args, bool killOnExit,
       transparent(transparent), name(name), bootOnStartup(bootOnStartup),
       width(width), height(height) {
 
-  recomputeHeightScaler();
+  heightScaler = X11App::recomputeHeightScaler(width, height);
   resetDefaultXYBySize();
 
   if (x.has_value()) {
@@ -46,7 +46,7 @@ void Bootable::resize(int width, int height) {
     x = defaultXBySize;
     y = defaultYBySize;
   }
-  recomputeHeightScaler();
+  heightScaler = X11App::recomputeHeightScaler(getWidth(), getHeight());
 }
 
 void Bootable::resetDefaultXYBySize() {
@@ -54,12 +54,7 @@ void Bootable::resetDefaultXYBySize() {
   defaultYBySize = (SCREEN_HEIGHT - height) / 2;
 }
 
-void Bootable::recomputeHeightScaler() {
-  auto standardRatio = SCREEN_HEIGHT/SCREEN_WIDTH;
-  auto currentRatio = (double)getHeight() / (double)getWidth();
-  auto scaleFactor = currentRatio / standardRatio;
-  heightScaler = glm::scale(glm::mat4(1.0), glm::vec3(1, scaleFactor, 1));
-}
+
 
 void BootablePersister::createTablesIfNeeded() {
   // even the pid should get saved (used for killOnExit = false)

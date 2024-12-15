@@ -183,6 +183,8 @@ Texture::Texture(vector<string> fnames, GLenum unit)
 
 Texture::Texture(GLenum unit)
 {
+  width = 0;
+  height = 0;
   initAndBindGlTexture(unit);
   setTextureParameters(false, false);
   blankData();
