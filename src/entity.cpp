@@ -1,10 +1,13 @@
 #include "entity.h"
 #include "SQLiteCpp/Database.h"
 #include "persister.h"
+#include "Config.h"
 #include <iostream>
 
 EntityRegistry::EntityRegistry() {
-  db = std::make_shared<SQLite::Database>("./db/matrix.db",
+
+  auto dbFile = Config::singleton()->get<std::string>("database_file");
+  db = std::make_shared<SQLite::Database>(dbFile,
                                           SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
 }
 
