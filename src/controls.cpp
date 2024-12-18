@@ -168,7 +168,8 @@ Controls::handleSave(GLFWwindow* window)
 void
 Controls::handleScreenshot(GLFWwindow* window)
 {
-  bool shouldCapture = glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS;
+  int screenshotKey = controlMappings.getKey("screenshot");
+  bool shouldCapture = glfwGetKey(window, screenshotKey) == GLFW_PRESS;
   if (shouldCapture && debounce(lastKeyPressTime)) {
     renderer->screenshot();
   }

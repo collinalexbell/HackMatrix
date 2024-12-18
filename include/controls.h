@@ -9,6 +9,7 @@
 #include "app.h"
 #include "world.h"
 #include "WindowManager/WindowManager.h"
+#include "ControlMappings.h"
 
 struct DeferedAction
 {
@@ -18,6 +19,7 @@ struct DeferedAction
 
 class Controls
 {
+  ControlMappings controlMappings;
   shared_ptr<blocks::TexturePack> texturePack;
   shared_ptr<WindowManager::WindowManager> wm;
   float windowFlop = 0.25;

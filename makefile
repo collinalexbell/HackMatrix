@@ -15,7 +15,7 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui -Itracy/public
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp
+ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
@@ -72,8 +72,13 @@ build/camera.o: src/camera.cpp include/camera.h
 build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h
 	g++  -std=c++20 $(FLAGS) -o build/api.o -c src/api.cpp $(INCLUDES)
 
-build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h
+build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h include/ControlMappings.h
 	g++  -std=c++20 $(FLAGS) -o build/controls.o -c src/controls.cpp $(INCLUDES)
+
+build/ControlMappings.o: src/ControlMappings.cpp include/ControlMappings.h include/Config.h
+	g++  -std=c++20 $(FLAGS) -o build/ControlMappings.o -c src/ControlMappings.cpp $(INCLUDES)
+
+
 
 build/app.o: src/app.cpp include/app.h include/screen.h
 	g++  -std=c++20 $(FLAGS) -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
@@ -123,7 +128,7 @@ build/model.o: src/model.cpp include/model.h include/mesh.h
 build/mesh.o: src/mesh.cpp include/mesh.h
 	g++ -std=c++20 $(FLAGS) -o build/mesh.o -c src/mesh.cpp $(INCLUDES)
 
-build/entity.o: src/entity.cpp include/entity.h
+build/entity.o: src/entity.cpp include/entity.h include/Config.h
 	g++ -std=c++20 $(FLAGS) -o build/entity.o -c src/entity.cpp $(INCLUDES)
 
 build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/RotateMovement.h include/model.h include/systems/Update.h include/components/Bootable.h include/components/Light.h include/engine.h
