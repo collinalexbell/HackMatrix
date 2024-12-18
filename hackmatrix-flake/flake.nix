@@ -18,8 +18,7 @@
           repo = "HackMatrix";
           rev = "master";
           sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; 
-          # some one whois on nix plaese ruseteh cmamnd nix-prefetch-git https://github.com/collinalexbell/HackMatrix and relace the hase with what ever you git as im not on nix but seen a issue asing for a nix flake
-
+          # nix-prefetch-git https://github.com/collinalexbell/HackMatrix and relace the hash
         };
 
         nativeBuildInputs = [ pkgs.pkg-config pkgs.cmake ];
