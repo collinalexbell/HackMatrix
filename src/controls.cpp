@@ -47,23 +47,28 @@ void
 Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
 {
   handleEscape(window);
-  handleModEscape(window);
-  handleControls(window, camera);
-  handleToggleCursor(window);
-  handleToggleApp(window, world, camera);
-  handleScreenshot(window);
-  handleSave(window);
-  handleSelection(window);
-  handleCodeBlock(window);
-  handleDebug(window);
-  handleToggleMeshing(window);
-  handleToggleWireframe(window);
-  handleLogBlockCounts(window);
-  handleLogBlockType(window);
-  handleDMenu(window, world);
-  handleWindowFlop(window);
-  handleChangePlayerSpeed(window);
+  if(keysEnabled) {
+    handleModEscape(window);
+    handleControls(window, camera);
+    handleToggleCursor(window);
+    handleToggleApp(window, world, camera);
+    handleScreenshot(window);
+    handleSave(window);
+    handleSelection(window);
+    handleCodeBlock(window);
+    handleDebug(window);
+    handleToggleMeshing(window);
+    handleToggleWireframe(window);
+    handleLogBlockCounts(window);
+    handleLogBlockType(window);
+    handleDMenu(window, world);
+    handleWindowFlop(window);
+    handleChangePlayerSpeed(window);
+  }
 }
+
+void Controls::disableKeys() {keysEnabled = false;}
+void Controls::enableKeys() {keysEnabled = true;}
 
 double DEBOUNCE_TIME = 0.1;
 bool

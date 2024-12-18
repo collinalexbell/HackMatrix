@@ -171,6 +171,12 @@ Engine::loop()
 
       api->mutateEntities();
       wm->tick();
+
+      if(ImGui::IsAnyItemActive()) {
+        controls->disableKeys();
+      } else {
+        controls->enableKeys();
+      }
       controls->poll(window, camera, world);
 
       if (client) {

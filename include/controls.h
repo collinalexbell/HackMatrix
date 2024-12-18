@@ -37,6 +37,7 @@ class Controls
   int clickY = 100;
   vector<DeferedAction> deferedActions;
   shared_ptr<WindowManager::Space> windowManagerSpace;
+  bool keysEnabled = true;
 
   void handleControls(GLFWwindow* window, Camera* camera);
   void handleEscape(GLFWwindow* window);
@@ -83,6 +84,7 @@ public:
               optional<glm::vec3> rotation,
               float secs,
               optional<function<void()>> = nullopt);
-  void disable();
+  void disableKeys();
+  void enableKeys();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
 };
