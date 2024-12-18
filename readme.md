@@ -138,12 +138,12 @@ sudo pacman -S --needed xdotool dmenu xorg-server xorg-xinit xorg-xwininfo xorg-
 > you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.
 
 #### nixos
-clone the github.
-then run `nix-prefetch-git https://github.com/collinalexbell/HackMatrix` and relpace the sha256 value in the flake found at `hackmatrix-flake/flake.nix` then run
-`nix build .#hackmatrix`
-in the same dir at the `flake.nix`then fallow the rest of the steps
+Run `nix-prefetch-git https://github.com/collinalexbell/HackMatrix` and relpace the sha256 value in the flake found at `hackmatrix-flake/flake.nix`.
 
-Make sure to install these libraries before proceeding with the compilation and execution of the program. The program's build system will link against these libraries using the provided `LIBS` flags:
+Then run `nix build .#hackmatrix` in the same dir at the `flake.nix` and follow the provided steps.
+
+Make sure to install these libraries before proceeding with the compilation and execution of the program.
+HackMatrix's build system will link against these libraries using the provided `LIBS` flags:
 
 ```makefile
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
