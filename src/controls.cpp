@@ -49,7 +49,7 @@ Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
   handleEscape(window);
   handleModEscape(window);
   handleControls(window, camera);
-  handleToggleFocus(window);
+  handleToggleCursor(window);
   handleToggleApp(window, world, camera);
   handleScreenshot(window);
   handleSave(window);
@@ -339,20 +339,20 @@ Controls::handleChangePlayerSpeed(GLFWwindow* window)
     }
   }
 
-  void Controls::handleToggleFocus(GLFWwindow * window)
+  void Controls::handleToggleCursor(GLFWwindow * window)
   {
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
-      if (debounce(lastKeyPressTime)) {
-        if (grabbedCursor) {
-          grabbedCursor = false;
-          glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-          wm->captureInput();
-        } else {
-          grabbedCursor = true;
-          resetMouse = true;
-          glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-          wm->passthroughInput();
-        }
+    auto toggleCursorKey = controlMappings.getKey("toggle_cursor");
+    if (glfwGetKey(window, toggleCursorKey) == GLFW_PRESS &&
+        debounce(lastKeyPressTime)) {
+      if (grabbedCursor) {
+        grabbedCursor = false;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        wm->captureInput();
+      } else {
+        grabbedCursor = true;
+        resetMouse = true;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        wm->passthroughInput();
       }
     }
   }

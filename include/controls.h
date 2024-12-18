@@ -41,7 +41,7 @@ class Controls
   void handleControls(GLFWwindow* window, Camera* camera);
   void handleEscape(GLFWwindow* window);
   void handleModEscape(GLFWwindow* window);
-  void handleToggleFocus(GLFWwindow* window);
+  void handleToggleCursor(GLFWwindow* window);
   void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
   void handleSelectApp(GLFWwindow* window);
   void handleDMenu(GLFWwindow* window, World* world);
