@@ -144,15 +144,6 @@ Run `nix-prefetch-git https://github.com/collinalexbell/HackMatrix` and relpace 
 
 Then `cd distributions/nix` and run `nix build .#hackmatrix` and follow the provided steps.
 
-Make sure to install these libraries before proceeding with the compilation and execution of the program.
-HackMatrix's build system will link against these libraries using the provided `LIBS` flags:
-
-```makefile
-LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib -lglfw -lGL -lpthread -lassimp -lsqlite3
-```
-
-Once the libraries are installed, you can compile and run the program as described in the compilation and execution sections of this README.
-
 ### Installing
 
 #### Compiling from source
