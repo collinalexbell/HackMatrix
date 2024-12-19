@@ -53,7 +53,7 @@
 
         meta = with pkgs.lib; {
           description = "A 3D Linux desktop environment with game engine capabilities.";
-          license = licenses.gpl2;
+          license = licenses.mit;
           maintainers = [ maintainers.anonymous ];
         };
       };
