@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <iostream>
+#include "Config.h"
 
 float Camera::DEFAULT_CAMERA_SPEED = 0.03f;
 
@@ -27,7 +28,8 @@ Camera::Camera()
   _projectionMatrixUpdated = true;
   zFar = 400.0f;
   zNear = 0.02f;
-  yFov = glm::radians(45.0f);
+  auto yFovDegs = Config::singleton()->get<float>("fov");
+  yFov = glm::radians(yFovDegs);
   projectionMatrix =
     glm::perspective(yFov, SCREEN_WIDTH / SCREEN_HEIGHT, zNear, zFar);
 }
