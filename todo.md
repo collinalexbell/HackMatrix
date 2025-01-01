@@ -31,6 +31,7 @@ issues, but in a simple txt file
 - get blender objs rendering textures properly
 - exit window mode  (super + e functionality, but zmqapi call)
 - create positionable at camera position ("spawn Positionables where I'm at")
+- bind click to various commands like screenshot (maybe use mousewheel to scroll through the functions)
 
 ### Priority
 ### Opposite of Priority
