@@ -7,7 +7,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <memory>
-#include <iostream>
 #include "Config.h"
 
 float Camera::DEFAULT_CAMERA_SPEED = 0.03f;
@@ -26,7 +25,7 @@ Camera::Camera()
   lastY = 600.0 / 2.0;
   viewUpdated = true;
   _projectionMatrixUpdated = true;
-  zFar = 400.0f;
+  zFar = Config::singleton()->get<float>("zFar");
   zNear = 0.02f;
   auto yFovDegs = Config::singleton()->get<float>("fov");
   yFov = glm::radians(yFovDegs);
