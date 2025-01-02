@@ -1,14 +1,8 @@
 #include "systems/Player.h"
 #include <map>
 #include <utility>
-#include "glm/gtc/constants.hpp"
 #include "model.h"
-#include "systems/Move.h"
-#include "glm/gtx/transform.hpp"
-#include "glm/ext/quaternion_trigonometric.hpp"
-#include "glm/gtx/rotate_vector.hpp"
 #include <glm/gtx/euler_angles.hpp>
-#include "glm/glm.hpp"
 #include <glm/gtc/quaternion.hpp>
 
 namespace systems {
