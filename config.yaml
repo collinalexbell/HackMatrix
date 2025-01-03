@@ -1,8 +1,9 @@
 database_file: "./db/matrix.db"
-menu_program: "rofi -show drun"
-#menu_program: dmenu_run
+#menu_program: "rofi -show drun"
+menu_program: dmenu_run
 fov: 45.0
 zFar: 400.0
 key_mappings:
   screenshot: "p"
   toggle_cursor: "f"
+  quit: "escape"

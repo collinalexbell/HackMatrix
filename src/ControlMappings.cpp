@@ -1,6 +1,5 @@
 #include "ControlMappings.h"
 #include "Config.h"
-#include <iostream>
 
 std::unordered_map<std::string, int> ControlMappings::keyMap = {
     // Printable keys

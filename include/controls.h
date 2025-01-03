@@ -40,7 +40,7 @@ class Controls
   bool keysEnabled = true;
 
   void handleControls(GLFWwindow* window, Camera* camera);
-  void handleEscape(GLFWwindow* window);
+  void handleQuit(GLFWwindow* window);
   void handleModEscape(GLFWwindow* window);
   void handleToggleCursor(GLFWwindow* window);
   void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
