@@ -665,7 +665,11 @@ EngineGui::renderComponentPanel(entt::entity entity)
     ImGui::RadioButton(label("True##BootOnStartup").c_str(), &bootOnStartup, 1);
     ImGui::RadioButton(
       label("False##BootOnStartup").c_str(), &bootOnStartup, 0);
+    if (ImGui::Button(label("Delete Component##Bootable").c_str())) {
+      registry->removePersistent<Bootable>(entity);
+    }
     ImGui::Spacing();
+
 
     bootable.cmd = cmd;
     bootable.args = args;
