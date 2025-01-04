@@ -1,4 +1,4 @@
-# HackMatrix 
+# HackMatrix
 
 <img src="images/header_img.png" width="800">
 
@@ -30,7 +30,7 @@ Type your program name and press `<enter>`
 
 The window will open up in the position you are looking at.
 
-Press `r` to [focus](#manually-focus-window) on the window 
+Press `r` to [focus](#manually-focus-window) on the window
 
 <img src="vids/openWindow.gif" width="420">
 
@@ -89,6 +89,7 @@ See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engin
 
 Before compiling or running the program, ensure that you have the following libraries installed on your Linux system:
 
+- rofi (`rofi`)
 - ZeroMQ (`libzmq`)
 - X11 (`libX11`)
 - Xcomposite (`libXcomposite`)
@@ -113,13 +114,13 @@ To install these libraries, you can use your distribution's package manager. Her
 #### Ubuntu or Debian
 
 ```bash
-sudo apt-get install xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
+sudo apt-get install rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
 ```
 
 #### Fedora or CentOS
 
 ```bash
-sudo dnf install xdotool xorg-x11-utils protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
+sudo dnf install rofi xdotool xorg-x11-utils protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
 ```
 
 #### Arch Linux
@@ -128,11 +129,11 @@ I'm currently working on an issue with protobuf compilation errors for Arch. [Th
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
-sudo pacman -S --needed xdotool dmenu xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
+sudo pacman -S --needed xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```
 #### Gentoo
 ```bash
- sudo emerge net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool  protobuf dev-libs/pthreadpool media-libs/libass media-lib/assimp dmenu
+ sudo emerge x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool  protobuf dev-libs/pthreadpool media-libs/libass media-lib/assimp dmenu
 ```
 > [!NOTE]
 > you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.
@@ -148,7 +149,7 @@ Clone the project (with submodules `git clone --recurse-submodules`), navigate t
 
 or
 
-if you have already cloned the project, use 
+if you have already cloned the project, use
 ```
 git submodule update --init
 ```
@@ -191,7 +192,7 @@ To exit the `trampoline`, run `pkill trampoline` in the terminal
 ##### How to use a debugger
 - Press `<del>` in `trampoline` mode to escape to terminal
 - Open a TTY with CTRL+FN+ALT+2
-- Run `tmux` 
+- Run `tmux`
 - Split the window `CTRL+b %`
 - Run `<project root>/devtools/gdb` in one split (and start the program)
 - Change to other split `CTLR+b <right arrow>`. Press `<enter>` to make sure the shell is accepting input.
