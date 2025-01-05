@@ -5,7 +5,6 @@
 #include "texture.h"
 #include <glad/glad.h>
 #include <iostream>
-#include <stdio.h>
 #include <cstdlib>
 
 using namespace std;
