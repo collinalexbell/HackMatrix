@@ -81,12 +81,6 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
 
 void WindowManager::createAndRegisterApps(char **envp) {
   logger->info("enter createAndRegisterApps()");
-
-  if (EDGE) {
-    forkOrFindApp("/usr/bin/microsoft-edge", "msedge", "Microsoft-edge",
-                  microsoftEdge, envp);
-    appsWithHotKeys.push_back(microsoftEdge);
-  }
   auto alreadyBooted = systems::getAlreadyBooted(registry);
   for(auto entityAndPid : alreadyBooted) {
     auto bootable = registry->get<Bootable>(entityAndPid.first);
@@ -100,8 +94,6 @@ void WindowManager::createAndRegisterApps(char **envp) {
   //forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", ideSelection.emacs, envp);
   //forkOrFindApp("/usr/bin/code", "emacs", "Emacs", ideSelection.vsCode, envp);
   //killTerminator();
-  addApps();
-
   logger->info("exit createAndRegisterApps()");
 }
 
@@ -146,22 +138,11 @@ void WindowManager::captureInput() {
   XFlush(display);
 }
 
-void WindowManager::addApps() {
-  if (MAGICA) {
-    space->addApp(magicaVoxel);
-  }
-  if (TERM) {
-    space->addApp(terminator);
-  }
-  if (EDGE) {
-    space->addApp(microsoftEdge);
-  }
-  if (OBS) {
-    space->addApp(obs);
-  }
-}
-
-  void WindowManager::wire(shared_ptr<WindowManager> sharedThis ,Camera *camera, Renderer *renderer) {
+void
+WindowManager::wire(shared_ptr<WindowManager> sharedThis,
+                    Camera* camera,
+                    Renderer* renderer)
+{
   space = make_shared<Space>(registry, renderer, camera, logSink);
   renderer->wireWindowManager(sharedThis, space);
   controls->wireWindowManager(space);

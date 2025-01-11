@@ -23,6 +23,7 @@ struct Positionable
   glm::mat4 modelMatrix;
   glm::mat3 normalMatrix;
   bool damaged = true;
+  bool isDragging = false;
   void damage();
 };
 

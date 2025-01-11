@@ -85,7 +85,6 @@ class WindowManager
   void addApp(X11App*, entt::entity);
   void allow_input_passthrough(Window window);
   void capture_input(Window window, bool shapeBounding, bool shapeInput);
-  void addApps();
   void createUnfocusHackThread(entt::entity entity);
   int waitForRemovalChangeSize(int curSize);
   void logWaitForRemovalChangeSize(int changeSize);
