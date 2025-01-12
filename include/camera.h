@@ -41,6 +41,14 @@ struct Frustum
   Plane nearFace;
 };
 
+struct Ray {
+    glm::vec3 origin;
+    glm::vec3 direction;
+};
+
+Ray createMouseRay(float mouseX, float mouseY, float screenWidth, float screenHeight, 
+                  const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix); 
+
 struct Movement
 {
   glm::vec3 startPosition;
