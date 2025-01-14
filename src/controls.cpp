@@ -191,9 +191,16 @@ Controls::handleClicks(GLFWwindow* window, World* world)
 {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    auto app = windowManagerSpace->getLookedAtApp();
-    if (app) {
-      goToApp(app.value());
+    if(grabbedCursor) {
+      auto app = windowManagerSpace->getLookedAtApp();
+      if (app) {
+        goToApp(app.value());
+      }
+    } else {
+      // move objects
+      //
+      // auto mouseRay = createMouseRay(mouseX, mouseY, screenWidth, screenHeight, projectionMatrix, viewMatrix)
+      // do intersection
     }
   }
 
