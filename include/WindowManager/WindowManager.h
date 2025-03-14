@@ -78,6 +78,7 @@ class WindowManager
   void removeAppForWindow(Window);
   void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
+  void setupLogger();
   void onHotkeyPress(XKeyEvent event);
   void createApp(Window window,
                  unsigned int width = Bootable::DEFAULT_WIDTH,

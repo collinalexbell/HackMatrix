@@ -580,15 +580,19 @@ void WindowManager::setWMProps(Window root) {
   XFlush(display);
 }
 
+void WindowManager::setupLogger() {
+  logger = make_shared<spdlog::logger>("wm", logSink);
+  logger->set_level(spdlog::level::debug);
+  logger->flush_on(spdlog::level::info);
+  logger->debug("WindowManager()");
+}
+
 WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
                              spdlog::sink_ptr loggerSink)
     : matrix(matrix), logSink(loggerSink), registry(registry) {
 
   menuProgram = Config::singleton()->get<std::string>("menu_program");
-  logger = make_shared<spdlog::logger>("wm", loggerSink);
-  logger->set_level(spdlog::level::debug);
-  logger->flush_on(spdlog::level::info);
-  logger->debug("WindowManager()");
+  setupLogger();
   display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
   X11App::initAppClass(display, screen);
