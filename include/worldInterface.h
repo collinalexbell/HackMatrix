@@ -13,7 +13,6 @@
 #include <glm/gtx/hash.hpp>
 #include <memory>
 #include <mutex>
-#include <octree/octree.h>
 #include <optional>
 #include <queue>
 #include <unordered_map>

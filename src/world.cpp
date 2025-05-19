@@ -14,7 +14,6 @@
 #include <glm/gtx/intersect.hpp>
 #include <iostream>
 #include <limits>
-#include <octree/octree.h>
 #include <sstream>
 #include <vector>
 #include "systems/ApplyTranslation.h"

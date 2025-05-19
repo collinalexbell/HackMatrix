@@ -11,7 +11,6 @@
 #include <glm/gtx/hash.hpp>
 #include <memory>
 #include <mutex>
-#include <octree/octree.h>
 #include "entity.h"
 #include "logger.h"
 #include <spdlog/common.h>
