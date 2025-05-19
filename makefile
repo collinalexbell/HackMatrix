@@ -23,6 +23,10 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 all: FLAGS+=-O3 -g
 all: tracy include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
 
+add:
+	git add src include
+	git status
+
 profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
 

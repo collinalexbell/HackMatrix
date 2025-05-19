@@ -85,7 +85,6 @@ public:
   World(shared_ptr<EntityRegistry>,
         Camera* camera,
         shared_ptr<blocks::TexturePack> texturePack,
-        string minecraftFolder,
         bool debug = false,
         spdlog::sink_ptr loggerSink = fileSink);
   ~World();

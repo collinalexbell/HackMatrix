@@ -15,8 +15,7 @@ framebuffer_size_callback(GLFWwindow* window, int width, int height)
   glViewport(0, 0, width, height);
 }
 
-GLFWwindow*
-initGraphics()
+GLFWwindow* MainWindow()
 {
   glfwSetErrorCallback(NULL);
   glfwInit();
@@ -43,40 +42,30 @@ initGraphics()
 }
 
 void
-waitForTTYSwitch()
-{
-  sleep(5);
-}
-
-void
 cleanup(Engine* engine)
 {
   glfwTerminate();
-  delete engine;
+  if(engine != NULL) {
+    delete engine;
+  }
 }
 
 int
 main(int argc, char** argv, char** envp)
 {
-  if (argc > 1) {
-    if (argv[1] == "--debug") {
-      waitForTTYSwitch();
-    }
-  }
   try {
-    GLFWwindow* window = initGraphics();
+    GLFWwindow* window = MainWindow();
     if (window == NULL)
       return -1;
 
     Engine* engine = new Engine(window, envp);
     engine->loop();
     cleanup(engine);
-    glfwTerminate();
 
   } catch (const std::exception& e) {
     // signal error to the trampoline
     // return -1;
-    glfwTerminate();
-    throw;
+    cleanup(NULL);
+    throw e;
   }
 }

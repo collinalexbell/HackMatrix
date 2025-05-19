@@ -40,6 +40,8 @@ mouseCallback(GLFWwindow* window, double xpos, double ypos)
   engine->controls->mouseCallback(window, xpos, ypos);
 }
 
+// The engineGui can't be created until the callback is registered
+// Encapsulate in Engine, even though it uses glfw
 void
 Engine::registerCursorCallback()
 {
@@ -52,6 +54,10 @@ Engine::setupRegistry()
 {
   registry = make_shared<EntityRegistry>();
 
+  // Create all the Persistor
+  // declaritively, because C++ type system can't 
+  // iterate through the type parameters
+  
   shared_ptr<SQLPersister> postionablePersister =
     make_shared<PositionablePersister>(registry);
   registry->addPersister(postionablePersister);
@@ -87,30 +93,41 @@ Engine::setupRegistry()
   registry->addPersister(bootablePersister);
 
   registry->createTablesIfNeeded();
+  registry->loadAll();
+}
+
+shared_ptr<LoggerVector> Engine::setupLogger() {
+  auto loggerVector = make_shared<LoggerVector>();
+  auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
+  loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
+  logger = make_shared<spdlog::logger>("engine", loggerSink);
+  logger->set_level(spdlog::level::debug);
+  return loggerVector;
 }
 
 Engine::Engine(GLFWwindow* window, char** envp)
   : window(window)
 {
   setupRegistry();
-  registry->loadAll();
+
+  // this probably doesn't belong here
+  // candidate for refactor
   systems::createDerivativeComponents(registry);
-  auto loggerVector = make_shared<LoggerVector>();
-  auto imGuiSink = make_shared<ImGuiSink>(loggerVector);
-  loggerSink = make_shared<LoggerSink>(fileSink, imGuiSink);
-  logger = make_shared<spdlog::logger>("engine", loggerSink);
-  logger->set_level(spdlog::level::debug);
-  initialize();
+
+  auto loggerVector = setupLogger();
+  initializeMemberObjs();
+
   glfwFocusWindow(window);
+
   TracyGpuContext;
+
   wire();
   wm->createAndRegisterApps(envp);
+
   registerCursorCallback();
   // Has to be be created after the cursorCallback because gui wraps the
   // callback
   engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
-  // turn off vsync
-  // glfwSwapInterval(0);
 }
 
 Engine::~Engine()
@@ -126,14 +143,14 @@ Engine::~Engine()
 }
 
 void
-Engine::initialize()
+Engine::initializeMemberObjs()
 {
   auto texturePack = blocks::initializeBasicPack();
   wm = make_shared<WindowManager::WindowManager>(
     registry, glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(
-    registry, camera, texturePack, "/home/collin/midtown/", true, loggerSink);
+    registry, camera, texturePack, true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
   api = new Api("tcp://*:3333", registry, controls, wm);
@@ -147,6 +164,19 @@ Engine::wire()
   wm->wire(wm, camera, renderer);
 }
 
+void Engine::multiplayerClientIteration(double frameStart) {
+
+  static double lastPlayerUpdate = 0;
+  if (client) {
+    client->poll();
+  }
+
+  if (client && frameStart - lastPlayerUpdate > 1.0 / 20.0) {
+    client->sendPlayer(camera->position, camera->front);
+    lastPlayerUpdate = frameStart;
+  }
+}
+
 void
 Engine::loop()
 {
@@ -154,7 +184,6 @@ Engine::loop()
   double frameStart;
   int frameIndex = 0;
   double fps;
-  double lastPlayerUpdate = 0;
   systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
@@ -178,15 +207,7 @@ Engine::loop()
         controls->enableKeys();
       }
       controls->poll(window, camera, world);
-
-      if (client) {
-        client->poll();
-      }
-
-      if (client && frameStart - lastPlayerUpdate > 1.0 / 20.0) {
-        client->sendPlayer(camera->position, camera->front);
-        lastPlayerUpdate = frameStart;
-      }
+      multiplayerClientIteration(frameStart);
 
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
       glfwSwapBuffers(window);

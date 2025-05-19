@@ -31,7 +31,6 @@ using namespace std;
 World::World(shared_ptr<EntityRegistry> registry,
              Camera* camera,
              shared_ptr<blocks::TexturePack> texturePack,
-             string minecraftFolder,
              bool debug,
              spdlog::sink_ptr loggerSink)
   : registry(registry)
@@ -39,7 +38,6 @@ World::World(shared_ptr<EntityRegistry> registry,
 {
   initLogger(loggerSink);
   logger->debug("Hello World!");
-  // initLoader(minecraftFolder, texturePack);
   initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
   dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f),
