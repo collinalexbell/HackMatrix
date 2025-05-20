@@ -33,6 +33,7 @@ class Engine
   std::shared_ptr<MultiPlayer::Server> server;
   spdlog::sink_ptr loggerSink;
   std::shared_ptr<LoggerVector> setupLogger();
+  void disableKeysIfImguiActive();
 
   friend void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void setupRegistry();

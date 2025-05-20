@@ -201,11 +201,7 @@ Engine::loop()
       api->mutateEntities();
       wm->tick();
 
-      if(ImGui::IsAnyItemActive()) {
-        controls->disableKeys();
-      } else {
-        controls->enableKeys();
-      }
+      disableKeysIfImguiActive();
       controls->poll(window, camera, world);
       multiplayerClientIteration(frameStart);
 
@@ -220,6 +216,15 @@ Engine::loop()
   } catch (const std::exception& e) {
     logger->error(e.what());
     throw;
+  }
+}
+
+void
+Engine::disableKeysIfImguiActive() {
+  if(ImGui::IsAnyItemActive()) {
+    controls->disableKeys();
+  } else {
+    controls->enableKeys();
   }
 }
 
