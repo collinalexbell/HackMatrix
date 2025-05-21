@@ -118,7 +118,7 @@ optional<entt::entity> Space::getLookedAtApp() {
     float x = intersection.intersectionPoint.x;
     float y = intersection.intersectionPoint.y;
     if (x > minX && x < maxX && y > minY && y < maxY &&
-        intersection.dist < DIST_LIMIT) {
+        intersection.dist < DIST_LIMIT && intersection.dist > 0.0) {
       return entity;
     }
   }
