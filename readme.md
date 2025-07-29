@@ -133,7 +133,7 @@ sudo pacman -S --needed xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-x
 ```
 #### Gentoo
 ```bash
- sudo emerge --autounmask-write x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
+ sudo emerge --autounmask-write x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
 ```
 > [!NOTE]
 > you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.
