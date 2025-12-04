@@ -643,6 +643,26 @@ Renderer::renderVoxels()
 }
 
 void
+Renderer::addVoxels(const std::vector<glm::vec3>& positions,
+                    bool replace,
+                    float size)
+{
+  if (replace) {
+    voxelSpace.clear();
+  }
+  if (positions.empty() && replace) {
+    voxelMesh = RenderedVoxelSpace();
+    voxelsEnabled = false;
+    return;
+  }
+  for (const auto& pos : positions) {
+    voxelSpace.add(pos, size);
+  }
+  voxelMesh = voxelSpace.render();
+  voxelsEnabled = true;
+}
+
+void
 Renderer::lightUniforms(RenderPerspective perspective,
                         std::optional<entt::entity> fromLight)
 {

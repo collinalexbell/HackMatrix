@@ -133,6 +133,9 @@ public:
   void toggleMeshing();
   void toggleWireframe();
   void wireWindowManager(shared_ptr<WindowManager::WindowManager>, shared_ptr<WindowManager::Space>);
+  void addVoxels(const std::vector<glm::vec3>& positions,
+                 bool replace = false,
+                 float size = 1.0f);
 
   glm::mat4 projection;
 };

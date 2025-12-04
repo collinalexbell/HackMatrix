@@ -153,7 +153,7 @@ Engine::initializeMemberObjs()
     registry, camera, texturePack, true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(world, camera, renderer, texturePack);
-  //api = new Api("tcp://*:3333", registry, controls, wm);
+  api = new Api("tcp://*:4455", registry, controls, renderer, wm);
   //wm->registerControls(controls);
 }
 
@@ -193,6 +193,9 @@ Engine::loop()
       glfwPollEvents();
       frameStart = glfwGetTime();
 
+      if (api != nullptr) {
+        api->mutateEntities();
+      }
       renderer->render();
       engineGui->render(fps, frameIndex, frameTimes);
 
