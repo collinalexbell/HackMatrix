@@ -122,7 +122,7 @@ Engine::Engine(GLFWwindow* window, char** envp)
   TracyGpuContext;
 
   wire();
-  wm->createAndRegisterApps(envp);
+  //wm->createAndRegisterApps(envp);
 
   registerCursorCallback();
   // Has to be be created after the cursorCallback because gui wraps the
@@ -138,7 +138,7 @@ Engine::~Engine()
   delete renderer;
   delete world;
   delete camera;
-  delete api;
+  //delete api;
   registry->saveAll();
 }
 
@@ -146,22 +146,22 @@ void
 Engine::initializeMemberObjs()
 {
   auto texturePack = blocks::initializeBasicPack();
-  wm = make_shared<WindowManager::WindowManager>(
-    registry, glfwGetX11Window(window), loggerSink);
+  //wm = make_shared<WindowManager::WindowManager>(
+  //registry, glfwGetX11Window(window), loggerSink);
   camera = new Camera();
   world = new World(
     registry, camera, texturePack, true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
-  controls = new Controls(wm, world, camera, renderer, texturePack);
-  api = new Api("tcp://*:3333", registry, controls, wm);
-  wm->registerControls(controls);
+  controls = new Controls(world, camera, renderer, texturePack);
+  //api = new Api("tcp://*:3333", registry, controls, wm);
+  //wm->registerControls(controls);
 }
 
 void
 Engine::wire()
 {
   world->attachRenderer(renderer);
-  wm->wire(wm, camera, renderer);
+  //wm->wire(wm, camera, renderer);
 }
 
 void Engine::multiplayerClientIteration(double frameStart) {
@@ -184,7 +184,9 @@ Engine::loop()
   double frameStart;
   int frameIndex = 0;
   double fps;
-  systems::updateLighting(registry, renderer);
+  // Skip shadow-map lighting pass while experimenting with voxel outlines to
+  // avoid crashes in the lighting pipeline.
+  // systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
       TracyGpuZone("loop");
@@ -198,8 +200,8 @@ Engine::loop()
       // call per light)
       world->tick();
 
-      api->mutateEntities();
-      wm->tick();
+      //api->mutateEntities();
+      //wm->tick();
 
       disableKeysIfImguiActive();
       controls->poll(window, camera, world);

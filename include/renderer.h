@@ -8,6 +8,7 @@
 #include "components/Bootable.h"
 #include "shader.h"
 #include "texture.h"
+#include "Voxel/VoxelSpace.h"
 #include "world.h"
 #include "camera.h"
 #include "app.h"
@@ -89,6 +90,7 @@ class Renderer
   void renderLookedAtFace();
   void renderDynamicObjects();
   void renderModels(RenderPerspective);
+  void renderVoxels();
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
 
@@ -107,6 +109,9 @@ class Renderer
   int verticesInDynamicObjects = 0;
 
   IndexPool appIndexPool;
+  bool voxelsEnabled = true;
+  VoxelSpace voxelSpace;
+  RenderedVoxelSpace voxelMesh;
 
 public:
   Renderer(shared_ptr<EntityRegistry> registry,

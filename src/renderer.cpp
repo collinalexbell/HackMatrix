@@ -273,6 +273,16 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   shader->setBool("isMesh", false);
   shader->setBool("isModel", false);
   shader->setBool("directRender", false);
+  shader->setBool("isVoxel", false);
+  shader->setBool("voxelsEnabled", voxelsEnabled);
+
+  float voxelSize = 2.0f;
+  voxelSpace.add(glm::vec3(0, 4, 4), voxelSize);
+  voxelSpace.add(glm::vec3(voxelSize, 4, 4), voxelSize);
+  voxelSpace.add(glm::vec3(-voxelSize, 4, 4), voxelSize);
+  voxelSpace.add(glm::vec3(0, 4 + voxelSize, 4), voxelSize);
+  voxelSpace.add(glm::vec3(0, 4 - voxelSize, 4), voxelSize);
+  voxelMesh = voxelSpace.render();
 
   if (isWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
@@ -526,6 +536,8 @@ Renderer::updateShaderUniforms()
   shader->setFloat("time", glfwGetTime());
   shader->setBool("isApp", false);
   shader->setBool("isLine", false);
+  shader->setBool("isVoxel", false);
+  shader->setBool("voxelsEnabled", voxelsEnabled);
 }
 
 void
@@ -615,6 +627,19 @@ Renderer::renderLines()
   glBindVertexArray(LINE_VAO);
   glDrawArrays(GL_LINES, 0, world->getLines().size() * 2);
   shader->setBool("isLine", false);
+}
+
+void
+Renderer::renderVoxels()
+{
+  if (!voxelsEnabled) {
+    return;
+  }
+  shader->setBool("isVoxel", true);
+  shader->setMatrix4("model", glm::mat4(1.0f));
+  glDisable(GL_CULL_FACE);
+  voxelMesh.draw();
+  shader->setBool("isVoxel", false);
 }
 
 void
@@ -734,7 +759,10 @@ Renderer::render(RenderPerspective perspective,
   updateShaderUniforms();
   lightUniforms(perspective, fromLight);
   renderModels(perspective);
-  renderApps();
+  if (perspective == CAMERA) {
+    renderVoxels();
+  }
+  //renderApps();
   //renderChunkMesh();
 }
 
@@ -792,8 +820,8 @@ void
 Renderer::wireWindowManager(shared_ptr<WindowManager::WindowManager> wm,
                             shared_ptr<WindowManager::Space> windowManagerSpace)
 {
-  this->wm = wm;
-  this->windowManagerSpace = windowManagerSpace;
+  //this->wm = wm;
+  //this->windowManagerSpace = windowManagerSpace;
 }
 
 Renderer::~Renderer()

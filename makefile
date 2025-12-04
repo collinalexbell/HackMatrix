@@ -15,9 +15,18 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui -Itracy/public
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp
+ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
+
+WLROOTS_AVAILABLE := $(shell pkg-config --exists wlroots wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
+ifeq ($(WLROOTS_AVAILABLE),1)
+    WLROOTS_CFLAGS := $(shell pkg-config --cflags wlroots wayland-server xkbcommon)
+    WLROOTS_LIBS := $(shell pkg-config --libs wlroots wayland-server xkbcommon)
+else
+    WLROOTS_CFLAGS :=
+    WLROOTS_LIBS :=
+endif
 
 
 all: FLAGS+=-O3 -g
@@ -29,6 +38,16 @@ add:
 
 profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
+
+ifeq ($(WLROOTS_AVAILABLE),1)
+wlroots-skeleton: build/wayland/wlroots_skeleton.o
+	g++ -std=c++20 $(FLAGS) -o wlroots-skeleton build/wayland/wlroots_skeleton.o $(WLROOTS_LIBS) -lpthread
+else
+wlroots-skeleton:
+	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
+	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor skeleton." >&2
+	@exit 1
+endif
 
 tracy:
 	git submodule update --init
@@ -51,6 +70,10 @@ build/enkimi.o: src/enkimi.c
 
 build/miniz.o: src/miniz.c
 	g++ $(FLAGS) $(LOADER_FLAGS) -o build/miniz.o -c src/miniz.c $(INCLUDES) -lm
+
+build/wayland/wlroots_skeleton.o: src/wayland/wlroots_skeleton.cpp
+	mkdir -p build/wayland
+	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlroots_skeleton.o -c src/wayland/wlroots_skeleton.cpp
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
@@ -131,6 +154,10 @@ build/model.o: src/model.cpp include/model.h include/mesh.h
 
 build/mesh.o: src/mesh.cpp include/mesh.h
 	g++ -std=c++20 $(FLAGS) -o build/mesh.o -c src/mesh.cpp $(INCLUDES)
+
+build/Voxel/VoxelSpace.o: src/Voxel/VoxelSpace.cpp include/Voxel/VoxelSpace.h
+	mkdir -p build/Voxel
+	g++ -std=c++20 $(FLAGS) -o build/Voxel/VoxelSpace.o -c src/Voxel/VoxelSpace.cpp $(INCLUDES)
 
 build/entity.o: src/entity.cpp include/entity.h include/Config.h
 	g++ -std=c++20 $(FLAGS) -o build/entity.o -c src/entity.cpp $(INCLUDES)
