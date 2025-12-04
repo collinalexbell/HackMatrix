@@ -685,11 +685,105 @@ World::getCube(float x, float y, float z)
   return NULL;
 }
 
+float
+World::getVoxelSize() const
+{
+  // Default to CUBE_SIZE for legacy world math; renderer sets this when voxels
+  // are added via the API.
+  return renderer != NULL ? renderer->getVoxelSize() : CUBE_SIZE;
+}
+
+Position
+World::raycastVoxelSpace(float size)
+{
+  Position rv;
+  rv.valid = false;
+  if (renderer == NULL) {
+    return rv;
+  }
+  glm::vec3 voxelSpace = cameraToVoxelSpace(camera->position);
+  int x = (int)floor(voxelSpace.x);
+  int y = (int)floor(voxelSpace.y);
+  int z = (int)floor(voxelSpace.z);
+
+  int stepX = (camera->front.x > 0) ? 1 : -1;
+  int stepY = (camera->front.y > 0) ? 1 : -1;
+  int stepZ = (camera->front.z > 0) ? 1 : -1;
+
+  float tilNextX = x + ((stepX == 1) ? 1 : 0) - (voxelSpace.x);
+  float tilNextY = y + ((stepY == 1) ? 1 : 0) - (voxelSpace.y);
+  float tilNextZ = z + ((stepZ == 1) ? 1 : 0) - (voxelSpace.z);
+
+  float tMaxX = camera->front.x != 0 ? tilNextX / camera->front.x
+                                     : std::numeric_limits<float>::infinity();
+
+  float tMaxY = camera->front.y != 0 ? tilNextY / camera->front.y
+                                     : std::numeric_limits<float>::infinity();
+
+  float tMaxZ = camera->front.z != 0 ? tilNextZ / camera->front.z
+                                     : std::numeric_limits<float>::infinity();
+
+  float tDeltaX = camera->front.x != 0 ? 1 / abs(camera->front.x)
+                                       : std::numeric_limits<float>::infinity();
+
+  float tDeltaY = camera->front.y != 0 ? 1 / abs(camera->front.y)
+                                       : std::numeric_limits<float>::infinity();
+
+  float tDeltaZ = camera->front.z != 0 ? 1 / abs(camera->front.z)
+                                       : std::numeric_limits<float>::infinity();
+
+  glm::vec3 normal(0);
+  glm::vec3 normalX = glm::vec3(stepX * -1, 0, 0);
+  glm::vec3 normalY = glm::vec3(0, stepY * -1, 0);
+  glm::vec3 normalZ = glm::vec3(0, 0, stepZ * -1);
+
+  int delta = 1;
+  int limit = 20;
+  int steps = 0;
+  while ((tMaxX < limit || tMaxY < limit || tMaxZ < limit) && steps < 256) {
+    if (tMaxX < tMaxY) {
+      if (tMaxX < tMaxZ) {
+        tMaxX = tMaxX + tDeltaX;
+        x = x + stepX;
+        normal = normalX;
+      } else {
+        tMaxZ = tMaxZ + tDeltaZ;
+        z = z + stepZ;
+        normal = normalZ;
+      }
+    } else {
+      if (tMaxY < tMaxZ) {
+        tMaxY = tMaxY + tDeltaY;
+        y = y + stepY;
+        normal = normalY;
+      } else {
+        tMaxZ = tMaxZ + tDeltaZ;
+        z = z + stepZ;
+        normal = normalZ;
+      }
+    }
+
+    glm::vec3 worldPos = glm::vec3(x, y, z) * size;
+    if (renderer->voxelExistsAt(worldPos, size)) {
+      rv.x = x;
+      rv.y = y;
+      rv.z = z;
+      rv.normal = normal;
+      rv.valid = true;
+      return rv;
+    }
+    steps += delta;
+  }
+
+  return rv;
+}
+
 glm::vec3
 World::cameraToVoxelSpace(glm::vec3 cameraPosition)
 {
   glm::vec3 halfAVoxel(0.5);
-  glm::vec3 rv = (cameraPosition / glm::vec3(CUBE_SIZE)) + halfAVoxel;
+  float size = getVoxelSize();
+  glm::vec3 rv = (cameraPosition / glm::vec3(size)) + halfAVoxel;
   return rv;
 }
 
@@ -803,15 +897,47 @@ void
 World::cubeAction(Action toTake)
 {
   Position lookingAt = getLookedAtCube();
+  if (toTake == PLACE_VOXEL) {
+    float size = getVoxelSize();
+    Position voxelHit = raycastVoxelSpace(size);
+
+    if (voxelHit.valid) {
+      glm::vec3 targetGrid = glm::vec3(voxelHit.x, voxelHit.y, voxelHit.z) +
+                             glm::vec3(voxelHit.normal);
+      glm::vec3 targetPos = targetGrid * size;
+      renderer->addVoxels({ targetPos }, false, size);
+      return;
+    }
+
+    if (lookingAt.valid) {
+      auto lookedAt = getCube(lookingAt.x, lookingAt.y, lookingAt.z);
+      glm::vec3 targetGrid = glm::vec3(lookingAt.x, lookingAt.y, lookingAt.z) +
+                             glm::vec3(lookingAt.normal);
+      glm::vec3 targetPos = targetGrid * size;
+      if (renderer != NULL) {
+        renderer->addVoxels({ targetPos }, false, size);
+      } else if (lookedAt != NULL) {
+        int x = lookingAt.x + (int)lookingAt.normal.x;
+        int y = lookingAt.y + (int)lookingAt.normal.y;
+        int z = lookingAt.z + (int)lookingAt.normal.z;
+        addCube(x, y, z, lookedAt->blockType());
+        mesh();
+      }
+      return;
+    }
+
+    // No voxel hit; place one in front of the camera on the nearest grid.
+    glm::vec3 aim = camera->position + camera->front * size;
+    glm::vec3 targetGrid = glm::round(aim / size);
+    glm::vec3 targetPos = targetGrid * size;
+    if (renderer != NULL) {
+      renderer->addVoxels({ targetPos }, false, size);
+    }
+    return;
+  }
+
   if (lookingAt.valid) {
     auto lookedAt = getCube(lookingAt.x, lookingAt.y, lookingAt.z);
-    if (toTake == PLACE_CUBE) {
-      int x = lookingAt.x + (int)lookingAt.normal.x;
-      int y = lookingAt.y + (int)lookingAt.normal.y;
-      int z = lookingAt.z + (int)lookingAt.normal.z;
-      addCube(x, y, z, lookedAt->blockType());
-      mesh();
-    }
     if (toTake == REMOVE_CUBE) {
       WorldPosition pos =
         translateToWorldPosition(lookingAt.x, lookingAt.y, lookingAt.z);

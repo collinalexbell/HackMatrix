@@ -13,6 +13,8 @@ public:
   Voxel();
   Voxel(glm::vec3 position, float size);
   std::pair<std::vector<glm::vec3>, std::vector<glm::vec3>> buildVertices() const;
+  glm::vec3 getPosition() const { return position; }
+  float getSize() const { return size; }
 
 private:
   glm::vec3 position{ 0.0f };
@@ -48,6 +50,7 @@ class VoxelSpace
 {
 public:
   void add(glm::vec3 position, float size = 1.0f);
+  bool has(glm::vec3 position, float size = 1.0f) const;
   RenderedVoxelSpace render() const;
   void clear();
 

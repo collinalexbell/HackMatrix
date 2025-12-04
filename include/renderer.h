@@ -112,6 +112,7 @@ class Renderer
   bool voxelsEnabled = true;
   VoxelSpace voxelSpace;
   RenderedVoxelSpace voxelMesh;
+  float voxelSize = 2.0f;
 
 public:
   Renderer(shared_ptr<EntityRegistry> registry,
@@ -136,6 +137,8 @@ public:
   void addVoxels(const std::vector<glm::vec3>& positions,
                  bool replace = false,
                  float size = 1.0f);
+  float getVoxelSize() const { return voxelSize; }
+  bool voxelExistsAt(const glm::vec3& worldPosition, float size) const;
 
   glm::mat4 projection;
 };

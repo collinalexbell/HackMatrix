@@ -92,7 +92,7 @@ Controls::handleDMenu(GLFWwindow* window, World* world)
   // its V menu for now :(
   bool dMenuActive = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
   if (dMenuActive && debounce(lastKeyPressTime)) {
-    wm->menu();
+    //wm->menu();
   }
 }
 
@@ -192,10 +192,12 @@ Controls::handleClicks(GLFWwindow* window, World* world)
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
     if(grabbedCursor) {
-      auto app = windowManagerSpace->getLookedAtApp();
-      if (app) {
-        goToApp(app.value());
-      }
+      // auto app = windowManagerSpace->getLookedAtApp();
+      // if (app) {
+      //   goToApp(app.value());
+      // } else {
+        world->action(PLACE_VOXEL);
+      // }
     } else {
       // move objects
       //
@@ -303,7 +305,8 @@ Controls::handleChangePlayerSpeed(GLFWwindow* window)
 void
 Controls::goToApp(entt::entity app)
 {
-  wm->passthroughInput();
+/*
+  //wm->passthroughInput();
   float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
   glm::vec3 rotationDegrees = windowManagerSpace->getAppRotation(app);
   glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
@@ -311,13 +314,15 @@ Controls::goToApp(entt::entity app)
   glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
   targetPosition = targetPosition + rotationQuat * glm::vec3(0, 0, deltaZ);
   moveTo(targetPosition, rotationDegrees, windowFlop, [app, this]() {
-    wm->focusApp(app);
+  //wm->focusApp(app);
   });
+*/
 }
 
 void
 Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
 {
+  /*
   auto app = windowManagerSpace->getLookedAtApp();
   if (app.has_value()) {
     int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
@@ -325,11 +330,13 @@ Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
       goToApp(app.value());
     }
   }
+  */
 }
 
 void
 Controls::handleSelectApp(GLFWwindow* window)
 {
+/*
   auto app = windowManagerSpace->getLookedAtApp();
   if (app) {
     int keyPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
@@ -337,6 +344,7 @@ Controls::handleSelectApp(GLFWwindow* window)
       windowManagerSpace->toggleAppSelect(*app);
     }
   }
+  */
 }
 
 void
@@ -372,12 +380,12 @@ Controls::handleToggleCursor(GLFWwindow* window)
     if (grabbedCursor) {
       grabbedCursor = false;
       glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-      wm->captureInput();
+      //wm->captureInput();
     } else {
       grabbedCursor = true;
       resetMouse = true;
       glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-      wm->passthroughInput();
+      //wm->passthroughInput();
     }
   }
 }
@@ -385,7 +393,9 @@ Controls::handleToggleCursor(GLFWwindow* window)
 void
 Controls::wireWindowManager(shared_ptr<WindowManager::Space> windowManagerSpace)
 {
+/*
   this->windowManagerSpace = windowManagerSpace;
+*/
 }
 
 void

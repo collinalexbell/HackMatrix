@@ -1,6 +1,7 @@
 #include "Voxel/VoxelSpace.h"
 
 #include <array>
+#include <cmath>
 #include <tuple>
 #include <utility>
 
@@ -170,6 +171,19 @@ void
 VoxelSpace::add(glm::vec3 position, float size)
 {
   voxels.emplace_back(position, size);
+}
+
+bool
+VoxelSpace::has(glm::vec3 position, float size) const
+{
+  const float EPS = 0.0001f;
+  for (const auto& v : voxels) {
+    if (fabs(v.getSize() - size) < EPS &&
+        glm::length(v.getPosition() - position) < EPS) {
+      return true;
+    }
+  }
+  return false;
 }
 
 RenderedVoxelSpace

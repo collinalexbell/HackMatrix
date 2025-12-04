@@ -276,7 +276,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   shader->setBool("isVoxel", false);
   shader->setBool("voxelsEnabled", voxelsEnabled);
 
-  float voxelSize = 2.0f;
   voxelSpace.add(glm::vec3(0, 4, 4), voxelSize);
   voxelSpace.add(glm::vec3(voxelSize, 4, 4), voxelSize);
   voxelSpace.add(glm::vec3(-voxelSize, 4, 4), voxelSize);
@@ -647,6 +646,9 @@ Renderer::addVoxels(const std::vector<glm::vec3>& positions,
                     bool replace,
                     float size)
 {
+  if (size > 0.0f) {
+    voxelSize = size;
+  }
   if (replace) {
     voxelSpace.clear();
   }
@@ -660,6 +662,23 @@ Renderer::addVoxels(const std::vector<glm::vec3>& positions,
   }
   voxelMesh = voxelSpace.render();
   voxelsEnabled = true;
+}
+
+bool
+Renderer::voxelExistsAt(const glm::vec3& worldPosition, float size) const
+{
+  float s = size > 0.0f ? size : voxelSize;
+  glm::vec3 pos = worldPosition;
+  // Basic epsilon to tolerate float drift when comparing grid-aligned voxels.
+  const float EPS = 0.0001f;
+  glm::vec3 expected = glm::round(pos / s) * s;
+  if (glm::length(pos - expected) > EPS) {
+    pos = expected;
+  }
+
+  // VoxelSpace currently only exposes add/render; mirror the simple storage
+  // here by iterating the backing container.
+  return voxelSpace.has(pos, s);
 }
 
 void
