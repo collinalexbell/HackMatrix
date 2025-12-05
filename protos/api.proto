@@ -5,6 +5,7 @@ enum MessageType {
   TURN_KEY = 1;
   PLAYER_MOVE = 2;
   UNFOCUS_WINDOW = 3;
+  ADD_VOXELS = 4;
 }
 
 message NoPayload {}
@@ -19,6 +20,18 @@ message PlayerMove {
   Vector position = 1;
   Vector rotation = 2;
   float unitsPerSecond = 3;
+}
+
+message VoxelCoord {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+message AddVoxels {
+  repeated VoxelCoord voxels = 1;
+  bool replace = 2;
+  float size = 3;
 }
 
 
@@ -41,11 +54,10 @@ message ApiRequest {
     TurnKey turnKey = 4;
     PlayerMove playerMove = 5;
     NoPayload noPayload = 6;
+    AddVoxels addVoxels = 7;
   }
 }
 
 message ApiRequestResponse {
   int64 requestId = 1;
 }
-
-

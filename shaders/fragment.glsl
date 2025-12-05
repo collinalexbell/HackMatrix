@@ -5,6 +5,7 @@ in vec3 FragPos;
 in vec3 lineColor;
 in vec4 ModelColor;
 in vec3 Normal;
+in vec3 Barycentric;
 
 uniform sampler2DArray allBlocks;
 uniform sampler2D texture_diffuse1;
@@ -29,6 +30,8 @@ uniform bool isMesh;
 uniform bool isDynamicObject;
 uniform bool isLight;
 uniform bool appTransparent;
+uniform bool isVoxel;
+uniform bool voxelsEnabled;
 uniform float time;
 const int MAX_LIGHTS = 10;
 uniform int numLights;
@@ -173,6 +176,22 @@ void main()
 		if(appSelected) {
 			FragColor = mix(FragColor, floor(TexCoord), 0.1);
 		}
+	} else if (isVoxel && voxelsEnabled) {
+    float wave = sin(FragPos.y * 0.6 + time * 1.3);
+    vec3 tint = palette(wave * 0.25 + 0.5);
+    vec3 glow = vec3(0.2) + 0.8 * abs(vec3(
+      sin(FragPos.x * 0.3 + time * 0.8),
+      cos(FragPos.y * 0.3 - time * 0.6),
+      sin(FragPos.z * 0.3 + time * 0.4)
+    ));
+    vec3 baseColor = mix(glow, tint, 0.5);
+    float edgeWidth = 0.03;
+    float edge = 1.0 - smoothstep(edgeWidth, edgeWidth * 2.0,
+                                  min(min(Barycentric.x, Barycentric.y), Barycentric.z));
+    vec3 edgeGlow = vec3(1.0, 0.9, 0.6) * (1.5 + 0.5 * sin(time * 3.0));
+    vec3 color = baseColor;
+    color = mix(color, edgeGlow, edge);
+    FragColor = vec4(color, 1.0);
 	} else if (isModel) {
 
     if(isLight) {

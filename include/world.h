@@ -66,6 +66,8 @@ class World : public WorldInterface
                                                          bool isInitial);
   OrthoginalPreload orthoginalPreload(DIRECTION direction, preload::SIDE side);
   void loadNextPreloadedChunkDeque(DIRECTION direction, bool initial = false);
+  float getVoxelSize() const;
+  Position raycastVoxelSpace(float size);
   void transferChunksToPreload(DIRECTION movementDirection,
                                deque<shared_ptr<Chunk>> slice);
   ChunkIndex middleIndex;
