@@ -3,6 +3,7 @@
 #include "dynamicObject.h"
 #include "glm/fwd.hpp"
 #include "logger.h"
+#include "renderer.h"
 #include "systems/KeyAndLock.h"
 #include "systems/Move.h"
 
@@ -25,9 +26,11 @@ int BatchedRequest::nextId = 0;
 Api::Api(std::string bindAddress,
          shared_ptr<EntityRegistry> registry,
          Controls* controls,
+         Renderer* renderer,
          shared_ptr<WindowManager::WindowManager> wm)
   : registry(registry)
   , controls(controls)
+  , renderer(renderer)
   , wm(wm)
 {
   context = zmq::context_t(2);
@@ -127,7 +130,26 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       break;
     }
     case UNFOCUS_WINDOW: {
-      wm->unfocusApp();
+      if (wm) {
+        wm->unfocusApp();
+      }
+      break;
+    }
+    case ADD_VOXELS: {
+      auto voxels = batchedRequest.request.addvoxels();
+      std::vector<glm::vec3> positions;
+      positions.reserve(voxels.voxels_size());
+      for (const auto& v : voxels.voxels()) {
+        positions.emplace_back(v.x(), v.y(), v.z());
+      }
+      float size = voxels.size() > 0 ? voxels.size() : 1.0f;
+      bool replace = voxels.replace();
+      // Allow empty positions when replace is true so callers can clear voxels.
+      bool shouldUpdate = replace || !positions.empty();
+      if (renderer != nullptr && shouldUpdate) {
+        renderer->addVoxels(positions, replace, size);
+      }
+      break;
     }
     default:
       break;

@@ -17,6 +17,7 @@ namespace WindowManager {
   class WindowManager;
 }
 class Controls;
+class Renderer;
 class Api;
 class CommandServer
 {
@@ -64,6 +65,7 @@ class Api
 
   shared_ptr<spdlog::logger> logger;
   shared_ptr<EntityRegistry> registry;
+  Renderer* renderer = nullptr;
 
   zmq::context_t context;
   CommandServer* commandServer;
@@ -82,7 +84,11 @@ protected:
   void processBatchedRequest(BatchedRequest);
 
 public:
-  Api(std::string bindAddress, shared_ptr<EntityRegistry>, Controls* controls, shared_ptr<WindowManager::WindowManager>);
+  Api(std::string bindAddress,
+      shared_ptr<EntityRegistry>,
+      Controls* controls,
+      Renderer* renderer,
+      shared_ptr<WindowManager::WindowManager>);
   ~Api();
   void poll();
   void mutateEntities();

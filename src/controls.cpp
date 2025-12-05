@@ -192,9 +192,14 @@ Controls::handleClicks(GLFWwindow* window, World* world)
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
     if(grabbedCursor) {
-      auto app = windowManagerSpace->getLookedAtApp();
-      if (app) {
+      std::optional<entt::entity> app = std::nullopt;
+      if (windowManagerSpace != nullptr) {
+        app = windowManagerSpace->getLookedAtApp();
+      }
+      if (app.has_value()) {
         goToApp(app.value());
+      } else {
+        world->action(PLACE_VOXEL);
       }
     } else {
       // move objects

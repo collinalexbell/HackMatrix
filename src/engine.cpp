@@ -153,7 +153,7 @@ Engine::initializeMemberObjs()
     registry, camera, texturePack, true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(wm, world, camera, renderer, texturePack);
-  api = new Api("tcp://*:3333", registry, controls, wm);
+  api = new Api("tcp://*:4455", registry, controls, renderer, wm);
   wm->registerControls(controls);
 }
 
@@ -184,13 +184,18 @@ Engine::loop()
   double frameStart;
   int frameIndex = 0;
   double fps;
-  systems::updateLighting(registry, renderer);
+  // Skip shadow-map lighting pass while experimenting with voxel outlines to
+  // avoid crashes in the lighting pipeline.
+  // systems::updateLighting(registry, renderer);
   try {
     while (!glfwWindowShouldClose(window)) {
       TracyGpuZone("loop");
       glfwPollEvents();
       frameStart = glfwGetTime();
 
+      if (api != nullptr) {
+        api->mutateEntities();
+      }
       renderer->render();
       engineGui->render(fps, frameIndex, frameTimes);
 
@@ -198,7 +203,6 @@ Engine::loop()
       // call per light)
       world->tick();
 
-      api->mutateEntities();
       wm->tick();
 
       disableKeysIfImguiActive();
