@@ -19,16 +19,6 @@ ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o buil
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
-WLROOTS_AVAILABLE := $(shell pkg-config --exists wlroots wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
-ifeq ($(WLROOTS_AVAILABLE),1)
-    WLROOTS_CFLAGS := $(shell pkg-config --cflags wlroots wayland-server xkbcommon)
-    WLROOTS_LIBS := $(shell pkg-config --libs wlroots wayland-server xkbcommon)
-else
-    WLROOTS_CFLAGS :=
-    WLROOTS_LIBS :=
-endif
-
-
 all: FLAGS+=-O3 -g
 all: tracy include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
 
@@ -38,16 +28,6 @@ add:
 
 profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
-
-ifeq ($(WLROOTS_AVAILABLE),1)
-wlroots-skeleton: build/wayland/wlroots_skeleton.o
-	g++ -std=c++20 $(FLAGS) -o wlroots-skeleton build/wayland/wlroots_skeleton.o $(WLROOTS_LIBS) -lpthread
-else
-wlroots-skeleton:
-	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
-	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor skeleton." >&2
-	@exit 1
-endif
 
 tracy:
 	git submodule update --init
@@ -70,10 +50,6 @@ build/enkimi.o: src/enkimi.c
 
 build/miniz.o: src/miniz.c
 	g++ $(FLAGS) $(LOADER_FLAGS) -o build/miniz.o -c src/miniz.c $(INCLUDES) -lm
-
-build/wayland/wlroots_skeleton.o: src/wayland/wlroots_skeleton.cpp
-	mkdir -p build/wayland
-	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlroots_skeleton.o -c src/wayland/wlroots_skeleton.cpp
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
