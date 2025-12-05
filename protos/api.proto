@@ -39,6 +39,7 @@ message AddVoxels {
   repeated VoxelCoord voxels = 1;
   bool replace = 2;
   float size = 3;
+  Vector color = 4;
 }
 
 message ClearVoxels {

@@ -136,7 +136,8 @@ public:
   void wireWindowManager(shared_ptr<WindowManager::WindowManager>, shared_ptr<WindowManager::Space>);
   void addVoxels(const std::vector<glm::vec3>& positions,
                  bool replace = false,
-                 float size = 1.0f);
+                 float size = 1.0f,
+                 glm::vec3 color = glm::vec3(1.0f));
   void clearVoxelsInBox(const glm::vec3& minCorner,
                         const glm::vec3& maxCorner);
   void setLines(const std::vector<Line>& lines);

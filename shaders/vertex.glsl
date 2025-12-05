@@ -4,6 +4,7 @@ layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 attr1;
 layout (location = 2) in vec3 normal;
 layout (location = 7) in vec3 barycentric;
+layout (location = 8) in vec3 voxelColorIn;
 
 out vec2 TexCoord;
 out vec3 lineColor;
@@ -11,6 +12,7 @@ out vec4 ModelColor;
 out vec3 Normal;
 out vec3 FragPos;
 out vec3 Barycentric;
+out vec3 VoxelColor;
 
 uniform mat4 meshModel;
 uniform mat4 model;
@@ -53,6 +55,7 @@ void main()
     TexCoord = vec2(0.0);
     Normal = mat3(model) * normal;
     Barycentric = barycentric;
+    VoxelColor = voxelColorIn;
   } else if (isLine) {
     gl_Position = projection * view * vec4(position, 1.0);
     FragPos = position;
@@ -60,11 +63,13 @@ void main()
     Normal = vec3(0.0);
     Barycentric = vec3(0.0);
     lineColor = attr1;
+    VoxelColor = vec3(1.0);
   } else {
     gl_Position = projection * view * vec4(position, 1.0);
     FragPos = vec3(position);
     TexCoord = vec2(0.0);
     Normal = vec3(0.0, 1.0, 0.0);
     Barycentric = vec3(0.0);
+    VoxelColor = vec3(1.0);
   }
 }

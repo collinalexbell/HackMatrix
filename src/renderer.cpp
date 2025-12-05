@@ -666,7 +666,8 @@ Renderer::renderVoxels()
 void
 Renderer::addVoxels(const std::vector<glm::vec3>& positions,
                     bool replace,
-                    float size)
+                    float size,
+                    glm::vec3 color)
 {
   if (size > 0.0f) {
     voxelSize = size;
@@ -680,7 +681,7 @@ Renderer::addVoxels(const std::vector<glm::vec3>& positions,
     return;
   }
   for (const auto& pos : positions) {
-    voxelSpace.add(pos, size);
+    voxelSpace.add(pos, size, color);
   }
   voxelMesh = voxelSpace.render();
   voxelsEnabled = true;

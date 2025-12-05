@@ -60,11 +60,15 @@ class Client:
         )
         return self._send(apiRequest)
 
-    def add_voxels(self, positions, replace=False, size=1.0):
+    def add_voxels(self, positions, replace=False, size=1.0, color=None):
+        color_msg = None
+        if color is not None:
+            color_msg = api_pb2.Vector(x=color[0], y=color[1], z=color[2])
         voxels_msg = api_pb2.AddVoxels(
             replace=replace,
             size=size,
             voxels=[api_pb2.VoxelCoord(x=p[0], y=p[1], z=p[2]) for p in positions],
+            color=color_msg,
         )
         apiRequest = api_pb2.ApiRequest(
             entityId=0, type="ADD_VOXELS", addVoxels=voxels_msg

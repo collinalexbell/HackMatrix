@@ -8,6 +8,7 @@ const ClearVoxels = proto.lookupType("ClearVoxels");
 const ConfirmAction = proto.lookupType("ConfirmAction");
 const Range = proto.lookupType("Range");
 const VoxelCoord = proto.lookupType("VoxelCoord");
+const Vector = proto.lookupType("Vector");
 
 const socket = new zmq.Request();
 async function init(address) {
@@ -15,11 +16,12 @@ async function init(address) {
     await socket.connect(target);
 }
 
-async function addVoxels(voxels, replace = false, size = 1.0) {
+async function addVoxels(voxels, replace = false, size = 1.0, color) {
     const addVoxels = AddVoxels.create({
         replace,
         size,
         voxels: voxels.map(v => VoxelCoord.create({ x: v[0], y: v[1], z: v[2] })),
+        color: color ? Vector.create({ x: color[0], y: color[1], z: color[2] }) : undefined,
     });
     const request = ApiRequest.create({
         type: proto.MessageType.ADD_VOXELS,

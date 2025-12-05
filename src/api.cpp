@@ -19,6 +19,7 @@
 #include <sstream>
 #include <string>
 #include <zmq/zmq.hpp>
+#include <unordered_set>
 #undef Status
 #include "protos/api.pb.h"
 
@@ -161,6 +162,10 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       }
       float size = voxels.size() > 0 ? voxels.size() : 1.0f;
       bool replace = voxels.replace();
+      glm::vec3 color(1.0f);
+      if (voxels.has_color()) {
+        color = glm::vec3(voxels.color().x(), voxels.color().y(), voxels.color().z());
+      }
       // Allow empty positions when replace is true so callers can clear voxels.
       bool shouldUpdate = replace || !positions.empty();
       if (renderer != nullptr && shouldUpdate) {
@@ -171,10 +176,12 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
                        size);
         }
         std::cout << "[API] AddVoxels count=" << positions.size()
-                  << " replace=" << replace << " size=" << size << std::endl;
+                  << " replace=" << replace << " size=" << size
+                  << " color=(" << color.x << "," << color.y << "," << color.z
+                  << ")" << std::endl;
         renderer->setLines(world != nullptr ? world->getLines()
                                             : std::vector<Line>{});
-        renderer->addVoxels(positions, replace, size);
+        renderer->addVoxels(positions, replace, size, color);
       }
       break;
     }
@@ -269,20 +276,95 @@ Api::buildClearAreaVoxels(const glm::vec3& min, const glm::vec3& max) const
   if (s <= 0.0f) {
     s = 1.0f;
   }
-  // Generate a hollow box (all faces) with step = voxel size.
   std::unordered_set<glm::vec3> voxels;
-  for (float x = lower.x; x <= upper.x + 0.001f; x += s) {
-    for (float y = lower.y; y <= upper.y + 0.001f; y += s) {
-      for (float z = lower.z; z <= upper.z + 0.001f; z += s) {
-        bool onFace = (x <= lower.x + 0.0001f) || (x >= upper.x - 0.0001f) ||
-                      (y <= lower.y + 0.0001f) || (y >= upper.y - 0.0001f) ||
-                      (z <= lower.z + 0.0001f) || (z >= upper.z - 0.0001f);
-        if (onFace) {
-          voxels.insert(glm::vec3(x, y, z));
-        }
+  auto addEdge = [&](glm::vec3 fixedA, glm::vec3 fixedB, bool varyX, bool varyY, bool varyZ) {
+    if (varyX) {
+      for (float x = lower.x; x <= upper.x + 0.0001f; x += s) {
+        voxels.insert(glm::vec3(x, fixedA.y, fixedA.z));
+        voxels.insert(glm::vec3(x, fixedB.y, fixedB.z));
+      }
+    } else if (varyY) {
+      for (float y = lower.y; y <= upper.y + 0.0001f; y += s) {
+        voxels.insert(glm::vec3(fixedA.x, y, fixedA.z));
+        voxels.insert(glm::vec3(fixedB.x, y, fixedB.z));
+      }
+    } else if (varyZ) {
+      for (float z = lower.z; z <= upper.z + 0.0001f; z += s) {
+        voxels.insert(glm::vec3(fixedA.x, fixedA.y, z));
+        voxels.insert(glm::vec3(fixedB.x, fixedB.y, z));
       }
     }
-  }
+  };
+
+  // Edges parallel to X
+  addEdge(glm::vec3(lower.x, lower.y, lower.z),
+          glm::vec3(lower.x, upper.y, lower.z),
+          true,
+          false,
+          false);
+  addEdge(glm::vec3(lower.x, lower.y, upper.z),
+          glm::vec3(lower.x, upper.y, upper.z),
+          true,
+          false,
+          false);
+
+  // Edges parallel to Y
+  addEdge(glm::vec3(lower.x, lower.y, lower.z),
+          glm::vec3(upper.x, lower.y, lower.z),
+          false,
+          true,
+          false);
+  addEdge(glm::vec3(lower.x, lower.y, upper.z),
+          glm::vec3(upper.x, lower.y, upper.z),
+          false,
+          true,
+          false);
+
+  // Edges parallel to Z
+  addEdge(glm::vec3(lower.x, lower.y, lower.z),
+          glm::vec3(lower.x, lower.y, upper.z),
+          false,
+          false,
+          true);
+  addEdge(glm::vec3(upper.x, lower.y, lower.z),
+          glm::vec3(upper.x, lower.y, upper.z),
+          false,
+          false,
+          true);
+
+  // Opposite edges on top face for Y/Z and X/Z
+  addEdge(glm::vec3(lower.x, upper.y, lower.z),
+          glm::vec3(lower.x, upper.y, upper.z),
+          false,
+          false,
+          true);
+  addEdge(glm::vec3(upper.x, upper.y, lower.z),
+          glm::vec3(upper.x, upper.y, upper.z),
+          false,
+          false,
+          true);
+
+  addEdge(glm::vec3(lower.x, lower.y, lower.z),
+          glm::vec3(lower.x, upper.y, lower.z),
+          false,
+          true,
+          false);
+  addEdge(glm::vec3(upper.x, lower.y, lower.z),
+          glm::vec3(upper.x, upper.y, lower.z),
+          false,
+          true,
+          false);
+
+  addEdge(glm::vec3(lower.x, lower.y, upper.z),
+          glm::vec3(lower.x, upper.y, upper.z),
+          false,
+          true,
+          false);
+  addEdge(glm::vec3(upper.x, lower.y, upper.z),
+          glm::vec3(upper.x, upper.y, upper.z),
+          false,
+          true,
+          false);
   return std::vector<glm::vec3>(voxels.begin(), voxels.end());
 }
 
@@ -305,7 +387,8 @@ Api::registerClearArea(const glm::vec3& min,
   auto previewVoxels = buildClearAreaVoxels(lower, upper);
   pendingClearAreas[actionId].previewVoxels = previewVoxels;
   if (renderer != nullptr && !previewVoxels.empty()) {
-    renderer->addVoxels(previewVoxels, false, renderer->getVoxelSize());
+    renderer->addVoxels(
+      previewVoxels, false, renderer->getVoxelSize(), glm::vec3(1.0f, 0.2f, 0.2f));
   }
   if (logger) {
     logger->info("Registered clear area {}: min=({}, {}, {}), max=({}, {}, {})",
