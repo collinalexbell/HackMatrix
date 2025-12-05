@@ -145,7 +145,7 @@ WindowManager::wire(shared_ptr<WindowManager> sharedThis,
 {
   space = make_shared<Space>(registry, renderer, camera, logSink);
   renderer->wireWindowManager(sharedThis, space);
-  controls->wireWindowManager(space);
+  // window manager wiring into controls disabled.
 }
 
   optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {

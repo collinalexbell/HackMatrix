@@ -393,6 +393,14 @@ Renderer::addLine(int index, Line line)
 }
 
 void
+Renderer::setLines(const std::vector<Line>& lines)
+{
+  for (size_t i = 0; i < lines.size(); ++i) {
+    addLine(static_cast<int>(i), lines[i]);
+  }
+}
+
+void
 Renderer::renderDynamicObjects()
 {
   glBindVertexArray(DYNAMIC_OBJECT_VERTEX);
@@ -622,9 +630,23 @@ Renderer::renderApps()
 void
 Renderer::renderLines()
 {
+  shader->setBool("isApp", false);
+  shader->setBool("isModel", false);
+  shader->setBool("isVoxel", false);
+  shader->setBool("isDynamicObject", false);
   shader->setBool("isLine", true);
+  // Draw lines on top; depth test off for clear visibility of selection boxes.
+  GLboolean depthEnabled = glIsEnabled(GL_DEPTH_TEST);
+  if (depthEnabled) {
+    glDisable(GL_DEPTH_TEST);
+  }
+  glLineWidth(2.5f);
   glBindVertexArray(LINE_VAO);
   glDrawArrays(GL_LINES, 0, world->getLines().size() * 2);
+  if (depthEnabled) {
+    glEnable(GL_DEPTH_TEST);
+  }
+  glLineWidth(1.0f);
   shader->setBool("isLine", false);
 }
 
@@ -662,6 +684,18 @@ Renderer::addVoxels(const std::vector<glm::vec3>& positions,
   }
   voxelMesh = voxelSpace.render();
   voxelsEnabled = true;
+}
+
+void
+Renderer::clearVoxelsInBox(const glm::vec3& minCorner,
+                           const glm::vec3& maxCorner)
+{
+  auto removed = voxelSpace.remove(minCorner, maxCorner);
+  if (removed == 0) {
+    return;
+  }
+  voxelMesh = voxelSpace.render();
+  voxelsEnabled = !voxelSpace.empty();
 }
 
 bool

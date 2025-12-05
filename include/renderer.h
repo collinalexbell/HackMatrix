@@ -137,6 +137,9 @@ public:
   void addVoxels(const std::vector<glm::vec3>& positions,
                  bool replace = false,
                  float size = 1.0f);
+  void clearVoxelsInBox(const glm::vec3& minCorner,
+                        const glm::vec3& maxCorner);
+  void setLines(const std::vector<Line>& lines);
   float getVoxelSize() const { return voxelSize; }
   bool voxelExistsAt(const glm::vec3& worldPosition, float size) const;
 

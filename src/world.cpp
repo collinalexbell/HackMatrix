@@ -663,6 +663,10 @@ World::removeLine(Line l)
     glm::vec3 b1 = l.points[1];
     if (glm::distance(a0, a1) < EPSILON && glm::distance(b0, b1) < EPSILON) {
       lines.erase(it);
+      if (renderer != NULL) {
+        renderer->setLines(lines);
+      }
+      break;
     }
   }
 }

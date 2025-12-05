@@ -27,6 +27,7 @@
 
 #include <memory>
 #include <spdlog/common.h>
+#include <cstdlib>
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -145,6 +146,10 @@ Engine::~Engine()
 void
 Engine::initializeMemberObjs()
 {
+  const char* apiAddressEnv = std::getenv("VOXEL_API_BIND");
+  std::string apiAddress =
+    apiAddressEnv != nullptr ? apiAddressEnv : "tcp://*:4455";
+
   auto texturePack = blocks::initializeBasicPack();
   //wm = make_shared<WindowManager::WindowManager>(
   //registry, glfwGetX11Window(window), loggerSink);
@@ -153,7 +158,7 @@ Engine::initializeMemberObjs()
     registry, camera, texturePack, true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
   controls = new Controls(world, camera, renderer, texturePack);
-  api = new Api("tcp://*:4455", registry, controls, renderer, wm);
+  api = new Api(apiAddress, registry, controls, renderer, world, wm);
   //wm->registerControls(controls);
 }
 

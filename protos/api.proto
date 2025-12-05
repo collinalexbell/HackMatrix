@@ -6,6 +6,8 @@ enum MessageType {
   PLAYER_MOVE = 2;
   UNFOCUS_WINDOW = 3;
   ADD_VOXELS = 4;
+  CLEAR_VOXELS = 5;
+  CONFIRM_ACTION = 6;
 }
 
 message NoPayload {}
@@ -14,6 +16,11 @@ message Vector {
   float x = 1;
   float y = 2;
   float z = 3;
+}
+
+message Range {
+  float min = 1;
+  float max = 2;
 }
 
 message PlayerMove {
@@ -34,6 +41,15 @@ message AddVoxels {
   float size = 3;
 }
 
+message ClearVoxels {
+  Range x = 1;
+  Range y = 2;
+  Range z = 3;
+}
+
+message ConfirmAction {
+  int64 actionId = 1;
+}
 
 message Move {
   float xDelta = 1;
@@ -55,9 +71,13 @@ message ApiRequest {
     PlayerMove playerMove = 5;
     NoPayload noPayload = 6;
     AddVoxels addVoxels = 7;
+    ClearVoxels clearVoxels = 8;
+    ConfirmAction confirmAction = 9;
   }
 }
 
 message ApiRequestResponse {
   int64 requestId = 1;
+  int64 actionId = 2;
+  bool success = 3;
 }

@@ -225,5 +225,7 @@ void main()
 
       FragColor = vec4(lightOutput,1) * texture(texture_diffuse1, TexCoord);
     }
-	} 
+	} else if (isLine) {
+    FragColor = vec4(lineColor, 1.0);
+  }
 }

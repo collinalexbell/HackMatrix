@@ -1,5 +1,6 @@
 #include "Voxel/VoxelSpace.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <tuple>
@@ -201,6 +202,33 @@ VoxelSpace::render() const
     barycentrics.insert(barycentrics.end(), b.begin(), b.end());
   }
   return RenderedVoxelSpace(vertices, barycentrics);
+}
+
+size_t
+VoxelSpace::remove(glm::vec3 min, glm::vec3 max)
+{
+  glm::vec3 lower(std::min(min.x, max.x),
+                  std::min(min.y, max.y),
+                  std::min(min.z, max.z));
+  glm::vec3 upper(std::max(min.x, max.x),
+                  std::max(min.y, max.y),
+                  std::max(min.z, max.z));
+  const float EPS = 0.0001f;
+
+  auto before = voxels.size();
+  voxels.erase(std::remove_if(voxels.begin(),
+                              voxels.end(),
+                              [&](const Voxel& voxel) {
+                                auto pos = voxel.getPosition();
+                                return pos.x >= lower.x - EPS &&
+                                       pos.x <= upper.x + EPS &&
+                                       pos.y >= lower.y - EPS &&
+                                       pos.y <= upper.y + EPS &&
+                                       pos.z >= lower.z - EPS &&
+                                       pos.z <= upper.z + EPS;
+                              }),
+               voxels.end());
+  return before - voxels.size();
 }
 
 void

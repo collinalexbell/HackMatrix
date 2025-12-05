@@ -2,8 +2,11 @@
 #define __API_H__
 #include <atomic>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <thread>
+#include <unordered_map>
+#include <vector>
 #include <zmq/zmq.hpp>
 #include <string>
 #include "entity.h"
@@ -49,6 +52,16 @@ struct BatchedRequest
   }
   int64_t id;
   ApiRequest request;
+  std::optional<int64_t> actionId;
+};
+
+struct ClearAreaAction
+{
+  int64_t id;
+  glm::vec3 min;
+  glm::vec3 max;
+  std::vector<Line> lines;
+  std::vector<glm::vec3> previewVoxels;
 };
 
 class Api
@@ -66,6 +79,7 @@ class Api
   shared_ptr<spdlog::logger> logger;
   shared_ptr<EntityRegistry> registry;
   Renderer* renderer = nullptr;
+  World* world = nullptr;
 
   zmq::context_t context;
   CommandServer* commandServer;
@@ -76,6 +90,16 @@ class Api
   thread offRenderThread;
 
   std::atomic_bool continuePolling = true;
+  std::atomic<int64_t> nextActionId = 1;
+  std::unordered_map<int64_t, ClearAreaAction> pendingClearAreas;
+  int64_t registerClearArea(const glm::vec3& min,
+                            const glm::vec3& max,
+                            std::optional<int64_t> requestedId);
+  bool confirmClearArea(int64_t actionId);
+  std::vector<Line> buildClearAreaLines(const glm::vec3& min,
+                                        const glm::vec3& max) const;
+  std::vector<glm::vec3> buildClearAreaVoxels(const glm::vec3& min,
+                                              const glm::vec3& max) const;
 
 protected:
   void grabBatched();
@@ -88,10 +112,12 @@ public:
       shared_ptr<EntityRegistry>,
       Controls* controls,
       Renderer* renderer,
+      World* world,
       shared_ptr<WindowManager::WindowManager>);
   ~Api();
   void poll();
   void mutateEntities();
+  int64_t allocateActionId() { return nextActionId++; }
 };
 
 #endif

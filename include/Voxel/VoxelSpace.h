@@ -51,8 +51,10 @@ class VoxelSpace
 public:
   void add(glm::vec3 position, float size = 1.0f);
   bool has(glm::vec3 position, float size = 1.0f) const;
+  size_t remove(glm::vec3 min, glm::vec3 max);
   RenderedVoxelSpace render() const;
   void clear();
+  bool empty() const { return voxels.empty(); }
 
 private:
   std::vector<Voxel> voxels;
