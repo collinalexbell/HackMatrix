@@ -17,6 +17,8 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+#include "AppSurface.h"
+#include "wayland_app.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -83,7 +85,7 @@ class Renderer
   float lastFrame = 0.0f; // Time of last frame
 
   unordered_map<int, unsigned int> frameBuffers;
-  void drawAppDirect(X11App* app, Bootable* bootable = NULL);
+  void drawAppDirect(AppSurface* app, Bootable* bootable = NULL);
   void updateShaderUniforms();
   void renderChunkMesh();
   void renderApps();
@@ -130,7 +132,7 @@ public:
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>>& meshes);
   void addLine(int index, Line line);
-  void registerApp(X11App* app);
+  void registerApp(AppSurface* app);
   void deregisterApp(int index);
   void reloadChunk();
   void screenshot();

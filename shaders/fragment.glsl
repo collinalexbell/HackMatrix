@@ -31,6 +31,7 @@ uniform bool isMesh;
 uniform bool isDynamicObject;
 uniform bool isLight;
 uniform bool appTransparent;
+uniform bool directRender;
 uniform bool isVoxel;
 uniform bool voxelsEnabled;
 uniform float time;
@@ -88,11 +89,21 @@ vec4 floorEffect( vec2 fragCoord ) {
 }
 
 vec4 colorFromTexture(sampler2D tex, vec2 coord) {
-  if(appTransparent) {
-    return texture(tex, coord * vec2(1,-1));
-  } else {
-    return vec4(vec3(texture(tex, coord * vec2(1,-1))), 1);
+  vec2 sampleCoord = coord;
+  if(!directRender) {
+    // Flip Y for in-world quads; directRender already uses screen space.
+    sampleCoord = vec2(coord.x, 1.0 - coord.y);
   }
+  if(appTransparent) {
+    return texture(tex, sampleCoord);
+  } else {
+    return vec4(vec3(texture(tex, sampleCoord)), 1);
+  }
+}
+
+// Debug: visualize texture coordinates to verify UVs.
+vec4 debugTexcoordColor(vec2 coord) {
+  return vec4(coord.x, coord.y, 0.0, 1.0);
 }
 
 
@@ -146,7 +157,10 @@ vec4 Light(int i, samplerCube depthMap) {
 void main()
 {
 	// need to pass this in as vertex data, but hold for now
-	if(isApp) {
+if(isApp) {
+    // Visualize TexCoord mapping instead of sampling the app texture.
+    //FragColor = debugTexcoordColor(TexCoord);
+    //return;
 		if(appNumber == 0) {
 			FragColor = colorFromTexture(app0, TexCoord);
     } else if (appNumber == 1) {

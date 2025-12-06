@@ -2,6 +2,7 @@
 #define __APP_H__
 
 #include <atomic>
+#include "AppSurface.h"
 #include <memory>
 #include <string>
 #include <X11/Xlib.h>
@@ -28,7 +29,7 @@ struct Identifier
   int pid;
 };
 
-class X11App
+class X11App : public AppSurface
 // the monster X11 Interface App class!!
 {
 
@@ -80,23 +81,26 @@ public:
   glm::mat4 heightScalar = glm::mat4(1.0);
   static glm::mat4 recomputeHeightScaler(double width, double height);
   void positionNotify(int x, int y);
-  void appTexture();
-  void attachTexture(int textureUnit, int textureId, size_t appIndex);
-  void focus(Window matrix);
-  void takeInputFocus();
-  void unfocus(Window matrix);
-  void resize(int width, int height);
-  void resizeMove(int width, int height, int x, int y);
-  bool isFocused();
+  void appTexture() override;
+  void attachTexture(int textureUnit, int textureId, size_t appIndex) override;
+  void focus(unsigned long matrix) override;
+  void takeInputFocus() override;
+  void unfocus(unsigned long matrix) override;
+  void resize(int width, int height) override;
+  void resizeMove(int width, int height, int x, int y) override;
+  bool isFocused() override;
   bool isAccessory();
-  int getPID();
-  string getWindowName();
+  int getPID() override;
+  string getWindowName() override;
   Window getWindow();
-  array<int, 2> getPosition();
-  size_t getAppIndex() { return appIndex; }
-  void select();
-  void deselect();
-  bool isSelected();
+  array<int, 2> getPosition() const override;
+  size_t getAppIndex() const override { return appIndex; }
+  int getWidth() const override { return width; }
+  int getHeight() const override { return height; }
+  glm::mat4 getHeightScalar() const override { return heightScalar; }
+  void select() override;
+  void deselect() override;
+  bool isSelected() override;
   void close();
   void larger();
   void smaller();

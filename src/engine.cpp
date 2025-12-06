@@ -141,7 +141,9 @@ Engine::Engine(GLFWwindow* window, char** envp, EngineOptions options)
   TracyGpuContext;
 
   wire();
-  //wm->createAndRegisterApps(envp);
+  if (wm) {
+    wm->createAndRegisterApps(envp);
+  }
 
   if (options.enableControls && window != nullptr) {
     registerCursorCallback();
@@ -175,8 +177,16 @@ Engine::initializeMemberObjs()
     apiAddressEnv != nullptr ? apiAddressEnv : "tcp://*:4455";
 
   auto texturePack = blocks::initializeBasicPack();
-  //wm = make_shared<WindowManager::WindowManager>(
-  //registry, glfwGetX11Window(window), loggerSink);
+  // Default to X11 WM only when we have a GLFW X11 window; wlroots path uses a
+  // Wayland-aware WM. For wlroots, matrix window is null so we skip X11 setup.
+  if (window != nullptr) {
+    wm = make_shared<WindowManager::WindowManager>(
+      registry, glfwGetX11Window(window), loggerSink);
+  } else {
+    // Wayland-only path (wlroots) doesn't have a GLFW window; build a WM in
+    // headless mode so we can still place/render apps.
+    wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true);
+  }
   camera = new Camera();
   world = new World(
     registry, camera, texturePack, true, loggerSink);
@@ -188,14 +198,18 @@ Engine::initializeMemberObjs()
     controls = nullptr;
   }
   api = new Api(apiAddress, registry, controls, renderer, world, wm);
-  //wm->registerControls(controls);
+  if (wm) {
+    wm->registerControls(controls);
+  }
 }
 
 void
 Engine::wire()
 {
   world->attachRenderer(renderer);
-  //wm->wire(wm, camera, renderer);
+  if (wm) {
+    wm->wire(wm, camera, renderer);
+  }
 }
 
 void Engine::multiplayerClientIteration(double frameStart) {
@@ -249,7 +263,9 @@ Engine::frame(double frameStart)
   world->tick();
 
   //api->mutateEntities();
-  //wm->tick();
+  if (wm) {
+    wm->tick();
+  }
 
   if (engineGui) {
     disableKeysIfImguiActive();

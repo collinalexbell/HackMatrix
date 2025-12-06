@@ -56,6 +56,8 @@ public:
   ~Engine();
   shared_ptr<EntityRegistry> getRegistry();
   Camera* getCamera() { return camera; }
+  Renderer* getRenderer() { return renderer; }
+  std::shared_ptr<WindowManager::WindowManager> getWindowManager() { return wm; }
   void wire();
   void loop();
   void frame(double frameStart);

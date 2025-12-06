@@ -7,6 +7,7 @@
 #include "screen.h"
 #include "systems/Boot.h"
 #include "Config.h"
+#include "model.h"
 #include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -80,6 +81,9 @@ void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
 }
 
 void WindowManager::createAndRegisterApps(char **envp) {
+  if (waylandMode) {
+    return;
+  }
   logger->info("enter createAndRegisterApps()");
   auto alreadyBooted = systems::getAlreadyBooted(registry);
   for(auto entityAndPid : alreadyBooted) {
@@ -98,6 +102,9 @@ void WindowManager::createAndRegisterApps(char **envp) {
 }
 
 void WindowManager::allow_input_passthrough(Window window) {
+  if (waylandMode) {
+    return;
+  }
   XserverRegion region = XFixesCreateRegion(display, NULL, 0);
 
   XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0, 0, 0);
@@ -107,6 +114,9 @@ void WindowManager::allow_input_passthrough(Window window) {
 }
 
 void WindowManager::passthroughInput() {
+  if (waylandMode) {
+    return;
+  }
   allow_input_passthrough(overlay);
   allow_input_passthrough(matrix);
   XFlush(display);
@@ -114,6 +124,9 @@ void WindowManager::passthroughInput() {
 
 void WindowManager::capture_input(Window window, bool shapeBounding,
                                   bool shapeInput) {
+  if (waylandMode) {
+    return;
+  }
   // Create a region covering the entire window
   XserverRegion region = XFixesCreateRegion(display, NULL, 0);
   XRectangle rect;
@@ -133,6 +146,9 @@ void WindowManager::capture_input(Window window, bool shapeBounding,
 }
 
 void WindowManager::captureInput() {
+  if (waylandMode) {
+    return;
+  }
   capture_input(overlay, true, true);
   capture_input(matrix, true, true);
   XFlush(display);
@@ -146,11 +162,35 @@ WindowManager::wire(shared_ptr<WindowManager> sharedThis,
   space = make_shared<Space>(registry, renderer, camera, logSink);
   renderer->wireWindowManager(sharedThis, space);
   // window manager wiring into controls disabled.
+  this->renderer = renderer;
+  this->camera = camera;
 }
 
   optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {
     return currentlyFocusedApp;
  }
+
+void WindowManager::goToLookedAtApp() {
+  if (!space || !camera) {
+    return;
+  }
+  auto looked = space->getLookedAtApp();
+  if (!looked) {
+    return;
+  }
+  auto ent = looked.value();
+  glm::vec3 targetPos = camera->position;
+  glm::vec3 facing = camera->front;
+  if (registry->all_of<Positionable>(ent)) {
+    auto& pos = registry->get<Positionable>(ent);
+    targetPos = pos.pos + glm::vec3(0.0f, 0.0f, 1.5f);
+    glm::vec3 dir = pos.pos - camera->position;
+    if (glm::length(dir) > 0.0001f) {
+      facing = glm::normalize(dir);
+    }
+  }
+  camera->moveTo(targetPos, facing, 0.5f);
+}
 
 void WindowManager::addApp(X11App *app, entt::entity entity) {
   std::lock_guard<std::mutex> lock(renderLoopMutex);
@@ -295,6 +335,9 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
 }
 
 void WindowManager::handleSubstructure() {
+  if (waylandMode) {
+    return;
+  }
   for (;;) {
     {
       lock_guard<std::mutex> continueLock(continueMutex);
@@ -362,6 +405,9 @@ void WindowManager::handleSubstructure() {
 }
 
 void WindowManager::reconfigureWindow(XConfigureEvent configureEvent) {
+  if (waylandMode) {
+    return;
+  }
   if(dynamicApps.contains(configureEvent.window)) {
     auto app = registry->try_get<X11App>(dynamicApps[configureEvent.window]);
     if(app!=NULL) {
@@ -416,6 +462,9 @@ void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemova
 }
 
 void WindowManager::tick() {
+  if (waylandMode) {
+    return;
+  }
   lock_guard<mutex> lock(renderLoopMutex);
 
   for (auto it = events.begin(); it != events.end(); it++) {
@@ -479,12 +528,21 @@ void WindowManager::tick() {
 }
 
 void WindowManager::focusApp(entt::entity appEntity) {
+  if (waylandMode) {
+    // Wayland focus is handled via wlroots; record focus only.
+    currentlyFocusedApp = appEntity;
+    return;
+  }
   currentlyFocusedApp = appEntity;
   auto &app = registry->get<X11App>(appEntity);
   app.focus(matrix);
 }
 
 void WindowManager::unfocusApp() {
+  if (waylandMode) {
+    currentlyFocusedApp = std::nullopt;
+    return;
+  }
   logger->debug("unfocusing app");
   if (currentlyFocusedApp.has_value()) {
     auto &app = registry->get<X11App>(currentlyFocusedApp.value());
@@ -493,7 +551,45 @@ void WindowManager::unfocusApp() {
   }
 }
 
+void WindowManager::focusLookedAtApp() {
+  if (!space) {
+    return;
+  }
+  if (auto looked = space->getLookedAtApp()) {
+    auto entity = looked.value();
+    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+    if (f) {
+      std::fprintf(f,
+                   "WM: focusLookedAtApp entity=%d isWayland=%d isX11=%d pos=(%.2f,%.2f,%.2f)\n",
+                   (int)entt::to_integral(entity),
+                   registry->all_of<WaylandApp::Component>(entity) ? 1 : 0,
+                   registry->all_of<X11App>(entity) ? 1 : 0,
+                   registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.x : 0.0f,
+                   registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.y : 0.0f,
+                   registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.z : 0.0f);
+      std::fflush(f);
+      std::fclose(f);
+    }
+    if (registry->all_of<WaylandApp::Component>(entity)) {
+      // Wayland app path: just record focus and let wlroots handle input.
+      currentlyFocusedApp = entity;
+      if (auto* comp = registry->try_get<WaylandApp::Component>(entity)) {
+        if (comp->app) {
+          comp->app->takeInputFocus();
+        }
+      }
+    } else if (registry->all_of<X11App>(entity)) {
+      focusApp(entity);
+    }
+    goToLookedAtApp();
+  }
+}
+
 void WindowManager::registerControls(Controls *controls) {
+  if (waylandMode) {
+    this->controls = controls;
+    return;
+  }
   this->controls = controls;
 }
 
@@ -627,6 +723,17 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
   substructureThread.detach();
 }
 
+WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
+                             spdlog::sink_ptr loggerSink,
+                             bool waylandMode)
+  : logSink(loggerSink)
+  , registry(registry)
+  , waylandMode(waylandMode)
+{
+  menuProgram = Config::singleton()->get<std::string>("menu_program");
+  setupLogger();
+}
+
 WindowManager::~WindowManager() {
   {
     lock_guard<std::mutex> continueLock(continueMutex);
@@ -636,7 +743,63 @@ WindowManager::~WindowManager() {
     substructureThread.join();
   }
   systems::killBootablesOnExit(registry);
-  XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
+  if (!waylandMode && display) {
+    XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
+  }
+}
+
+entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, bool spawnAtCamera) {
+  if (!app || !registry) {
+    return entt::null;
+  }
+  static FILE* logFile = []() {
+    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+    return f ? f : stderr;
+  }();
+  std::fprintf(logFile,
+               "WM: registerWaylandApp size=%dx%d spawnAtCamera=%d\n",
+               app->getWidth(),
+               app->getHeight(),
+               spawnAtCamera ? 1 : 0);
+  std::fflush(logFile);
+  entt::entity entity = registry->create();
+  registry->emplace<WaylandApp::Component>(entity, app);
+  if (renderer) {
+    renderer->registerApp(app.get());
+  } else {
+    std::fprintf(logFile,
+                 "WM: renderer missing; registered component only for entity=%d\n",
+                 (int)entt::to_integral(entity));
+  }
+  // Place in world space similar to spawnAtCamera path.
+  glm::vec3 pos(0.0f, 3.5f, -2.0f);
+  glm::vec3 rot(0.0f);
+  if (spawnAtCamera && camera) {
+    float yaw = camera->getYaw();
+    float pitch = camera->getPitch();
+    glm::quat yawRotation =
+      glm::angleAxis(glm::radians(90 + yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+    glm::quat pitchRotation =
+      glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::quat finalRotation = yawRotation * pitchRotation;
+    rot = glm::degrees(glm::eulerAngles(finalRotation));
+    pos = camera->position + finalRotation * glm::vec3(0, 0, -2.0f);
+  }
+  registry->emplace<Positionable>(entity, pos, glm::vec3(0.0f), rot, 1.0f);
+  // Mark as damaged so renderer updates transforms.
+  if (auto* p = registry->try_get<Positionable>(entity)) {
+    p->damage();
+  }
+  std::fprintf(logFile,
+               "WM: WaylandApp entity=%d size=%dx%d pos=(%.2f, %.2f, %.2f)\n",
+               (int)entt::to_integral(entity),
+               app->getWidth(),
+               app->getHeight(),
+               pos.x,
+               pos.y,
+               pos.z);
+  std::fflush(logFile);
+  return entity;
 }
 
 } // namespace WindowManager

@@ -8,6 +8,7 @@
 #include "model.h"
 #include "screen.h"
 #include "renderer.h"
+#include "wayland_app.h"
 #include <glm/gtx/intersect.hpp>
 #include <iterator>
 #include <optional>
@@ -103,10 +104,8 @@ optional<entt::entity> Space::getLookedAtApp() {
   float DIST_LIMIT = 1.5;
   float height = 0.74;
   float width = 1.0;
-  auto view = registry->view<X11App, Positionable>();
-  for (auto [entity, app, positionable]: view.each()) {
+  auto checkHit = [&](entt::entity entity, Positionable& positionable) -> optional<entt::entity> {
     auto appPosition = positionable.pos;
-
     glm::quat rotation = glm::quat(glm::radians(positionable.rotate));
     auto appDir = rotation * glm::vec3(0.0f,0.0f,1.0f);
     Intersection intersection =
@@ -120,6 +119,23 @@ optional<entt::entity> Space::getLookedAtApp() {
     if (x > minX && x < maxX && y > minY && y < maxY &&
         intersection.dist < DIST_LIMIT && intersection.dist > 0.0) {
       return entity;
+    }
+    return std::nullopt;
+  };
+
+  auto view = registry->view<X11App, Positionable>();
+  for (auto [entity, app, positionable]: view.each()) {
+    if (auto hit = checkHit(entity, positionable)) {
+      return hit;
+    }
+  }
+  auto wlView = registry->view<WaylandApp::Component, Positionable>();
+  for (auto [entity, comp, positionable] : wlView.each()) {
+    if (!comp.app) {
+      continue;
+    }
+    if (auto hit = checkHit(entity, positionable)) {
+      return hit;
     }
   }
   return std::nullopt;

@@ -5,5 +5,6 @@ export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg-runtime-$USER}"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 export LD_LIBRARY_PATH="$BASE_DIR/wlroots/build:$BASE_DIR/wlroots/build/subprojects/wayland/src:${LD_LIBRARY_PATH}"
-sleep 5; WLR_BACKENDS=x11 VOXEL_API_BIND=tcp://*:3345 ./matrix-wlroots
+#sleep 5; WLR_BACKENDS=x11 VOXEL_API_BIND=tcp://*:3345 ./matrix-wlroots
+sleep 5; VOXEL_API_BIND=tcp://*:3345 ./matrix-wlroots
 

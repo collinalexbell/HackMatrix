@@ -6,11 +6,14 @@
 #include <chrono>
 #include <memory>
 #include <drm_fourcc.h>
+#include <ctime>
+#include <unordered_map>
 
 extern "C" {
 #include <EGL/egl.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
+#include <wlr/types/wlr_compositor.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/drm_format_set.h>
 #include <wlr/render/gles2.h>
@@ -20,6 +23,14 @@ extern "C" {
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
 #include <wlr/types/wlr_pointer.h>
+#include <wlr/types/wlr_seat.h>
+#include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_xdg_shell.h>
+#define namespace namespace_keyword_workaround
+#include <wlr/types/wlr_layer_shell_v1.h>
+#undef namespace
+#include <wlr/types/wlr_xdg_output_v1.h>
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
@@ -28,6 +39,9 @@ extern "C" {
 #include <glad/glad.h>
 
 #include "engine.h"
+#include "wayland_app.h"
+#include "AppSurface.h"
+#include "entity.h"
 
 namespace {
 
@@ -66,6 +80,7 @@ struct WlrPointerHandle {
   wlr_pointer* pointer = nullptr;
   wl_listener motion;
   wl_listener motion_abs;
+  wl_listener button;
   wl_listener destroy;
 };
 
@@ -88,11 +103,45 @@ struct WlrServer {
   wlr_allocator* allocator = nullptr;
   wl_listener new_output;
   wl_listener new_input;
+  wl_listener new_xdg_surface;
   std::unique_ptr<Engine> engine;
+  std::shared_ptr<EntityRegistry> registry;
   bool gladLoaded = false;
   double lastFrameTime = 0.0;
   char** envp = nullptr;
   InputState input;
+  wlr_compositor* compositor = nullptr;
+  wlr_xdg_shell* xdg_shell = nullptr;
+  wlr_seat* seat = nullptr;
+  wlr_data_device_manager* data_device_manager = nullptr;
+  wlr_output_layout* output_layout = nullptr;
+  wlr_xdg_output_manager_v1* xdg_output_manager = nullptr;
+  wlr_layer_shell_v1* layer_shell = nullptr;
+  wlr_output* primary_output = nullptr;
+  wlr_input_device* last_keyboard_device = nullptr;
+  wlr_input_device* last_pointer_device = nullptr;
+  std::unordered_map<wlr_surface*, entt::entity> surface_map;
+  std::vector<wlr_xdg_surface*> pending_surfaces;
+};
+
+struct WaylandAppHandle {
+  WlrServer* server = nullptr;
+  std::shared_ptr<WaylandApp> app;
+  wlr_surface* surface = nullptr;
+  wl_listener destroy;
+  wl_listener commit;
+  bool registered = false;
+  entt::entity entity = entt::null;
+};
+
+struct XdgSurfaceHandle {
+  WlrServer* server = nullptr;
+  wlr_xdg_surface* xdg = nullptr;
+  bool created = false;
+  bool configured_sent = false;
+  wl_listener commit;
+  wl_listener map;
+  wl_listener destroy;
 };
 
 WlrServer* g_server = nullptr;
@@ -140,10 +189,39 @@ handle_keyboard_key(wl_listener* listener, void* data)
       case XKB_KEY_D:
         server->input.right = pressed;
         break;
+      case XKB_KEY_r:
+      case XKB_KEY_R:
+        if (pressed && server->engine) {
+          if (auto wm = server->engine->getWindowManager()) {
+            wm->focusLookedAtApp();
+          }
+        }
+        break;
+      case XKB_KEY_v:
+      case XKB_KEY_V:
+        if (pressed && server->engine) {
+          if (auto wm = server->engine->getWindowManager()) {
+            wm->menu();
+          }
+        }
+        break;
       default:
         break;
     }
+    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+    if (f) {
+      std::fprintf(f, "key sym=%u pressed=%d\n", syms[i], pressed ? 1 : 0);
+      std::fflush(f);
+      std::fclose(f);
+    }
     wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", syms[i], pressed ? 1 : 0);
+  }
+  if (server->seat) {
+    wlr_seat_set_keyboard(server->seat, handle->keyboard);
+    enum wl_keyboard_key_state state = event->state;
+    wlr_seat_keyboard_notify_key(
+      server->seat, event->time_msec, event->keycode, state);
+    wlr_seat_keyboard_notify_modifiers(server->seat, &handle->keyboard->modifiers);
   }
 }
 
@@ -156,6 +234,7 @@ handle_new_input(wl_listener* listener, void* data)
   if (device->type != WLR_INPUT_DEVICE_KEYBOARD) {
     if (device->type == WLR_INPUT_DEVICE_POINTER) {
       auto* pointer = wlr_pointer_from_input_device(device);
+      server->last_pointer_device = device;
       auto* handle = new WlrPointerHandle();
       handle->server = server;
       handle->pointer = pointer;
@@ -184,15 +263,41 @@ handle_new_input(wl_listener* listener, void* data)
         handle->server->input.have_abs = true;
         handle->server->input.last_abs_x = event->x;
         handle->server->input.last_abs_y = event->y;
+        FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+        if (f) {
+          std::fprintf(f, "pointer motion abs dx=%.3f dy=%.3f\n",
+                       handle->server->input.delta_x,
+                       handle->server->input.delta_y);
+          std::fflush(f);
+          std::fclose(f);
+        }
         wlr_log(WLR_DEBUG, "pointer motion abs dx=%.3f dy=%.3f", handle->server->input.delta_x, handle->server->input.delta_y);
       };
       wl_signal_add(&pointer->events.motion_absolute, &handle->motion_abs);
+      handle->button.notify = [](wl_listener* listener, void* data) {
+        auto* handle =
+          wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), button);
+        auto* event = static_cast<wlr_pointer_button_event*>(data);
+        if (event->state == WLR_BUTTON_PRESSED && handle->server && handle->server->engine) {
+          if (auto wm = handle->server->engine->getWindowManager()) {
+            FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+            if (f) {
+              std::fprintf(f, "wlr: pointer button press -> focusLookedAtApp\n");
+              std::fflush(f);
+              std::fclose(f);
+            }
+            wm->focusLookedAtApp();
+          }
+        }
+      };
+      wl_signal_add(&pointer->events.button, &handle->button);
       handle->destroy.notify = [](wl_listener* listener, void* data) {
         (void)data;
         auto* handle =
           wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), destroy);
         wl_list_remove(&handle->motion.link);
         wl_list_remove(&handle->motion_abs.link);
+        wl_list_remove(&handle->button.link);
         wl_list_remove(&handle->destroy.link);
         delete handle;
       };
@@ -202,10 +307,32 @@ handle_new_input(wl_listener* listener, void* data)
   }
 
   auto* keyboard = wlr_keyboard_from_input_device(device);
+  server->last_keyboard_device = device;
+  if (server->seat) {
+    wlr_seat_set_capabilities(server->seat,
+                              WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+    wlr_seat_set_keyboard(server->seat, keyboard);
+  }
   auto* handle = new WlrKeyboardHandle();
   handle->server = server;
   handle->keyboard = keyboard;
-  handle->key.notify = handle_keyboard_key;
+  handle->key.notify = [](wl_listener* listener, void* data) {
+    auto* handle =
+      wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), key);
+    auto* event = static_cast<wlr_keyboard_key_event*>(data);
+    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+    if (f) {
+      std::fprintf(f,
+                   "wlr: key time=%u keycode=%u state=%u device=%p\n",
+                   event->time_msec,
+                   event->keycode,
+                   event->state,
+                   (void*)handle->keyboard);
+      std::fflush(f);
+      std::fclose(f);
+    }
+    handle_keyboard_key(listener, data);
+  };
   wl_signal_add(&keyboard->events.key, &handle->key);
   handle->destroy.notify = handle_keyboard_destroy;
   wl_signal_add(&device->events.destroy, &handle->destroy);
@@ -217,6 +344,210 @@ handle_new_input(wl_listener* listener, void* data)
   xkb_keymap_unref(keymap);
   xkb_context_unref(context);
   wlr_keyboard_set_repeat_info(keyboard, 25, 600);
+  if (server->seat) {
+    wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+    if (server->seat->keyboard_state.focused_surface) {
+      wlr_seat_keyboard_notify_enter(server->seat,
+                                     server->seat->keyboard_state.focused_surface,
+                                     keyboard->keycodes,
+                                     keyboard->num_keycodes,
+                                     &keyboard->modifiers);
+    }
+  }
+}
+
+static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
+{
+  auto app = std::make_shared<WaylandApp>(server->renderer,
+                                          server->allocator,
+                                          xdg_surface,
+                                          0);
+  app->setSeat(server->seat, xdg_surface->surface);
+
+  auto* handle = new WaylandAppHandle();
+  handle->server = server;
+  handle->app = app;
+  handle->surface = xdg_surface->surface;
+  handle->entity = entt::null;
+  handle->registered = false;
+  handle->commit.notify = [](wl_listener* listener, void* data) {
+    auto* handle = wl_container_of(listener, static_cast<WaylandAppHandle*>(nullptr), commit);
+    auto* surf = static_cast<wlr_surface*>(data);
+    if (!handle->server || handle->registered || !surf) {
+      return;
+    }
+    int w = surf->current.width;
+    int h = surf->current.height;
+    if (w <= 0 || h <= 0) {
+      return;
+    }
+    entt::entity entity = entt::null;
+    if (handle->server->engine) {
+      if (auto wm = handle->server->engine->getWindowManager()) {
+        entity = wm->registerWaylandApp(handle->app, true);
+        auto* comp = handle->server->registry->try_get<WaylandApp::Component>(entity);
+        if (comp) {
+          handle->app = comp->app;
+        }
+      }
+    }
+    if (entity == entt::null && handle->server->registry) {
+      entity = handle->server->registry->create();
+      handle->server->registry->emplace<WaylandApp::Component>(entity, handle->app);
+      if (auto* renderer = handle->server->engine->getRenderer()) {
+        renderer->registerApp(handle->app.get());
+      }
+    }
+    if (entity != entt::null) {
+      handle->entity = entity;
+      handle->registered = true;
+      handle->server->surface_map[surf] = entity;
+      FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
+      if (f) {
+        std::fprintf(f,
+                     "wlr: surface_map add surface=%p entity=%d size=%dx%d\n",
+                     (void*)surf,
+                     (int)entt::to_integral(entity),
+                     w,
+                     h);
+        std::fflush(f);
+        std::fclose(f);
+      }
+      wlr_log(WLR_DEBUG,
+              "surface_map add surface=%p entity=%d after first commit size=%dx%d",
+              (void*)surf,
+              (int)entt::to_integral(entity),
+              w,
+              h);
+    }
+  };
+  wl_signal_add(&xdg_surface->surface->events.commit, &handle->commit);
+  handle->destroy.notify = [](wl_listener* listener, void* data) {
+    auto* handle = wl_container_of(listener, static_cast<WaylandAppHandle*>(nullptr), destroy);
+    auto* surf = static_cast<wlr_surface*>(data);
+    if (handle->server) {
+      auto it = handle->server->surface_map.find(surf);
+      if (it != handle->server->surface_map.end()) {
+        entt::entity e = it->second;
+        if (handle->server->registry && handle->server->registry->valid(e)) {
+          if (auto* renderer = handle->server->engine->getRenderer()) {
+            if (auto* comp = handle->server->registry->try_get<WaylandApp::Component>(e)) {
+              if (comp->app) {
+                renderer->deregisterApp((int)comp->app->getAppIndex());
+              }
+            }
+          }
+          handle->server->registry->destroy(e);
+        }
+        handle->server->surface_map.erase(it);
+      }
+    }
+    wl_list_remove(&handle->destroy.link);
+    wl_list_remove(&handle->commit.link);
+    delete handle;
+  };
+  wl_signal_add(&xdg_surface->surface->events.destroy, &handle->destroy);
+
+  if (server->primary_output) {
+    wlr_surface_send_enter(xdg_surface->surface, server->primary_output);
+  }
+  if (server->seat && server->last_keyboard_device) {
+    auto* kbd = wlr_keyboard_from_input_device(server->last_keyboard_device);
+    wlr_seat_set_keyboard(server->seat, kbd);
+    wlr_seat_keyboard_notify_enter(server->seat,
+                                   xdg_surface->surface,
+                                   kbd->keycodes,
+                                   kbd->num_keycodes,
+                                   &kbd->modifiers);
+    wlr_seat_keyboard_notify_modifiers(server->seat, &kbd->modifiers);
+  }
+  if (server->seat) {
+    wlr_seat_pointer_notify_enter(server->seat, xdg_surface->surface, 0.0, 0.0);
+  }
+}
+
+void
+handle_new_xdg_surface(wl_listener* listener, void* data)
+{
+  auto* server = wl_container_of(listener, static_cast<WlrServer*>(nullptr), new_xdg_surface);
+  auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
+  wlr_log(WLR_DEBUG, "new xdg_surface %p", (void*)xdg_surface);
+  if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel) {
+    wlr_xdg_toplevel_set_size(xdg_surface->toplevel, 1280, 720);
+    wlr_xdg_toplevel_set_activated(xdg_surface->toplevel, true);
+    wlr_xdg_surface_schedule_configure(xdg_surface);
+  }
+
+  auto* handle = new XdgSurfaceHandle();
+  handle->server = server;
+  handle->xdg = xdg_surface;
+
+  handle->commit.notify = [](wl_listener* listener, void* data) {
+    auto* handle = wl_container_of(listener, static_cast<XdgSurfaceHandle*>(nullptr), commit);
+    auto* surface = static_cast<wlr_surface*>(data);
+    if (!handle->server || !handle->xdg) {
+      return;
+    }
+    wlr_log(WLR_DEBUG,
+            "xdg_surface %p commit role=%d mapped=%d size=%dx%d",
+            (void*)handle->xdg,
+            handle->xdg->role,
+            surface->mapped ? 1 : 0,
+            surface->current.width,
+            surface->current.height);
+    if (handle->xdg->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+      return;
+    }
+    if (!handle->configured_sent) {
+      if (handle->xdg->toplevel) {
+        wlr_xdg_toplevel_set_size(handle->xdg->toplevel, 1280, 720);
+        wlr_xdg_toplevel_set_activated(handle->xdg->toplevel, true);
+      }
+      wlr_log(WLR_DEBUG, "xdg_surface %p initial configure", (void*)handle->xdg);
+      wlr_xdg_surface_schedule_configure(handle->xdg);
+      handle->configured_sent = true;
+    }
+    if (surface->mapped && !handle->created) {
+      handle->created = true;
+      create_wayland_app(handle->server, handle->xdg);
+    }
+    (void)surface;
+  };
+  wl_signal_add(&xdg_surface->surface->events.commit, &handle->commit);
+
+  handle->map.notify = [](wl_listener* listener, void* /*data*/) {
+    auto* handle = wl_container_of(listener, static_cast<XdgSurfaceHandle*>(nullptr), map);
+    if (!handle || !handle->server || !handle->xdg) {
+      return;
+    }
+    wlr_log(WLR_DEBUG, "xdg_surface %p mapped", (void*)handle->xdg);
+    if (!handle->created) {
+      handle->created = true;
+      create_wayland_app(handle->server, handle->xdg);
+    }
+  };
+  wl_signal_add(&xdg_surface->surface->events.map, &handle->map);
+
+  handle->destroy.notify = [](wl_listener* listener, void* data) {
+    auto* handle = wl_container_of(listener, static_cast<XdgSurfaceHandle*>(nullptr), destroy);
+    auto* xdg = static_cast<wlr_xdg_surface*>(data);
+    (void)xdg;
+    handle->xdg = nullptr;
+    wl_list_remove(&handle->map.link);
+    wl_list_remove(&handle->commit.link);
+    wl_list_remove(&handle->destroy.link);
+    delete handle;
+  };
+  wl_signal_add(&xdg_surface->events.destroy, &handle->destroy);
+}
+
+static void
+handle_new_layer_surface(struct wl_listener* listener, void* data)
+{
+  // Minimal layer-shell support: do nothing. We don't present layer surfaces
+  // yet, but ignoring them avoids crashing on premature configure.
+  (void)listener;
+  (void)data;
 }
 
 void
@@ -225,6 +556,9 @@ handle_output_destroy(wl_listener* listener, void* data)
   (void)data;
   auto* handle =
     wl_container_of(listener, static_cast<WlrOutputHandle*>(nullptr), destroy);
+  if (handle->server && handle->server->output_layout && handle->output) {
+    wlr_output_layout_remove(handle->server->output_layout, handle->output);
+  }
   wl_list_remove(&handle->frame.link);
   wl_list_remove(&handle->destroy.link);
   if (handle->swapchain) {
@@ -348,6 +682,9 @@ handle_output_frame(wl_listener* listener, void* data)
     options.invertYAxis = true;
     server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
   }
+  if (server->engine && !server->registry) {
+    server->registry = server->engine->getRegistry();
+  }
 
   if (server->engine) {
     Camera* camera = server->engine->getCamera();
@@ -363,12 +700,33 @@ handle_output_frame(wl_listener* listener, void* data)
     }
   }
 
+  if (server->engine && server->registry && !server->pending_surfaces.empty()) {
+    auto pending = std::move(server->pending_surfaces);
+    server->pending_surfaces.clear();
+    for (auto* xdg : pending) {
+      create_wayland_app(server, xdg);
+    }
+  }
+
   glViewport(0, 0, width, height);
   double frameStart = currentTimeSeconds();
   server->engine->frame(frameStart);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   wlr_render_pass_submit(pass);
+
+  struct timespec now;
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  for (auto& entry : server->surface_map) {
+    wlr_surface* root = entry.first;
+    wlr_surface_for_each_surface(
+      root,
+      [](wlr_surface* surface, int, int, void* data) {
+        auto* ts = static_cast<timespec*>(data);
+        wlr_surface_send_frame_done(surface, ts);
+      },
+      &now);
+  }
 
   wlr_output_state_set_buffer(&output_state, buffer);
   if (!wlr_output_commit_state(handle->output, &output_state)) {
@@ -391,6 +749,10 @@ handle_new_output(wl_listener* listener, void* data)
     return;
   }
 
+  if (server->output_layout) {
+    wlr_output_layout_add_auto(server->output_layout, output);
+  }
+
   struct wlr_output_state state;
   wlr_output_state_init(&state);
   wlr_output_state_set_enabled(&state, true);
@@ -408,6 +770,13 @@ handle_new_output(wl_listener* listener, void* data)
   auto* handle = new WlrOutputHandle();
   handle->server = server;
   handle->output = output;
+  if (!server->primary_output) {
+    server->primary_output = output;
+  }
+  for (auto& entry : server->surface_map) {
+    wlr_surface_send_enter(entry.first, output);
+  }
+  wlr_log(WLR_DEBUG, "new output %s %dx%d", output->name, output->width, output->height);
   handle->frame.notify = handle_output_frame;
   wl_signal_add(&output->events.frame, &handle->frame);
   handle->destroy.notify = handle_output_destroy;
@@ -428,10 +797,14 @@ main(int argc, char** argv, char** envp)
 
   wlr_log_init(WLR_DEBUG, nullptr);
 
-  // If wlroots was built without X11 backend and we're running under Wayland,
-  // force the Wayland backend to avoid the X11 autoselection.
-  if (!std::getenv("WLR_BACKENDS") && std::getenv("WAYLAND_DISPLAY")) {
-    setenv("WLR_BACKENDS", "wayland", 1);
+  // If WLR_BACKENDS not set, prefer wayland when under Wayland, otherwise try X11
+  // so running from an X session or tty can still work.
+  if (!std::getenv("WLR_BACKENDS")) {
+    if (std::getenv("WAYLAND_DISPLAY")) {
+      setenv("WLR_BACKENDS", "wayland", 1);
+    } else if (std::getenv("DISPLAY")) {
+      setenv("WLR_BACKENDS", "x11", 1);
+    }
   }
 
   server.display = wl_display_create();
@@ -453,12 +826,42 @@ main(int argc, char** argv, char** envp)
     std::fprintf(stderr, "Failed to create renderer\n");
     return EXIT_FAILURE;
   }
+  if (!wlr_renderer_init_wl_display(server.renderer, server.display)) {
+    std::fprintf(stderr, "Failed to init renderer for wl_display\n");
+    return EXIT_FAILURE;
+  }
 
   server.allocator = wlr_allocator_autocreate(server.backend, server.renderer);
   if (!server.allocator) {
     std::fprintf(stderr, "Failed to create allocator\n");
     return EXIT_FAILURE;
   }
+
+  server.output_layout = wlr_output_layout_create(server.display);
+
+  server.compositor = wlr_compositor_create(server.display, 5, server.renderer);
+  if (!server.compositor) {
+    std::fprintf(stderr, "Failed to create compositor\n");
+    return EXIT_FAILURE;
+  }
+  server.xdg_shell = wlr_xdg_shell_create(server.display, 3);
+  if (!server.xdg_shell) {
+    std::fprintf(stderr, "Failed to create xdg-shell\n");
+    return EXIT_FAILURE;
+  }
+  server.seat = wlr_seat_create(server.display, "seat0");
+  if (server.seat) {
+    wlr_seat_set_capabilities(server.seat,
+                              WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+  }
+  server.data_device_manager = wlr_data_device_manager_create(server.display);
+  if (server.output_layout) {
+    server.xdg_output_manager =
+      wlr_xdg_output_manager_v1_create(server.display, server.output_layout);
+  }
+
+  server.new_xdg_surface.notify = handle_new_xdg_surface;
+  wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
 
   server.new_output.notify = handle_new_output;
   wl_signal_add(&server.backend->events.new_output, &server.new_output);
@@ -476,6 +879,14 @@ main(int argc, char** argv, char** envp)
     return EXIT_FAILURE;
   }
   setenv("WAYLAND_DISPLAY", socket, true);
+
+  wlr_log(WLR_DEBUG,
+          "wlroots compositor ready; WAYLAND_DISPLAY=%s",
+          socket ? socket : "(null)");
+
+  wlr_log(WLR_DEBUG,
+          "wlroots compositor ready; WAYLAND_DISPLAY=%s",
+          socket ? socket : "(null)");
 
   std::signal(SIGINT, [](int) {
     if (g_server && g_server->display) {

@@ -92,7 +92,9 @@ Controls::handleDMenu(GLFWwindow* window, World* world)
   // its V menu for now :(
   bool dMenuActive = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
   if (dMenuActive && debounce(lastKeyPressTime)) {
-    // window manager menu disabled; no-op.
+    if (wm) {
+      wm->menu();
+    }
   }
 }
 
@@ -357,9 +359,9 @@ Controls::handleToggleCursor(GLFWwindow* window)
 }
 
 void
-Controls::wireWindowManager(std::shared_ptr<WindowManager::Space>)
+Controls::wireWindowManager(std::shared_ptr<WindowManager::Space> space)
 {
-  // window manager wiring disabled; ignore.
+  windowManagerSpace = space;
 }
 
 void

@@ -1,6 +1,11 @@
 # Detect if the distro is one that uses external fmt
 EXTERNAL_FMT_CHECK := $(shell grep -q 'void' /etc/os-release && echo "true" || echo "false")
 
+# Keep make output terse; errors still print. Use `make V=1` to override.
+ifndef V
+MAKEFLAGS += -s
+endif
+
 # Set extra compiler flags for Arch Linux
 ifeq ($(EXTERNAL_FMT_CHECK),true)
     FLAGS+= -D SPDLOG_FMT_EXTERNAL
@@ -42,13 +47,13 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui -Itracy/public
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp
+ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp build/wayland/WaylandApp.o
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
 WLROOTS_AVAILABLE := $(shell pkg-config --exists $(WLROOTS_PC_NAME) wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
 ifeq ($(WLROOTS_AVAILABLE),1)
-    WLROOTS_CFLAGS := $(shell pkg-config --cflags $(WLROOTS_PC_NAME) wayland-server xkbcommon)
+    WLROOTS_CFLAGS := $(shell pkg-config --cflags $(WLROOTS_PC_NAME) wayland-server xkbcommon) -DWLR_USE_UNSTABLE -I$(abspath wlroots/build/protocol)
     WLROOTS_LIBS := $(shell pkg-config --libs $(WLROOTS_PC_NAME) wayland-server xkbcommon)
     RPATH_WLROOTS := -Wl,-rpath,$(abspath wlroots/build) -Wl,-rpath,$(abspath wlroots/build/subprojects/wayland/src)
 else
@@ -113,6 +118,10 @@ build/wayland/wlroots_skeleton.o: src/wayland/wlroots_skeleton.cpp
 build/wayland/wlr_compositor.o: src/wayland/wlr_compositor.cpp
 	mkdir -p build/wayland
 	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlr_compositor.o -c src/wayland/wlr_compositor.cpp
+
+build/wayland/WaylandApp.o: src/wayland/WaylandApp.cpp
+	mkdir -p build/wayland
+	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/WaylandApp.o -c src/wayland/WaylandApp.cpp
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)

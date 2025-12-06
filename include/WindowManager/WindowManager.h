@@ -1,6 +1,7 @@
 #pragma once
 #include "WindowManager/Space.h"
 #include "app.h"
+#include "wayland_app.h"
 #include "entity.h"
 #include "logger.h"
 #include "world.h"
@@ -43,6 +44,7 @@ class WindowManager
 {
   shared_ptr<EntityRegistry> registry;
   Display* display = NULL;
+  bool waylandMode = false;
   Controls* controls = NULL;
   spdlog::sink_ptr logSink;
   int screen;
@@ -102,14 +104,25 @@ public:
   void captureInput();
   void createAndRegisterApps(char** envp);
   WindowManager(shared_ptr<EntityRegistry>, Window, spdlog::sink_ptr);
+  WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, bool waylandMode);
   ~WindowManager();
   optional<entt::entity> getCurrentlyFocusedApp();
   void focusApp(entt::entity);
   void wire(shared_ptr<WindowManager>, Camera* camera, Renderer* renderer);
   void handleSubstructure();
   void goToLookedAtApp();
+  void focusLookedAtApp();
+  std::shared_ptr<Space> getSpace() { return space; }
   void registerControls(Controls* controls);
   void tick();
+  // Wayland-only: register a surface-backed app through the WM for placement
+  // and rendering.
+  entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
+                                  bool spawnAtCamera = true);
+
+private:
+  Renderer* renderer = nullptr;
+  Camera* camera = nullptr;
 };
 
 } // namespace WindowManager

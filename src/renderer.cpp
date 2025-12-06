@@ -6,6 +6,8 @@
 #include "texture.h"
 #include "renderer.h"
 #include "shader.h"
+#include "AppSurface.h"
+#include "wayland_app.h"
 #include "camera.h"
 #include "app.h"
 #include "screen.h"
@@ -259,7 +261,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
                    bool invertY)
   : texturePack(texturePack)
   , registry(registry)
-  , appIndexPool(IndexPool(17))
+  , appIndexPool(IndexPool(9))
   , invertY(invertY)
 {
   this->camera = camera;
@@ -333,14 +335,32 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
 void
 Renderer::initAppTextures()
 {
-  for (int index = 0; index < 20; index++) {
-    int textureN = 31 - index;
+  GLint maxUnits = 0;
+  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxUnits);
+  if (maxUnits <= 0) {
+    maxUnits = 8;
+  }
+  int appTextures = std::min(9, maxUnits);
+  appIndexPool = IndexPool(appTextures);
+  static FILE* logFile = []() {
+    FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+    return f ? f : stderr;
+  }();
+  std::fprintf(logFile, "initAppTextures: maxUnits=%d appTextures=%d\n", maxUnits, appTextures);
+  for (int index = 0; index < appTextures; index++) {
+    int textureN = (maxUnits - 1) - index;
     int textureUnit = GL_TEXTURE0 + textureN;
     string textureName = "app" + to_string(index);
-    textures.insert(
-      std::pair<string, Texture*>(textureName, new Texture(textureUnit)));
+    textures[textureName] = new Texture(textureUnit);
     shader->setInt(textureName, textureN);
+    std::fprintf(logFile,
+                 "initAppTextures: index=%d texName=%s texId=%u unit=%d\n",
+                 index,
+                 textureName.c_str(),
+                 textures[textureName]->ID,
+                 textureUnit - GL_TEXTURE0);
   }
+  std::fflush(logFile);
 }
 
 void
@@ -448,39 +468,41 @@ Renderer::renderDynamicObjects()
 }
 
 void
-Renderer::drawAppDirect(X11App* app, Bootable* bootable)
+Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
 {
   int index = app->getAppIndex();
   int screenWidth = SCREEN_WIDTH;
   int screenHeight = SCREEN_HEIGHT;
-  int appWidth = app->width;
-  int appHeight = app->height;
+  int appWidth = app->getWidth();
+  int appHeight = app->getHeight();
   auto pos = app->getPosition();
+  auto fbIt = frameBuffers.find(index);
+  if (fbIt == frameBuffers.end()) {
+    return;
+  }
   if (index >= 0) {
     if (!bootable) {
-      glBlitNamedFramebuffer(frameBuffers[index],
-                             0,
-                             // src x1, src y1 (flip)
-                             0,
-                             appHeight,
-                             // end x2, end y2 (flip)
-                             appWidth,
-                             0,
-
-                             // dest x1,y1,x2,y2
-                             /*
-                             (screenWidth - appWidth) / 2,
-                             (screenHeight - appHeight) / 2,
-                             appWidth + (screenWidth - appWidth) / 2,
-                             appHeight + (screenHeight - appHeight) / 2,
-                             */
-                             pos[0],
-                             pos[1],
-                             pos[0] + appWidth,
-                             pos[1] + appHeight,
-
-                             GL_COLOR_BUFFER_BIT,
-                             GL_NEAREST);
+      GLint prevReadFbo = 0;
+      GLint prevDrawFbo = 0;
+      glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
+      glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, fbIt->second);
+      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
+      glBlitFramebuffer(
+        // src x1, y1 (flip)
+        0,
+        appHeight,
+        // src x2, y2 (flip)
+        appWidth,
+        0,
+        // dest x1,y1,x2,y2
+        pos[0],
+        pos[1],
+        pos[0] + appWidth,
+        pos[1] + appHeight,
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
     } else {
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
@@ -600,6 +622,10 @@ Renderer::renderChunkMesh()
 void
 Renderer::renderApps()
 {
+  static FILE* logFile = []() {
+    FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+    return f ? f : stderr;
+  }();
   TracyGpuZone("render apps");
   auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
   shader->setBool("appSelected", false);
@@ -616,7 +642,7 @@ Renderer::renderApps()
 
     // OPTIMIZATION
     // TODO: cache the recomputeHeightScaler into the app itself and don't recompute it every render
-    shader->setMatrix4("bootableScale", app.heightScalar);
+    shader->setMatrix4("bootableScale", app.getHeightScalar());
     shader->setInt("appNumber", app.getAppIndex());
     shader->setBool("appTransparent", false);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -639,14 +665,17 @@ Renderer::renderApps()
   }
 
   if (lookedAtAppEntity.has_value()) {
-    auto bootable = registry->try_get<Bootable>(lookedAtAppEntity.value());
-    auto& app = registry->get<X11App>(lookedAtAppEntity.value());
-    if (wm->getCurrentlyFocusedApp().has_value()
-        && wm->getCurrentlyFocusedApp().value() == lookedAtAppEntity.value()
-        && (!bootable || !bootable->transparent)) {
-      shader->setBool("appFocused", app.isFocused());
-      drawAppDirect(&app);
-      shader->setBool("appFocused", false);
+    auto ent = lookedAtAppEntity.value();
+    if (registry->all_of<X11App>(ent)) {
+      auto bootable = registry->try_get<Bootable>(ent);
+      auto& app = registry->get<X11App>(ent);
+      if (wm->getCurrentlyFocusedApp().has_value()
+          && wm->getCurrentlyFocusedApp().value() == ent
+          && (!bootable || !bootable->transparent)) {
+        shader->setBool("appFocused", app.isFocused());
+        drawAppDirect(&app);
+        shader->setBool("appFocused", false);
+      }
     }
   }
 
@@ -660,6 +689,46 @@ Renderer::renderApps()
     registry->view<X11App, Bootable>(entt::exclude<Positionable>);
   for (auto [entity, directApp, bootable] : directRenderNonBlits.each()) {
     drawAppDirect(&directApp, &bootable);
+  }
+
+  // Wayland apps: render any that were registered by the wlroots backend.
+  auto wlPositionable =
+    registry->view<WaylandApp::Component, Positionable>(entt::exclude<Bootable>);
+  for (auto [entity, comp, positionable] : wlPositionable.each()) {
+    auto* app = comp.app.get();
+    if (!app) {
+      continue;
+    }
+    app->appTexture();
+    shader->setMatrix4("model", positionable.modelMatrix);
+    shader->setMatrix4("bootableScale", app->getHeightScalar());
+    shader->setInt("appNumber", app->getAppIndex());
+    shader->setBool("appTransparent", false);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    // If focused, also draw directly to screen to ensure visibility.
+    if (wm && wm->getCurrentlyFocusedApp().has_value() &&
+        wm->getCurrentlyFocusedApp().value() == entity) {
+      glActiveTexture(app->getTextureUnit());
+      glBindTexture(GL_TEXTURE_2D, app->getTextureId());
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, app->getTextureId());
+      shader->setInt("app0", 0);
+      shader->setBool("directRender", true);
+      shader->setInt("appNumber", app->getAppIndex());
+      glm::mat4 model = glm::mat4(1.0f);
+      float sx = static_cast<float>(app->getWidth()) /
+                 static_cast<float>(SCREEN_WIDTH);
+      float sy = static_cast<float>(app->getHeight()) /
+                 static_cast<float>(SCREEN_HEIGHT);
+      model = glm::scale(model, glm::vec3(sx, sy, 1.0f));
+      shader->setMatrix4("model", model);
+      glBindVertexArray(DIRECT_RENDER_VAO);
+      glDisable(GL_DEPTH_TEST);
+      glDrawArrays(GL_TRIANGLES, 0, 6);
+      glEnable(GL_DEPTH_TEST);
+      shader->setBool("directRender", false);
+      shader->setMatrix4("model", positionable.modelMatrix);
+    }
   }
 
   shader->setBool("isApp", false);
@@ -856,6 +925,13 @@ Renderer::render(RenderPerspective perspective,
 {
   ZoneScoped;
   TracyGpuZone("render");
+  static FILE* logFile = []() {
+    FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+    return f ? f : stderr;
+  }();
+  auto allWl = registry->view<WaylandApp::Component>();
+  std::fprintf(logFile, "Renderer: frame WaylandApp count=%zu\n", allWl.size());
+  std::fflush(logFile);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glFrontFace(invertY ? GL_CW : GL_CCW);
   if (perspective == CAMERA) {
@@ -877,8 +953,8 @@ Renderer::render(RenderPerspective perspective,
   renderModels(perspective);
   if (perspective == CAMERA) {
     renderVoxels();
+    renderApps();
   }
-  //renderApps();
   //renderChunkMesh();
 }
 
@@ -889,21 +965,52 @@ Renderer::getCamera()
 }
 
 void
-Renderer::registerApp(X11App* app)
+Renderer::registerApp(AppSurface* app)
 {
   // We need to keep track of which textureN has been used.
   // because deletions means this won't work
   // indices will change.
   auto index = appIndexPool.acquireIndex();
+  static GLint maxTextureUnits = -1;
+  if (maxTextureUnits < 0) {
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+    if (maxTextureUnits <= 0) {
+      maxTextureUnits = 8;
+    }
+  }
+  if (index >= maxTextureUnits) {
+    std::fprintf(stderr,
+                 "Renderer: app index %u exceeds max texture units %d; skipping registration\n",
+                 static_cast<unsigned>(index),
+                 maxTextureUnits);
+    appIndexPool.relinquishIndex(index);
+    return;
+  }
+  FILE* logFile = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
   try {
-    int textureN = 31 - index;
+    int textureN = maxTextureUnits - 1 - static_cast<int>(index);
     int textureUnit = GL_TEXTURE0 + textureN;
     int textureId = textures["app" + to_string(index)]->ID;
     app->attachTexture(textureUnit, textureId, index);
     app->appTexture();
+    if (logFile) {
+      std::fprintf(logFile,
+                   "registerApp: index=%u textureId=%d unit=%d\n",
+                   static_cast<unsigned>(index),
+                   textureId,
+                   textureUnit - GL_TEXTURE0);
+    }
   } catch (...) {
+    if (logFile) {
+      std::fprintf(logFile, "registerApp: exception, releasing index\n");
+      std::fclose(logFile);
+    }
     appIndexPool.relinquishIndex(index);
     throw;
+  }
+  if (logFile) {
+    std::fflush(logFile);
+    std::fclose(logFile);
   }
 
   unsigned int framebufferId;
@@ -915,6 +1022,16 @@ Renderer::registerApp(X11App* app)
                          GL_TEXTURE_2D,
                          textures["app" + to_string(index)]->ID,
                          0);
+  FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+  if (logFile2) {
+    std::fprintf(logFile2,
+                 "registerApp: framebuffer %u attached to texId=%u index=%u\n",
+                 framebufferId,
+                 textures["app" + to_string(index)]->ID,
+                 static_cast<unsigned>(index));
+    std::fflush(logFile2);
+    std::fclose(logFile2);
+  }
 }
 
 void
@@ -936,8 +1053,8 @@ void
 Renderer::wireWindowManager(shared_ptr<WindowManager::WindowManager> wm,
                             shared_ptr<WindowManager::Space> windowManagerSpace)
 {
-  //this->wm = wm;
-  //this->windowManagerSpace = windowManagerSpace;
+  this->wm = wm;
+  this->windowManagerSpace = windowManagerSpace;
 }
 
 Renderer::~Renderer()
