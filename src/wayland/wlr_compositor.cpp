@@ -119,6 +119,12 @@ struct InputState {
   double last_abs_y = 0.0;
 };
 
+struct PendingWlAction {
+  enum Type { Add, Remove } type;
+  std::shared_ptr<WaylandApp> app;
+  wlr_surface* surface = nullptr;
+};
+
 struct WlrServer {
   wl_display* display = nullptr;
   wlr_backend* backend = nullptr;
@@ -147,6 +153,7 @@ struct WlrServer {
   wlr_cursor* cursor = nullptr;
   std::unordered_map<wlr_surface*, entt::entity> surface_map;
   std::vector<wlr_xdg_surface*> pending_surfaces;
+  std::vector<PendingWlAction> pending_wl_actions;
   bool isX11Backend = false;
   double pointer_x = 0.0;
   double pointer_y = 0.0;
@@ -184,6 +191,8 @@ set_default_cursor(WlrServer* server)
   if (!server || !server->cursor || !server->cursor_mgr) {
     return;
   }
+  // Load default theme if not already; reuse per-output scale later.
+  wlr_xcursor_manager_load(server->cursor_mgr, 1);
   wlr_cursor_set_xcursor(server->cursor, server->cursor_mgr, "left_ptr");
   server->pointer_x = server->cursor->x;
   server->pointer_y = server->cursor->y;
@@ -201,22 +210,79 @@ ensure_wayland_apps_registered(WlrServer* server)
     return;
   }
   FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
-  auto view = server->registry->view<WaylandApp::Component>();
-  for (auto [ent, comp] : view.each()) {
-    if (!comp.app) {
-      continue;
-    }
-    if (comp.app->getTextureId() >= 0 && comp.app->getTextureUnit() >= 0) {
-      continue;
-    }
-    renderer->registerApp(comp.app.get());
-    if (f) {
-      std::fprintf(f,
-                   "wayland app tex attach: ent=%d texId=%d texUnit=%d\n",
-                   (int)entt::to_integral(ent),
-                   comp.app->getTextureId(),
-                   comp.app->getTextureUnit() - GL_TEXTURE0);
-      std::fflush(f);
+  if (!server->pending_wl_actions.empty() && f) {
+    std::fprintf(f,
+                 "wayland deferred queue drain: count=%zu\n",
+                 server->pending_wl_actions.size());
+    std::fflush(f);
+  }
+  auto actions = std::move(server->pending_wl_actions);
+  server->pending_wl_actions.clear();
+  for (auto& action : actions) {
+    if (action.type == PendingWlAction::Add) {
+      entt::entity entity = entt::null;
+      if (auto wm = server->engine->getWindowManager()) {
+        entity = wm->registerWaylandApp(action.app, true);
+        if (entity != entt::null) {
+          if (auto* comp = server->registry->try_get<WaylandApp::Component>(entity)) {
+            action.app = comp->app;
+          }
+        }
+      }
+      if (entity == entt::null && server->registry) {
+        entity = server->registry->create();
+        server->registry->emplace<WaylandApp::Component>(entity, action.app);
+      }
+      if (entity != entt::null) {
+        renderer->registerApp(action.app.get());
+        server->surface_map[action.surface] = entity;
+        if (f) {
+          std::fprintf(f,
+                       "wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
+                       (void*)action.surface,
+                       (int)entt::to_integral(entity),
+                       action.app->getTextureId(),
+                       action.app->getTextureUnit() - GL_TEXTURE0,
+                       (void*)action.app.get());
+          std::fflush(f);
+        }
+      } else {
+        if (f) {
+          std::fprintf(f,
+                       "wayland app add (deferred) failed: surface=%p\n",
+                       (void*)action.surface);
+          std::fflush(f);
+        }
+      }
+    } else if (action.type == PendingWlAction::Remove) {
+      auto it = server->surface_map.find(action.surface);
+      if (it != server->surface_map.end()) {
+        entt::entity e = it->second;
+        if (server->registry && server->registry->valid(e)) {
+          if (auto* renderer = server->engine->getRenderer()) {
+            if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {
+              if (comp->app) {
+                renderer->deregisterApp((int)comp->app->getAppIndex());
+              }
+            }
+          }
+          server->registry->destroy(e);
+        }
+        server->surface_map.erase(it);
+      }
+      if (f) {
+        std::fprintf(f,
+                     "wayland app remove (deferred): surface=%p\n",
+                     (void*)action.surface);
+        std::fflush(f);
+      }
+    } else {
+      if (f) {
+        std::fprintf(f,
+                     "wayland app action unknown (deferred): surface=%p\n",
+                     (void*)action.surface);
+        std::fflush(f);
+      }
     }
   }
   if (f) {
@@ -229,6 +295,7 @@ struct WaylandAppHandle {
   std::shared_ptr<WaylandApp> app;
   wlr_surface* surface = nullptr;
   wl_listener destroy;
+  wl_listener unmap;
   wl_listener commit;
   bool registered = false;
   entt::entity entity = entt::null;
@@ -426,6 +493,8 @@ handle_new_input(wl_listener* listener, void* data)
       server->last_pointer_device = device;
       if (server->cursor) {
         wlr_cursor_attach_input_device(server->cursor, device);
+        // Ensure a visible default cursor when a new pointer arrives.
+        set_default_cursor(server);
       }
       auto* handle = new WlrPointerHandle();
       handle->server = server;
@@ -601,7 +670,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
   handle->commit.notify = [](wl_listener* listener, void* data) {
     auto* handle = wl_container_of(listener, static_cast<WaylandAppHandle*>(nullptr), commit);
     auto* surf = static_cast<wlr_surface*>(data);
-    if (!handle->server || handle->registered || !surf) {
+    if (!handle->server || !surf) {
       return;
     }
     int w = surf->current.width;
@@ -609,63 +678,36 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
     if (w <= 0 || h <= 0) {
       return;
     }
-    entt::entity entity = entt::null;
-    if (handle->server->engine) {
-      if (auto wm = handle->server->engine->getWindowManager()) {
-        entity = wm->registerWaylandApp(handle->app, true);
-        auto* comp = handle->server->registry->try_get<WaylandApp::Component>(entity);
-        if (comp) {
-          handle->app = comp->app;
-        }
-      }
-    }
-    if (entity == entt::null && handle->server->registry) {
-      entity = handle->server->registry->create();
-      handle->server->registry->emplace<WaylandApp::Component>(entity, handle->app);
-    }
-    if (entity != entt::null) {
-      handle->entity = entity;
-      handle->registered = true;
-      handle->server->surface_map[surf] = entity;
-      FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-      if (f) {
-        std::fprintf(f,
-                     "wlr: surface_map add surface=%p entity=%d size=%dx%d\n",
-                     (void*)surf,
-                     (int)entt::to_integral(entity),
-                     w,
-                     h);
-        std::fflush(f);
-        std::fclose(f);
-      }
-      wlr_log(WLR_DEBUG,
-              "surface_map add surface=%p entity=%d after first commit size=%dx%d",
-              (void*)surf,
-              (int)entt::to_integral(entity),
-              w,
-              h);
-    }
+    // Defer registration to the render loop to avoid GL/context races.
+    handle->server->pending_wl_actions.push_back(
+      PendingWlAction{ PendingWlAction::Add, handle->app, surf });
+    log_to_tmp("wayland deferred add queued: surface=%p size=%dx%d app=%p\n",
+               (void*)surf,
+               w,
+               h,
+               (void*)handle->app.get());
   };
   wl_signal_add(&xdg_surface->surface->events.commit, &handle->commit);
+  handle->unmap.notify = [](wl_listener* listener, void* /*data*/) {
+    auto* handle = wl_container_of(listener, static_cast<WaylandAppHandle*>(nullptr), unmap);
+    if (handle->server && handle->surface) {
+      handle->server->pending_wl_actions.push_back(
+        PendingWlAction{ PendingWlAction::Remove, handle->app, handle->surface });
+      log_to_tmp("wayland deferred remove queued (unmap): surface=%p app=%p\n",
+                 (void*)handle->surface,
+                 (void*)handle->app.get());
+    }
+  };
+  wl_signal_add(&xdg_surface->surface->events.unmap, &handle->unmap);
   handle->destroy.notify = [](wl_listener* listener, void* data) {
     auto* handle = wl_container_of(listener, static_cast<WaylandAppHandle*>(nullptr), destroy);
     auto* surf = static_cast<wlr_surface*>(data);
     if (handle->server) {
-      auto it = handle->server->surface_map.find(surf);
-      if (it != handle->server->surface_map.end()) {
-        entt::entity e = it->second;
-        if (handle->server->registry && handle->server->registry->valid(e)) {
-          if (auto* renderer = handle->server->engine->getRenderer()) {
-            if (auto* comp = handle->server->registry->try_get<WaylandApp::Component>(e)) {
-              if (comp->app) {
-                renderer->deregisterApp((int)comp->app->getAppIndex());
-              }
-            }
-          }
-          handle->server->registry->destroy(e);
-        }
-        handle->server->surface_map.erase(it);
-      }
+      handle->server->pending_wl_actions.push_back(
+        PendingWlAction{ PendingWlAction::Remove, handle->app, surf });
+      log_to_tmp("wayland deferred remove queued (destroy): surface=%p app=%p\n",
+                 (void*)surf,
+                 (void*)handle->app.get());
     }
     wl_list_remove(&handle->destroy.link);
     wl_list_remove(&handle->commit.link);
@@ -1086,6 +1128,8 @@ main(int argc, char** argv, char** envp)
   log_to_tmp("startup: SCREEN_WIDTH=%s SCREEN_HEIGHT=%s\n",
              std::getenv("SCREEN_WIDTH") ? std::getenv("SCREEN_WIDTH") : "(null)",
              std::getenv("SCREEN_HEIGHT") ? std::getenv("SCREEN_HEIGHT") : "(null)");
+  log_to_tmp("startup: XDG_RUNTIME_DIR=%s\n",
+             std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)");
 
   // If WLR_BACKENDS not set, prefer wayland when under Wayland, otherwise try X11
   // so running from an X session or tty can still work.
@@ -1245,6 +1289,7 @@ main(int argc, char** argv, char** envp)
     return EXIT_FAILURE;
   }
   setenv("WAYLAND_DISPLAY", socket, true);
+  log_to_tmp("startup: WAYLAND_DISPLAY chosen=%s\n", socket ? socket : "(null)");
 
   wlr_log(WLR_DEBUG,
           "wlroots compositor ready; WAYLAND_DISPLAY=%s",

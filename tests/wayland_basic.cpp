@@ -1,0 +1,153 @@
+#include <gtest/gtest.h>
+#include <chrono>
+#include <cctype>
+#include <filesystem>
+#include <fstream>
+#include <string>
+#include <thread>
+#include <unistd.h>
+#include <signal.h>
+
+namespace fs = std::filesystem;
+
+static bool file_nonempty(const std::string& path)
+{
+  std::ifstream in(path);
+  return in.good() && in.peek() != std::ifstream::traits_type::eof();
+}
+
+static bool wait_for_log_line_contains(const std::string& path,
+                                       const std::string& needle,
+                                       std::string* out_line = nullptr,
+                                       int attempts = 150,
+                                       int sleep_ms = 100)
+{
+  for (int i = 0; i < attempts; ++i) {
+    std::ifstream in(path);
+    std::string line;
+    while (std::getline(in, line)) {
+      if (line.find(needle) != std::string::npos) {
+        if (out_line) {
+          *out_line = line;
+        }
+        return true;
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
+  }
+  return false;
+}
+
+static std::string rstrip(const std::string& in)
+{
+  size_t end = in.find_last_not_of(" \t\r\n");
+  if (end == std::string::npos) {
+    return "";
+  }
+  return in.substr(0, end + 1);
+}
+
+class WaylandBasicTest : public ::testing::Test
+{
+protected:
+  std::string logFile = "/tmp/matrix-wlroots-output.log";
+  pid_t compPid = -1;
+
+  void SetUp() override
+  {
+    // Kill any existing compositor to avoid conflicts.
+    system("pkill -f matrix-wlroots >/dev/null 2>&1");
+    // Clear log
+    std::ofstream(logFile, std::ios::trunc).close();
+
+    // Ensure runtime dir exists
+    const char* user = std::getenv("USER");
+    std::string xdg = "/tmp/xdg-runtime-";
+    xdg += (user ? user : "user");
+    unsetenv("WAYLAND_DISPLAY");
+
+    // Verify launch exists in current dir
+    ASSERT_TRUE(fs::exists("./launch")) << "launch script not found";
+
+    // Start compositor
+    compPid = fork();
+    if (compPid == 0) {
+      execl("/bin/bash", "bash", "-lc", "./launch --in-wm", (char*)nullptr);
+      std::exit(127);
+    }
+    ASSERT_GT(compPid, 0);
+  }
+
+  void TearDown() override
+  {
+    if (compPid > 0) {
+      kill(compPid, SIGTERM);
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      kill(compPid, SIGKILL);
+      compPid = -1;
+    }
+    system("pkill -f matrix-wlroots >/dev/null 2>&1");
+  }
+};
+
+TEST_F(WaylandBasicTest, LogsAreWrittenAfterStartup)
+{
+  // Wait up to ~6s for the compositor to write something.
+  bool wrote = false;
+  for (int i = 0; i < 120; ++i) { // up to ~12s
+    if (file_nonempty(logFile)) {
+      wrote = true;
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  EXPECT_TRUE(wrote) << "Compositor log is empty after startup";
+}
+
+TEST_F(WaylandBasicTest, LogsWaylandDisplaySelection)
+{
+  std::string line;
+  bool found =
+    wait_for_log_line_contains(logFile,
+                               "startup: WAYLAND_DISPLAY chosen=",
+                               &line,
+                               200,
+                               100);
+  EXPECT_TRUE(found) << "Expected WAYLAND_DISPLAY selection log";
+  if (found) {
+    auto pos = line.find("WAYLAND_DISPLAY chosen=");
+    ASSERT_NE(pos, std::string::npos);
+    std::string value = line.substr(pos + std::string("WAYLAND_DISPLAY chosen=").size());
+    value = rstrip(value);
+    EXPECT_FALSE(value.empty());
+    EXPECT_NE(value, "(null)");
+    EXPECT_TRUE(value.rfind("wayland-", 0) == 0) << "Unexpected WAYLAND_DISPLAY value: "
+                                                 << value;
+  }
+}
+
+TEST_F(WaylandBasicTest, LogsXdgRuntimeDirFallback)
+{
+  std::string line;
+  bool found =
+    wait_for_log_line_contains(logFile, "startup: XDG_RUNTIME_DIR=", &line, 200, 100);
+  EXPECT_TRUE(found) << "Expected XDG_RUNTIME_DIR log";
+  if (found) {
+    auto pos = line.find("XDG_RUNTIME_DIR=");
+    ASSERT_NE(pos, std::string::npos);
+    std::string value = line.substr(pos + std::string("XDG_RUNTIME_DIR=").size());
+    value = rstrip(value);
+    EXPECT_FALSE(value.empty());
+    EXPECT_NE(value, "(null)");
+    const char* user = std::getenv("USER");
+    std::string expected_prefix = "/tmp/xdg-runtime-";
+    expected_prefix += (user ? user : "user");
+    EXPECT_EQ(value, expected_prefix) << "Unexpected XDG_RUNTIME_DIR value";
+  }
+}
+
+int main(int argc, char** argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
