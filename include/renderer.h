@@ -113,6 +113,7 @@ class Renderer
   VoxelSpace voxelSpace;
   RenderedVoxelSpace voxelMesh;
   float voxelSize = 2.0f;
+  bool shadowsEnabled = true;
 
 public:
   Renderer(shared_ptr<EntityRegistry> registry,

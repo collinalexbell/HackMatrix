@@ -6,6 +6,33 @@ ifeq ($(EXTERNAL_FMT_CHECK),true)
     FLAGS+= -D SPDLOG_FMT_EXTERNAL
 endif
 
+# Prefer a local wlroots build tree if present.
+# You can override by exporting WLROOTS_PC_DIR=/path/to/wlroots/build
+WLROOTS_PC_DIR ?= ./wlroots/build/meson-uninstalled
+WLROOTS_PC_FILE := $(firstword $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.20-uninstalled.pc) $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.20.pc))
+WLROOTS_PC_NAME ?= $(if $(WLROOTS_PC_FILE),$(basename $(notdir $(WLROOTS_PC_FILE))),wlroots-0.20)
+ifneq (,$(WLROOTS_PC_FILE))
+    export PKG_CONFIG_PATH := $(abspath $(dir $(WLROOTS_PC_FILE))):$(PKG_CONFIG_PATH)
+endif
+
+WLROOTS_REPO := https://gitlab.freedesktop.org/wlroots/wlroots.git
+WLROOTS_BUILD_DIR := wlroots/build
+WLROOTS_SETUP_FLAGS := -Dbackends=x11,drm,libinput -Dxwayland=disabled -Dexamples=false --wrap-mode=forcefallback
+WLROOTS_TOLERANT_CFLAGS := -Wno-error=packed -Wno-error=format-overflow -Wno-error=calloc-transposed-args -Wno-error=maybe-uninitialized -U_FORTIFY_SOURCE
+WLROOTS_WERROR_OPTS := -Dwerror=false -Dlibdrm:werror=false -Dlibxkbcommon:werror=false -Dlibdisplay-info:werror=false -Dseatd:werror=false -Dwayland:werror=false -Dpixman:werror=false -Dv4l-utils:werror=false
+
+.PHONY: wlroots-local
+wlroots-local: $(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json
+	@echo "Building local wlroots with X11 backend..."
+	ninja -C $(WLROOTS_BUILD_DIR)
+
+$(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json:
+	@echo "Ensuring wlroots source..."
+	@if [ ! -d wlroots ]; then git clone $(WLROOTS_REPO) wlroots; fi
+	@echo "Configuring wlroots..."
+	meson setup $(WLROOTS_BUILD_DIR) $(WLROOTS_SETUP_FLAGS) -Doptimization=1 -Dc_args='$(WLROOTS_TOLERANT_CFLAGS)' $(WLROOTS_WERROR_OPTS) || meson setup $(WLROOTS_BUILD_DIR) $(WLROOTS_SETUP_FLAGS) --wipe -Doptimization=1 -Dc_args='$(WLROOTS_TOLERANT_CFLAGS)' $(WLROOTS_WERROR_OPTS)
+	meson configure $(WLROOTS_BUILD_DIR) -Dlibdisplay-info:c_args='$(WLROOTS_TOLERANT_CFLAGS)'
+
 PROTO_DIR = protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
@@ -19,13 +46,15 @@ ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o buil
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
-WLROOTS_AVAILABLE := $(shell pkg-config --exists wlroots wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
+WLROOTS_AVAILABLE := $(shell pkg-config --exists $(WLROOTS_PC_NAME) wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
 ifeq ($(WLROOTS_AVAILABLE),1)
-    WLROOTS_CFLAGS := $(shell pkg-config --cflags wlroots wayland-server xkbcommon)
-    WLROOTS_LIBS := $(shell pkg-config --libs wlroots wayland-server xkbcommon)
+    WLROOTS_CFLAGS := $(shell pkg-config --cflags $(WLROOTS_PC_NAME) wayland-server xkbcommon)
+    WLROOTS_LIBS := $(shell pkg-config --libs $(WLROOTS_PC_NAME) wayland-server xkbcommon)
+    RPATH_WLROOTS := -Wl,-rpath,$(abspath wlroots/build) -Wl,-rpath,$(abspath wlroots/build/subprojects/wayland/src)
 else
     WLROOTS_CFLAGS :=
     WLROOTS_LIBS :=
+    RPATH_WLROOTS :=
 endif
 
 
@@ -42,10 +71,16 @@ profiled: matrix
 ifeq ($(WLROOTS_AVAILABLE),1)
 wlroots-skeleton: build/wayland/wlroots_skeleton.o
 	g++ -std=c++20 $(FLAGS) -o wlroots-skeleton build/wayland/wlroots_skeleton.o $(WLROOTS_LIBS) -lpthread
+matrix-wlroots: build/wayland/wlr_compositor.o $(ALL_OBJECTS)
+	g++ -std=c++20 $(FLAGS) -g -o matrix-wlroots build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
 else
 wlroots-skeleton:
 	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
 	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor skeleton." >&2
+	@exit 1
+matrix-wlroots:
+	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
+	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor target." >&2
 	@exit 1
 endif
 
@@ -74,6 +109,10 @@ build/miniz.o: src/miniz.c
 build/wayland/wlroots_skeleton.o: src/wayland/wlroots_skeleton.cpp
 	mkdir -p build/wayland
 	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlroots_skeleton.o -c src/wayland/wlroots_skeleton.cpp
+
+build/wayland/wlr_compositor.o: src/wayland/wlr_compositor.cpp
+	mkdir -p build/wayland
+	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlr_compositor.o -c src/wayland/wlr_compositor.cpp
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)

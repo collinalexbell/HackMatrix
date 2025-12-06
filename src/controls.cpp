@@ -357,7 +357,7 @@ Controls::handleToggleCursor(GLFWwindow* window)
 }
 
 void
-Controls::wireWindowManager(std::shared_ptr<void>)
+Controls::wireWindowManager(std::shared_ptr<WindowManager::Space>)
 {
   // window manager wiring disabled; ignore.
 }

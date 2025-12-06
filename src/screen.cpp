@@ -7,8 +7,9 @@ getScreenHeight()
 {
   Display* display = XOpenDisplay(NULL);
   if (display == NULL) {
-    std::cout << "Failed to open display" << std::endl;
-    throw "couldn't determine screen height";
+    std::cout << "Failed to open display, defaulting height to 720"
+              << std::endl;
+    return 720.0f;
   }
 
   int screen = DefaultScreen(display);
@@ -23,8 +24,9 @@ getScreenWidth()
 {
   Display* display = XOpenDisplay(NULL);
   if (display == NULL) {
-    std::cout << "Failed to open display" << std::endl;
-    throw "couldn't determine screen width";
+    std::cout << "Failed to open display, defaulting width to 1280"
+              << std::endl;
+    return 1280.0f;
   }
 
   int screen = DefaultScreen(display);

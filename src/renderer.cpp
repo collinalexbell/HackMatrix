@@ -24,8 +24,33 @@
 #include "stb/stb_image_write.h"
 #include <ctime>
 #include <iomanip>
+#include <cstring>
+#include <cstdio>
 
-#define SHADOWS_ENABLED true
+static bool
+gl_version_at_least(int wantMajor, int wantMinor)
+{
+  const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  if (!version) {
+    return false;
+  }
+  // Handles strings like "OpenGL ES 3.2 ...", "OpenGL ES 3.0", "3.3.0"
+  int major = 0;
+  int minor = 0;
+  if (strstr(version, "OpenGL ES")) {
+    std::sscanf(version, "%*s %*s %d.%d", &major, &minor);
+  } else {
+    std::sscanf(version, "%d.%d", &major, &minor);
+  }
+  return (major > wantMajor) || (major == wantMajor && minor >= wantMinor);
+}
+
+static bool
+is_gles()
+{
+  const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+  return version && std::strstr(version, "OpenGL ES");
+}
 #define DISABLE_CULLING true
 
 float HEIGHT = SCREEN_HEIGHT / SCREEN_WIDTH / 2.0;
@@ -254,9 +279,14 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   textures.insert(
     std::pair<string, Texture*>("allBlocks", new Texture(images, GL_TEXTURE0)));
   cameraShader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-  depthShader = new Shader("shaders/depthVertex.glsl",
-                           "shaders/depthGeometry.glsl",
-                           "shaders/depthFragment.glsl");
+  shadowsEnabled = gl_version_at_least(3, 2);
+  if (!shadowsEnabled) {
+    logger->warn("Disabling shadows: GL version too low for geometry shader");
+  } else {
+    depthShader = new Shader("shaders/depthVertex.glsl",
+                             "shaders/depthGeometry.glsl",
+                             "shaders/depthFragment.glsl");
+  }
 
   shader = cameraShader;
 
@@ -264,7 +294,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
 
   shader->setInt("allBlocks", 0);
   shader->setInt("totalBlockTypes", images.size());
-  shader->setBool("SHADOWS_ENABLED", SHADOWS_ENABLED);
+  shader->setBool("SHADOWS_ENABLED", shadowsEnabled);
 
   initAppTextures();
 
@@ -283,13 +313,19 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   voxelSpace.add(glm::vec3(0, 4 - voxelSize, 4), voxelSize);
   voxelMesh = voxelSpace.render();
 
-  if (isWireframe) {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
-  } else {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
+  if (!is_gles()) {
+    if (isWireframe) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
+    } else {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); //  normal
+    }
   }
   glClearColor(163.0 / 255.0, 163.0 / 255.0, 167.0 / 255.0, 1.0f);
-  glLineWidth(10.0);
+  if (!is_gles()) {
+    glLineWidth(10.0);
+  } else {
+    glLineWidth(1.0f);
+  }
 }
 
 void
@@ -827,6 +863,9 @@ Renderer::render(RenderPerspective perspective,
     camera->tick();
     updateTransformMatrices();
   } else {
+    if (!shadowsEnabled || depthShader == nullptr) {
+      return;
+    }
     shader = depthShader;
     shader->use();
   }

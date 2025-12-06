@@ -28,11 +28,25 @@
 #include <memory>
 #include <spdlog/common.h>
 #include <cstdlib>
+#include <chrono>
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
 #include "imgui/imgui_impl_opengl3.h"
+
+namespace {
+
+double
+currentTimeSeconds()
+{
+  static const auto start = std::chrono::steady_clock::now();
+  const auto now = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed = now - start;
+  return elapsed.count();
+}
+
+} // namespace
 
 void
 mouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -106,8 +120,10 @@ shared_ptr<LoggerVector> Engine::setupLogger() {
   return loggerVector;
 }
 
-Engine::Engine(GLFWwindow* window, char** envp)
+Engine::Engine(GLFWwindow* window, char** envp, EngineOptions options)
   : window(window)
+  , options(options)
+  , frameTimes(20, 0.0)
 {
   setupRegistry();
 
@@ -118,24 +134,32 @@ Engine::Engine(GLFWwindow* window, char** envp)
   auto loggerVector = setupLogger();
   initializeMemberObjs();
 
-  glfwFocusWindow(window);
+  if (window != nullptr) {
+    glfwFocusWindow(window);
+  }
 
   TracyGpuContext;
 
   wire();
   //wm->createAndRegisterApps(envp);
 
-  registerCursorCallback();
+  if (options.enableControls && window != nullptr) {
+    registerCursorCallback();
+  }
   // Has to be be created after the cursorCallback because gui wraps the
   // callback
-  engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
+  if (options.enableGui && window != nullptr) {
+    engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
+  }
 }
 
 Engine::~Engine()
 {
   // may want to remove this because it might be slow on shutdown
   // when trying to get fast dev time
-  delete controls;
+  if (controls) {
+    delete controls;
+  }
   delete renderer;
   delete world;
   delete camera;
@@ -157,7 +181,11 @@ Engine::initializeMemberObjs()
   world = new World(
     registry, camera, texturePack, true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack);
-  controls = new Controls(world, camera, renderer, texturePack);
+  if (options.enableControls) {
+    controls = new Controls(wm, world, camera, renderer, texturePack);
+  } else {
+    controls = nullptr;
+  }
   api = new Api(apiAddress, registry, controls, renderer, world, wm);
   //wm->registerControls(controls);
 }
@@ -185,10 +213,6 @@ void Engine::multiplayerClientIteration(double frameStart) {
 void
 Engine::loop()
 {
-  vector<double> frameTimes(20, 0);
-  double frameStart;
-  int frameIndex = 0;
-  double fps;
   // Skip shadow-map lighting pass while experimenting with voxel outlines to
   // avoid crashes in the lighting pipeline.
   // systems::updateLighting(registry, renderer);
@@ -196,36 +220,62 @@ Engine::loop()
     while (!glfwWindowShouldClose(window)) {
       TracyGpuZone("loop");
       glfwPollEvents();
-      frameStart = glfwGetTime();
-
-      if (api != nullptr) {
-        api->mutateEntities();
-      }
-      renderer->render();
-      engineGui->render(fps, frameIndex, frameTimes);
-
-      // this has the potential to make OpenGL calls (for lighting; 1 render
-      // call per light)
-      world->tick();
-
-      //api->mutateEntities();
-      //wm->tick();
-
-      disableKeysIfImguiActive();
-      controls->poll(window, camera, world);
-      multiplayerClientIteration(frameStart);
-
-      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+      double frameStart = currentTimeSeconds();
+      frame(frameStart);
       glfwSwapBuffers(window);
-      TracyGpuCollect;
-      FrameMark;
-
-      frameTimes[frameIndex] = glfwGetTime() - frameStart;
-      frameIndex = (frameIndex + 1) % 10;
     }
   } catch (const std::exception& e) {
     logger->error(e.what());
     throw;
+  }
+}
+
+void
+Engine::frame(double frameStart)
+{
+  if (api != nullptr) {
+    api->mutateEntities();
+  }
+
+  renderer->render();
+
+  if (engineGui) {
+    engineGui->render(fps, frameIndex, frameTimes);
+  }
+
+  // this has the potential to make OpenGL calls (for lighting; 1 render
+  // call per light)
+  world->tick();
+
+  //api->mutateEntities();
+  //wm->tick();
+
+  if (engineGui) {
+    disableKeysIfImguiActive();
+  }
+  if (controls) {
+    controls->poll(window, camera, world);
+  }
+  multiplayerClientIteration(frameStart);
+
+  if (engineGui) {
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+  }
+
+  TracyGpuCollect;
+  FrameMark;
+
+  frameTimes[frameIndex] = currentTimeSeconds() - frameStart;
+  frameIndex = (frameIndex + 1) % frameTimes.size();
+  if (frameIndex == 0 && frameTimes.size() > 0) {
+    fps = 0.0;
+    for (double ft : frameTimes) {
+      fps += ft;
+    }
+    fps /= static_cast<double>(frameTimes.size());
+    if (fps > 0.0) {
+      fps = 1.0 / fps;
+    }
   }
 }
 

@@ -65,7 +65,7 @@ vec3 palette( float t ) {
 }
 
 //https://www.shadertoy.com/view/mtyGWy
-vec4 floor( vec2 fragCoord ) {
+vec4 floorEffect( vec2 fragCoord ) {
 	vec2 uv = (fragCoord * 2.0 - vec2(1,1)) / vec2(1,1);
 	vec2 uv0 = uv;
 	vec3 finalColor = vec3(0.0);
@@ -126,14 +126,14 @@ vec4 Light(int i, samplerCube depthMap) {
   vec3 diffuse = diff * lightColor[i];
 
   float specularStrength = 0.5;
-  float shininess = 32;
+  float shininess = 32.0;
   vec3 viewDir = normalize(viewPos - FragPos);
   vec3 reflectDir = reflect(-lightDir, norm);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
   vec3 specular = specularStrength * spec * lightColor[i];
 
   // calculate shadow
-  float shadow = 0; 
+  float shadow = 0.0; 
 
   if(SHADOWS_ENABLED) {
     shadow = ShadowCalculation(depthMap, FragPos, norm, lightDir, i);                      
@@ -175,7 +175,7 @@ void main()
 		} 
 		*/
 		if(appSelected) {
-			FragColor = mix(FragColor, floor(TexCoord), 0.1);
+			FragColor = mix(FragColor, floorEffect(TexCoord), 0.1);
 		}
 	} else if (isVoxel && voxelsEnabled) {
     float edgeWidth = 0.03;
@@ -216,7 +216,7 @@ void main()
       }
 
 
-      FragColor = vec4(lightOutput,1) * texture(texture_diffuse1, TexCoord);
+      FragColor = vec4(lightOutput,1.0) * texture(texture_diffuse1, TexCoord);
     }
 	} else if (isLine) {
     FragColor = vec4(lineColor, 1.0);

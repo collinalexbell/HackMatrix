@@ -32,7 +32,8 @@ Light::Light(glm::vec3 color): color(color) {
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-
+  GLint prevFbo = 0;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFbo);
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
@@ -40,7 +41,7 @@ Light::Light(glm::vec3 color): color(color) {
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, prevFbo);
 }
 
 void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene) {
@@ -50,11 +51,13 @@ void Light::renderDepthMap(glm::vec3 lightPos, std::function<void()> renderScene
   int SCR_HEIGHT = viewport[3];
   lightspaceTransform(lightPos);
   glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+  GLint prevFbo = 0;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFbo);
   glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
   TracyGpuZone("renderDepthMap");
   renderScene();
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, prevFbo);
   glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 }
 
