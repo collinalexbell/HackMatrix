@@ -20,6 +20,7 @@
 #include <string>
 #include <zmq/zmq.hpp>
 #include <unordered_set>
+#include "time_utils.h"
 #undef Status
 #include "protos/api.pb.h"
 
@@ -432,11 +433,11 @@ Api::confirmClearArea(int64_t actionId)
 void
 Api::mutateEntities()
 {
-  long time = glfwGetTime();
+  long time = nowSeconds();
   long target = time + 0.005;
   grabBatched();
   auto batchedRequests = getBatchedRequests();
-  for (; time <= target && batchedRequests->size() != 0; time = glfwGetTime()) {
+  for (; time <= target && batchedRequests->size() != 0; time = nowSeconds()) {
     processBatchedRequest(batchedRequests->front());
     batchedRequests->pop();
   }

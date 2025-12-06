@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <iostream>
 
 #include <X11/extensions/shape.h>
@@ -161,7 +162,9 @@ WindowManager::wire(shared_ptr<WindowManager> sharedThis,
 {
   space = make_shared<Space>(registry, renderer, camera, logSink);
   renderer->wireWindowManager(sharedThis, space);
-  // window manager wiring into controls disabled.
+  if (controls) {
+    controls->wireWindowManager(space);
+  }
   this->renderer = renderer;
   this->camera = camera;
 }
@@ -182,11 +185,26 @@ void WindowManager::goToLookedAtApp() {
   glm::vec3 targetPos = camera->position;
   glm::vec3 facing = camera->front;
   if (registry->all_of<Positionable>(ent)) {
-    auto& pos = registry->get<Positionable>(ent);
-    targetPos = pos.pos + glm::vec3(0.0f, 0.0f, 1.5f);
-    glm::vec3 dir = pos.pos - camera->position;
-    if (glm::length(dir) > 0.0001f) {
-      facing = glm::normalize(dir);
+    // Match the X11 app navigation flow: stand back from the surface based on
+    // its size and face the surface-normal derived from its rotation.
+    float deltaZ = space->getViewDistanceForWindowSize(ent);
+    glm::vec3 rotationDegrees = space->getAppRotation(ent);
+    glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
+
+    glm::vec3 appPos = space->getAppPosition(ent);
+    targetPos = appPos + rotationQuat * glm::vec3(0, 0, deltaZ);
+    facing = rotationQuat * glm::vec3(0, 0, -1);
+
+    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+    if (f) {
+      std::fprintf(f,
+                   "WM: goToLookedAtApp ent=%d pos=(%.2f,%.2f,%.2f) camPos=(%.2f,%.2f,%.2f) targetPos=(%.2f,%.2f,%.2f)\n",
+                   (int)entt::to_integral(ent),
+                   appPos.x, appPos.y, appPos.z,
+                   camera->position.x, camera->position.y, camera->position.z,
+                   targetPos.x, targetPos.y, targetPos.z);
+      std::fflush(f);
+      std::fclose(f);
     }
   }
   camera->moveTo(targetPos, facing, 0.5f);
@@ -462,7 +480,22 @@ void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemova
 }
 
 void WindowManager::tick() {
+  // In Wayland mode, there are no X11 events to process, but we still want
+  // camera animations (moveTo) to advance each frame.
   if (waylandMode) {
+    if (camera) {
+      camera->tick();
+      FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+      if (f) {
+        std::fprintf(f,
+                     "WM: tick (wayland) camPos=(%.2f,%.2f,%.2f)\n",
+                     camera->position.x,
+                     camera->position.y,
+                     camera->position.z);
+        std::fflush(f);
+        std::fclose(f);
+      }
+    }
     return;
   }
   lock_guard<mutex> lock(renderLoopMutex);
@@ -531,6 +564,8 @@ void WindowManager::focusApp(entt::entity appEntity) {
   if (waylandMode) {
     // Wayland focus is handled via wlroots; record focus only.
     currentlyFocusedApp = appEntity;
+    // Also move camera toward the app for waylandMode when focused via API.
+    goToLookedAtApp();
     return;
   }
   currentlyFocusedApp = appEntity;

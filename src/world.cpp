@@ -24,6 +24,7 @@
 #include <csignal>
 #include "systems/ApplyRotation.h"
 #include "tracy/Tracy.hpp"
+#include "time_utils.h"
 
 using namespace std;
 
@@ -106,7 +107,7 @@ World::~World() {}
 void
 World::mesh(bool realTime)
 {
-  double currentTime = glfwGetTime();
+  double currentTime = nowSeconds();
   vector<shared_ptr<ChunkMesh>> m;
   int sizeX = chunks[0][0]->getSize()[0];
   int sizeZ = chunks[0][0]->getSize()[2];

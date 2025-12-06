@@ -42,18 +42,36 @@ void Space::initAppPositions() {
     numPositionableApps--;
   }
 
-  auto &app = registry->get<X11App>(entity);
-  renderer->deregisterApp(app.getAppIndex());
-  registry->remove<X11App>(entity);
+  AppSurface* surface = nullptr;
+  if (registry->all_of<X11App>(entity)) {
+    surface = &registry->get<X11App>(entity);
+    registry->remove<X11App>(entity);
+  } else if (registry->all_of<WaylandApp::Component>(entity)) {
+    auto& comp = registry->get<WaylandApp::Component>(entity);
+    surface = comp.app.get();
+    registry->remove<WaylandApp::Component>(entity);
+  }
+  if (surface) {
+    renderer->deregisterApp(static_cast<int>(surface->getAppIndex()));
+  }
   //registry->destroy(entity);
 }
 
 float Space::getViewDistanceForWindowSize(entt::entity entity) {
-  auto &app = registry->get<X11App>(entity);
+  AppSurface* surface = nullptr;
+  if (registry->all_of<X11App>(entity)) {
+    surface = &registry->get<X11App>(entity);
+  } else if (registry->all_of<WaylandApp::Component>(entity)) {
+    auto& comp = registry->get<WaylandApp::Component>(entity);
+    surface = comp.app.get();
+  }
+  if (!surface) {
+    return 1.0f;
+  }
   auto positionable = registry->try_get<Positionable>(entity);
   // view = projection^-1 * gl_vertex * vertex^-1
   float scaleFactor = positionable != NULL ? positionable->scale : 1;
-  float glVertexX = float(app.width) / SCREEN_WIDTH / scaleFactor;
+  float glVertexX = float(surface->getWidth()) / SCREEN_WIDTH / scaleFactor;
   glm::vec4 gl_pos = glm::vec4(10000, 0, 0, 0);
   float zBest;
   float target = glVertexX;

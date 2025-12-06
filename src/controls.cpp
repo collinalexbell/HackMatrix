@@ -8,10 +8,12 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <glm/gtc/quaternion.hpp>
 
 #include "controls.h"
 #include "camera.h"
 #include "renderer.h"
+#include "time_utils.h"
 
 using namespace std;
 
@@ -80,7 +82,7 @@ double DEBOUNCE_TIME = 0.1;
 bool
 debounce(double& lastTime)
 {
-  double curTime = glfwGetTime();
+  double curTime = nowSeconds();
   double interval = curTime - lastTime;
   lastTime = curTime;
   return interval > DEBOUNCE_TIME;
@@ -302,19 +304,45 @@ Controls::handleChangePlayerSpeed(GLFWwindow* window)
 void
 Controls::goToApp(entt::entity app)
 {
-  // window manager disabled; ignore app navigation.
+  if (!wm || !windowManagerSpace) {
+    return;
+  }
+  wm->passthroughInput();
+  float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
+  glm::vec3 rotationDegrees = windowManagerSpace->getAppRotation(app);
+  glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
+
+  glm::vec3 targetPosition = windowManagerSpace->getAppPosition(app);
+  targetPosition = targetPosition + rotationQuat * glm::vec3(0, 0, deltaZ);
+  moveTo(targetPosition, rotationDegrees, windowFlop, [app, this]() {
+    wm->focusApp(app);
+  });
 }
 
 void
 Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
 {
-  // window manager disabled; no-op.
+  auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                : std::optional<entt::entity>();
+  if (app.has_value()) {
+    int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
+    if (rKeyPressed && debounce(lastKeyPressTime)) {
+      goToApp(app.value());
+    }
+  }
 }
 
 void
 Controls::handleSelectApp(GLFWwindow* window)
 {
-  // window manager disabled; no-op.
+  auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                : std::optional<entt::entity>();
+  if (app) {
+    int keyPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
+    if (keyPressed && debounce(lastKeyPressTime)) {
+      windowManagerSpace->toggleAppSelect(*app);
+    }
+  }
 }
 
 void

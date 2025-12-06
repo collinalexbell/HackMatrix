@@ -8,8 +8,16 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include "Config.h"
+#include <chrono>
+#include "time_utils.h"
 
 float Camera::DEFAULT_CAMERA_SPEED = 0.03f;
+
+static double
+currentTimeSecondsFallback()
+{
+  return nowSeconds();
+}
 
 Camera::Camera()
 {
@@ -94,7 +102,7 @@ Camera::tick()
 void
 Camera::interpolateMovement(Movement& movement)
 {
-  double time = glfwGetTime();
+  double time = currentTimeSecondsFallback();
   float completionRatio =
     (time - movement.startTime) / (movement.endTime - movement.startTime);
   if (completionRatio >= 1.0) {
@@ -155,7 +163,7 @@ Camera::moveTo(glm::vec3 targetPosition,
   pitch = glm::degrees(asin(targetFront.y));
   yaw = glm::degrees(atan2(targetFront.z, targetFront.x));
   std::shared_ptr<bool> isDone(new bool(false));
-  double curTime = glfwGetTime();
+  double curTime = currentTimeSecondsFallback();
   double finishTime = curTime + moveSeconds;
 
   Movement movement{ position, targetPosition, front, targetFront,

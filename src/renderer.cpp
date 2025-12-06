@@ -12,6 +12,7 @@
 #include "app.h"
 #include "screen.h"
 #include "components/Bootable.h"
+#include "time_utils.h"
 #include <iostream>
 #include <vector>
 #include <glad/glad.h>
@@ -600,7 +601,7 @@ Renderer::renderLookedAtFace()
 void
 Renderer::updateShaderUniforms()
 {
-  shader->setFloat("time", glfwGetTime());
+  shader->setFloat("time", nowSeconds());
   shader->setBool("isApp", false);
   shader->setBool("isLine", false);
   shader->setBool("isVoxel", false);

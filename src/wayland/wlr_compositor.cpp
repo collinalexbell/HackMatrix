@@ -123,6 +123,7 @@ struct WlrServer {
   wlr_input_device* last_pointer_device = nullptr;
   std::unordered_map<wlr_surface*, entt::entity> surface_map;
   std::vector<wlr_xdg_surface*> pending_surfaces;
+  bool isX11Backend = false;
 };
 
 struct WaylandAppHandle {
@@ -146,6 +147,27 @@ struct XdgSurfaceHandle {
 };
 
 WlrServer* g_server = nullptr;
+
+static bool
+pick_output_size(int* out_width, int* out_height)
+{
+  // Only override the backend-reported mode if the user explicitly requests it.
+  const char* w_env = std::getenv("SCREEN_WIDTH");
+  const char* h_env = std::getenv("SCREEN_HEIGHT");
+  if (!w_env || !h_env) {
+    return false;
+  }
+
+  int width = std::atoi(w_env);
+  int height = std::atoi(h_env);
+  if (width <= 0 || height <= 0) {
+    return false;
+  }
+
+  *out_width = width;
+  *out_height = height;
+  return true;
+}
 
 void
 handle_keyboard_destroy(wl_listener* listener, void* data)
@@ -757,8 +779,17 @@ handle_new_output(wl_listener* listener, void* data)
   struct wlr_output_state state;
   wlr_output_state_init(&state);
   wlr_output_state_set_enabled(&state, true);
-  wlr_output_mode* mode = wlr_output_preferred_mode(output);
-  if (mode != nullptr) {
+  int desired_width = 0;
+  int desired_height = 0;
+  bool have_override = pick_output_size(&desired_width, &desired_height);
+  if (have_override) {
+    int refresh = server->isX11Backend ? 0 : 60000; // X11 backend ignores refresh
+    if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
+      refresh = mode->refresh;
+    }
+    wlr_output_state_set_custom_mode(
+      &state, desired_width, desired_height, refresh);
+  } else if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
     wlr_output_state_set_mode(&state, mode);
   }
   if (!wlr_output_commit_state(output, &state)) {
@@ -836,6 +867,13 @@ main(int argc, char** argv, char** envp)
   if (!server.allocator) {
     std::fprintf(stderr, "Failed to create allocator\n");
     return EXIT_FAILURE;
+  }
+  // Detect X11 backend (common for nested testing).
+  const char* backend_env = std::getenv("WLR_BACKENDS");
+  if (backend_env && std::string(backend_env).find("x11") != std::string::npos) {
+    server.isX11Backend = true;
+  } else if (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY")) {
+    server.isX11Backend = true;
   }
 
   server.output_layout = wlr_output_layout_create(server.display);

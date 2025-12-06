@@ -6,6 +6,7 @@
 #include <type_traits>
 #include "systems/Player.h"
 #include <GLFW/glfw3.h>
+#include "time_utils.h"
 
 namespace MultiPlayer {
 
@@ -155,11 +156,11 @@ Client::isConnected()
 
 bool
 Client::shouldSendPlayerPacket() {
-  return glfwGetTime()-lastUpdate >= UPDATE_EVERY;
+  return nowSeconds()-lastUpdate >= UPDATE_EVERY;
 }
 
 void Client::justSentPlayerPacket() {
-  lastUpdate = glfwGetTime();
+  lastUpdate = nowSeconds();
 }
 
 bool

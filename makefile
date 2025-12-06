@@ -47,7 +47,7 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui -Itracy/public
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp build/wayland/WaylandApp.o
+ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o build/time_utils.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp build/wayland/WaylandApp.o
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
@@ -123,7 +123,7 @@ build/wayland/WaylandApp.o: src/wayland/WaylandApp.cpp
 	mkdir -p build/wayland
 	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/WaylandApp.o -c src/wayland/WaylandApp.cpp
 
-build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h
+build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
 
 build/IndexPool.o: include/IndexPool.h src/IndexPool.cpp
@@ -138,16 +138,16 @@ build/shader.o: src/shader.cpp include/shader.h
 build/texture.o: src/texture.cpp include/texture.h
 	g++  -std=c++20 $(FLAGS) -o build/texture.o -c src/texture.cpp $(INCLUDES)
 
-build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h include/loader.h include/utility.h include/dynamicObject.h include/renderer.h include/worldInterface.h include/model.h include/systems/ApplyRotation.h
+build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h include/loader.h include/utility.h include/dynamicObject.h include/renderer.h include/worldInterface.h include/model.h include/systems/ApplyRotation.h include/time_utils.h
 	g++ -std=c++20 -g $(FLAGS) -o build/world.o -c src/world.cpp $(INCLUDES)
 
-build/camera.o: src/camera.cpp include/camera.h
+build/camera.o: src/camera.cpp include/camera.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/camera.o -c src/camera.cpp $(INCLUDES)
 
-build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h
+build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/api.o -c src/api.cpp $(INCLUDES)
 
-build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h include/ControlMappings.h
+build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h include/ControlMappings.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/controls.o -c src/controls.cpp $(INCLUDES)
 
 build/ControlMappings.o: src/ControlMappings.cpp include/ControlMappings.h include/Config.h
@@ -179,7 +179,7 @@ build/cube.o: src/cube.cpp include/cube.h
 build/chunk.o: src/chunk.cpp include/chunk.h include/mesher.h
 	g++ -std=c++20 $(FLAGS) -o build/chunk.o -c src/chunk.cpp $(INCLUDES)
 
-build/mesher.o: src/mesher.cpp include/mesher.h
+build/mesher.o: src/mesher.cpp include/mesher.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/mesher.o -c src/mesher.cpp $(INCLUDES)
 
 build/loader.o: src/loader.cpp include/loader.h include/utility.h
@@ -216,10 +216,10 @@ build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/Rota
 build/persister.o: src/persister.cpp include/persister.h
 	g++ -std=c++20 $(FLAGS) -o build/persister.o -c src/persister.cpp $(INCLUDES)
 
-build/systems/ApplyRotation.o: src/systems/ApplyRotation.cpp include/systems/ApplyRotation.h include/components/RotateMovement.h include/model.h
+build/systems/ApplyRotation.o: src/systems/ApplyRotation.cpp include/systems/ApplyRotation.h include/components/RotateMovement.h include/model.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/ApplyRotation.o -c src/systems/ApplyRotation.cpp $(INCLUDES)
 
-build/systems/ApplyTranslation.o: src/systems/ApplyTranslation.cpp include/systems/ApplyTranslation.h include/components/TranslateMovement.h include/model.h
+build/systems/ApplyTranslation.o: src/systems/ApplyTranslation.cpp include/systems/ApplyTranslation.h include/components/TranslateMovement.h include/model.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/ApplyTranslation.o -c src/systems/ApplyTranslation.cpp $(INCLUDES)
 
 
@@ -261,6 +261,9 @@ build/components/Bootable.o: src/components/Bootable.cpp include/components/Boot
 build/components/Light.o: src/components/Light.cpp include/components/Light.h
 	g++ -std=c++20 $(FLAGS) -o build/components/Light.o -c src/components/Light.cpp $(INCLUDES)
 
+build/time_utils.o: src/time_utils.cpp include/time_utils.h
+	g++ -std=c++20 $(FLAGS) -o build/time_utils.o -c src/time_utils.cpp $(INCLUDES)
+
 build/systems/Scripts.o: src/systems/Scripts.cpp include/systems/Scripts.h include/components/Scriptable.h include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/Scripts.o -c src/systems/Scripts.cpp $(INCLUDES)
 
@@ -280,7 +283,7 @@ build/systems/Player.o: src/systems/Player.cpp include/systems/Player.h include/
 build/MultiPlayer/Gui.o: src/MultiPlayer/Gui.cpp include/MultiPlayer/Gui.h include/engine.h
 	g++ -std=c++20 $(FLAGS) -o build/MultiPlayer/Gui.o -c src/MultiPlayer/Gui.cpp $(INCLUDES)
 
-build/MultiPlayer/Client.o: src/MultiPlayer/Client.cpp include/MultiPlayer/Client.h
+build/MultiPlayer/Client.o: src/MultiPlayer/Client.cpp include/MultiPlayer/Client.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/MultiPlayer/Client.o -c src/MultiPlayer/Client.cpp $(INCLUDES)
 
 build/MultiPlayer/Server.o: src/MultiPlayer/Server.cpp include/MultiPlayer/Server.h include/systems/Player.h include/entity.h

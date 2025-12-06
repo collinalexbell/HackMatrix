@@ -5,17 +5,17 @@
 #include "glm/gtx/transform.hpp"
 #include "model.h"
 #include "components/Parent.h"
-#include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
+#include "time_utils.h"
 
 double MIN_DELTA = 0.0001;
 void
 systems::applyTranslations(std::shared_ptr<EntityRegistry> registry)
 {
   // initialize to current time on first call
-  static double lastTranslated = glfwGetTime();
+  static double lastTranslated = nowSeconds();
 
-  double curTime = glfwGetTime();
+  double curTime = nowSeconds();
 
   auto toRotate = registry->view<Positionable, TranslateMovement>();
   for (auto [entity, positionable, translateMovement] : toRotate.each()) {
