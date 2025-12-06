@@ -178,6 +178,23 @@ WaylandApp::appTexture()
       lastW = width;
       lastH = height;
     }
+    if (!sampleLogged) {
+      const uint8_t* raw = static_cast<const uint8_t*>(data);
+      uint8_t r0 = raw[0], g0 = raw[1], b0 = raw[2], a0 = raw[3];
+      bool ok = (width > 0 && height > 0) && (r0 | g0 | b0 | a0);
+      std::fprintf(logFile,
+                   "wayland-app: sample size=%dx%d fmt=%u firstPixel=(%u,%u,%u,%u) ok=%d\n",
+                   width,
+                   height,
+                   format,
+                   r0,
+                   g0,
+                   b0,
+                   a0,
+                   ok ? 1 : 0);
+      std::fflush(logFile);
+      sampleLogged = true;
+    }
     // Convert to RGBA8 if the format isn't directly supported in GLES2.
     const uint8_t* src = static_cast<const uint8_t*>(data);
     std::vector<uint8_t> converted;
@@ -201,17 +218,47 @@ WaylandApp::appTexture()
         const uint8_t* p = srcRow + x * 4;
         uint8_t r = 0, g = 0, b = 0, a = 0;
         switch (format) {
-          case DRM_FORMAT_ARGB8888: // A R G B
-            a = p[0];
-            r = p[1];
-            g = p[2];
-            b = p[3];
+          case DRM_FORMAT_ARGB8888: // memory order (little-endian): B G R A
+            b = p[0];
+            g = p[1];
+            r = p[2];
+            a = p[3];
             break;
           case DRM_FORMAT_ABGR8888: // A B G R
             r = p[0];
             g = p[1];
             b = p[2];
             a = p[3];
+            break;
+          case DRM_FORMAT_BGRA8888: // memory order: A R G B
+            a = p[0];
+            r = p[1];
+            g = p[2];
+            b = p[3];
+            break;
+          case DRM_FORMAT_RGBA8888: // memory order: A B G R
+            a = p[0];
+            b = p[1];
+            g = p[2];
+            r = p[3];
+            break;
+          case DRM_FORMAT_XBGR8888: // memory order: R G B X
+            r = p[0];
+            g = p[1];
+            b = p[2];
+            a = 255;
+            break;
+          case DRM_FORMAT_BGRX8888: // memory order: X R G B
+            r = p[1];
+            g = p[2];
+            b = p[3];
+            a = 255;
+            break;
+          case DRM_FORMAT_RGBX8888: // memory order: X B G R
+            b = p[1];
+            g = p[2];
+            r = p[3];
+            a = 255;
             break;
           case DRM_FORMAT_XRGB8888: // Fourcc XRGB8888, bytes in memory B,G,R,X (little endian)
             b = p[0];

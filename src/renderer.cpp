@@ -658,6 +658,7 @@ Renderer::renderApps()
     FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
     return f ? f : stderr;
   }();
+  static std::unordered_set<void*> loggedApps;
   TracyGpuZone("render apps");
   auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
   shader->setBool("appSelected", false);
@@ -704,6 +705,14 @@ Renderer::renderApps()
       shader->setBool("appTransparent", false);
     }
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    if (loggedApps.insert((void*)&app).second) {
+      std::fprintf(logFile,
+                   "renderer: first render X11 app idx=%zu size=%dx%d\n",
+                   app.getAppIndex(),
+                   bootable.getWidth(),
+                   bootable.getHeight());
+      std::fflush(logFile);
+    }
   }
 
   if (lookedAtAppEntity.has_value()) {
@@ -786,6 +795,13 @@ Renderer::renderApps()
       glEnable(GL_DEPTH_TEST);
       shader->setBool("directRender", false);
       shader->setMatrix4("model", positionable.modelMatrix);
+    }
+    if (loggedApps.insert((void*)app).second) {
+      std::fprintf(logFile,
+                   "renderer: first render Wayland app size=%dx%d\n",
+                   app->getWidth(),
+                   app->getHeight());
+      std::fflush(logFile);
     }
   }
 

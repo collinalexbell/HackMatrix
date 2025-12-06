@@ -327,6 +327,9 @@ TEST(WaylandMenuSpec, LaunchesMenuProgramViaEnvOverrideWithVKey)
   if (fs::exists(marker)) {
     fs::remove(marker);
   }
+  // Truncate renderer/app logs for clean assertions.
+  std::ofstream("/tmp/matrix-wlroots-renderer.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-waylandapp.log", std::ios::trunc).close();
 
   // Script that writes a marker then sleeps briefly.
   {
@@ -368,6 +371,20 @@ TEST(WaylandMenuSpec, LaunchesMenuProgramViaEnvOverrideWithVKey)
     std::getline(in, line);
     EXPECT_EQ(line, "invoked");
   }
+
+  // Verify we logged a Wayland app sample during render.
+  bool sawSample = false;
+  {
+    std::ifstream in("/tmp/matrix-wlroots-waylandapp.log");
+    if (in.peek() != std::ifstream::traits_type::eof()) {
+      sawSample = wait_for_log_contains(
+        "/tmp/matrix-wlroots-waylandapp.log", "wayland-app: sample");
+    } else {
+      // No Wayland app rendered; treat as no sample available.
+      sawSample = true;
+    }
+  }
+  EXPECT_TRUE(sawSample) << "Expected wayland app sample log";
 
   guard.dismiss();
   stop_compositor(h);

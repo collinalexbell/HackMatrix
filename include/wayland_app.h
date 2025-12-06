@@ -44,6 +44,7 @@ class WaylandApp : public AppSurface {
   int y = 0;
   int uploadedWidth = 0;
   int uploadedHeight = 0;
+  bool sampleLogged = false;
 
 public:
   int width = 0;
