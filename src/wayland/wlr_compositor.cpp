@@ -38,11 +38,28 @@ extern "C" {
 }
 
 #include <glad/glad.h>
+#include <cstdarg>
 
 #include "engine.h"
 #include "wayland_app.h"
 #include "AppSurface.h"
 #include "entity.h"
+#include "screen.h"
+
+static void
+log_to_tmp(const char* fmt, ...)
+{
+  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+  if (!f) {
+    return;
+  }
+  va_list args;
+  va_start(args, fmt);
+  std::vfprintf(f, fmt, args);
+  std::fflush(f);
+  va_end(args);
+  std::fclose(f);
+}
 
 namespace {
 
@@ -149,19 +166,37 @@ struct XdgSurfaceHandle {
 WlrServer* g_server = nullptr;
 
 static bool
-pick_output_size(int* out_width, int* out_height)
+pick_output_size(bool isX11Backend, int* out_width, int* out_height)
 {
-  // Only override the backend-reported mode if the user explicitly requests it.
-  const char* w_env = std::getenv("SCREEN_WIDTH");
-  const char* h_env = std::getenv("SCREEN_HEIGHT");
-  if (!w_env || !h_env) {
-    return false;
+  // Order of preference:
+  // 1) Explicit SCREEN_WIDTH/HEIGHT envs.
+  // 2) For X11 backend, use WLR_X11_OUTPUT_{WIDTH,HEIGHT} if set.
+  // 3) Default (no override) => let backend choose.
+  int width = 0;
+  int height = 0;
+
+  if (const char* w_env = std::getenv("SCREEN_WIDTH")) {
+    width = std::atoi(w_env);
+  }
+  if (const char* h_env = std::getenv("SCREEN_HEIGHT")) {
+    height = std::atoi(h_env);
   }
 
-  int width = std::atoi(w_env);
-  int height = std::atoi(h_env);
   if (width <= 0 || height <= 0) {
-    return false;
+    if (isX11Backend) {
+      if (const char* wx = std::getenv("WLR_X11_OUTPUT_WIDTH")) {
+        width = std::atoi(wx);
+      }
+      if (const char* hx = std::getenv("WLR_X11_OUTPUT_HEIGHT")) {
+        height = std::atoi(hx);
+      }
+      if (width <= 0 || height <= 0) {
+        width = 1920;
+        height = 1080;
+      }
+    } else {
+      return false;
+    }
   }
 
   *out_width = width;
@@ -286,6 +321,12 @@ handle_new_input(wl_listener* listener, void* data)
         handle->server->input.have_abs = true;
         handle->server->input.last_abs_x = event->x;
         handle->server->input.last_abs_y = event->y;
+        if (handle->server->seat && handle->server->primary_output) {
+          double sx = event->x * handle->server->primary_output->width;
+          double sy = event->y * handle->server->primary_output->height;
+          wlr_seat_pointer_notify_motion(
+            handle->server->seat, event->time_msec, sx, sy);
+        }
         FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
         if (f) {
           std::fprintf(f, "pointer motion abs dx=%.3f dy=%.3f\n",
@@ -311,6 +352,12 @@ handle_new_input(wl_listener* listener, void* data)
             }
             wm->focusLookedAtApp();
           }
+        }
+        if (handle->server->seat) {
+          wlr_seat_pointer_notify_button(handle->server->seat,
+                                         event->time_msec,
+                                         event->button,
+                                         event->state);
         }
       };
       wl_signal_add(&pointer->events.button, &handle->button);
@@ -692,6 +739,10 @@ handle_output_frame(wl_listener* listener, void* data)
 
   int width = handle->swapchain ? handle->swapchain->width : 1;
   int height = handle->swapchain ? handle->swapchain->height : 1;
+  log_to_tmp("frame: swapchain %dx%d output %s\n",
+             width,
+             height,
+             handle->output ? handle->output->name : "(null)");
 
   ensure_glad(server);
 
@@ -732,6 +783,7 @@ handle_output_frame(wl_listener* listener, void* data)
   }
 
   glViewport(0, 0, width, height);
+  log_to_tmp("frame: glViewport %dx%d\n", width, height);
   double frameStart = currentTimeSeconds();
   server->engine->frame(frameStart);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -781,7 +833,8 @@ handle_new_output(wl_listener* listener, void* data)
   wlr_output_state_set_enabled(&state, true);
   int desired_width = 0;
   int desired_height = 0;
-  bool have_override = pick_output_size(&desired_width, &desired_height);
+  bool have_override =
+    pick_output_size(server->isX11Backend, &desired_width, &desired_height);
   if (have_override) {
     int refresh = server->isX11Backend ? 0 : 60000; // X11 backend ignores refresh
     if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
@@ -789,15 +842,37 @@ handle_new_output(wl_listener* listener, void* data)
     }
     wlr_output_state_set_custom_mode(
       &state, desired_width, desired_height, refresh);
+    log_to_tmp("new_output: override mode %dx%d@%d on %s\n",
+               desired_width,
+               desired_height,
+               refresh,
+               output->name ? output->name : "(null)");
   } else if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
     wlr_output_state_set_mode(&state, mode);
+    log_to_tmp("new_output: preferred mode %dx%d@%d on %s\n",
+               mode->width,
+               mode->height,
+               mode->refresh,
+               output->name ? output->name : "(null)");
   }
   if (!wlr_output_commit_state(output, &state)) {
     wlr_log(WLR_ERROR, "Failed to commit output %s", output->name);
     wlr_output_state_finish(&state);
+    log_to_tmp("new_output: commit failed %s\n", output->name ? output->name : "(null)");
     return;
   }
   wlr_output_state_finish(&state);
+
+  // Keep global screen dimensions in sync with the wlroots output so renderer
+  // projection and texture sizing match the real buffer size.
+  SCREEN_WIDTH = static_cast<float>(output->width);
+  SCREEN_HEIGHT = static_cast<float>(output->height);
+  log_to_tmp("new_output: committed size %dx%d (SCREEN %fx%f) name=%s\n",
+             output->width,
+             output->height,
+             SCREEN_WIDTH,
+             SCREEN_HEIGHT,
+             output->name ? output->name : "(null)");
 
   auto* handle = new WlrOutputHandle();
   handle->server = server;
@@ -828,6 +903,13 @@ main(int argc, char** argv, char** envp)
   server.envp = envp;
 
   wlr_log_init(WLR_DEBUG, nullptr);
+  log_to_tmp("startup: WLR_BACKENDS=%s DISPLAY=%s WAYLAND_DISPLAY=%s\n",
+             std::getenv("WLR_BACKENDS") ? std::getenv("WLR_BACKENDS") : "(null)",
+             std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)",
+             std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)");
+  log_to_tmp("startup: SCREEN_WIDTH=%s SCREEN_HEIGHT=%s\n",
+             std::getenv("SCREEN_WIDTH") ? std::getenv("SCREEN_WIDTH") : "(null)",
+             std::getenv("SCREEN_HEIGHT") ? std::getenv("SCREEN_HEIGHT") : "(null)");
 
   // If WLR_BACKENDS not set, prefer wayland when under Wayland, otherwise try X11
   // so running from an X session or tty can still work.
@@ -836,6 +918,30 @@ main(int argc, char** argv, char** envp)
       setenv("WLR_BACKENDS", "wayland", 1);
     } else if (std::getenv("DISPLAY")) {
       setenv("WLR_BACKENDS", "x11", 1);
+    }
+  }
+  // For the X11 backend, wlroots expects an explicit output size. Provide one
+  // (default 1920x1080) unless the user already set WLR_X11_OUTPUT_*.
+  const char* backends_env = std::getenv("WLR_BACKENDS");
+  bool likely_x11 = (backends_env && std::string(backends_env).find("x11") != std::string::npos) ||
+                    (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY"));
+  if (likely_x11) {
+    if (!std::getenv("WLR_X11_OUTPUT_WIDTH") ||
+        !std::getenv("WLR_X11_OUTPUT_HEIGHT")) {
+      int width = 1920;
+      int height = 1080;
+      if (const char* w_env = std::getenv("SCREEN_WIDTH")) {
+        width = std::max(1, std::atoi(w_env));
+      }
+      if (const char* h_env = std::getenv("SCREEN_HEIGHT")) {
+        height = std::max(1, std::atoi(h_env));
+      }
+      char buf[32];
+      std::snprintf(buf, sizeof(buf), "%d", width);
+      setenv("WLR_X11_OUTPUT_WIDTH", buf, 1);
+      std::snprintf(buf, sizeof(buf), "%d", height);
+      setenv("WLR_X11_OUTPUT_HEIGHT", buf, 1);
+      log_to_tmp("startup: set WLR_X11_OUTPUT_WIDTH=%d HEIGHT=%d\n", width, height);
     }
   }
 
