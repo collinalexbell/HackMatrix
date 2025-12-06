@@ -4,7 +4,7 @@
 ;; Meta: authored/maintained by Codex—pay attention when you read this.
 (defparameter *wayland-stacktrace-test-plan*
   '(:meta (:author "Codex"
-           :write-count 6
+           :write-count 7
            :purpose "Enumerate end-to-end tests for wlroots/Wayland compositor stack traces and value handling."
            :editing-instructions "Increment :write-count on every edit; keep Lisp structure; set :status to :done when finished; add :notes for completions/challenges; avoid duplicating IDs."
            :format "Plist with :meta, :infra-notes, and :tests list of per-item plists.")
@@ -19,7 +19,7 @@
       (:id 1   :desc "Startup with no clients: launch compositor, assert it stays up 10s and logs backend/output init stack." :status :done :notes "Basic gtest starts compositor via ./launch --in-wm and asserts logs are non-empty.")
       (:id 2   :desc "Verify WAYLAND_DISPLAY selection: compositor picks wayland-0 or env override and logs chosen display." :status :done :notes "Added explicit log marker and gtest checks for chosen display string.")
       (:id 3   :desc "Verify XDG_RUNTIME_DIR resolution path logs when env unset (falls back)." :status :done :notes "Startup log records fallback /tmp/xdg-runtime-$USER; gtest asserts value.")
-      (:id 4   :desc "Backend detection logs: confirm wlroots backend enum logged (x11 vs drm vs headless)." :status :pending)
+      (:id 4   :desc "Backend detection logs: confirm wlroots backend enum logged (x11 vs drm vs headless)." :status :done :notes "Added startup backend kind log and gtest asserting x11 in nested run.")
       (:id 5   :desc "Output mode negotiation stack: verify preferred mode pick path logged (size/refresh)." :status :pending)
       (:id 6   :desc "SCREEN_WIDTH/HEIGHT override path logs propagate to renderer viewport." :status :pending)
       (:id 7   :desc "WLR_X11_OUTPUT_* override path logs propagate to viewport." :status :pending)

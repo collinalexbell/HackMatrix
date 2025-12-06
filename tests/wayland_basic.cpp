@@ -146,6 +146,27 @@ TEST_F(WaylandBasicTest, LogsXdgRuntimeDirFallback)
   }
 }
 
+TEST_F(WaylandBasicTest, LogsBackendDetection)
+{
+  std::string line;
+  bool found =
+    wait_for_log_line_contains(logFile, "startup: backend kind=", &line, 200, 100);
+  EXPECT_TRUE(found) << "Expected backend detection log";
+  if (found) {
+    auto pos = line.find("backend kind=");
+    ASSERT_NE(pos, std::string::npos);
+    std::string value = line.substr(pos + std::string("backend kind=").size());
+    value = rstrip(value);
+    EXPECT_FALSE(value.empty());
+    EXPECT_NE(value, "(null)");
+    auto space = value.find(' ');
+    if (space != std::string::npos) {
+      value = value.substr(0, space);
+    }
+    EXPECT_EQ(value, "x11") << "Unexpected backend kind: " << value;
+  }
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

@@ -1201,6 +1201,15 @@ main(int argc, char** argv, char** envp)
   } else if (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY")) {
     server.isX11Backend = true;
   }
+  const char* backend_kind = "unknown";
+  if (server.isX11Backend) {
+    backend_kind = "x11";
+  } else if (std::getenv("WAYLAND_DISPLAY")) {
+    backend_kind = "wayland";
+  }
+  log_to_tmp("startup: backend kind=%s env=%s\n",
+             backend_kind,
+             backend_env ? backend_env : "(null)");
 
   server.output_layout = wlr_output_layout_create(server.display);
 
