@@ -36,6 +36,14 @@ Camera::Camera()
 Camera::~Camera() {}
 
 void
+Camera::setInvertY(bool invert)
+{
+  invertY = invert;
+  _projectionMatrixUpdated = true;
+  viewUpdated = true;
+}
+
+void
 Camera::handleTranslateForce(bool up, bool down, bool left, bool right)
 {
   if (up)
@@ -122,7 +130,12 @@ Camera::viewMatrixUpdated()
 glm::mat4&
 Camera::getProjectionMatrix(bool isRenderLoop)
 {
-  if (isRenderLoop) {
+  if (_projectionMatrixUpdated || isRenderLoop) {
+    projectionMatrix =
+      glm::perspective(yFov, SCREEN_WIDTH / SCREEN_HEIGHT, zNear, zFar);
+    if (invertY) {
+      projectionMatrix[1][1] *= -1.0f;
+    }
     _projectionMatrixUpdated = false;
   }
   return projectionMatrix;

@@ -19,6 +19,7 @@ extern "C" {
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
+#include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/util/log.h>
 #include <xkbcommon/xkbcommon.h>
@@ -60,6 +61,26 @@ struct WlrKeyboardHandle {
   wl_listener destroy;
 };
 
+struct WlrPointerHandle {
+  WlrServer* server = nullptr;
+  wlr_pointer* pointer = nullptr;
+  wl_listener motion;
+  wl_listener motion_abs;
+  wl_listener destroy;
+};
+
+struct InputState {
+  bool forward = false;
+  bool back = false;
+  bool left = false;
+  bool right = false;
+  double delta_x = 0.0;
+  double delta_y = 0.0;
+  bool have_abs = false;
+  double last_abs_x = 0.0;
+  double last_abs_y = 0.0;
+};
+
 struct WlrServer {
   wl_display* display = nullptr;
   wlr_backend* backend = nullptr;
@@ -71,6 +92,7 @@ struct WlrServer {
   bool gladLoaded = false;
   double lastFrameTime = 0.0;
   char** envp = nullptr;
+  InputState input;
 };
 
 WlrServer* g_server = nullptr;
@@ -100,6 +122,28 @@ handle_keyboard_key(wl_listener* listener, void* data)
     if (syms[i] == XKB_KEY_Escape && event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
       wl_display_terminate(server->display);
     }
+    bool pressed = event->state == WL_KEYBOARD_KEY_STATE_PRESSED;
+    switch (syms[i]) {
+      case XKB_KEY_w:
+      case XKB_KEY_W:
+        server->input.forward = pressed;
+        break;
+      case XKB_KEY_s:
+      case XKB_KEY_S:
+        server->input.back = pressed;
+        break;
+      case XKB_KEY_a:
+      case XKB_KEY_A:
+        server->input.left = pressed;
+        break;
+      case XKB_KEY_d:
+      case XKB_KEY_D:
+        server->input.right = pressed;
+        break;
+      default:
+        break;
+    }
+    wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", syms[i], pressed ? 1 : 0);
   }
 }
 
@@ -110,6 +154,50 @@ handle_new_input(wl_listener* listener, void* data)
     wl_container_of(listener, static_cast<WlrServer*>(nullptr), new_input);
   auto* device = static_cast<wlr_input_device*>(data);
   if (device->type != WLR_INPUT_DEVICE_KEYBOARD) {
+    if (device->type == WLR_INPUT_DEVICE_POINTER) {
+      auto* pointer = wlr_pointer_from_input_device(device);
+      auto* handle = new WlrPointerHandle();
+      handle->server = server;
+      handle->pointer = pointer;
+      handle->motion.notify = [](wl_listener* listener, void* data) {
+        auto* handle =
+          wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), motion);
+        auto* event = static_cast<wlr_pointer_motion_event*>(data);
+        handle->server->input.delta_x += event->delta_x;
+        handle->server->input.delta_y += event->delta_y;
+        wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
+                event->delta_x,
+                event->delta_y);
+      };
+      wl_signal_add(&pointer->events.motion, &handle->motion);
+      handle->motion_abs.notify = [](wl_listener* listener, void* data) {
+        auto* handle =
+          wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), motion_abs);
+        auto* event = static_cast<wlr_pointer_motion_absolute_event*>(data);
+        if (handle->server->input.have_abs) {
+          // Normalize deltas into something closer to pixel units.
+          double dx = (event->x - handle->server->input.last_abs_x) * 1000.0;
+          double dy = (event->y - handle->server->input.last_abs_y) * 1000.0;
+          handle->server->input.delta_x += dx;
+          handle->server->input.delta_y += dy;
+        }
+        handle->server->input.have_abs = true;
+        handle->server->input.last_abs_x = event->x;
+        handle->server->input.last_abs_y = event->y;
+        wlr_log(WLR_DEBUG, "pointer motion abs dx=%.3f dy=%.3f", handle->server->input.delta_x, handle->server->input.delta_y);
+      };
+      wl_signal_add(&pointer->events.motion_absolute, &handle->motion_abs);
+      handle->destroy.notify = [](wl_listener* listener, void* data) {
+        (void)data;
+        auto* handle =
+          wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), destroy);
+        wl_list_remove(&handle->motion.link);
+        wl_list_remove(&handle->motion_abs.link);
+        wl_list_remove(&handle->destroy.link);
+        delete handle;
+      };
+      wl_signal_add(&device->events.destroy, &handle->destroy);
+    }
     return;
   }
 
@@ -255,9 +343,24 @@ handle_output_frame(wl_listener* listener, void* data)
   ensure_depth_buffer(handle, width, height, fbo);
   if (!server->engine) {
     EngineOptions options;
-    options.enableControls = false;
+    options.enableControls = false; // wlroots path feeds input directly
     options.enableGui = false;
+    options.invertYAxis = true;
     server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
+  }
+
+  if (server->engine) {
+    Camera* camera = server->engine->getCamera();
+    if (camera) {
+      camera->handleTranslateForce(
+        server->input.forward, server->input.back, server->input.left, server->input.right);
+      if (server->input.delta_x != 0.0 || server->input.delta_y != 0.0) {
+        camera->handleRotateForce(
+          nullptr, server->input.delta_x, -server->input.delta_y);
+        server->input.delta_x = 0.0;
+        server->input.delta_y = 0.0;
+      }
+    }
   }
 
   glViewport(0, 0, width, height);

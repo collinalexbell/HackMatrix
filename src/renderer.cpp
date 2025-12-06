@@ -255,10 +255,12 @@ Renderer::toggleWireframe()
 Renderer::Renderer(shared_ptr<EntityRegistry> registry,
                    Camera* camera,
                    World* world,
-                   shared_ptr<blocks::TexturePack> texturePack)
+                   shared_ptr<blocks::TexturePack> texturePack,
+                   bool invertY)
   : texturePack(texturePack)
   , registry(registry)
   , appIndexPool(IndexPool(17))
+  , invertY(invertY)
 {
   this->camera = camera;
   this->world = world;
@@ -855,6 +857,7 @@ Renderer::render(RenderPerspective perspective,
   ZoneScoped;
   TracyGpuZone("render");
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glFrontFace(invertY ? GL_CW : GL_CCW);
   if (perspective == CAMERA) {
     shader = cameraShader;
     shader->use();

@@ -180,7 +180,8 @@ Engine::initializeMemberObjs()
   camera = new Camera();
   world = new World(
     registry, camera, texturePack, true, loggerSink);
-  renderer = new Renderer(registry, camera, world, texturePack);
+  renderer = new Renderer(registry, camera, world, texturePack, options.invertYAxis);
+  camera->setInvertY(options.invertYAxis);
   if (options.enableControls) {
     controls = new Controls(wm, world, camera, renderer, texturePack);
   } else {

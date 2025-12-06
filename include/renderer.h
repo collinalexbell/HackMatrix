@@ -65,6 +65,7 @@ class Renderer
   Shader* cameraShader;
   Shader* appShader;
   Shader* depthShader;
+  bool invertY = false;
   std::map<string, Texture*> textures;
   void initAppTextures();
   glm::mat4 trans;
@@ -119,7 +120,8 @@ public:
   Renderer(shared_ptr<EntityRegistry> registry,
            Camera*,
            World*,
-           shared_ptr<blocks::TexturePack>);
+           shared_ptr<blocks::TexturePack>,
+           bool invertY = false);
   ~Renderer();
   shared_ptr<EntityRegistry> registry;
   Camera* getCamera();

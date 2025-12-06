@@ -21,6 +21,7 @@ mouseCallback(GLFWwindow* window, double xpos, double ypos);
 struct EngineOptions {
   bool enableGui = true;
   bool enableControls = true;
+  bool invertYAxis = false; // flip rendering for wlroots FBO orientation
 };
 
 class Engine
@@ -54,6 +55,7 @@ public:
   Engine(GLFWwindow* window, char** envp, EngineOptions options = {});
   ~Engine();
   shared_ptr<EntityRegistry> getRegistry();
+  Camera* getCamera() { return camera; }
   void wire();
   void loop();
   void frame(double frameStart);
