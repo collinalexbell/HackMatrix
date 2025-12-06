@@ -101,6 +101,7 @@ public:
   glm::mat4 getHeightScalar() const override { return heightScalar; }
   int getTextureId() const { return textureId; }
   int getTextureUnit() const { return textureUnit; }
+  wlr_surface* getSurface() const { return surface; }
 
   std::string getWindowName() override { return title; }
   int getPID() override { return 0; }

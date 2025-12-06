@@ -39,6 +39,8 @@ extern "C" {
 
 #include <glad/glad.h>
 #include <cstdarg>
+#include <algorithm>
+#include <string>
 
 #include "engine.h"
 #include "wayland_app.h"
@@ -275,12 +277,32 @@ handle_keyboard_key(wl_listener* listener, void* data)
     wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", syms[i], pressed ? 1 : 0);
   }
   if (server->seat) {
-    wlr_seat_set_keyboard(server->seat, handle->keyboard);
-    enum wl_keyboard_key_state state = event->state;
-    wlr_seat_keyboard_notify_key(
-      server->seat, event->time_msec, event->keycode, state);
-    wlr_seat_keyboard_notify_modifiers(server->seat, &handle->keyboard->modifiers);
+    // Only forward keys to the app when the focused surface matches the WM's
+    // focused Wayland app.
+    wlr_surface* focused_surface = server->seat->keyboard_state.focused_surface;
+    bool deliverToApp = false;
+    if (server->engine) {
+      if (auto wm = server->engine->getWindowManager()) {
+        if (auto focused = wm->getCurrentlyFocusedApp()) {
+          if (server->registry &&
+              server->registry->all_of<WaylandApp::Component>(*focused)) {
+            auto& comp = server->registry->get<WaylandApp::Component>(*focused);
+            if (comp.app && comp.app->getSurface() == focused_surface) {
+              deliverToApp = true;
+            }
+          }
+        }
+      }
+    }
+    if (deliverToApp) {
+      wlr_seat_set_keyboard(server->seat, handle->keyboard);
+      enum wl_keyboard_key_state state = event->state;
+      wlr_seat_keyboard_notify_key(
+        server->seat, event->time_msec, event->keycode, state);
+      wlr_seat_keyboard_notify_modifiers(server->seat, &handle->keyboard->modifiers);
+    }
   }
+}
 }
 
 void
@@ -891,8 +913,6 @@ handle_new_output(wl_listener* listener, void* data)
 
   wlr_output_schedule_frame(output);
 }
-
-} // namespace
 
 int
 main(int argc, char** argv, char** envp)
