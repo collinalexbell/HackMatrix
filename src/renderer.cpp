@@ -704,6 +704,14 @@ Renderer::renderApps()
     shader->setMatrix4("bootableScale", app->getHeightScalar());
     shader->setInt("appNumber", app->getAppIndex());
     shader->setBool("appTransparent", false);
+    std::fprintf(logFile,
+                 "Renderer: Wayland in-world ent=%d appNumber=%zu texId=%d texUnit=%d size=%dx%d\n",
+                 (int)entity,
+                 app->getAppIndex(),
+                 app->getTextureId(),
+                 app->getTextureUnit() - GL_TEXTURE0,
+                 app->getWidth(),
+                 app->getHeight());
     glDrawArrays(GL_TRIANGLES, 0, 6);
     // If focused, also draw directly to screen to ensure visibility.
     if (wm && wm->getCurrentlyFocusedApp().has_value() &&
@@ -722,6 +730,14 @@ Renderer::renderApps()
                  static_cast<float>(SCREEN_HEIGHT);
       model = glm::scale(model, glm::vec3(sx, sy, 1.0f));
       shader->setMatrix4("model", model);
+      std::fprintf(logFile,
+                   "Renderer: Wayland direct ent=%d appNumber=%zu texId=%d texUnit=%d screenScale=(%.3f,%.3f)\n",
+                   (int)entity,
+                   app->getAppIndex(),
+                   app->getTextureId(),
+                   app->getTextureUnit() - GL_TEXTURE0,
+                   sx,
+                   sy);
       glBindVertexArray(DIRECT_RENDER_VAO);
       glDisable(GL_DEPTH_TEST);
       glDrawArrays(GL_TRIANGLES, 0, 6);

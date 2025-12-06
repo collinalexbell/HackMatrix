@@ -142,9 +142,9 @@ WaylandApp::appTexture()
     return;
   }
 
-  size_t stride = 0;
-  void* data = nullptr;
-  uint32_t format = 0;
+    size_t stride = 0;
+    void* data = nullptr;
+    uint32_t format = 0;
 
   if (wlr_buffer_begin_data_ptr_access(buffer,
                                        WLR_BUFFER_DATA_PTR_ACCESS_READ,
@@ -211,6 +211,17 @@ WaylandApp::appTexture()
             r = p[2];
             a = 255;
             break;
+          case DRM_FORMAT_XRGB2101010: { // 10:10:10:2 little endian, B,G,R,X
+            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+            uint32_t br = (v >> 0) & 0x3FF;
+            uint32_t bg = (v >> 10) & 0x3FF;
+            uint32_t bb = (v >> 20) & 0x3FF;
+            r = (uint8_t)((br * 255) / 1023);
+            g = (uint8_t)((bg * 255) / 1023);
+            b = (uint8_t)((bb * 255) / 1023);
+            a = 255;
+            break;
+          }
           default:
             // Assume RGBA
             r = p[0];
@@ -284,29 +295,17 @@ WaylandApp::appTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    if (uploadedWidth != width || uploadedHeight != height || injectTestPattern) {
-      glTexImage2D(GL_TEXTURE_2D,
-                   0,
-                   GL_RGBA,
-                   width,
-                   height,
-                   0,
-                   uploadFormat,
-                   GL_UNSIGNED_BYTE,
-                   converted.data());
-      uploadedWidth = width;
-      uploadedHeight = height;
-    } else {
-      glTexSubImage2D(GL_TEXTURE_2D,
-                      0,
-                      0,
-                      0,
-                      width,
-                      height,
-                      uploadFormat,
-                      GL_UNSIGNED_BYTE,
-                      converted.data());
-    }
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGBA,
+                 width,
+                 height,
+                 0,
+                 GL_RGBA,
+                 GL_UNSIGNED_BYTE,
+                 converted.data());
+    uploadedWidth = width;
+    uploadedHeight = height;
     GLint texWidth = 0;
     GLint texHeight = 0;
     glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &texWidth);

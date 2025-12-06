@@ -19,6 +19,7 @@ extern "C" {
 #include <wlr/render/gles2.h>
 #include <wlr/render/swapchain.h>
 #include <wlr/render/wlr_renderer.h>
+#include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_input_device.h>
 #include <wlr/types/wlr_keyboard.h>
@@ -842,6 +843,11 @@ main(int argc, char** argv, char** envp)
   server.compositor = wlr_compositor_create(server.display, 5, server.renderer);
   if (!server.compositor) {
     std::fprintf(stderr, "Failed to create compositor\n");
+    return EXIT_FAILURE;
+  }
+  // Some clients (e.g., foot) require wl_subcompositor to be advertised.
+  if (!wlr_subcompositor_create(server.display)) {
+    std::fprintf(stderr, "Failed to create subcompositor\n");
     return EXIT_FAILURE;
   }
   server.xdg_shell = wlr_xdg_shell_create(server.display, 3);
