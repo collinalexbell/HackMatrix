@@ -24,6 +24,7 @@ include/protos/*.h
 
 logs
 build
+.ccls-cache/
 
 py/scns
 
