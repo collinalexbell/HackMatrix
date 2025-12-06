@@ -169,6 +169,35 @@ TEST_F(WaylandBasicTest, LogsBackendDetection)
 
 int main(int argc, char** argv)
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  // Allow focusing on a single test by default; use --all to run everything or
+  // set WAYLAND_TEST_FILTER to override the default filter. Falls back to
+  // WaylandBasicTest.LogsBackendDetection to keep runs short.
+  std::string defaultFilter = "WaylandBasicTest.LogsBackendDetection";
+  const char* envFilter = std::getenv("WAYLAND_TEST_FILTER");
+  bool runAll = false;
+
+  // Strip --all from argv so gtest doesn't complain.
+  std::vector<char*> args;
+  args.push_back(argv[0]);
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "--all") {
+      runAll = true;
+      continue;
+    }
+    args.push_back(argv[i]);
+  }
+  args.push_back(nullptr);
+  int newArgc = static_cast<int>(args.size()) - 1;
+
+  ::testing::InitGoogleTest(&newArgc, args.data());
+
+  if (!runAll) {
+    if (envFilter && *envFilter) {
+      ::testing::GTEST_FLAG(filter) = envFilter;
+    } else {
+      ::testing::GTEST_FLAG(filter) = defaultFilter;
+    }
+  }
+
   return RUN_ALL_TESTS();
 }
