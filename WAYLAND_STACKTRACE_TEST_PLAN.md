@@ -1,213 +1,219 @@
-# Wayland Full Stack Trace Test Plan
-
-Purpose: enumerate end-to-end tests that exercise all code paths and value handling in the Wayland compositor/renderer pipeline (wlr_compositor.cpp, WaylandApp.cpp, WindowManager, renderer, controls, texture upload, deferred queues, cursor manager, GL unit reuse). Ranked from least difficult to most difficult. Each item is intended to drive stack-trace logging (callbacks → queueing → tick() → renderer) and validate values in /tmp/matrix-wlroots-output.log plus any test-captured stdout/stderr.
-
-- 001. Startup with no clients: launch compositor, assert it stays up 10s and logs backend/output init stack. **Status: done (basic gtest runs compositor and observes log output).**
-- 002. Verify WAYLAND_DISPLAY selection: compositor picks wayland-0 or env override and logs chosen display. **Status: done (gtest checks log marker for chosen WAYLAND_DISPLAY).**
-- 003. Verify XDG_RUNTIME_DIR resolution path logs when env unset (falls back). **Status: done (gtest asserts startup log shows fallback /tmp/xdg-runtime-$USER).**
-- 004. Backend detection logs: confirm wlroots backend enum logged (x11 vs drm vs headless).
-- 005. Output mode negotiation stack: verify preferred mode pick path logged (size/refresh).
-- 006. SCREEN_WIDTH/HEIGHT override path logs propagate to renderer viewport.
-- 007. WLR_X11_OUTPUT_* override path logs propagate to viewport.
-- 008. Renderer init logs GL version/vendor and shader compile success path.
-- 009. Shader compile failure path: deliberately break shader, expect failure stack and graceful exit.
-- 010. Texture unit allocation init path logs (max units, chosen reuse policy).
-- 011. Cursor manager init path logs default cursor load success.
-- 012. Cursor manager failure path when theme missing logs fallback.
-- 013. Seat creation stack: verify seat, pointer, keyboard new callbacks logged.
-- 014. Pointer creation stack: confirm listener install logs.
-- 015. Keyboard creation stack: confirm listener install logs.
-- 016. Pointer destroy listener logs when compositor shutdown.
-- 017. Keyboard destroy listener logs when compositor shutdown.
-- 018. Idle tick path with zero apps logs “no app” render branch.
-- 019. Render loop timing logs: frame delta calculation path.
-- 020. Camera tick path with no input: logs stable position/orientation.
-- 021. Camera tick path with synthetic mouse move: rotation applied logged.
-- 022. Controls mouse grab toggle path (X11 style) logs grab/ungrab.
-- 023. Controls goToApp path no target: logs no-op branch.
-- 024. Controls goToApp path valid target: logs focus set stack.
-- 025. WindowManager focus change stack: old focus cleared, new focus set logs.
-- 026. Input focus gating path: pointer motion ignored when unfocused app.
-- 027. Input focus gating path: keyboard event forwarded only to focused app.
-- 028. Key repeat suppression path logs.
-- 029. Modifier key handling path logs (caps/ctrl/meta).
-- 030. Pointer motion absolute path logs dx/dy and target surface.
-- 031. Pointer motion relative path logs dx/dy and target surface.
-- 032. Pointer button press path logs symbol/state and target app.
-- 033. Pointer button release path logs symbol/state and target app.
-- 034. Scroll axis path logs value and dispatch result.
-- 035. Surface map listener path: new surface logs entity creation and mapping.
-- 036. Surface unmap listener path: logs removal enqueue.
-- 037. Surface destroy listener path: logs destroy enqueue.
-- 038. Surface commit listener path: logs size/role and buffer info.
-- 039. XDG toplevel new path logs app title/app_id.
-- 040. XDG toplevel configure ack path logs serials.
-- 041. XDG surface initial configure path logs serial/size.
-- 042. XDG surface map first-commit path logs texture upload queued.
-- 043. XDG surface resize commit path logs new size and viewport adjust.
-- 044. Popup surface map path logs hierarchy.
-- 045. Popup surface unmap path logs removal.
-- 046. Subsurface map path logs.
-- 047. Subsurface unmap path logs.
-- 048. Drag icon surface map path logs.
-- 049. Drag icon unmap path logs.
-- 050. New output hotplug path logs mode selection.
-- 051. Output remove path logs renderer cleanup.
-- 052. Output frame callback path logs damage and swap.
-- 053. Output frame skip path when no apps logs.
-- 054. Renderer swap success path logs fence/present info.
-- 055. Renderer swap failure path logs GL error.
-- 056. GL error detection path logs GL_INVALID_OPERATION occurrences.
-- 057. GL resource leak check path logs cleanup counts on shutdown.
-- 058. Texture cache reuse hit path logs reused unit id.
-- 059. Texture cache miss path logs new upload.
-- 060. Texture unit exhaustion path logs LRU eviction.
-- 061. Texture unit reuse after eviction path logs success.
-- 062. Texture deletion path on unmap logs unit freed.
-- 063. Texture deletion path on destroy logs unit freed.
-- 064. Direct render path (renderAppDirect) logs entry/exit.
-- 065. Deferred render path entry logs queue size before drain.
-- 066. Deferred queue drain logs per action applied.
-- 067. Deferred add path logs app pointer and entity id.
-- 068. Deferred remove path logs app pointer and entity id.
-- 069. Deferred path no-op when queue empty logs.
-- 070. Deferred path under load (many actions) logs batch count.
-- 071. Ensure apps registered path: detects missing app and logs warning.
-- 072. Ensure apps registered path: no missing app logs success.
-- 073. WaylandApp constructor path logs wl_surface/wlr_buffer ids.
-- 074. WaylandApp destructor path logs cleanup order.
-- 075. WaylandApp buffer commit path logs shm buffer attributes.
-- 076. WaylandApp buffer commit path logs dmabuf attributes.
-- 077. Buffer import failure path logs errno.
-- 078. Buffer import success path logs format/fd/stride.
-- 079. GL upload path for XRGB8888 logs format conversion.
-- 080. GL upload path for ARGB8888 logs premultiply decision.
-- 081. GL upload path for XRGB2101010 logs conversion branch.
-- 082. GL upload path for ABGR2101010 logs conversion branch.
-- 083. GL upload path for RGBA8888 direct upload logs.
-- 084. GL upload path for BGRA8888 direct upload logs.
-- 085. GL upload path for RGB565 logs.
-- 086. GL upload path for DRM_FORMAT_NV12 logs planar handling.
-- 087. GL upload path for DRM_FORMAT_YUV420 logs planar handling.
-- 088. GL upload path for DRM_FORMAT_P010 logs 10-bit handling.
-- 089. Unsupported format path logs graceful fallback.
-- 090. Buffer transform (rotate/flip) path logs applied matrix.
-- 091. Buffer scale (fractional) path logs applied scale.
-- 092. Alpha handling path logs opacity value used.
-- 093. Damage region handling path logs rectangles applied.
-- 094. Full redraw path logs when damage empty.
-- 095. WindowManager addApp path logs insertion order.
-- 096. WindowManager removeApp path logs erasure success/failure.
-- 097. WindowManager list iteration path logs count per frame.
-- 098. Renderer culling path logs culled apps.
-- 099. Renderer depth ordering path logs.
-- 100. Renderer shader selection path logs (world vs direct).
-- 101. Renderer UBO update path logs sizes.
-- 102. Renderer VBO upload path logs bytes per app.
-- 103. Renderer IBO upload path logs bytes per app.
-- 104. Renderer VAO bind path logs unit ids.
-- 105. Renderer viewport change path logs on resize.
-- 106. Renderer projection matrix change path logs.
-- 107. Renderer view matrix change path logs on camera move.
-- 108. Renderer model matrix per app logs position/scale.
-- 109. Lighting uniform update path logs per light slot.
-- 110. Shadow map path logs invocation.
-- 111. Shadow map path logs GL errors if unsupported.
-- 112. Multi-app render path logs per-app timing.
-- 113. Single-app render path logs simplified timing.
-- 114. Blank frame suppression path logs skip.
-- 115. Swapchain resize path logs recreate result.
-- 116. Swapchain failure path logs error code.
-- 117. Frame pacing path logs target FPS vs actual.
-- 118. High-DPI scaling path logs scaling factor.
-- 119. Pointer constraint path logs when locking pointer.
-- 120. Pointer constraint release path logs unlock.
-- 121. Relative pointer path logs per-event values.
-- 122. Cursor surface commit path logs hotspot/scale.
-- 123. Cursor surface destroy path logs.
-- 124. Cursor visible toggle path logs when showing.
-- 125. Cursor hidden toggle path logs when hiding.
-- 126. Cursor theme reload path logs (env change).
-- 127. Drag-and-drop enter path logs offer details.
-- 128. Drag-and-drop leave path logs.
-- 129. Drag-and-drop drop path logs mime types delivered.
-- 130. Primary selection path logs set/clear.
-- 131. Clipboard selection path logs set/clear.
-- 132. Keyboard repeat info path logs rate/delay from client.
-- 133. Keyboard layout path logs keymap format.
-- 134. Keymap load failure path logs.
-- 135. XWayland disabled path logs guard branch.
-- 136. XWayland enabled path logs guard branch.
-- 137. Renderer thread (if used) path logs handoff success.
-- 138. Renderer thread shutdown path logs join.
-- 139. App positionable entity creation path logs world coords.
-- 140. App positionable update path logs when moving app.
-- 141. App removal path logs world detachment.
-- 142. Controls ESC shutdown path logs exit reason.
-- 143. Signals (SIGINT) path logs graceful shutdown sequence.
-- 144. Signals (SIGTERM) path logs graceful shutdown sequence.
-- 145. Crash handler path logs backtrace to file.
-- 146. Log rotation path logs when truncating old logs.
-- 147. Missing /tmp directory path logs creation attempt.
-- 148. Permission denied writing log path logs error.
-- 149. Launch script path logs when compositor exits early.
-- 150. Launch script path logs when compositor PID captured.
-- 151. Test harness path logs reading log after exit.
-- 152. Deferred add while render in progress logs queued and drained next frame.
-- 153. Deferred remove while render in progress logs queued and drained next frame.
-- 154. Deferred queue ordering path logs preserved order across frame.
-- 155. Deferred queue empty after drain path logs confirmation.
-- 156. Deferred queue under rapid map/unmap stress logs.
-- 157. App reconnect (map after unmap) path logs fresh registration.
-- 158. App crash (client disconnect) path logs surface destroy.
-- 159. App that never commits buffer path logs timeout/warning.
-- 160. App that commits zero-sized buffer path logs rejection.
-- 161. App that commits huge buffer path logs clamped size.
-- 162. App that commits rapidly (fps > refresh) path logs frame drop/merge.
-- 163. App that commits with stale buffer path logs reuse/skip.
-- 164. App with multiple surfaces path logs per-surface mapping and render order.
-- 165. App with subsurface tree path logs recursive traversal.
-- 166. App with cursor surface separate from main surface logs correct routing.
-- 167. App with fractional scale path logs per-surface scale.
-- 168. App with viewport crop path logs source/dest.
-- 169. App with buffer transform 90° path logs rotation and shader flip.
-- 170. App with buffer transform 180° path logs rotation and shader flip.
-- 171. App with buffer transform 270° path logs rotation and shader flip.
-- 172. App with opaque region set path logs scissor/optimization.
-- 173. App with input region path logs input clipping.
-- 174. App minimized path logs skip rendering.
-- 175. App fullscreen request path logs mode change handling.
-- 176. App maximized request path logs.
-- 177. App move/resize request path logs.
-- 178. App close request path logs and client termination.
-- 179. Multiple outputs path logs per-output render calls.
-- 180. Output mirror path logs shared buffer handling.
-- 181. Output transform path logs matrices per output.
-- 182. Output scale path logs per-output scaling.
-- 183. Headless backend path logs no outputs.
-- 184. DRM backend path logs KMS setup (guarded for available devices).
-- 185. GPU hot-unplug path logs device loss handling.
-- 186. Texture format negotiation with EGL dmabuf path logs modifiers.
-- 187. Fallback to SHM when dmabuf import fails logs branch.
-- 188. EGL context loss path logs reinit attempt.
-- 189. Renderer memory pressure path logs eviction decisions.
-- 190. Renderer MSAA on/off path logs state and GL errors.
-- 191. Screenshot path (scrot) logs image saved with timestamp.
-- 192. Log signature detection path (tests) confirms presence of key markers.
-- 193. Automated grep tool path logs missing markers as failures.
-- 194. Stress test: spawn N (e.g., 20) foot instances logs ordering and no drops.
-- 195. Stress test: rapid open/close foot instances logs no crashes.
-- 196. Latency measurement path logs time from commit to render.
-- 197. Frame time histogram path logs distribution under load.
-- 198. Regression harness path logs summary of all markers after run.
-- 199. Cross-backend parity path logs matching markers on X11 backend.
-- 200. End-to-end capture path: start compositor, launch app, ensure deferred path markers, ensure unmap markers, ensure shutdown markers all present in order.
-
-## Infra notes (to build iteratively while adding tests)
-- Common C++ gtest harness helpers: start compositor via `./launch --in-wm`, wait for WAYLAND_DISPLAY socket readiness, kill on teardown; allow env override for XDG_RUNTIME_DIR/WAYLAND_DISPLAY.
-- Client launcher utility: spawn foot/wofi with captured stdout/stderr, optional timeout, and ensure kill on test cleanup.
-- Log capture helper: clear /tmp/matrix-wlroots-output.log (and wm log), stream-tail while test runs, and provide search/assert primitives (ordered markers).
-- Marker macros: lightweight logging macro to stamp “TESTMARK:<name>” at key stack points to ease grepping for path/value assertions.
-- Screenshot helper: trigger scrot to a temp file and provide simple pixel/size checks for window presence.
-- Timing helper: wall-clock wait with jitter to accommodate launch delays; retries on socket connect instead of fixed sleeps.
-- Resource cleanup guard: RAII for processes and temp files to avoid leftover compositor or client after failures.
+;; Wayland full stack trace test plan in Lisp form
+;; Meta: increment :write-count every time this file is edited. Preserve ordering and IDs.
+;; Meta: update :status and :notes when tests are completed; keep descriptions stable.
+;; Meta: authored/maintained by Codex—pay attention when you read this.
+(defparameter *wayland-stacktrace-test-plan*
+  '(:meta (:author "Codex"
+           :write-count 6
+           :purpose "Enumerate end-to-end tests for wlroots/Wayland compositor stack traces and value handling."
+           :editing-instructions "Increment :write-count on every edit; keep Lisp structure; set :status to :done when finished; add :notes for completions/challenges; avoid duplicating IDs."
+           :format "Plist with :meta, :infra-notes, and :tests list of per-item plists.")
+    :infra-notes ("Common C++ gtest harness helpers: start compositor via ./launch --in-wm, wait for WAYLAND_DISPLAY socket readiness, kill on teardown; allow env override for XDG_RUNTIME_DIR/WAYLAND_DISPLAY."
+                  "Client launcher utility: spawn foot/wofi with captured stdout/stderr, optional timeout, and ensure kill on cleanup."
+                  "Log capture helper: clear /tmp/matrix-wlroots-output.log (and wm log), tail while running, provide ordered search/assert primitives."
+                  "Marker macros: lightweight logging macro for TESTMARK:<name> to ease grepping for path/value assertions."
+                  "Screenshot helper: trigger scrot to temp file and provide pixel/size checks for window presence."
+                  "Timing helper: wall-clock wait with retry for socket readiness instead of fixed sleeps."
+                  "Resource cleanup guard: RAII for processes and temp files to avoid leftovers after failures.")
+    :tests (
+      (:id 1   :desc "Startup with no clients: launch compositor, assert it stays up 10s and logs backend/output init stack." :status :done :notes "Basic gtest starts compositor via ./launch --in-wm and asserts logs are non-empty.")
+      (:id 2   :desc "Verify WAYLAND_DISPLAY selection: compositor picks wayland-0 or env override and logs chosen display." :status :done :notes "Added explicit log marker and gtest checks for chosen display string.")
+      (:id 3   :desc "Verify XDG_RUNTIME_DIR resolution path logs when env unset (falls back)." :status :done :notes "Startup log records fallback /tmp/xdg-runtime-$USER; gtest asserts value.")
+      (:id 4   :desc "Backend detection logs: confirm wlroots backend enum logged (x11 vs drm vs headless)." :status :pending)
+      (:id 5   :desc "Output mode negotiation stack: verify preferred mode pick path logged (size/refresh)." :status :pending)
+      (:id 6   :desc "SCREEN_WIDTH/HEIGHT override path logs propagate to renderer viewport." :status :pending)
+      (:id 7   :desc "WLR_X11_OUTPUT_* override path logs propagate to viewport." :status :pending)
+      (:id 8   :desc "Renderer init logs GL version/vendor and shader compile success path." :status :pending)
+      (:id 9   :desc "Shader compile failure path: deliberately break shader, expect failure stack and graceful exit." :status :pending)
+      (:id 10  :desc "Texture unit allocation init path logs (max units, chosen reuse policy)." :status :pending)
+      (:id 11  :desc "Cursor manager init path logs default cursor load success." :status :pending)
+      (:id 12  :desc "Cursor manager failure path when theme missing logs fallback." :status :pending)
+      (:id 13  :desc "Seat creation stack: verify seat, pointer, keyboard new callbacks logged." :status :pending)
+      (:id 14  :desc "Pointer creation stack: confirm listener install logs." :status :pending)
+      (:id 15  :desc "Keyboard creation stack: confirm listener install logs." :status :pending)
+      (:id 16  :desc "Pointer destroy listener logs when compositor shutdown." :status :pending)
+      (:id 17  :desc "Keyboard destroy listener logs when compositor shutdown." :status :pending)
+      (:id 18  :desc "Idle tick path with zero apps logs “no app” render branch." :status :pending)
+      (:id 19  :desc "Render loop timing logs: frame delta calculation path." :status :pending)
+      (:id 20  :desc "Camera tick path with no input: logs stable position/orientation." :status :pending)
+      (:id 21  :desc "Camera tick path with synthetic mouse move: rotation applied logged." :status :pending)
+      (:id 22  :desc "Controls mouse grab toggle path (X11 style) logs grab/ungrab." :status :pending)
+      (:id 23  :desc "Controls goToApp path no target: logs no-op branch." :status :pending)
+      (:id 24  :desc "Controls goToApp path valid target: logs focus set stack." :status :pending)
+      (:id 25  :desc "WindowManager focus change stack: old focus cleared, new focus set logs." :status :pending)
+      (:id 26  :desc "Input focus gating path: pointer motion ignored when unfocused app." :status :pending)
+      (:id 27  :desc "Input focus gating path: keyboard event forwarded only to focused app." :status :pending)
+      (:id 28  :desc "Key repeat suppression path logs." :status :pending)
+      (:id 29  :desc "Modifier key handling path logs (caps/ctrl/meta)." :status :pending)
+      (:id 30  :desc "Pointer motion absolute path logs dx/dy and target surface." :status :pending)
+      (:id 31  :desc "Pointer motion relative path logs dx/dy and target surface." :status :pending)
+      (:id 32  :desc "Pointer button press path logs symbol/state and target app." :status :pending)
+      (:id 33  :desc "Pointer button release path logs symbol/state and target app." :status :pending)
+      (:id 34  :desc "Scroll axis path logs value and dispatch result." :status :pending)
+      (:id 35  :desc "Surface map listener path: new surface logs entity creation and mapping." :status :pending)
+      (:id 36  :desc "Surface unmap listener path: logs removal enqueue." :status :pending)
+      (:id 37  :desc "Surface destroy listener path: logs destroy enqueue." :status :pending)
+      (:id 38  :desc "Surface commit listener path: logs size/role and buffer info." :status :pending)
+      (:id 39  :desc "XDG toplevel new path logs app title/app_id." :status :pending)
+      (:id 40  :desc "XDG toplevel configure ack path logs serials." :status :pending)
+      (:id 41  :desc "XDG surface initial configure path logs serial/size." :status :pending)
+      (:id 42  :desc "XDG surface map first-commit path logs texture upload queued." :status :pending)
+      (:id 43  :desc "XDG surface resize commit path logs new size and viewport adjust." :status :pending)
+      (:id 44  :desc "Popup surface map path logs hierarchy." :status :pending)
+      (:id 45  :desc "Popup surface unmap path logs removal." :status :pending)
+      (:id 46  :desc "Subsurface map path logs." :status :pending)
+      (:id 47  :desc "Subsurface unmap path logs." :status :pending)
+      (:id 48  :desc "Drag icon surface map path logs." :status :pending)
+      (:id 49  :desc "Drag icon unmap path logs." :status :pending)
+      (:id 50  :desc "New output hotplug path logs mode selection." :status :pending)
+      (:id 51  :desc "Output remove path logs renderer cleanup." :status :pending)
+      (:id 52  :desc "Output frame callback path logs damage and swap." :status :pending)
+      (:id 53  :desc "Output frame skip path when no apps logs." :status :pending)
+      (:id 54  :desc "Renderer swap success path logs fence/present info." :status :pending)
+      (:id 55  :desc "Renderer swap failure path logs GL error." :status :pending)
+      (:id 56  :desc "GL error detection path logs GL_INVALID_OPERATION occurrences." :status :pending)
+      (:id 57  :desc "GL resource leak check path logs cleanup counts on shutdown." :status :pending)
+      (:id 58  :desc "Texture cache reuse hit path logs reused unit id." :status :pending)
+      (:id 59  :desc "Texture cache miss path logs new upload." :status :pending)
+      (:id 60  :desc "Texture unit exhaustion path logs LRU eviction." :status :pending)
+      (:id 61  :desc "Texture unit reuse after eviction path logs success." :status :pending)
+      (:id 62  :desc "Texture deletion path on unmap logs unit freed." :status :pending)
+      (:id 63  :desc "Texture deletion path on destroy logs unit freed." :status :pending)
+      (:id 64  :desc "Direct render path (renderAppDirect) logs entry/exit." :status :pending)
+      (:id 65  :desc "Deferred render path entry logs queue size before drain." :status :pending)
+      (:id 66  :desc "Deferred queue drain logs per action applied." :status :pending)
+      (:id 67  :desc "Deferred add path logs app pointer and entity id." :status :pending)
+      (:id 68  :desc "Deferred remove path logs app pointer and entity id." :status :pending)
+      (:id 69  :desc "Deferred path no-op when queue empty logs." :status :pending)
+      (:id 70  :desc "Deferred path under load (many actions) logs batch count." :status :pending)
+      (:id 71  :desc "Ensure apps registered path: detects missing app and logs warning." :status :pending)
+      (:id 72  :desc "Ensure apps registered path: no missing app logs success." :status :pending)
+      (:id 73  :desc "WaylandApp constructor path logs wl_surface/wlr_buffer ids." :status :pending)
+      (:id 74  :desc "WaylandApp destructor path logs cleanup order." :status :pending)
+      (:id 75  :desc "WaylandApp buffer commit path logs shm buffer attributes." :status :pending)
+      (:id 76  :desc "WaylandApp buffer commit path logs dmabuf attributes." :status :pending)
+      (:id 77  :desc "Buffer import failure path logs errno." :status :pending)
+      (:id 78  :desc "Buffer import success path logs format/fd/stride." :status :pending)
+      (:id 79  :desc "GL upload path for XRGB8888 logs format conversion." :status :pending)
+      (:id 80  :desc "GL upload path for ARGB8888 logs premultiply decision." :status :pending)
+      (:id 81  :desc "GL upload path for XRGB2101010 logs conversion branch." :status :pending)
+      (:id 82  :desc "GL upload path for ABGR2101010 logs conversion branch." :status :pending)
+      (:id 83  :desc "GL upload path for RGBA8888 direct upload logs." :status :pending)
+      (:id 84  :desc "GL upload path for BGRA8888 direct upload logs." :status :pending)
+      (:id 85  :desc "GL upload path for RGB565 logs." :status :pending)
+      (:id 86  :desc "GL upload path for DRM_FORMAT_NV12 logs planar handling." :status :pending)
+      (:id 87  :desc "GL upload path for DRM_FORMAT_YUV420 logs planar handling." :status :pending)
+      (:id 88  :desc "GL upload path for DRM_FORMAT_P010 logs 10-bit handling." :status :pending)
+      (:id 89  :desc "Unsupported format path logs graceful fallback." :status :pending)
+      (:id 90  :desc "Buffer transform (rotate/flip) path logs applied matrix." :status :pending)
+      (:id 91  :desc "Buffer scale (fractional) path logs applied scale." :status :pending)
+      (:id 92  :desc "Alpha handling path logs opacity value used." :status :pending)
+      (:id 93  :desc "Damage region handling path logs rectangles applied." :status :pending)
+      (:id 94  :desc "Full redraw path logs when damage empty." :status :pending)
+      (:id 95  :desc "WindowManager addApp path logs insertion order." :status :pending)
+      (:id 96  :desc "WindowManager removeApp path logs erasure success/failure." :status :pending)
+      (:id 97  :desc "WindowManager list iteration path logs count per frame." :status :pending)
+      (:id 98  :desc "Renderer culling path logs culled apps." :status :pending)
+      (:id 99  :desc "Renderer depth ordering path logs." :status :pending)
+      (:id 100 :desc "Renderer shader selection path logs (world vs direct)." :status :pending)
+      (:id 101 :desc "Renderer UBO update path logs sizes." :status :pending)
+      (:id 102 :desc "Renderer VBO upload path logs bytes per app." :status :pending)
+      (:id 103 :desc "Renderer IBO upload path logs bytes per app." :status :pending)
+      (:id 104 :desc "Renderer VAO bind path logs unit ids." :status :pending)
+      (:id 105 :desc "Renderer viewport change path logs on resize." :status :pending)
+      (:id 106 :desc "Renderer projection matrix change path logs." :status :pending)
+      (:id 107 :desc "Renderer view matrix change path logs on camera move." :status :pending)
+      (:id 108 :desc "Renderer model matrix per app logs position/scale." :status :pending)
+      (:id 109 :desc "Lighting uniform update path logs per light slot." :status :pending)
+      (:id 110 :desc "Shadow map path logs invocation." :status :pending)
+      (:id 111 :desc "Shadow map path logs GL errors if unsupported." :status :pending)
+      (:id 112 :desc "Multi-app render path logs per-app timing." :status :pending)
+      (:id 113 :desc "Single-app render path logs simplified timing." :status :pending)
+      (:id 114 :desc "Blank frame suppression path logs skip." :status :pending)
+      (:id 115 :desc "Swapchain resize path logs recreate result." :status :pending)
+      (:id 116 :desc "Swapchain failure path logs error code." :status :pending)
+      (:id 117 :desc "Frame pacing path logs target FPS vs actual." :status :pending)
+      (:id 118 :desc "High-DPI scaling path logs scaling factor." :status :pending)
+      (:id 119 :desc "Pointer constraint path logs when locking pointer." :status :pending)
+      (:id 120 :desc "Pointer constraint release path logs unlock." :status :pending)
+      (:id 121 :desc "Relative pointer path logs per-event values." :status :pending)
+      (:id 122 :desc "Cursor surface commit path logs hotspot/scale." :status :pending)
+      (:id 123 :desc "Cursor surface destroy path logs." :status :pending)
+      (:id 124 :desc "Cursor visible toggle path logs when showing." :status :pending)
+      (:id 125 :desc "Cursor hidden toggle path logs when hiding." :status :pending)
+      (:id 126 :desc "Cursor theme reload path logs (env change)." :status :pending)
+      (:id 127 :desc "Drag-and-drop enter path logs offer details." :status :pending)
+      (:id 128 :desc "Drag-and-drop leave path logs." :status :pending)
+      (:id 129 :desc "Drag-and-drop drop path logs mime types delivered." :status :pending)
+      (:id 130 :desc "Primary selection path logs set/clear." :status :pending)
+      (:id 131 :desc "Clipboard selection path logs set/clear." :status :pending)
+      (:id 132 :desc "Keyboard repeat info path logs rate/delay from client." :status :pending)
+      (:id 133 :desc "Keyboard layout path logs keymap format." :status :pending)
+      (:id 134 :desc "Keymap load failure path logs." :status :pending)
+      (:id 135 :desc "XWayland disabled path logs guard branch." :status :pending)
+      (:id 136 :desc "XWayland enabled path logs guard branch." :status :pending)
+      (:id 137 :desc "Renderer thread (if used) path logs handoff success." :status :pending)
+      (:id 138 :desc "Renderer thread shutdown path logs join." :status :pending)
+      (:id 139 :desc "App positionable entity creation path logs world coords." :status :pending)
+      (:id 140 :desc "App positionable update path logs when moving app." :status :pending)
+      (:id 141 :desc "App removal path logs world detachment." :status :pending)
+      (:id 142 :desc "Controls ESC shutdown path logs exit reason." :status :pending)
+      (:id 143 :desc "Signals (SIGINT) path logs graceful shutdown sequence." :status :pending)
+      (:id 144 :desc "Signals (SIGTERM) path logs graceful shutdown sequence." :status :pending)
+      (:id 145 :desc "Crash handler path logs backtrace to file." :status :pending)
+      (:id 146 :desc "Log rotation path logs when truncating old logs." :status :pending)
+      (:id 147 :desc "Missing /tmp directory path logs creation attempt." :status :pending)
+      (:id 148 :desc "Permission denied writing log path logs error." :status :pending)
+      (:id 149 :desc "Launch script path logs when compositor exits early." :status :pending)
+      (:id 150 :desc "Launch script path logs when compositor PID captured." :status :pending)
+      (:id 151 :desc "Test harness path logs reading log after exit." :status :pending)
+      (:id 152 :desc "Deferred add while render in progress logs queued and drained next frame." :status :pending)
+      (:id 153 :desc "Deferred remove while render in progress logs queued and drained next frame." :status :pending)
+      (:id 154 :desc "Deferred queue ordering path logs preserved order across frame." :status :pending)
+      (:id 155 :desc "Deferred queue empty after drain path logs confirmation." :status :pending)
+      (:id 156 :desc "Deferred queue under rapid map/unmap stress logs." :status :pending)
+      (:id 157 :desc "App reconnect (map after unmap) path logs fresh registration." :status :pending)
+      (:id 158 :desc "App crash (client disconnect) path logs surface destroy." :status :pending)
+      (:id 159 :desc "App that never commits buffer path logs timeout/warning." :status :pending)
+      (:id 160 :desc "App that commits zero-sized buffer path logs rejection." :status :pending)
+      (:id 161 :desc "App that commits huge buffer path logs clamped size." :status :pending)
+      (:id 162 :desc "App that commits rapidly (fps > refresh) path logs frame drop/merge." :status :pending)
+      (:id 163 :desc "App that commits with stale buffer path logs reuse/skip." :status :pending)
+      (:id 164 :desc "App with multiple surfaces path logs per-surface mapping and render order." :status :pending)
+      (:id 165 :desc "App with subsurface tree path logs recursive traversal." :status :pending)
+      (:id 166 :desc "App with cursor surface separate from main surface logs correct routing." :status :pending)
+      (:id 167 :desc "App with fractional scale path logs per-surface scale." :status :pending)
+      (:id 168 :desc "App with viewport crop path logs source/dest." :status :pending)
+      (:id 169 :desc "App with buffer transform 90° path logs rotation and shader flip." :status :pending)
+      (:id 170 :desc "App with buffer transform 180° path logs rotation and shader flip." :status :pending)
+      (:id 171 :desc "App with buffer transform 270° path logs rotation and shader flip." :status :pending)
+      (:id 172 :desc "App with opaque region set path logs scissor/optimization." :status :pending)
+      (:id 173 :desc "App with input region path logs input clipping." :status :pending)
+      (:id 174 :desc "App minimized path logs skip rendering." :status :pending)
+      (:id 175 :desc "App fullscreen request path logs mode change handling." :status :pending)
+      (:id 176 :desc "App maximized request path logs." :status :pending)
+      (:id 177 :desc "App move/resize request path logs." :status :pending)
+      (:id 178 :desc "App close request path logs and client termination." :status :pending)
+      (:id 179 :desc "Multiple outputs path logs per-output render calls." :status :pending)
+      (:id 180 :desc "Output mirror path logs shared buffer handling." :status :pending)
+      (:id 181 :desc "Output transform path logs matrices per output." :status :pending)
+      (:id 182 :desc "Output scale path logs per-output scaling." :status :pending)
+      (:id 183 :desc "Headless backend path logs no outputs." :status :pending)
+      (:id 184 :desc "DRM backend path logs KMS setup (guarded for available devices)." :status :pending)
+      (:id 185 :desc "GPU hot-unplug path logs device loss handling." :status :pending)
+      (:id 186 :desc "Texture format negotiation with EGL dmabuf path logs modifiers." :status :pending)
+      (:id 187 :desc "Fallback to SHM when dmabuf import fails logs branch." :status :pending)
+      (:id 188 :desc "EGL context loss path logs reinit attempt." :status :pending)
+      (:id 189 :desc "Renderer memory pressure path logs eviction decisions." :status :pending)
+      (:id 190 :desc "Renderer MSAA on/off path logs state and GL errors." :status :pending)
+      (:id 191 :desc "Screenshot path (scrot) logs image saved with timestamp." :status :pending)
+      (:id 192 :desc "Log signature detection path (tests) confirms presence of key markers." :status :pending)
+      (:id 193 :desc "Automated grep tool path logs missing markers as failures." :status :pending)
+      (:id 194 :desc "Stress test: spawn N (e.g., 20) foot instances logs ordering and no drops." :status :pending)
+      (:id 195 :desc "Stress test: rapid open/close foot instances logs no crashes." :status :pending)
+      (:id 196 :desc "Latency measurement path logs time from commit to render." :status :pending)
+      (:id 197 :desc "Frame time histogram path logs distribution under load." :status :pending)
+      (:id 198 :desc "Regression harness path logs summary of all markers after run." :status :pending)
+      (:id 199 :desc "Cross-backend parity path logs matching markers on X11 backend." :status :pending)
+      (:id 200 :desc "End-to-end capture path: start compositor, launch app, ensure deferred path markers, ensure unmap markers, ensure shutdown markers all present in order." :status :pending)
+    )))
