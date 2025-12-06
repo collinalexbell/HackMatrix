@@ -319,10 +319,6 @@ TEST(WaylandMenuSpec, LaunchesMenuProgramViaEnvOverrideWithVKey)
 {
   namespace fs = std::filesystem;
 
-  if (!command_ok("command -v xdotool >/dev/null 2>&1")) {
-    GTEST_SKIP() << "xdotool not available; skipping menu keypress test";
-  }
-
   fs::path tmp = fs::temp_directory_path();
   fs::path marker = tmp / "menu-invoked.txt";
   fs::path script = tmp / "menu-test.sh";
@@ -349,16 +345,11 @@ TEST(WaylandMenuSpec, LaunchesMenuProgramViaEnvOverrideWithVKey)
   ScopeExit guard([&]() { stop_compositor(h); });
   ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
 
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  std::string windowId = find_window_for_pid(h.pid);
-  ASSERT_FALSE(windowId.empty()) << "Could not find compositor window for keypress";
-
-  // Focus compositor window and send 'v' to trigger menu.
-  std::string sendCmd = "xdotool windowactivate --sync " + windowId +
-                        " && xdotool windowfocus --sync " + windowId +
-                        " && xdotool key --window " + windowId + " v";
-  std::system(sendCmd.c_str());
+  // Trigger menu via replayed 'v' key.
+  bool sent = send_key_replay({ { "v", 500 } });
+  ASSERT_TRUE(sent) << "Failed to send key replay for menu key";
 
   bool found = false;
   for (int i = 0; i < 40; ++i) { // up to ~2s
