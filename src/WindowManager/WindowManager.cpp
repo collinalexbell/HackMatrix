@@ -678,6 +678,51 @@ void WindowManager::focusLookedAtApp() {
   }
 }
 
+void
+WindowManager::keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries)
+{
+  replayQueue.clear();
+  replayIndex = 0;
+  replayActive = false;
+  replayStart = std::chrono::steady_clock::now();
+  uint64_t cumulative = 0;
+  for (const auto& e : entries) {
+    if (e.first.empty()) {
+      continue;
+    }
+    xkb_keysym_t sym =
+      xkb_keysym_from_name(e.first.c_str(), XKB_KEYSYM_NO_FLAGS);
+    if (sym == XKB_KEY_NoSymbol) {
+      continue;
+    }
+    cumulative += e.second;
+    replayQueue.push_back(ReplayEvent{ sym, cumulative });
+  }
+  replayActive = !replayQueue.empty();
+}
+
+std::vector<xkb_keysym_t>
+WindowManager::consumeReadyReplaySyms(uint64_t now_ms)
+{
+  std::vector<xkb_keysym_t> ready;
+  if (!replayActive) {
+    return ready;
+  }
+  uint64_t start_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        replayStart.time_since_epoch())
+                        .count();
+  uint64_t elapsed = now_ms > start_ms ? now_ms - start_ms : 0;
+  while (replayIndex < replayQueue.size() &&
+         elapsed >= replayQueue[replayIndex].ready_ms) {
+    ready.push_back(replayQueue[replayIndex].sym);
+    ++replayIndex;
+  }
+  if (replayIndex >= replayQueue.size()) {
+    replayActive = false;
+  }
+  return ready;
+}
+
 void WindowManager::registerControls(Controls *controls) {
   if (waylandMode) {
     this->controls = controls;

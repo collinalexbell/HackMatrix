@@ -16,6 +16,8 @@
 #include <spdlog/common.h>
 #include <thread>
 #include <optional>
+#include <chrono>
+#include <vector>
 
 class Controls;
 
@@ -97,6 +99,14 @@ class WindowManager
   void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
   int findAppsHotKey(entt::entity theApp);
+  struct ReplayEvent {
+    xkb_keysym_t sym;
+    uint64_t ready_ms;
+  };
+  std::vector<ReplayEvent> replayQueue;
+  size_t replayIndex = 0;
+  bool replayActive = false;
+  std::chrono::steady_clock::time_point replayStart;
 
 public:
   void unfocusApp();
@@ -117,6 +127,8 @@ public:
   void registerControls(Controls* controls);
   void tick();
   void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld);
+  void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries);
+  std::vector<xkb_keysym_t> consumeReadyReplaySyms(uint64_t now_ms);
   // Wayland-only: register a surface-backed app through the WM for placement
   // and rendering.
   entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,

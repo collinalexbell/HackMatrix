@@ -8,6 +8,8 @@ enum MessageType {
   ADD_VOXELS = 4;
   CLEAR_VOXELS = 5;
   CONFIRM_ACTION = 6;
+  QUIT = 7;
+  KEY_REPLAY = 8;
 }
 
 message NoPayload {}
@@ -52,6 +54,15 @@ message ConfirmAction {
   int64 actionId = 1;
 }
 
+message KeyReplayEntry {
+  string sym = 1;       // XKB keysym name (e.g., "v", "Super_L")
+  uint32 delay_ms = 2;  // Wait time after this key press before next entry
+}
+
+message KeyReplay {
+  repeated KeyReplayEntry entries = 1;
+}
+
 message Move {
   float xDelta = 1;
   float yDelta = 2;
@@ -74,6 +85,7 @@ message ApiRequest {
     AddVoxels addVoxels = 7;
     ClearVoxels clearVoxels = 8;
     ConfirmAction confirmAction = 9;
+    KeyReplay keyReplay = 10;
   }
 }
 

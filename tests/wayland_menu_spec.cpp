@@ -101,6 +101,48 @@ static bool wait_for_log_contains(const std::string& path,
   return false;
 }
 
+static bool send_key_replay(const std::vector<std::pair<std::string, uint32_t>>& entries)
+{
+  const char* addr = std::getenv("VOXEL_API_ADDR_FOR_TEST");
+  std::string endpoint = addr ? addr : "tcp://127.0.0.1:3345";
+  for (int attempt = 0; attempt < 10; ++attempt) {
+    try {
+      zmq::context_t ctx(1);
+      zmq::socket_t sock(ctx, zmq::socket_type::req);
+      sock.set(zmq::sockopt::rcvtimeo, 500);
+      sock.set(zmq::sockopt::sndtimeo, 500);
+      sock.set(zmq::sockopt::linger, 100);
+      sock.connect(endpoint);
+      ApiRequest req;
+      req.set_entityid(0);
+      req.set_type(MessageType::KEY_REPLAY);
+      for (const auto& e : entries) {
+        auto* ent = req.mutable_keyreplay()->add_entries();
+        ent->set_sym(e.first);
+        ent->set_delay_ms(e.second);
+      }
+      std::string data;
+      if (!req.SerializeToString(&data)) {
+        return false;
+      }
+      zmq::message_t msg(data.size());
+      memcpy(msg.data(), data.data(), data.size());
+      if (!sock.send(msg, zmq::send_flags::none)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        continue;
+      }
+      zmq::message_t reply;
+      auto res = sock.recv(reply, zmq::recv_flags::none);
+      if (res.has_value()) {
+        return true;
+      }
+    } catch (...) {
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  }
+  return false;
+}
+
 static std::string find_window_for_pid(const std::string& pid,
                                        int attempts = 120,
                                        int millis = 100)
@@ -368,6 +410,31 @@ TEST(WaylandMenuSpec, LogsMenuKeypressInHandler)
   bool sawLog = wait_for_log_contains(logPath, "sym=118", 80, 100) ||
                 wait_for_log_contains(logPath, "sym=86", 80, 100);
   EXPECT_TRUE(sawLog) << "Expected key handler log for V keypress";
+
+  guard.dismiss();
+  stop_compositor(h);
+}
+
+TEST(WaylandMenuSpec, KeyReplayMovesCamera)
+{
+  // Truncate camera log before run.
+  const std::string logPath = "/tmp/camera-move.log";
+  std::ofstream(logPath, std::ios::trunc).close();
+
+  auto h = start_compositor_with_env();
+  ScopeExit guard([&]() { stop_compositor(h); });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  // Give compositor a moment to initialize.
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+  // Send a replay for 'w' after 1s.
+  bool sent = send_key_replay({ { "w", 1000 } });
+  ASSERT_TRUE(sent) << "Failed to send key replay request";
+
+  // Wait up to ~3s for movement log.
+  bool moved = wait_for_log_contains(logPath, "camera moved", 60, 50);
+  EXPECT_TRUE(moved) << "No camera movement logged after key replay";
 
   guard.dismiss();
   stop_compositor(h);

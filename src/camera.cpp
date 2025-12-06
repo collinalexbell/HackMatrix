@@ -63,6 +63,21 @@ Camera::handleTranslateForce(bool up, bool down, bool left, bool right)
   if (right)
     position += glm::normalize(glm::cross(front, this->up)) * cameraSpeed;
   viewUpdated = true;
+  if (up || down || left || right) {
+    FILE* f = std::fopen("/tmp/camera-move.log", "a");
+    if (f) {
+      std::fprintf(f,
+                   "camera moved pos=(%.3f,%.3f,%.3f) dir=(%.3f,%.3f,%.3f)\n",
+                   position.x,
+                   position.y,
+                   position.z,
+                   front.x,
+                   front.y,
+                   front.z);
+      std::fflush(f);
+      std::fclose(f);
+    }
+  }
 }
 
 void

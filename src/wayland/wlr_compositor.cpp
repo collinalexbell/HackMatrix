@@ -393,74 +393,73 @@ handle_keyboard_destroy(wl_listener* listener, void* data)
   delete handle;
 }
 
-void
-handle_keyboard_key(wl_listener* listener, void* data)
+static void
+process_key_sym(WlrServer* server,
+                wlr_keyboard* keyboard,
+                xkb_keysym_t sym,
+                bool pressed,
+                uint32_t time_msec,
+                uint32_t keycode = 0)
 {
-  auto* handle =
-    wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), key);
-  auto* server = handle->server;
-  auto* event = static_cast<wlr_keyboard_key_event*>(data);
-  uint32_t keycode = event->keycode + 8;
-  const xkb_keysym_t* syms;
-  int nsyms = xkb_state_key_get_syms(handle->keyboard->xkb_state, keycode, &syms);
-  for (int i = 0; i < nsyms; ++i) {
-    if (syms[i] == XKB_KEY_Escape && event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {
-      wl_display_terminate(server->display);
-    }
-    bool pressed = event->state == WL_KEYBOARD_KEY_STATE_PRESSED;
-    if (pressed && server->engine) {
-      if (auto wm = server->engine->getWindowManager()) {
-        uint32_t mods = wlr_keyboard_get_modifiers(handle->keyboard);
-        bool superHeld = mods & WLR_MODIFIER_LOGO;
-        bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
-        wm->handleHotkeySym(syms[i], superHeld, shiftHeld);
-      }
-    }
-    switch (syms[i]) {
-      case XKB_KEY_w:
-      case XKB_KEY_W:
-        server->input.forward = pressed;
-        break;
-      case XKB_KEY_s:
-      case XKB_KEY_S:
-        server->input.back = pressed;
-        break;
-      case XKB_KEY_a:
-      case XKB_KEY_A:
-        server->input.left = pressed;
-        break;
-      case XKB_KEY_d:
-      case XKB_KEY_D:
-        server->input.right = pressed;
-        break;
-      case XKB_KEY_r:
-      case XKB_KEY_R:
-        if (pressed && server->engine) {
-          if (auto wm = server->engine->getWindowManager()) {
-            wm->focusLookedAtApp();
-          }
-        }
-        break;
-      case XKB_KEY_v:
-      case XKB_KEY_V:
-        if (pressed && server->engine) {
-          if (auto wm = server->engine->getWindowManager()) {
-            wm->menu();
-          }
-        }
-        break;
-      default:
-        break;
-    }
-    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-    if (f) {
-      std::fprintf(f, "key sym=%u pressed=%d\n", syms[i], pressed ? 1 : 0);
-      std::fflush(f);
-      std::fclose(f);
-    }
-    wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", syms[i], pressed ? 1 : 0);
+  if (!server) {
+    return;
   }
-  if (server->seat) {
+  if (sym == XKB_KEY_Escape && pressed) {
+    wl_display_terminate(server->display);
+  }
+  if (pressed && server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
+      bool superHeld = mods & WLR_MODIFIER_LOGO;
+      bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
+      wm->handleHotkeySym(sym, superHeld, shiftHeld);
+    }
+  }
+  switch (sym) {
+    case XKB_KEY_w:
+    case XKB_KEY_W:
+      server->input.forward = pressed;
+      break;
+    case XKB_KEY_s:
+    case XKB_KEY_S:
+      server->input.back = pressed;
+      break;
+    case XKB_KEY_a:
+    case XKB_KEY_A:
+      server->input.left = pressed;
+      break;
+    case XKB_KEY_d:
+    case XKB_KEY_D:
+      server->input.right = pressed;
+      break;
+    case XKB_KEY_r:
+    case XKB_KEY_R:
+      if (pressed && server->engine) {
+        if (auto wm = server->engine->getWindowManager()) {
+          wm->focusLookedAtApp();
+        }
+      }
+      break;
+    case XKB_KEY_v:
+    case XKB_KEY_V:
+      if (pressed && server->engine) {
+        if (auto wm = server->engine->getWindowManager()) {
+          wm->menu();
+        }
+      }
+      break;
+    default:
+      break;
+  }
+  FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+  if (f) {
+    std::fprintf(f, "key sym=%u pressed=%d\n", sym, pressed ? 1 : 0);
+    std::fflush(f);
+    std::fclose(f);
+  }
+  wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", sym, pressed ? 1 : 0);
+
+  if (server->seat && keyboard && time_msec != 0) {
     // Only forward keys to the app when the focused surface matches the WM's
     // focused Wayland app.
     wlr_surface* focused_surface = server->seat->keyboard_state.focused_surface;
@@ -479,12 +478,28 @@ handle_keyboard_key(wl_listener* listener, void* data)
       }
     }
     if (deliverToApp) {
-      wlr_seat_set_keyboard(server->seat, handle->keyboard);
-      enum wl_keyboard_key_state state = event->state;
-      wlr_seat_keyboard_notify_key(
-        server->seat, event->time_msec, event->keycode, state);
-      wlr_seat_keyboard_notify_modifiers(server->seat, &handle->keyboard->modifiers);
+      wlr_seat_set_keyboard(server->seat, keyboard);
+      enum wl_keyboard_key_state state =
+        pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
+      wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
+      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
     }
+  }
+}
+
+void
+handle_keyboard_key(wl_listener* listener, void* data)
+{
+  auto* handle =
+    wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), key);
+  auto* server = handle->server;
+  auto* event = static_cast<wlr_keyboard_key_event*>(data);
+  uint32_t keycode = event->keycode + 8;
+  const xkb_keysym_t* syms;
+  int nsyms = xkb_state_key_get_syms(handle->keyboard->xkb_state, keycode, &syms);
+  for (int i = 0; i < nsyms; ++i) {
+    bool pressed = event->state == WL_KEYBOARD_KEY_STATE_PRESSED;
+    process_key_sym(server, handle->keyboard, syms[i], pressed, event->time_msec);
   }
 }
 }
@@ -973,6 +988,23 @@ handle_output_frame(wl_listener* listener, void* data)
   }
   // Ensure Wayland apps have textures attached once the renderer exists.
   ensure_wayland_apps_registered(server);
+
+  if (server->engine) {
+    auto wm = server->engine->getWindowManager();
+    if (wm) {
+      uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          std::chrono::steady_clock::now().time_since_epoch())
+                          .count();
+      auto ready = wm->consumeReadyReplaySyms(now_ms);
+      wlr_keyboard* kbd = nullptr;
+      if (server->last_keyboard_device) {
+        kbd = wlr_keyboard_from_input_device(server->last_keyboard_device);
+      }
+      for (auto sym : ready) {
+        process_key_sym(server, kbd, sym, true, 0);
+      }
+    }
+  }
 
   if (server->engine) {
     Camera* camera = server->engine->getCamera();
