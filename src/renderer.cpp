@@ -337,11 +337,13 @@ void
 Renderer::initAppTextures()
 {
   GLint maxUnits = 0;
-  glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxUnits);
+  // Fragment shader texture units; use these to stay GLES-compatible.
+  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxUnits);
   if (maxUnits <= 0) {
     maxUnits = 8;
   }
-  int appTextures = std::min(9, maxUnits);
+  // Keep a small pool to avoid exhausting units (GLES2 often has 8).
+  int appTextures = std::min(4, maxUnits);
   appIndexPool = IndexPool(appTextures);
   static FILE* logFile = []() {
     FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
@@ -349,11 +351,11 @@ Renderer::initAppTextures()
   }();
   std::fprintf(logFile, "initAppTextures: maxUnits=%d appTextures=%d\n", maxUnits, appTextures);
   for (int index = 0; index < appTextures; index++) {
-    int textureN = (maxUnits - 1) - index;
-    int textureUnit = GL_TEXTURE0 + textureN;
+    int textureN = index;
+    int textureUnit = GL_TEXTURE0; // single unit; we'll bind per-app before draw
     string textureName = "app" + to_string(index);
     textures[textureName] = new Texture(textureUnit);
-    shader->setInt(textureName, textureN);
+    shader->setInt(textureName, 0); // all samplers map to unit 0
     std::fprintf(logFile,
                  "initAppTextures: index=%d texName=%s texId=%u unit=%d\n",
                  index,
@@ -505,6 +507,13 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
         GL_NEAREST);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
     } else {
+      glActiveTexture(GL_TEXTURE0);
+      auto texIt = textures.find("app" + std::to_string(index));
+      if (texIt != textures.end()) {
+        glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
+      }
+      shader->setInt("app0", 0);
+      shader->setInt("appNumber", 0);
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
       static int x = -1;
@@ -534,7 +543,6 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
         x = bootable->x;
         y = bootable->y;
       }
-      shader->setInt("appNumber", app->getAppIndex());
       shader->setBool("appTransparent", bootable->transparent);
       shader->setMatrix4("model", model);
       glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -990,7 +998,7 @@ Renderer::registerApp(AppSurface* app)
   auto index = appIndexPool.acquireIndex();
   static GLint maxTextureUnits = -1;
   if (maxTextureUnits < 0) {
-    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
     if (maxTextureUnits <= 0) {
       maxTextureUnits = 8;
     }
@@ -1005,9 +1013,8 @@ Renderer::registerApp(AppSurface* app)
   }
   FILE* logFile = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
   try {
-    int textureN = maxTextureUnits - 1 - static_cast<int>(index);
-    int textureUnit = GL_TEXTURE0 + textureN;
     int textureId = textures["app" + to_string(index)]->ID;
+    int textureUnit = GL_TEXTURE0; // always bind to unit 0; shader samplers set to 0
     app->attachTexture(textureUnit, textureId, index);
     app->appTexture();
     if (logFile) {
@@ -1057,6 +1064,32 @@ Renderer::deregisterApp(int index)
   appIndexPool.relinquishIndex(index);
   glDeleteFramebuffers(1, &frameBuffers[index]);
   frameBuffers.erase(index);
+}
+
+void
+Renderer::attachSharedAppTexture(AppSurface* app)
+{
+  if (!app) {
+    return;
+  }
+  // Use index 0 slot, unit 0; avoids consuming extra texture units.
+  auto it = textures.find("app0");
+  if (it == textures.end()) {
+    return;
+  }
+  int textureUnit = GL_TEXTURE0;
+  int textureId = it->second->ID;
+  app->attachTexture(textureUnit, textureId, 0);
+  app->appTexture();
+  FILE* logFile = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+  if (logFile) {
+    std::fprintf(logFile,
+                 "attachSharedAppTexture: texId=%d unit=%d\n",
+                 textureId,
+                 textureUnit - GL_TEXTURE0);
+    std::fflush(logFile);
+    std::fclose(logFile);
+  }
 }
 
 void

@@ -54,7 +54,7 @@ LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt
 WLROOTS_AVAILABLE := $(shell pkg-config --exists $(WLROOTS_PC_NAME) wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
 ifeq ($(WLROOTS_AVAILABLE),1)
     WLROOTS_CFLAGS := $(shell pkg-config --cflags $(WLROOTS_PC_NAME) wayland-server xkbcommon) -DWLR_USE_UNSTABLE -I$(abspath wlroots/build/protocol)
-    WLROOTS_LIBS := $(shell pkg-config --libs $(WLROOTS_PC_NAME) wayland-server xkbcommon)
+    WLROOTS_LIBS := $(shell pkg-config --libs $(WLROOTS_PC_NAME) wayland-server xkbcommon) -lpixman-1
     RPATH_WLROOTS := -Wl,-rpath,$(abspath wlroots/build) -Wl,-rpath,$(abspath wlroots/build/subprojects/wayland/src)
 else
     WLROOTS_CFLAGS :=

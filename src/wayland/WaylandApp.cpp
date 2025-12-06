@@ -15,6 +15,7 @@ extern "C" {
 #include <glm/gtc/matrix_transform.hpp>
 #include <EGL/egl.h>
 #include <glad/glad.h>
+#include <chrono>
 #include <vector>
 
 static glm::mat4
@@ -94,6 +95,13 @@ WaylandApp::takeInputFocus()
         seat, seat_surface, kbd->keycodes, kbd->num_keycodes, &kbd->modifiers);
       wlr_seat_keyboard_notify_modifiers(seat, &kbd->modifiers);
     }
+    // Ensure pointer focus follows the focused app so pointer events are delivered.
+    wlr_seat_pointer_notify_enter(seat, seat_surface, 0, 0);
+    auto now_ms = static_cast<uint32_t>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch())
+        .count());
+    wlr_seat_pointer_notify_motion(seat, now_ms, 0, 0);
   }
 }
 
@@ -306,10 +314,6 @@ WaylandApp::appTexture()
                  converted.data());
     uploadedWidth = width;
     uploadedHeight = height;
-    GLint texWidth = 0;
-    GLint texHeight = 0;
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &texWidth);
-    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &texHeight);
     GLenum errAfter = glGetError();
     if (rowChecksum == 0 && centerPixel == 0 && firstPixel == 0) {
       injectTestPattern = true;
@@ -332,8 +336,8 @@ WaylandApp::appTexture()
                    "WaylandApp upload: texId=%d unit=%d texSize=%dx%d uploadSize=%dx%d stride=%zu fmt=%u glErr=0x%x firstPixel=0x%08x rawFirst=0x%08x center=0x%08x rawCenter=0x%08x rowChecksum=%u min=(%u,%u,%u,%u) max=(%u,%u,%u,%u)\n",
                    textureId,
                    textureUnit - GL_TEXTURE0,
-                   texWidth,
-                   texHeight,
+                   width,
+                   height,
                    width,
                    height,
                    stride,

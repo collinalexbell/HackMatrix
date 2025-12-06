@@ -799,7 +799,9 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, 
   std::fflush(logFile);
   entt::entity entity = registry->create();
   registry->emplace<WaylandApp::Component>(entity, app);
-  if (renderer) {
+  // For X11 we attach immediately; for wlroots we defer GL texture attach to the
+  // compositor render loop to avoid context issues.
+  if (renderer && !waylandMode) {
     renderer->registerApp(app.get());
   } else {
     std::fprintf(logFile,

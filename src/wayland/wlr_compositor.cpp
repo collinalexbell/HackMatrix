@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <chrono>
+#include <pixman-1/pixman.h>
 #include <memory>
 #include <drm_fourcc.h>
 #include <ctime>
@@ -27,6 +28,8 @@ extern "C" {
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xdg_shell.h>
+#include <wlr/types/wlr_cursor.h>
+#include <wlr/types/wlr_xcursor_manager.h>
 #define namespace namespace_keyword_workaround
 #include <wlr/types/wlr_layer_shell_v1.h>
 #undef namespace
@@ -140,10 +143,86 @@ struct WlrServer {
   wlr_output* primary_output = nullptr;
   wlr_input_device* last_keyboard_device = nullptr;
   wlr_input_device* last_pointer_device = nullptr;
+  wlr_xcursor_manager* cursor_mgr = nullptr;
+  wlr_cursor* cursor = nullptr;
   std::unordered_map<wlr_surface*, entt::entity> surface_map;
   std::vector<wlr_xdg_surface*> pending_surfaces;
   bool isX11Backend = false;
+  double pointer_x = 0.0;
+  double pointer_y = 0.0;
+  wl_listener request_set_cursor;
 };
+
+static void
+log_pointer_state(WlrServer* server, const char* tag)
+{
+  if (!server) {
+    return;
+  }
+  double px = server->pointer_x;
+  double py = server->pointer_y;
+  if (server->cursor) {
+    px = server->cursor->x;
+    py = server->cursor->y;
+    server->pointer_x = px;
+    server->pointer_y = py;
+  }
+  wlr_surface* surf = nullptr;
+  if (server->seat && server->seat->pointer_state.focused_surface) {
+    surf = server->seat->pointer_state.focused_surface;
+  }
+  log_to_tmp("pointer[%s]: pos=(%.1f,%.1f) focus=%p\n",
+             tag ? tag : "",
+             px,
+             py,
+             (void*)surf);
+}
+
+static void
+set_default_cursor(WlrServer* server)
+{
+  if (!server || !server->cursor || !server->cursor_mgr) {
+    return;
+  }
+  wlr_cursor_set_xcursor(server->cursor, server->cursor_mgr, "left_ptr");
+  server->pointer_x = server->cursor->x;
+  server->pointer_y = server->cursor->y;
+  log_pointer_state(server, "default_cursor");
+}
+
+static void
+ensure_wayland_apps_registered(WlrServer* server)
+{
+  if (!server || !server->registry || !server->engine) {
+    return;
+  }
+  auto* renderer = server->engine->getRenderer();
+  if (!renderer) {
+    return;
+  }
+  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+  auto view = server->registry->view<WaylandApp::Component>();
+  for (auto [ent, comp] : view.each()) {
+    if (!comp.app) {
+      continue;
+    }
+    if (comp.app->getTextureId() >= 0 && comp.app->getTextureUnit() >= 0) {
+      continue;
+    }
+    renderer->registerApp(comp.app.get());
+    if (f) {
+      std::fprintf(f,
+                   "wayland app tex attach: ent=%d texId=%d texUnit=%d\n",
+                   (int)entt::to_integral(ent),
+                   comp.app->getTextureId(),
+                   comp.app->getTextureUnit() - GL_TEXTURE0);
+      std::fflush(f);
+    }
+  }
+  if (f) {
+    std::fclose(f);
+  }
+}
 
 struct WaylandAppHandle {
   WlrServer* server = nullptr;
@@ -166,6 +245,36 @@ struct XdgSurfaceHandle {
 };
 
 WlrServer* g_server = nullptr;
+
+static bool
+wayland_app_has_pointer_focus(WlrServer* server)
+{
+  if (!server || !server->engine) {
+    return false;
+  }
+  auto wm = server->engine->getWindowManager();
+  if (!wm || !server->registry) {
+    return false;
+  }
+  auto focused = wm->getCurrentlyFocusedApp();
+  if (!focused.has_value() || !server->registry->valid(*focused)) {
+    return false;
+  }
+  auto entity = focused.value();
+  if (!server->registry->all_of<WaylandApp::Component>(entity)) {
+    return false;
+  }
+  auto& comp = server->registry->get<WaylandApp::Component>(entity);
+  wlr_surface* focused_surface = comp.app ? comp.app->getSurface() : nullptr;
+  if (!focused_surface) {
+    return false;
+  }
+  if (server->seat && server->seat->pointer_state.focused_surface) {
+    return server->seat->pointer_state.focused_surface == focused_surface;
+  }
+  // Fallback: if we can't inspect seat focus, honor the WM focus flag.
+  return true;
+}
 
 static bool
 pick_output_size(bool isX11Backend, int* out_width, int* out_height)
@@ -315,6 +424,9 @@ handle_new_input(wl_listener* listener, void* data)
     if (device->type == WLR_INPUT_DEVICE_POINTER) {
       auto* pointer = wlr_pointer_from_input_device(device);
       server->last_pointer_device = device;
+      if (server->cursor) {
+        wlr_cursor_attach_input_device(server->cursor, device);
+      }
       auto* handle = new WlrPointerHandle();
       handle->server = server;
       handle->pointer = pointer;
@@ -324,6 +436,21 @@ handle_new_input(wl_listener* listener, void* data)
         auto* event = static_cast<wlr_pointer_motion_event*>(data);
         handle->server->input.delta_x += event->delta_x;
         handle->server->input.delta_y += event->delta_y;
+        if (handle->server->cursor) {
+          wlr_cursor_move(handle->server->cursor,
+                          handle->server->last_pointer_device,
+                          event->delta_x,
+                          event->delta_y);
+          handle->server->pointer_x = handle->server->cursor->x;
+          handle->server->pointer_y = handle->server->cursor->y;
+        }
+        if (handle->server->seat) {
+          wlr_seat_pointer_notify_motion(handle->server->seat,
+                                         event->time_msec,
+                                         handle->server->pointer_x,
+                                         handle->server->pointer_y);
+        }
+        log_pointer_state(handle->server, "motion_rel");
         wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
                 event->delta_x,
                 event->delta_y);
@@ -343,12 +470,21 @@ handle_new_input(wl_listener* listener, void* data)
         handle->server->input.have_abs = true;
         handle->server->input.last_abs_x = event->x;
         handle->server->input.last_abs_y = event->y;
-        if (handle->server->seat && handle->server->primary_output) {
-          double sx = event->x * handle->server->primary_output->width;
-          double sy = event->y * handle->server->primary_output->height;
-          wlr_seat_pointer_notify_motion(
-            handle->server->seat, event->time_msec, sx, sy);
+        if (handle->server->cursor) {
+          wlr_cursor_warp_absolute(handle->server->cursor,
+                                   handle->server->last_pointer_device,
+                                   event->x,
+                                   event->y);
+          handle->server->pointer_x = handle->server->cursor->x;
+          handle->server->pointer_y = handle->server->cursor->y;
         }
+        if (handle->server->seat) {
+          wlr_seat_pointer_notify_motion(handle->server->seat,
+                                         event->time_msec,
+                                         handle->server->pointer_x,
+                                         handle->server->pointer_y);
+        }
+        log_pointer_state(handle->server, "motion_abs");
         FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
         if (f) {
           std::fprintf(f, "pointer motion abs dx=%.3f dy=%.3f\n",
@@ -486,9 +622,6 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
     if (entity == entt::null && handle->server->registry) {
       entity = handle->server->registry->create();
       handle->server->registry->emplace<WaylandApp::Component>(entity, handle->app);
-      if (auto* renderer = handle->server->engine->getRenderer()) {
-        renderer->registerApp(handle->app.get());
-      }
     }
     if (entity != entt::null) {
       handle->entity = entity;
@@ -781,18 +914,23 @@ handle_output_frame(wl_listener* listener, void* data)
   if (server->engine && !server->registry) {
     server->registry = server->engine->getRegistry();
   }
+  // Ensure Wayland apps have textures attached once the renderer exists.
+  ensure_wayland_apps_registered(server);
 
   if (server->engine) {
     Camera* camera = server->engine->getCamera();
     if (camera) {
       camera->handleTranslateForce(
         server->input.forward, server->input.back, server->input.left, server->input.right);
-      if (server->input.delta_x != 0.0 || server->input.delta_y != 0.0) {
+      bool pointerOwnedByApp = wayland_app_has_pointer_focus(server);
+      if (!pointerOwnedByApp &&
+          (server->input.delta_x != 0.0 || server->input.delta_y != 0.0)) {
         camera->handleRotateForce(
           nullptr, server->input.delta_x, -server->input.delta_y);
-        server->input.delta_x = 0.0;
-        server->input.delta_y = 0.0;
       }
+      // Always clear accumulated deltas so they don't apply after focus changes.
+      server->input.delta_x = 0.0;
+      server->input.delta_y = 0.0;
     }
   }
 
@@ -808,6 +946,14 @@ handle_output_frame(wl_listener* listener, void* data)
   log_to_tmp("frame: glViewport %dx%d\n", width, height);
   double frameStart = currentTimeSeconds();
   server->engine->frame(frameStart);
+
+  // Render software cursors (clients set them via wl_pointer.set_cursor).
+  pixman_region32_t cursor_damage;
+  pixman_region32_init_rect(&cursor_damage, 0, 0, width, height);
+  wlr_output_add_software_cursors_to_render_pass(handle->output, pass, &cursor_damage);
+  pixman_region32_fini(&cursor_damage);
+  log_pointer_state(server, "frame");
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   wlr_render_pass_submit(pass);
@@ -899,6 +1045,16 @@ handle_new_output(wl_listener* listener, void* data)
   auto* handle = new WlrOutputHandle();
   handle->server = server;
   handle->output = output;
+  server->pointer_x = output->width / 2.0;
+  server->pointer_y = output->height / 2.0;
+  if (server->cursor) {
+    wlr_cursor_map_to_output(server->cursor, output);
+    wlr_cursor_warp(server->cursor, nullptr, server->pointer_x, server->pointer_y);
+    if (server->cursor_mgr) {
+      wlr_xcursor_manager_load(server->cursor_mgr, output->scale);
+      set_default_cursor(server);
+    }
+  }
   if (!server->primary_output) {
     server->primary_output = output;
   }
@@ -1023,6 +1179,43 @@ main(int argc, char** argv, char** envp)
   if (server.seat) {
     wlr_seat_set_capabilities(server.seat,
                               WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+    server.cursor_mgr = wlr_xcursor_manager_create(nullptr, 24);
+    if (server.cursor_mgr) {
+      wlr_xcursor_manager_load(server.cursor_mgr, 1);
+    }
+    server.cursor = wlr_cursor_create();
+    if (server.cursor && server.output_layout) {
+      wlr_cursor_attach_output_layout(server.cursor, server.output_layout);
+    }
+    server.request_set_cursor.notify = [](wl_listener* listener, void* data) {
+      auto* server =
+        wl_container_of(listener, static_cast<WlrServer*>(nullptr), request_set_cursor);
+      auto* event = static_cast<wlr_seat_pointer_request_set_cursor_event*>(data);
+      if (!server || !server->cursor || !server->seat) {
+        return;
+      }
+      // Only honor cursor requests from the focused client.
+      if (server->seat->pointer_state.focused_client != event->seat_client) {
+        return;
+      }
+      if (event->surface) {
+        wlr_cursor_set_surface(
+          server->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+        log_to_tmp("set_cursor: surface=%p hotspot=%d,%d\n",
+                   (void*)event->surface,
+                   event->hotspot_x,
+                   event->hotspot_y);
+      } else {
+        log_to_tmp("set_cursor: null surface -> default\n");
+        set_default_cursor(server);
+      }
+      server->pointer_x = server->cursor->x;
+      server->pointer_y = server->cursor->y;
+      log_pointer_state(server, "set_cursor");
+    };
+    wl_signal_add(&server.seat->events.request_set_cursor, &server.request_set_cursor);
+    // Set an initial default cursor.
+    set_default_cursor(&server);
   }
   server.data_device_manager = wlr_data_device_manager_create(server.display);
   if (server.output_layout) {
@@ -1042,6 +1235,9 @@ main(int argc, char** argv, char** envp)
     std::fprintf(stderr, "Failed to start wlroots backend\n");
     return EXIT_FAILURE;
   }
+  log_to_tmp("startup: pointer init pos (%.1f,%.1f)\n",
+             server.pointer_x,
+             server.pointer_y);
 
   const char* socket = wl_display_add_socket_auto(server.display);
   if (!socket) {

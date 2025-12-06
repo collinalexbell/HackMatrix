@@ -112,6 +112,8 @@ class Renderer
   int verticesInDynamicObjects = 0;
 
   IndexPool appIndexPool;
+  int appTextureBaseUnit = 0; // highest usable texture unit index
+  int appTextureCount = 0;    // how many app textures we reserve
   bool voxelsEnabled = true;
   VoxelSpace voxelSpace;
   RenderedVoxelSpace voxelMesh;
@@ -133,6 +135,8 @@ public:
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>>& meshes);
   void addLine(int index, Line line);
   void registerApp(AppSurface* app);
+  // Wayland path can reuse a single texture unit to avoid GL unit exhaustion.
+  void attachSharedAppTexture(AppSurface* app);
   void deregisterApp(int index);
   void reloadChunk();
   void screenshot();
