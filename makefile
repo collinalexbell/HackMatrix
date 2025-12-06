@@ -328,7 +328,7 @@ TEST_OBJECTS = build/testChunk.o
 
 test: FLAGS+=-O0
 test: $(TEST_OBJECTS) $(ALL_OBJECTS)
-	g++ -std=c++20 $(FLAGS) -o test $(TEST_OBJECTS) $(ALL_OBJECTS) -fuse-ld=gold -I /usr/src/gtest $(INCLUDES) -L /usr/local/lib $(LIBS) -lgtest -lgtest_main -pthread $(EXTRA_LDFLAGS)
+	g++ -std=c++20 $(FLAGS) -o test $(TEST_OBJECTS) $(ALL_OBJECTS) -I /usr/src/gtest $(INCLUDES) -L /usr/local/lib $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lgtest -lgtest_main -pthread $(EXTRA_LDFLAGS)
 
 build/testDynamicObject.o: build/dynamicObject.o tests/dynamicObject.cpp include/dynamicObject.h
 	g++ -std=c++20 $(FLAGS) -o build/testDynamicObject.o -c tests/dynamicObject.cpp $(INCLUDES)
@@ -338,6 +338,22 @@ build/testDynamicObject.o: build/dynamicObject.o tests/dynamicObject.cpp include
 
 build/testChunk.o: build/chunk.o tests/chunk.cpp include/chunk.h include/mesher.h include/cube.h
 	g++ -std=c++20 $(FLAGS) -o build/testChunk.o -c tests/chunk.cpp $(INCLUDES)
+
+# Wayland basic test (uses gtest)
+build/testWaylandBasic.o: tests/wayland_basic.cpp
+	mkdir -p build
+	g++ -std=c++20 $(FLAGS) -o build/testWaylandBasic.o -c tests/wayland_basic.cpp $(INCLUDES)
+
+test-wayland-basic: build/testWaylandBasic.o
+	g++ -std=c++20 $(FLAGS) -o build/test-wayland-basic build/testWaylandBasic.o $(INCLUDES) -lgtest -lpthread
+
+# Menu launcher spec (TDD harness)
+build/testWaylandMenuSpec.o: tests/wayland_menu_spec.cpp
+	mkdir -p build
+	g++ -std=c++20 $(FLAGS) -o build/testWaylandMenuSpec.o -c tests/wayland_menu_spec.cpp $(INCLUDES)
+
+test-wayland-menu: build/testWaylandMenuSpec.o
+	g++ -std=c++20 $(FLAGS) -o build/test-wayland-menu build/testWaylandMenuSpec.o $(ALL_OBJECTS) $(INCLUDES) $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lgtest -lgtest_main -lpthread
 
 
 

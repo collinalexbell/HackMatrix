@@ -295,6 +295,64 @@ int WindowManager::findAppsHotKey(entt::entity theApp)
   return -1;
 }
 
+void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld)
+{
+  if (!superHeld) {
+    return;
+  }
+
+  auto swapOrFocus = [&](int index) {
+    if (shiftHeld && currentlyFocusedApp.has_value()) {
+      int source = findAppsHotKey(currentlyFocusedApp.value());
+      swapHotKeys(source, index);
+      return;
+    }
+    unfocusApp();
+    if (index >= 0 && index < static_cast<int>(appsWithHotKeys.size())) {
+      if (appsWithHotKeys[index].has_value() && controls) {
+        controls->goToApp(appsWithHotKeys[index].value());
+      }
+    }
+  };
+
+  switch (sym) {
+    case XKB_KEY_E:
+    case XKB_KEY_e:
+      unfocusApp();
+      break;
+    case XKB_KEY_q:
+    case XKB_KEY_Q:
+      // Close-on-Super+Q is only supported for X11 apps; for Wayland we just unfocus.
+      unfocusApp();
+      if (!waylandMode && currentlyFocusedApp.has_value()) {
+        auto& app = registry->get<X11App>(currentlyFocusedApp.value());
+        app.close();
+      }
+      break;
+    case XKB_KEY_0:
+      unfocusApp();
+      if (controls) {
+        controls->moveTo(glm::vec3(3.0, 5.0, 16), std::nullopt, 4);
+      }
+      break;
+    case XKB_KEY_1:
+    case XKB_KEY_2:
+    case XKB_KEY_3:
+    case XKB_KEY_4:
+    case XKB_KEY_5:
+    case XKB_KEY_6:
+    case XKB_KEY_7:
+    case XKB_KEY_8:
+    case XKB_KEY_9: {
+      int idx = static_cast<int>(sym - XKB_KEY_1);
+      swapOrFocus(idx);
+      break;
+    }
+    default:
+      break;
+  }
+}
+
 void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode qKeyCode = XKeysymToKeycode(display, XK_q);
@@ -712,6 +770,9 @@ void WindowManager::setWMProps(Window root) {
 }
 
 void WindowManager::setupLogger() {
+  if (!logSink) {
+    return;
+  }
   logger = make_shared<spdlog::logger>("wm", logSink);
   logger->set_level(spdlog::level::debug);
   logger->flush_on(spdlog::level::info);
@@ -723,6 +784,9 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
     : matrix(matrix), logSink(loggerSink), registry(registry) {
 
   menuProgram = Config::singleton()->get<std::string>("menu_program");
+  if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
+    menuProgram = envMenu;
+  }
   setupLogger();
   display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
@@ -766,6 +830,9 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
   , waylandMode(waylandMode)
 {
   menuProgram = Config::singleton()->get<std::string>("menu_program");
+  if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
+    menuProgram = envMenu;
+  }
   setupLogger();
 }
 
@@ -836,6 +903,7 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, 
                pos.y,
                pos.z);
   std::fflush(logFile);
+  appsWithHotKeys.push_back(entity);
   return entity;
 }
 

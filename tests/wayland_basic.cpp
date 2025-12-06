@@ -57,6 +57,7 @@ protected:
   {
     // Kill any existing compositor to avoid conflicts.
     system("pkill -f matrix-wlroots >/dev/null 2>&1");
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     // Clear log
     std::ofstream(logFile, std::ios::trunc).close();
 
@@ -82,11 +83,13 @@ protected:
   {
     if (compPid > 0) {
       kill(compPid, SIGTERM);
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::this_thread::sleep_for(std::chrono::seconds(2));
       kill(compPid, SIGKILL);
+      std::this_thread::sleep_for(std::chrono::seconds(2));
       compPid = -1;
     }
     system("pkill -f matrix-wlroots >/dev/null 2>&1");
+    std::this_thread::sleep_for(std::chrono::seconds(2));
   }
 };
 

@@ -6,6 +6,7 @@
 #include "logger.h"
 #include "world.h"
 #include "components/Bootable.h"
+#include <xkbcommon/xkbcommon.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
 #include <atomic>
@@ -115,6 +116,7 @@ public:
   std::shared_ptr<Space> getSpace() { return space; }
   void registerControls(Controls* controls);
   void tick();
+  void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld);
   // Wayland-only: register a surface-backed app through the WM for placement
   // and rendering.
   entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,

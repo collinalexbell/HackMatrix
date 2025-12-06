@@ -16,6 +16,9 @@
 
 using namespace std;
 
+// Forward-declare Wayland display to avoid pulling Wayland headers here.
+struct wl_display;
+
 namespace WindowManager {
   class WindowManager;
 }
@@ -83,6 +86,8 @@ class Api
 
   zmq::context_t context;
   CommandServer* commandServer;
+  // Wayland display (set by wlroots path) so QUIT requests can terminate cleanly.
+  wl_display* display = nullptr;
 
   queue<BatchedRequest> batchedRequests;
 
@@ -114,6 +119,7 @@ public:
       Renderer* renderer,
       World* world,
       shared_ptr<WindowManager::WindowManager>);
+  void setDisplay(wl_display* d) { display = d; }
   ~Api();
   void poll();
   void mutateEntities();

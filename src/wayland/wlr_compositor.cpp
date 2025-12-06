@@ -408,6 +408,14 @@ handle_keyboard_key(wl_listener* listener, void* data)
       wl_display_terminate(server->display);
     }
     bool pressed = event->state == WL_KEYBOARD_KEY_STATE_PRESSED;
+    if (pressed && server->engine) {
+      if (auto wm = server->engine->getWindowManager()) {
+        uint32_t mods = wlr_keyboard_get_modifiers(handle->keyboard);
+        bool superHeld = mods & WLR_MODIFIER_LOGO;
+        bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
+        wm->handleHotkeySym(syms[i], superHeld, shiftHeld);
+      }
+    }
     switch (syms[i]) {
       case XKB_KEY_w:
       case XKB_KEY_W:
@@ -951,7 +959,14 @@ handle_output_frame(wl_listener* listener, void* data)
     options.enableControls = false; // wlroots path feeds input directly
     options.enableGui = false;
     options.invertYAxis = true;
-    server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
+  server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
+  // Surface API quit handling through wl_display so tests can terminate cleanly.
+  if (server->engine) {
+    auto api = server->engine->getApi();
+    if (api) {
+      api->setDisplay(server->display);
+    }
+  }
   }
   if (server->engine && !server->registry) {
     server->registry = server->engine->getRegistry();
@@ -1121,6 +1136,16 @@ main(int argc, char** argv, char** envp)
   server.envp = envp;
 
   wlr_log_init(WLR_DEBUG, nullptr);
+  // Write PID for test harness so it can kill the compositor reliably.
+  {
+    const char* pidPath = "/tmp/matrix-wlroots.pid";
+    FILE* f = std::fopen(pidPath, "w");
+    if (f) {
+      std::fprintf(f, "%d\n", (int)getpid());
+      std::fclose(f);
+      log_to_tmp("startup: wrote pid file %s\n", pidPath);
+    }
+  }
   log_to_tmp("startup: WLR_BACKENDS=%s DISPLAY=%s WAYLAND_DISPLAY=%s\n",
              std::getenv("WLR_BACKENDS") ? std::getenv("WLR_BACKENDS") : "(null)",
              std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)",

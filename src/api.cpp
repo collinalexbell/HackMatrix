@@ -18,13 +18,31 @@
 #include <spdlog/common.h>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <zmq/zmq.hpp>
 #include <unordered_set>
 #include "time_utils.h"
 #undef Status
 #include "protos/api.pb.h"
 
+extern "C" {
+#include <wayland-server-core.h>
+}
+
 using namespace std;
+
+namespace {
+void
+log_to_tmp_api(const std::string& msg)
+{
+  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+  if (!f) {
+    return;
+  }
+  std::fwrite(msg.c_str(), 1, msg.size(), f);
+  std::fclose(f);
+}
+} // namespace
 
 int BatchedRequest::nextId = 0;
 
@@ -80,7 +98,14 @@ Api::ProtobufCommandServer::poll()
       if (apiRequest.type() == CLEAR_VOXELS) {
         request.actionId = api->allocateActionId();
       }
-      batchedRequests->push(request);
+      if (apiRequest.type() == QUIT) {
+        log_to_tmp_api("api quit requested\n");
+        // Process QUIT immediately so the display is terminated even if the
+        // main mutate loop isn't ticking (e.g., in headless tests).
+        api->processBatchedRequest(request);
+      } else {
+        batchedRequests->push(request);
+      }
       api->releaseBatched();
 
       ApiRequestResponse response;
@@ -208,6 +233,17 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
     case CONFIRM_ACTION: {
       auto confirm = batchedRequest.request.confirmaction();
       confirmClearArea(confirm.actionid());
+      break;
+    }
+    case QUIT: {
+      // Allow external harnesses/tests to terminate the compositor cleanly.
+      if (logger) {
+        logger->info("Received QUIT request; terminating display");
+      }
+      log_to_tmp_api("api quit requested\n");
+      if (display) {
+        wl_display_terminate(display);
+      }
       break;
     }
     default:
