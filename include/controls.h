@@ -86,5 +86,6 @@ public:
               optional<function<void()>> = nullopt);
   void disableKeys();
   void enableKeys();
+  void triggerScreenshot();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
 };

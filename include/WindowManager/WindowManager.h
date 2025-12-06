@@ -107,6 +107,7 @@ class WindowManager
   size_t replayIndex = 0;
   bool replayActive = false;
   std::chrono::steady_clock::time_point replayStart;
+  std::atomic_bool screenshotRequested = false;
 
 public:
   void unfocusApp();
@@ -129,6 +130,8 @@ public:
   void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld);
   void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries);
   std::vector<xkb_keysym_t> consumeReadyReplaySyms(uint64_t now_ms);
+  bool consumeScreenshotRequest();
+  void requestScreenshot();
   // Wayland-only: register a surface-backed app through the WM for placement
   // and rendering.
   entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,

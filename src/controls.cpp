@@ -191,6 +191,14 @@ Controls::handleScreenshot(GLFWwindow* window)
 }
 
 void
+Controls::triggerScreenshot()
+{
+  if (renderer) {
+    renderer->screenshot();
+  }
+}
+
+void
 Controls::handleClicks(GLFWwindow* window, World* world)
 {
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);

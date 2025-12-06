@@ -373,6 +373,54 @@ TEST(WaylandMenuSpec, LaunchesMenuProgramViaEnvOverrideWithVKey)
   stop_compositor(h);
 }
 
+TEST(WaylandMenuSpec, ScreenshotViaKeyReplay)
+{
+  namespace fs = std::filesystem;
+  fs::path screenshotDir = fs::path("screenshots");
+  fs::create_directories(screenshotDir);
+  // Clean slate: remove existing screenshots so any new file is easy to detect.
+  for (auto& p : fs::directory_iterator(screenshotDir)) {
+    if (p.is_regular_file()) {
+      fs::remove(p.path());
+    }
+  }
+
+  auto h = start_compositor_with_env();
+  ScopeExit guard([&]() { stop_compositor(h); });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+  bool sent = send_key_replay({ { "p", 500 } });
+  ASSERT_TRUE(sent) << "Failed to send screenshot key replay";
+
+  bool newShot = false;
+  fs::path foundShot;
+  for (int i = 0; i < 160; ++i) { // up to ~8s
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    for (auto& p : fs::directory_iterator(screenshotDir)) {
+      if (!p.is_regular_file()) {
+        continue;
+      }
+      newShot = true;
+      foundShot = p.path();
+      break;
+    }
+    if (newShot) {
+      break;
+    }
+  }
+
+  EXPECT_TRUE(newShot) << "No new screenshot found in screenshots/";
+  if (newShot) {
+    ASSERT_FALSE(foundShot.empty());
+    EXPECT_TRUE(fs::file_size(foundShot) > 0);
+  }
+
+  guard.dismiss();
+  stop_compositor(h);
+}
+
 // Verifies the key handler logs menu key presses.
 TEST(WaylandMenuSpec, LogsMenuKeypressInHandler)
 {

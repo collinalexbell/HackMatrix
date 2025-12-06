@@ -297,6 +297,11 @@ int WindowManager::findAppsHotKey(entt::entity theApp)
 
 void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld)
 {
+  // Screenshot hotkey works without modifiers to align with user-facing key.
+  if (sym == XKB_KEY_p || sym == XKB_KEY_P) {
+    requestScreenshot();
+    return;
+  }
   if (!superHeld) {
     return;
   }
@@ -721,6 +726,28 @@ WindowManager::consumeReadyReplaySyms(uint64_t now_ms)
     replayActive = false;
   }
   return ready;
+}
+
+void
+WindowManager::requestScreenshot()
+{
+  screenshotRequested = true;
+  FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+  if (f) {
+    std::fprintf(f, "WM: screenshot requested\n");
+    std::fflush(f);
+    std::fclose(f);
+  }
+}
+
+bool
+WindowManager::consumeScreenshotRequest()
+{
+  bool expected = true;
+  if (screenshotRequested.compare_exchange_strong(expected, false)) {
+    return true;
+  }
+  return false;
 }
 
 void WindowManager::registerControls(Controls *controls) {

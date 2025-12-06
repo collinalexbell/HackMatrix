@@ -578,6 +578,29 @@ Renderer::screenshot()
 }
 
 void
+Renderer::screenshotFromCurrentFramebuffer(int width, int height)
+{
+  auto t = std::time(nullptr);
+  auto tm = *std::localtime(&t);
+  stringstream filenameSS;
+  filenameSS << "screenshots/" << std::put_time(&tm, "%d-%m-%Y %H-%M-%S.png");
+
+  string filename = filenameSS.str();
+
+  int channels = 4; // 4 for RGBA
+  unsigned char* data = new unsigned char[width * height * channels];
+  glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  std::thread saver([filename, width, height, channels, data]() {
+    // Wayland framebuffer is already oriented correctly; avoid flipping.
+    stbi_flip_vertically_on_write(false);
+    stbi_write_png(
+      filename.c_str(), width, height, channels, data, width * channels);
+    delete[] data;
+  });
+  saver.detach();
+}
+
+void
 Renderer::renderLookedAtFace()
 {
   Position lookedAt = world->getLookedAtCube();
@@ -642,26 +665,36 @@ Renderer::renderApps()
   shader->setBool("isApp", true);
   glBindVertexArray(APP_VAO);
   glDisable(GL_CULL_FACE);
+  auto bindAppTexture = [&](int index) {
+    auto it = textures.find("app" + std::to_string(index));
+    if (it != textures.end()) {
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, it->second->ID);
+    }
+    shader->setInt("appNumber", 0); // all app samplers map to unit 0
+  };
 
   // this is LEGACY for msedge
   auto positionableNonBootable =
     registry->view<X11App, Positionable>(entt::exclude<Bootable>);
   for (auto [entity, app, positionable] : positionableNonBootable.each()) {
+    bindAppTexture(static_cast<int>(app.getAppIndex()));
     shader->setMatrix4("model", positionable.modelMatrix);
 
     // OPTIMIZATION
     // TODO: cache the recomputeHeightScaler into the app itself and don't recompute it every render
     shader->setMatrix4("bootableScale", app.getHeightScalar());
-    shader->setInt("appNumber", app.getAppIndex());
+    shader->setInt("appNumber", 0);
     shader->setBool("appTransparent", false);
     glDrawArrays(GL_TRIANGLES, 0, 6);
   }
 
   auto positionableApps = registry->view<X11App, Positionable, Bootable>();
   for (auto [entity, app, positionable, bootable] : positionableApps.each()) {
+    bindAppTexture(static_cast<int>(app.getAppIndex()));
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setMatrix4("bootableScale", bootable.getHeightScaler());
-    shader->setInt("appNumber", app.getAppIndex());
+    shader->setInt("appNumber", 0);
     if (app.isSelected()) {
       shader->setBool("appSelected", true);
     }
@@ -691,12 +724,14 @@ Renderer::renderApps()
   auto directRenderBlits =
     registry->view<X11App>(entt::exclude<Positionable, Bootable>);
   for (auto [entity, directApp] : directRenderBlits.each()) {
+    bindAppTexture(static_cast<int>(directApp.getAppIndex()));
     drawAppDirect(&directApp);
   }
 
   auto directRenderNonBlits =
     registry->view<X11App, Bootable>(entt::exclude<Positionable>);
   for (auto [entity, directApp, bootable] : directRenderNonBlits.each()) {
+    bindAppTexture(static_cast<int>(directApp.getAppIndex()));
     drawAppDirect(&directApp, &bootable);
   }
 
@@ -708,10 +743,11 @@ Renderer::renderApps()
     if (!app) {
       continue;
     }
+    bindAppTexture(static_cast<int>(app->getAppIndex()));
     app->appTexture();
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setMatrix4("bootableScale", app->getHeightScalar());
-    shader->setInt("appNumber", app->getAppIndex());
+    shader->setInt("appNumber", 0);
     shader->setBool("appTransparent", false);
     std::fprintf(logFile,
                  "Renderer: Wayland in-world ent=%d appNumber=%zu texId=%d texUnit=%d size=%dx%d\n",
@@ -725,13 +761,10 @@ Renderer::renderApps()
     // If focused, also draw directly to screen to ensure visibility.
     if (wm && wm->getCurrentlyFocusedApp().has_value() &&
         wm->getCurrentlyFocusedApp().value() == entity) {
-      glActiveTexture(app->getTextureUnit());
-      glBindTexture(GL_TEXTURE_2D, app->getTextureId());
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, app->getTextureId());
+      bindAppTexture(static_cast<int>(app->getAppIndex()));
       shader->setInt("app0", 0);
       shader->setBool("directRender", true);
-      shader->setInt("appNumber", app->getAppIndex());
+      shader->setInt("appNumber", 0);
       glm::mat4 model = glm::mat4(1.0f);
       float sx = static_cast<float>(app->getWidth()) /
                  static_cast<float>(SCREEN_WIDTH);

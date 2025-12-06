@@ -1035,6 +1035,15 @@ handle_output_frame(wl_listener* listener, void* data)
   log_to_tmp("frame: glViewport %dx%d\n", width, height);
   double frameStart = currentTimeSeconds();
   server->engine->frame(frameStart);
+  if (server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      if (wm->consumeScreenshotRequest()) {
+        if (auto renderer = server->engine->getRenderer()) {
+          renderer->screenshotFromCurrentFramebuffer(width, height);
+        }
+      }
+    }
+  }
 
   // Render software cursors (clients set them via wl_pointer.set_cursor).
   pixman_region32_t cursor_damage;
