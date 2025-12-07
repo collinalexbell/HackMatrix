@@ -8,8 +8,9 @@ export LD_LIBRARY_PATH="$BASE_DIR/wlroots/build:$BASE_DIR/wlroots/build/subproje
 # Optional flags:
 #   --in-wm     -> delay start when running inside another WM.
 #   --headless  -> force wlroots headless backend (for TTY/headless use).
+#   --drm       -> force wlroots DRM backend (run as a real compositor on TTY).
 DELAY=0
-HEADLESS=0
+BACKEND=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --in-wm)
@@ -17,7 +18,11 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     --headless)
-      HEADLESS=1
+      BACKEND="headless"
+      shift
+      ;;
+    --drm)
+      BACKEND="drm"
       shift
       ;;
     *)
@@ -26,8 +31,18 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-if [ "$HEADLESS" -eq 1 ]; then
-  export WLR_BACKENDS=headless
+if [ -n "$BACKEND" ]; then
+  export WLR_BACKENDS="$BACKEND"
+  if [ "$BACKEND" = "drm" ]; then
+    # Prefer logind for seat access when running on a TTY.
+    export LIBSEAT_BACKEND="${LIBSEAT_BACKEND:-logind}"
+    # Ensure XDG_RUNTIME_DIR exists; logind normally sets this.
+    if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
+      export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+      mkdir -p "$XDG_RUNTIME_DIR"
+      chmod 700 "$XDG_RUNTIME_DIR"
+    fi
+  fi
 fi
 
 [ "$DELAY" -gt 0 ] && sleep "$DELAY"
