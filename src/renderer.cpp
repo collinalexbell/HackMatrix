@@ -794,6 +794,36 @@ Renderer::renderApps()
     if (!app) {
       continue;
     }
+#ifdef ENABLE_RENDER_TMP_LOGS
+    static FILE* rlog = []() {
+      FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+      return f ? f : stderr;
+    }();
+    if (rlog) {
+      std::fprintf(rlog,
+                   "renderer: wl draw ent=%d texId=%d texUnit=%d size=%dx%d direct=%d model=[%.2f %.2f %.2f; %.2f %.2f %.2f; %.2f %.2f %.2f; %.2f %.2f %.2f]\n",
+                   (int)entity,
+                   app->getTextureId(),
+                   app->getTextureUnit() - GL_TEXTURE0,
+                   app->getWidth(),
+                   app->getHeight(),
+                   (wm && wm->getCurrentlyFocusedApp().has_value() &&
+                    wm->getCurrentlyFocusedApp().value() == entity),
+                   positionable.modelMatrix[0][0],
+                   positionable.modelMatrix[0][1],
+                   positionable.modelMatrix[0][2],
+                   positionable.modelMatrix[1][0],
+                   positionable.modelMatrix[1][1],
+                   positionable.modelMatrix[1][2],
+                   positionable.modelMatrix[2][0],
+                   positionable.modelMatrix[2][1],
+                   positionable.modelMatrix[2][2],
+                   positionable.modelMatrix[3][0],
+                   positionable.modelMatrix[3][1],
+                   positionable.modelMatrix[3][2]);
+      std::fflush(rlog);
+    }
+#endif
     bindAppTexture(static_cast<int>(app->getAppIndex()));
     app->appTexture();
     shader->setMatrix4("model", positionable.modelMatrix);
@@ -1047,8 +1077,18 @@ Renderer::render(RenderPerspective perspective,
 {
   ZoneScoped;
   TracyGpuZone("render");
-  auto allWl = registry->view<WaylandApp::Component>();
-  WL_RENDERER_LOG("Renderer: frame WaylandApp count=%zu\n", allWl.size());
+  auto allWl = registry->view<WaylandApp::Component, Positionable>();
+  size_t wlCount = allWl.size_hint();
+  WL_RENDERER_LOG("Renderer: frame WaylandApp count=%zu\n", wlCount);
+  allWl.each([&](auto ent, WaylandApp::Component& comp, Positionable& pos) {
+    WL_RENDERER_LOG("Renderer: Wayland app ent=%d pos=(%.2f,%.2f,%.2f) texId=%d surface=%p\n",
+                    (int)entt::to_integral(ent),
+                    pos.pos.x,
+                    pos.pos.y,
+                    pos.pos.z,
+                    comp.app ? comp.app->getTextureId() : -1,
+                    comp.app ? (void*)comp.app->getSurface() : nullptr);
+  });
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glFrontFace(invertY ? GL_CW : GL_CCW);
   if (perspective == CAMERA) {

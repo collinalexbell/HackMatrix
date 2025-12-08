@@ -453,7 +453,11 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shift
     unfocusApp();
     if (index >= 0 && index < static_cast<int>(appsWithHotKeys.size())) {
       if (appsWithHotKeys[index].has_value() && controls) {
-        controls->goToApp(appsWithHotKeys[index].value());
+        auto ent = appsWithHotKeys[index].value();
+        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d\n",
+                  index,
+                  (int)entt::to_integral(ent));
+        controls->goToApp(ent);
       }
     }
   };
@@ -772,7 +776,12 @@ void WindowManager::unfocusApp() {
   if (waylandMode) {
     auto ent = currentlyFocusedApp.has_value() ? (int)entt::to_integral(*currentlyFocusedApp)
                                                : -1;
-    WL_WM_LOG("WM: unfocusApp (wayland) ent=%d\n", ent);
+    size_t wlCount = 0;
+    if (registry) {
+      auto view = registry->view<WaylandApp::Component>();
+      view.each([&](auto /*e*/, auto& /*comp*/) { ++wlCount; });
+    }
+    WL_WM_LOG("WM: unfocusApp (wayland) ent=%d wlCount=%zu\n", ent, wlCount);
     currentlyFocusedApp = std::nullopt;
     return;
   }
@@ -837,10 +846,10 @@ WindowManager::keyReplay(const std::vector<std::pair<std::string, uint32_t>>& en
   replayActive = !replayQueue.empty();
 }
 
-std::vector<xkb_keysym_t>
+std::vector<ReplayEvent>
 WindowManager::consumeReadyReplaySyms(uint64_t now_ms)
 {
-  std::vector<xkb_keysym_t> ready;
+  std::vector<ReplayEvent> ready;
   if (!replayActive) {
     return ready;
   }
@@ -850,7 +859,7 @@ WindowManager::consumeReadyReplaySyms(uint64_t now_ms)
   uint64_t elapsed = now_ms > start_ms ? now_ms - start_ms : 0;
   while (replayIndex < replayQueue.size() &&
          elapsed >= replayQueue[replayIndex].ready_ms) {
-    ready.push_back(replayQueue[replayIndex].sym);
+    ready.push_back(replayQueue[replayIndex]);
     ++replayIndex;
   }
   if (replayIndex >= replayQueue.size()) {

@@ -189,6 +189,18 @@ struct WlrServer {
   wl_listener request_set_cursor;
 };
 
+static size_t
+wayland_app_count(WlrServer* server)
+{
+  if (!server || !server->registry) {
+    return 0;
+  }
+  size_t count = 0;
+  auto view = server->registry->view<WaylandApp::Component>();
+  view.each([&](auto /*ent*/, auto& /*comp*/) { ++count; });
+  return count;
+}
+
 static void
 log_pointer_state(WlrServer* server, const char* tag)
 {
@@ -601,6 +613,21 @@ process_key_sym(WlrServer* server,
                    keycode);
       }
       if (superHeld && (sym == XKB_KEY_E || sym == XKB_KEY_e)) {
+        entt::entity focusedEnt{};
+        bool haveFocus = false;
+        if (auto focused = wm->getCurrentlyFocusedApp()) {
+          focusedEnt = *focused;
+          haveFocus = true;
+        }
+        size_t wlCountBefore = wayland_app_count(server);
+        log_to_tmp("super combo: about to unfocus (pressed=%d mods=0x%x replaySuper=%d time=%u keycode=%u focused=%d wlCount=%zu)\n",
+                   pressed ? 1 : 0,
+                   mods,
+                   server->replaySuperActive ? 1 : 0,
+                   time_msec,
+                   keycode,
+                   haveFocus ? (int)entt::to_integral(focusedEnt) : -1,
+                   wlCountBefore);
         log_to_tmp("super combo: triggered -> unfocus (pressed=%d mods=0x%x replaySuper=%d time=%u keycode=%u)\n",
                    pressed ? 1 : 0,
                    mods,
@@ -613,11 +640,32 @@ process_key_sym(WlrServer* server,
           wlr_seat_keyboard_notify_clear_focus(server->seat);
           wlr_seat_pointer_notify_clear_focus(server->seat);
         }
+        size_t wlCountAfter = wayland_app_count(server);
+        log_to_tmp("super combo: unfocus done focused=%d wlCount=%zu\n",
+                   haveFocus ? (int)entt::to_integral(focusedEnt) : -1,
+                   wlCountAfter);
         consumedHotkey = true;
         server->replaySuperActive = false;
       }
-      if (!waylandFocusActive && !consumedHotkey) {
+      if (superHeld &&
+          (sym >= XKB_KEY_1 && sym <= XKB_KEY_9)) {
+        int idx = static_cast<int>(sym - XKB_KEY_1);
+        log_to_tmp("super hotkey: idx=%d mods=0x%x time=%u keycode=%u\n",
+                   idx,
+                   mods,
+                   time_msec,
+                   keycode);
         wm->handleHotkeySym(sym, superHeld, shiftHeld);
+        consumedHotkey = true;
+        return;
+      }
+      if (!consumedHotkey) {
+        if (superHeld) {
+          wm->handleHotkeySym(sym, superHeld, shiftHeld);
+          consumedHotkey = true; // Treat Super combos as compositor-level.
+        } else if (!waylandFocusActive) {
+          wm->handleHotkeySym(sym, superHeld, shiftHeld);
+        }
       }
       if (consumedHotkey) {
         return;
@@ -1108,7 +1156,10 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
   handle->destroy.notify = [](wl_listener* listener, void* data) {
     auto* handle = wl_container_of(listener, static_cast<XdgSurfaceHandle*>(nullptr), destroy);
     auto* xdg = static_cast<wlr_xdg_surface*>(data);
-    (void)xdg;
+    log_to_tmp("xdg_surface destroy: root=%p surface=%p role=%d\n",
+               (void*)xdg,
+               xdg ? (void*)xdg->surface : nullptr,
+               xdg ? (int)xdg->role : -1);
     handle->xdg = nullptr;
     wl_list_remove(&handle->map.link);
     wl_list_remove(&handle->commit.link);
@@ -1305,7 +1356,7 @@ handle_output_frame(wl_listener* listener, void* data)
       uint32_t step = 0;
       constexpr uint32_t kReplayHoldMs = 16;
       for (size_t i = 0; i < ready.size(); ++i) {
-        auto sym = ready[i];
+        auto sym = ready[i].sym;
         auto lookup = keycode_for_keysym(kbd, sym);
         if (!lookup.has_value() || lookup->keycode == 0) {
           log_to_tmp("key replay: no keycode for sym=%u\n", sym);
@@ -1345,14 +1396,21 @@ handle_output_frame(wl_listener* listener, void* data)
           step += 1;
         }
         process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
-        uint32_t release_time = time_msec + kReplayHoldMs;
+        uint64_t hold_ms = kReplayHoldMs;
+        if (i + 1 < ready.size()) {
+          auto delta_ms = ready[i + 1].ready_ms - ready[i].ready_ms;
+          if (delta_ms > hold_ms) {
+            hold_ms = static_cast<uint32_t>(std::min<uint64_t>(delta_ms, 10000));
+          }
+        }
+        uint32_t release_time = time_msec + static_cast<uint32_t>(hold_ms);
         server->pendingReplayKeyups.push_back(
-          { sym, release_time, hw_keycode, true });
+          ReplayKeyRelease{ sym, release_time, hw_keycode, true });
         if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
           uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
                                                          : shift_lookup->keycode;
           server->pendingReplayKeyups.push_back(
-            { XKB_KEY_Shift_L, release_time + 1, shift_hw, true });
+            ReplayKeyRelease{ XKB_KEY_Shift_L, release_time + 1, shift_hw, true });
           step += 1;
         }
         step += 2;
@@ -1370,18 +1428,6 @@ handle_output_frame(wl_listener* listener, void* data)
           server->pendingReplaySuperSym = XKB_KEY_NoSymbol;
           step += 1;
         }
-      }
-      if (server->pendingReplaySuper && !wm->hasPendingReplay()) {
-        process_key_sym(server,
-                        kbd,
-                        server->pendingReplaySuperSym,
-                        false,
-                        base_msec + step + 1,
-                        server->pendingReplaySuperKeycode,
-                        true);
-        server->pendingReplaySuper = false;
-        server->pendingReplaySuperKeycode = 0;
-        server->pendingReplaySuperSym = XKB_KEY_NoSymbol;
       }
     }
   }

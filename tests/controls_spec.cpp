@@ -65,9 +65,13 @@ start_compositor()
   kill_existing_compositor();
 
   CompositorHandle h;
+  const std::string apiBind = "tcp://*:3345";
+  const std::string apiAddr = "tcp://127.0.0.1:3345";
+  setenv("VOXEL_API_ADDR_FOR_TEST", apiAddr.c_str(), 1);
   std::string cmd =
     "MATRIX_WLROOTS_BIN=./matrix-wlroots-debug MENU_PROGRAM=foot "
-    "VOXEL_API_BIND=tcp://*:3345 "
+    "VOXEL_API_BIND=" + apiBind + " "
+    "VOXEL_API_ADDR_FOR_TEST=" + apiAddr + " "
     "bash -lc './launch --in-wm "
     ">/tmp/controls-test.log 2>&1 & echo $!'";
   FILE* pipe = popen(cmd.c_str(), "r");
@@ -104,6 +108,20 @@ wait_for_log_contains(const std::string& path,
     }
   }
   return false;
+}
+
+static int
+count_log_occurrences(const std::string& path, const std::string& needle)
+{
+  std::ifstream in(path);
+  std::string line;
+  int count = 0;
+  while (std::getline(in, line)) {
+    if (line.find(needle) != std::string::npos) {
+      ++count;
+    }
+  }
+  return count;
 }
 
 static std::string
@@ -208,8 +226,23 @@ static bool fetch_status(ApiRequestResponse* out)
       if (!res.has_value()) {
         continue;
       }
+      FILE* log = std::fopen("/tmp/matrix-wlroots-test-status.log", "a");
       if (!out->ParseFromArray(reply.data(), reply.size())) {
+        if (log) {
+          std::fprintf(log, "fetch_status: parse failure attempt=%d bytes=%zu\n", attempt, reply.size());
+          std::fclose(log);
+        }
         return false;
+      }
+      if (log) {
+        const auto& st = out->status();
+        std::fprintf(log,
+                     "fetch_status: attempt=%d wayland=%u total=%u focus=%d\n",
+                     attempt,
+                     st.wayland_apps(),
+                     st.total_entities(),
+                     st.wayland_focus() ? 1 : 0);
+        std::fclose(log);
       }
       return true;
     } catch (...) {
@@ -303,17 +336,44 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to send focus key";
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
-  std::optional<EngineStatus> statusBefore;
-  for (int i = 0; i < 60; ++i) {
-    statusBefore = current_status();
-    if (statusBefore.has_value() && statusBefore->wayland_apps() > 0 &&
-        statusBefore->has_camera_position()) {
-      break;
+  auto wait_for_status = [](uint32_t minWayland,
+                            int maxTries,
+                            int sleepMs) -> std::optional<EngineStatus> {
+    FILE* log = std::fopen("/tmp/matrix-wlroots-test-status.log", "a");
+    std::optional<EngineStatus> st;
+    for (int i = 0; i < maxTries; ++i) {
+      st = current_status();
+      if (log) {
+        std::fprintf(log,
+                     "status attempt=%d has=%d wayland=%u camera=%d\n",
+                     i,
+                     st.has_value() ? 1 : 0,
+                     st.has_value() ? st->wayland_apps() : 0,
+                     st.has_value() ? st->has_camera_position() : 0);
+        std::fflush(log);
+      }
+      if (st.has_value() && st->has_camera_position() &&
+          st->wayland_apps() >= minWayland) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-  }
+    if (log) {
+      std::fclose(log);
+    }
+    return st;
+  };
+
+  auto statusBefore = wait_for_status(/*minWayland=*/1, /*maxTries=*/80, /*sleepMs=*/250);
   ASSERT_TRUE(statusBefore.has_value()) << "Missing engine status before unfocus";
   ASSERT_TRUE(statusBefore->has_camera_position()) << "Camera position missing from status";
+  if (statusBefore->wayland_apps() == 0u) {
+    FILE* log = std::fopen("/tmp/matrix-wlroots-test-status.log", "a");
+    if (log) {
+      std::fprintf(log, "warning: wayland_apps=0 before Super+E; continuing\n");
+      std::fclose(log);
+    }
+  }
 
   // Super+E should unfocus via WM and log.
   bool sent = send_key_replay({ { "Super_L", 0 }, { "e", 50 } });
@@ -322,6 +382,8 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   // Only wait briefly; the unfocus log should be immediate if the combo worked.
   bool sawUnfocus =
     wait_for_log_contains("/tmp/matrix-wlroots-wm.log", "WM: unfocusApp", 20, 100);
+  bool sawSuperCombo =
+    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "super combo: triggered -> unfocus", 20, 100);
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   // Try to move the camera via WASD-style input; movement only occurs when WM focus is cleared.
@@ -330,9 +392,10 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
     << "Failed to send movement keys";
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
-  auto statusAfter = current_status();
+  auto statusAfter = wait_for_status(statusBefore->wayland_apps(), /*maxTries=*/40, /*sleepMs=*/250);
   ASSERT_TRUE(statusAfter.has_value()) << "Missing engine status after movement";
   ASSERT_TRUE(statusAfter->has_camera_position()) << "Camera position missing after movement";
+  // After unfocus, Wayland app count must remain stable.
   if (statusBefore->wayland_apps() > 0 && statusAfter->wayland_apps() > 0) {
     EXPECT_EQ(statusAfter->wayland_apps(), statusBefore->wayland_apps())
       << "Wayland app count changed after Super+E; foot may have crashed";
@@ -343,7 +406,151 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
 
   // Let RAII guard handle shutdown to ensure cleanup even on early failures.
   EXPECT_TRUE(sawUnfocus) << "Expected WM unfocusApp log after Super+E";
+  EXPECT_TRUE(sawSuperCombo) << "Expected compositor super combo log after Super+E";
   double moved = camera_distance(*statusBefore, *statusAfter);
   EXPECT_GT(moved, 0.01) << "Camera did not move after Super+E and movement keys (delta=" << moved
                          << ")";
+}
+
+TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
+{
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  // Clean logs.
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-wm.log", std::ios::trunc).close();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+
+  // Spawn first foot.
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu launch key (first)";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 300, 50))
+    << "First foot window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+  // Focus looked-at app so it registers.
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus first app";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  // Unfocus and move backward (hold 's' until next entry).
+  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "e", 50 }, { "s", 4000 } }))
+    << "Failed to unfocus and move back";
+  std::this_thread::sleep_for(std::chrono::milliseconds(4500));
+
+  // Spawn second foot.
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu launch key (second)";
+  // Wait for at least two mapped entries.
+  bool twoMapped = false;
+  for (int i = 0; i < 100; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (count_log_occurrences("/tmp/matrix-wlroots-output.log", "mapped") >= 2) {
+      twoMapped = true;
+      break;
+    }
+  }
+  ASSERT_TRUE(twoMapped) << "Second foot window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+  // Cycle hotkeys: Super+1 -> Super+2 -> Super+1.
+  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 },
+                                { "1", 100 },
+                                { "Super_L", 0 },
+                                { "2", 100 },
+                                { "Super_L", 0 },
+                                { "1", 100 } }))
+    << "Failed to send hotkey replay";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+
+  // Verify we hopped across at least two hotkey indices via compositor log.
+  std::set<int> indices;
+  {
+    std::ifstream in("/tmp/matrix-wlroots-output.log");
+    std::string line;
+    while (std::getline(in, line)) {
+      auto pos = line.find("super hotkey: idx=");
+      if (pos != std::string::npos) {
+        auto sub = line.substr(pos + strlen("super hotkey: idx="));
+        try {
+          int idx = std::stoi(sub);
+          indices.insert(idx);
+        } catch (...) {
+        }
+      }
+    }
+  }
+  EXPECT_GE(indices.size(), 2u) << "Expected hotkey cycling to hit at least two indices";
+}
+
+TEST(ControlsSpec, TwoWaylandWindowsAreRegisteredAndRendered)
+{
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-wm.log", std::ios::trunc).close();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+
+  // Spawn first and second foot instances.
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch first foot";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 200, 50))
+    << "First foot window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  // Unfocus and move back to give space before spawning the second.
+  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "e", 50 },
+                                { "s", 3000 }, { "s", 3000 } }))
+    << "Failed to unfocus and back up";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  // Spawn second foot.
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch second foot";
+  // Unfocus once more for good measure.
+  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "e", 50 } }))
+    << "Failed to unfocus after second launch";
+
+  // Wait for two map events and two WM registrations, retry spawning if needed.
+  bool twoMapped = false;
+  bool twoRegistered = false;
+  for (int i = 0; i < 150; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    twoMapped = count_log_occurrences("/tmp/matrix-wlroots-output.log", "mapped") >= 2;
+    twoRegistered =
+      count_log_occurrences("/tmp/matrix-wlroots-wm.log", "WaylandApp entity=") >= 2;
+    if (twoMapped && twoRegistered) {
+      break;
+    }
+    // If not mapped after some time, re-issue launch once.
+    if (i == 80) {
+      send_key_replay({ { "v", 0 } });
+    }
+  }
+  ASSERT_TRUE(twoMapped) << "Second foot window never mapped";
+  ASSERT_TRUE(twoRegistered) << "Wayland apps were not both registered";
+
+  // Status should reflect both apps; allow a few retries for the registry to update.
+  ApiRequestResponse statusResp;
+  bool statusOk = false;
+  for (int i = 0; i < 40; ++i) {
+    if (fetch_status(&statusResp) && statusResp.has_status()) {
+      FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+      if (f) {
+        std::fprintf(f,
+                     "test status poll iter=%d wayland=%u total=%u\n",
+                     i,
+                     statusResp.status().wayland_apps(),
+                     statusResp.status().total_entities());
+        std::fclose(f);
+      }
+      if (statusResp.status().wayland_apps() >= 2) {
+        statusOk = true;
+        break;
+      }
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  }
+  EXPECT_TRUE(statusOk) << "Expected two wayland apps in status";
+
+  // Ensure renderer saw both with positionables logged.
+  int posLogs = count_log_occurrences("/tmp/matrix-wlroots-wm.log", "pos=(");
+  EXPECT_GE(posLogs, 2) << "Expected positionable logs for both windows";
 }
