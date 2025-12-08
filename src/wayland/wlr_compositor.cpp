@@ -645,13 +645,29 @@ handle_new_input(wl_listener* listener, void* data)
         auto* event = static_cast<wlr_pointer_button_event*>(data);
         if (event->state == WLR_BUTTON_PRESSED && handle->server && handle->server->engine) {
           if (auto wm = handle->server->engine->getWindowManager()) {
-            FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-            if (f) {
-              std::fprintf(f, "wlr: pointer button press -> focusLookedAtApp\n");
-              std::fflush(f);
-              std::fclose(f);
+            // Prefer focusing the surface under the pointer to keep WM focus in sync.
+            wlr_surface* pointer_surface = nullptr;
+            if (handle->server->seat && handle->server->seat->pointer_state.focused_surface) {
+              pointer_surface = handle->server->seat->pointer_state.focused_surface;
             }
-            wm->focusLookedAtApp();
+            bool focusedViaPointer = false;
+            if (pointer_surface) {
+              auto it = handle->server->surface_map.find(pointer_surface);
+              if (it != handle->server->surface_map.end()) {
+                entt::entity ent = it->second;
+                wm->focusApp(ent);
+                if (auto* comp =
+                      handle->server->registry->try_get<WaylandApp::Component>(ent)) {
+                  if (comp->app) {
+                    comp->app->takeInputFocus();
+                  }
+                }
+                focusedViaPointer = true;
+              }
+            }
+            if (!focusedViaPointer) {
+              wm->focusLookedAtApp();
+            }
           }
         }
         if (handle->server->seat) {
