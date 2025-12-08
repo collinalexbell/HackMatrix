@@ -20,6 +20,7 @@ extern "C" {
 #include <wlr/render/gles2.h>
 #include <wlr/render/swapchain.h>
 #include <wlr/render/wlr_renderer.h>
+#include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_input_device.h>
@@ -157,6 +158,7 @@ struct WlrServer {
   wlr_xdg_shell* xdg_shell = nullptr;
   wlr_seat* seat = nullptr;
   wlr_data_device_manager* data_device_manager = nullptr;
+  wlr_screencopy_manager_v1* screencopy_manager = nullptr;
   wlr_output_layout* output_layout = nullptr;
   wlr_xdg_output_manager_v1* xdg_output_manager = nullptr;
   wlr_layer_shell_v1* layer_shell = nullptr;
@@ -635,7 +637,6 @@ process_key_sym(WlrServer* server,
     }
   }
 }
-}
 
 void
 handle_keyboard_key(wl_listener* listener, void* data)
@@ -644,12 +645,16 @@ handle_keyboard_key(wl_listener* listener, void* data)
     wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), key);
   auto* server = handle->server;
   auto* event = static_cast<wlr_keyboard_key_event*>(data);
-  uint32_t keycode = event->keycode + 8;
+  // wlroots key events carry a hardware/libinput keycode. Add 8 only for xkb
+  // lookup; keep the raw code for notifying the seat.
+  uint32_t xkb_keycode = event->keycode + 8;
   const xkb_keysym_t* syms;
-  int nsyms = xkb_state_key_get_syms(handle->keyboard->xkb_state, keycode, &syms);
+  int nsyms =
+    xkb_state_key_get_syms(handle->keyboard->xkb_state, xkb_keycode, &syms);
   for (int i = 0; i < nsyms; ++i) {
     bool pressed = event->state == WL_KEYBOARD_KEY_STATE_PRESSED;
-    process_key_sym(server, handle->keyboard, syms[i], pressed, event->time_msec);
+    process_key_sym(
+      server, handle->keyboard, syms[i], pressed, event->time_msec, event->keycode);
   }
 }
 
@@ -1190,31 +1195,37 @@ handle_output_frame(wl_listener* listener, void* data)
           log_to_tmp("key replay: no keycode for sym=%u\n", sym);
           continue;
         }
+        uint32_t hw_keycode = lookup->keycode >= 8 ? lookup->keycode - 8 : lookup->keycode;
         uint32_t time_msec = base_msec + step;
-        log_to_tmp("key replay: sym=%u keycode=%u time=%u\n",
+        log_to_tmp("key replay: sym=%u keycode=%u hw=%u time=%u\n",
                    sym,
                    lookup->keycode,
+                   hw_keycode,
                    time_msec);
         if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
+          uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
+                                                         : shift_lookup->keycode;
           process_key_sym(server,
                           kbd,
                           XKB_KEY_Shift_L,
                           true,
                           time_msec,
-                          shift_lookup->keycode);
+                          shift_hw);
           time_msec += 1;
           step += 1;
         }
-        process_key_sym(server, kbd, sym, true, time_msec, lookup->keycode);
+        process_key_sym(server, kbd, sym, true, time_msec, hw_keycode);
         // Send a matching release so clients see a full key cycle.
-        process_key_sym(server, kbd, sym, false, time_msec + 1, lookup->keycode);
+        process_key_sym(server, kbd, sym, false, time_msec + 1, hw_keycode);
         if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
+          uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
+                                                         : shift_lookup->keycode;
           process_key_sym(server,
                           kbd,
                           XKB_KEY_Shift_L,
                           false,
                           time_msec + 2,
-                          shift_lookup->keycode);
+                          shift_hw);
           step += 1;
         }
         step += 2;
@@ -1386,6 +1397,8 @@ handle_new_output(wl_listener* listener, void* data)
   wlr_output_schedule_frame(output);
 }
 
+} // namespace
+
 int
 main(int argc, char** argv, char** envp)
 {
@@ -1555,6 +1568,8 @@ main(int argc, char** argv, char** envp)
     set_default_cursor(&server);
   }
   server.data_device_manager = wlr_data_device_manager_create(server.display);
+  // Advertise the screencopy protocol so tools like grim can capture frames.
+  server.screencopy_manager = wlr_screencopy_manager_v1_create(server.display);
   if (server.output_layout) {
     server.xdg_output_manager =
       wlr_xdg_output_manager_v1_create(server.display, server.output_layout);
