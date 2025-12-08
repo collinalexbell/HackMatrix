@@ -381,10 +381,10 @@ Renderer::initAppTextures()
   }
   for (int index = 0; index < appTextures; index++) {
     int textureN = index;
-    int textureUnit = GL_TEXTURE0; // single unit; we'll bind per-app before draw
+    int textureUnit = GL_TEXTURE0 + index; // dedicate a unit per app slot
     string textureName = "app" + to_string(index);
     textures[textureName] = new Texture(textureUnit);
-    shader->setInt(textureName, 0); // all samplers map to unit 0
+    shader->setInt(textureName, index); // map sampler to its texture unit
     if constexpr (kWlrootsDebugLogs) {
       static FILE* logFile = []() {
         FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
@@ -539,19 +539,19 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
         // dest x1,y1,x2,y2
         pos[0],
         pos[1],
-        pos[0] + appWidth,
-        pos[1] + appHeight,
-        GL_COLOR_BUFFER_BIT,
-        GL_NEAREST);
-      glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
-    } else {
-      glActiveTexture(GL_TEXTURE0);
-      auto texIt = textures.find("app" + std::to_string(index));
-      if (texIt != textures.end()) {
-        glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
-      }
-      shader->setInt("app0", 0);
-      shader->setInt("appNumber", 0);
+    pos[0] + appWidth,
+    pos[1] + appHeight,
+    GL_COLOR_BUFFER_BIT,
+    GL_NEAREST);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
+} else {
+  glActiveTexture(GL_TEXTURE0 + index);
+  auto texIt = textures.find("app" + std::to_string(index));
+  if (texIt != textures.end()) {
+    glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
+  }
+  shader->setInt("app0", index);
+  shader->setInt("appNumber", index);
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
       static int x = -1;
@@ -709,33 +709,33 @@ Renderer::renderApps()
   auto bindAppTexture = [&](int index) {
     auto it = textures.find("app" + std::to_string(index));
     if (it != textures.end()) {
-      glActiveTexture(GL_TEXTURE0);
+      glActiveTexture(GL_TEXTURE0 + index);
       glBindTexture(GL_TEXTURE_2D, it->second->ID);
     }
-    shader->setInt("appNumber", 0); // all app samplers map to unit 0
+    shader->setInt("appNumber", index);
   };
 
   // this is LEGACY for msedge
   auto positionableNonBootable =
     registry->view<X11App, Positionable>(entt::exclude<Bootable>);
   for (auto [entity, app, positionable] : positionableNonBootable.each()) {
-    bindAppTexture(static_cast<int>(app.getAppIndex()));
+    int idx = static_cast<int>(app.getAppIndex());
+    bindAppTexture(idx);
     shader->setMatrix4("model", positionable.modelMatrix);
 
     // OPTIMIZATION
     // TODO: cache the recomputeHeightScaler into the app itself and don't recompute it every render
     shader->setMatrix4("bootableScale", app.getHeightScalar());
-    shader->setInt("appNumber", 0);
     shader->setBool("appTransparent", false);
     glDrawArrays(GL_TRIANGLES, 0, 6);
   }
 
   auto positionableApps = registry->view<X11App, Positionable, Bootable>();
   for (auto [entity, app, positionable, bootable] : positionableApps.each()) {
-    bindAppTexture(static_cast<int>(app.getAppIndex()));
+    int idx = static_cast<int>(app.getAppIndex());
+    bindAppTexture(idx);
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setMatrix4("bootableScale", bootable.getHeightScaler());
-    shader->setInt("appNumber", 0);
     if (app.isSelected()) {
       shader->setBool("appSelected", true);
     }
@@ -824,11 +824,12 @@ Renderer::renderApps()
       std::fflush(rlog);
     }
 #endif
-    bindAppTexture(static_cast<int>(app->getAppIndex()));
+    int idx = static_cast<int>(app->getAppIndex());
+    bindAppTexture(idx);
     app->appTexture();
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setMatrix4("bootableScale", app->getHeightScalar());
-    shader->setInt("appNumber", 0);
+    shader->setInt("appNumber", idx);
     shader->setBool("appTransparent", false);
 #ifdef ENABLE_RENDER_TMP_LOGS
     std::fprintf(logFile,
@@ -844,10 +845,10 @@ Renderer::renderApps()
     // If focused, also draw directly to screen to ensure visibility.
     if (wm && wm->getCurrentlyFocusedApp().has_value() &&
         wm->getCurrentlyFocusedApp().value() == entity) {
-      bindAppTexture(static_cast<int>(app->getAppIndex()));
-      shader->setInt("app0", 0);
+      bindAppTexture(idx);
+      shader->setInt("app0", idx);
       shader->setBool("directRender", true);
-      shader->setInt("appNumber", 0);
+      shader->setInt("appNumber", idx);
       glm::mat4 model = glm::mat4(1.0f);
       float sx = static_cast<float>(app->getWidth()) /
                  static_cast<float>(SCREEN_WIDTH);
@@ -1151,7 +1152,7 @@ Renderer::registerApp(AppSurface* app)
   FILE* logFile = kWlrootsDebugLogs ? wlroots_renderer_log() : nullptr;
   try {
     int textureId = textures["app" + to_string(index)]->ID;
-    int textureUnit = GL_TEXTURE0; // always bind to unit 0; shader samplers set to 0
+    int textureUnit = GL_TEXTURE0 + index;
     app->attachTexture(textureUnit, textureId, index);
     app->appTexture();
     if (logFile) {
