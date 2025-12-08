@@ -64,6 +64,13 @@ struct ClearAreaAction
   std::vector<glm::vec3> previewVoxels;
 };
 
+struct PendingStatusRequest
+{
+  int64_t requestId = 0;
+  ApiRequestResponse response;
+  bool ready = false;
+};
+
 class Api
 {
 
@@ -94,6 +101,10 @@ class Api
   std::atomic_bool continuePolling = true;
   std::atomic<int64_t> nextActionId = 1;
   std::unordered_map<int64_t, ClearAreaAction> pendingClearAreas;
+  mutable std::mutex statusMutex;
+  EngineStatus cachedStatus; // updated on render thread, read by API thread
+  std::deque<std::shared_ptr<PendingStatusRequest>> pendingStatus;
+  std::condition_variable statusCv;
   int64_t registerClearArea(const glm::vec3& min,
                             const glm::vec3& max,
                             std::optional<int64_t> requestedId);
@@ -108,8 +119,12 @@ protected:
   queue<BatchedRequest>* getBatchedRequests();
   void releaseBatched();
   void processBatchedRequest(BatchedRequest);
+  void updateCachedStatus();
 
 public:
+  // Exposed for compositor paths that need to refresh cached status immediately
+  // after registering new Wayland apps.
+  void forceUpdateCachedStatus() { updateCachedStatus(); }
   Api(std::string bindAddress,
       shared_ptr<EntityRegistry>,
       Controls* controls,

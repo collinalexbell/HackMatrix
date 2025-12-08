@@ -352,7 +352,7 @@ ensure_wayland_apps_registered(WlrServer* server)
                    (void*)action.app.get());
         if (server->engine) {
           if (auto api = server->engine->getApi()) {
-            api->updateCachedStatus();
+            api->forceUpdateCachedStatus();
           }
         }
       } else {
