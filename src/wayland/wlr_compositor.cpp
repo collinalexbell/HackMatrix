@@ -284,6 +284,23 @@ ensure_wayland_apps_registered(WlrServer* server)
       if (entity != entt::null) {
         renderer->registerApp(action.app.get());
         server->surface_map[action.surface] = entity;
+        auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
+        // Keep WM focus aligned with the newly mapped Wayland surface so keys
+        // route to the client when it appears.
+        if (server->engine) {
+          if (auto wm = server->engine->getWindowManager()) {
+            bool wmHasFocus = wm->getCurrentlyFocusedApp().has_value();
+            bool seatTargetsSurface =
+              server->seat &&
+              server->seat->keyboard_state.focused_surface == action.surface;
+            if (!wmHasFocus || seatTargetsSurface) {
+              wm->focusApp(entity);
+              if (comp && comp->app) {
+                comp->app->takeInputFocus();
+              }
+            }
+          }
+        }
         if (f) {
           std::fprintf(f,
                        "wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
@@ -445,6 +462,41 @@ handle_keyboard_destroy(wl_listener* listener, void* data)
   wl_list_remove(&handle->key.link);
   wl_list_remove(&handle->destroy.link);
   delete handle;
+}
+
+struct KeycodeLookupResult {
+  xkb_keycode_t keycode = 0;
+  bool needsShift = false;
+};
+
+static std::optional<KeycodeLookupResult>
+keycode_for_keysym(wlr_keyboard* keyboard, xkb_keysym_t sym)
+{
+  if (!keyboard || !keyboard->keymap) {
+    return std::nullopt;
+  }
+  const xkb_keycode_t min = xkb_keymap_min_keycode(keyboard->keymap);
+  const xkb_keycode_t max = xkb_keymap_max_keycode(keyboard->keymap);
+  for (xkb_keycode_t code = min; code <= max; ++code) {
+    int layouts = xkb_keymap_num_layouts_for_key(keyboard->keymap, code);
+    for (int layout = 0; layout < layouts; ++layout) {
+      int levels = xkb_keymap_num_levels_for_key(keyboard->keymap, code, layout);
+      for (int level = 0; level < levels; ++level) {
+        const xkb_keysym_t* syms = nullptr;
+        int nsyms =
+          xkb_keymap_key_get_syms_by_level(keyboard->keymap, code, layout, level, &syms);
+        for (int i = 0; i < nsyms; ++i) {
+          if (syms[i] == sym) {
+            KeycodeLookupResult res;
+            res.keycode = code;
+            res.needsShift = level > 0;
+            return res;
+          }
+        }
+      }
+    }
+  }
+  return std::nullopt;
 }
 
 static void
@@ -927,6 +979,9 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
       return;
     }
     wlr_log(WLR_DEBUG, "xdg_surface %p mapped", (void*)handle->xdg);
+    log_to_tmp("xdg_surface mapped surface=%p role=%d\n",
+               (void*)handle->xdg->surface,
+               handle->xdg->role);
     if (!handle->created) {
       handle->created = true;
       create_wayland_app(handle->server, handle->xdg);
@@ -1118,9 +1173,51 @@ handle_output_frame(wl_listener* listener, void* data)
       wlr_keyboard* kbd = nullptr;
       if (server->last_keyboard_device) {
         kbd = wlr_keyboard_from_input_device(server->last_keyboard_device);
+      } else if (server->seat && server->seat->keyboard_state.keyboard) {
+        kbd = server->seat->keyboard_state.keyboard;
       }
+      static bool logged_missing_keyboard = false;
+      if (!kbd && !logged_missing_keyboard) {
+        log_to_tmp("key replay: no keyboard device available for injection\n");
+        logged_missing_keyboard = true;
+      }
+      auto shift_lookup = keycode_for_keysym(kbd, XKB_KEY_Shift_L);
+      uint32_t base_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
+      uint32_t step = 0;
       for (auto sym : ready) {
-        process_key_sym(server, kbd, sym, true, 0);
+        auto lookup = keycode_for_keysym(kbd, sym);
+        if (!lookup.has_value() || lookup->keycode == 0) {
+          log_to_tmp("key replay: no keycode for sym=%u\n", sym);
+          continue;
+        }
+        uint32_t time_msec = base_msec + step;
+        log_to_tmp("key replay: sym=%u keycode=%u time=%u\n",
+                   sym,
+                   lookup->keycode,
+                   time_msec);
+        if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
+          process_key_sym(server,
+                          kbd,
+                          XKB_KEY_Shift_L,
+                          true,
+                          time_msec,
+                          shift_lookup->keycode);
+          time_msec += 1;
+          step += 1;
+        }
+        process_key_sym(server, kbd, sym, true, time_msec, lookup->keycode);
+        // Send a matching release so clients see a full key cycle.
+        process_key_sym(server, kbd, sym, false, time_msec + 1, lookup->keycode);
+        if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
+          process_key_sym(server,
+                          kbd,
+                          XKB_KEY_Shift_L,
+                          false,
+                          time_msec + 2,
+                          shift_lookup->keycode);
+          step += 1;
+        }
+        step += 2;
       }
     }
   }
@@ -1506,6 +1603,12 @@ main(int argc, char** argv, char** envp)
   if (server.engine) {
     server.engine.reset();
   }
+  if (server.seat) {
+    wl_list_remove(&server.request_set_cursor.link);
+  }
+  wl_list_remove(&server.new_input.link);
+  wl_list_remove(&server.new_output.link);
+  wl_list_remove(&server.new_xdg_surface.link);
   if (server.allocator) {
     wlr_allocator_destroy(server.allocator);
   }

@@ -536,28 +536,29 @@ TEST(WaylandMenuSpec, RunsNeofetchAndCapturesOutputToFile)
   std::this_thread::sleep_for(std::chrono::milliseconds(1200));
 
   ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu launch key";
-  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 120, 100))
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 160, 100))
     << "Foot window never mapped";
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  // Give foot time to settle and its shell to be ready for input.
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
   bool sent = send_key_replay({
-    { "n", 0 }, { "e", 0 }, { "o", 0 }, { "f", 0 }, { "e", 0 }, { "t", 0 }, { "c", 0 }, { "h", 0 },
-    { "Return", 0 }
+    { "n", 50 }, { "e", 50 }, { "o", 50 }, { "f", 50 }, { "e", 50 }, { "t", 50 }, { "c", 50 }, { "h", 50 },
+    { "Return", 80 }
   });
   ASSERT_TRUE(sent) << "Failed to send key replay for first neofetch";
 
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   sent = send_key_replay({
-    { "n", 0 }, { "e", 0 }, { "o", 0 }, { "f", 0 }, { "e", 0 }, { "t", 0 }, { "c", 0 }, { "h", 0 },
-    { "space", 0 }, { "greater", 0 }, { "space", 0 },
-    { "slash", 0 }, { "t", 0 }, { "m", 0 }, { "p", 0 }, { "slash", 0 },
-    { "n", 0 }, { "e", 0 }, { "o", 0 }, { "f", 0 }, { "e", 0 }, { "t", 0 }, { "c", 0 }, { "h", 0 },
-    { "period", 0 }, { "t", 0 }, { "x", 0 }, { "t", 0 },
-    { "Return", 0 }
+    { "n", 50 }, { "e", 50 }, { "o", 50 }, { "f", 50 }, { "e", 50 }, { "t", 50 }, { "c", 50 }, { "h", 50 },
+    { "space", 50 }, { "greater", 50 }, { "space", 50 },
+    { "slash", 50 }, { "t", 50 }, { "m", 50 }, { "p", 50 }, { "slash", 50 },
+    { "n", 50 }, { "e", 50 }, { "o", 50 }, { "f", 50 }, { "e", 50 }, { "t", 50 }, { "c", 50 }, { "h", 50 },
+    { "period", 50 }, { "t", 50 }, { "x", 50 }, { "t", 50 },
+    { "Return", 80 }
   });
   ASSERT_TRUE(sent) << "Failed to send key replay for redirected neofetch";
-  ASSERT_TRUE(wait_for_file(target.string(), 80, 100)) << "neofetch output file not created";
+  ASSERT_TRUE(wait_for_file(target.string(), 120, 100)) << "neofetch output file not created";
 
   std::ifstream in(target);
   std::string firstLine;
