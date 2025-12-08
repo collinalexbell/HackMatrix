@@ -94,6 +94,13 @@ void
 WaylandApp::takeInputFocus()
 {
   focused = true;
+  // Activate the toplevel only when the WM explicitly focuses us.
+  if (xdg_toplevel) {
+    wlr_xdg_toplevel_set_activated(xdg_toplevel, true);
+    if (xdg_surface) {
+      wlr_xdg_surface_schedule_configure(xdg_surface);
+    }
+  }
   if (seat && seat_surface) {
     wlr_keyboard* kbd = wlr_seat_get_keyboard(seat);
     if (kbd) {
@@ -161,12 +168,20 @@ WaylandApp::appTexture()
     void* data = nullptr;
     uint32_t format = 0;
 
+  auto logSamplesEnabled = []() {
+    static int enabled = -1;
+    if (enabled == -1) {
+      enabled = (kWlrootsDebugLogs || std::getenv("WLR_APP_SAMPLE_LOG")) ? 1 : 0;
+    }
+    return enabled == 1;
+  };
+
   if (wlr_buffer_begin_data_ptr_access(buffer,
                                        WLR_BUFFER_DATA_PTR_ACCESS_READ,
                                        &data,
                                        &format,
                                        &stride)) {
-    if constexpr (kWlrootsDebugLogs) {
+    if (logSamplesEnabled()) {
       static FILE* logFile = []() {
         FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
         return f ? f : stderr;

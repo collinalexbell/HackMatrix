@@ -102,6 +102,20 @@ static bool wait_for_log_contains(const std::string& path,
   return false;
 }
 
+static int
+count_log_occurrences(const std::string& path, const std::string& needle)
+{
+  std::ifstream in(path);
+  std::string line;
+  int count = 0;
+  while (std::getline(in, line)) {
+    if (line.find(needle) != std::string::npos) {
+      ++count;
+    }
+  }
+  return count;
+}
+
 static bool send_key_replay(const std::vector<std::pair<std::string, uint32_t>>& entries)
 {
   const char* addr = std::getenv("VOXEL_API_ADDR_FOR_TEST");
@@ -628,6 +642,132 @@ TEST(WaylandMenuSpec, KeyReplayMovesCamera)
   // Wait up to ~3s for movement log.
   bool moved = wait_for_log_contains(logPath, "camera moved", 60, 50);
   EXPECT_TRUE(moved) << "No camera movement logged after key replay";
+
+  guard.dismiss();
+  stop_compositor(h);
+}
+
+TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
+{
+  namespace fs = std::filesystem;
+
+  auto find_chromium = []() -> std::string {
+    const char* candidates[] = { "chromium", "chromium-browser", nullptr };
+    for (const char** c = candidates; *c; ++c) {
+      std::string cmd = "command -v ";
+      cmd += *c;
+      cmd += " >/dev/null 2>&1";
+      if (std::system(cmd.c_str()) == 0) {
+        return *c;
+      }
+    }
+    return "";
+  };
+
+  std::string chromeBin = find_chromium();
+  if (chromeBin.empty()) {
+    GTEST_SKIP() << "chromium not available; skipping render test";
+  }
+
+  fs::path tmp = fs::temp_directory_path();
+  fs::path profile = tmp / "chromium-wlroots-profile";
+  fs::create_directories(profile);
+  fs::path chromiumLog = tmp / "chromium-menu.log";
+  fs::path markerLog = "/tmp/matrix-wlroots-waylandapp.log";
+  std::ofstream(markerLog, std::ios::trunc).close();
+  std::ofstream(chromiumLog, std::ios::trunc).close();
+
+  // Use default menu program (foot) and type the chromium command so we capture stderr.
+  std::string chromiumCmd =
+    chromeBin +
+    " --ozone-platform=wayland --enable-features=UseOzonePlatform "
+    "--disable-gpu --disable-gpu-sandbox --no-first-run --no-default-browser-check "
+    "--hide-scrollbars --mute-audio "
+    "--user-data-dir=\"" + profile.string() + "\" "
+    "--app=data:text/html,%3Chtml%3E%3Cbody%20style%3D%22background%3Argb(255,0,0)%3B%22%3Etest%3C%2Fbody%3E%3C%2Fhtml%3E "
+    "2>\"" + chromiumLog.string() + "\"\n";
+  std::string env = "WLR_APP_SAMPLE_LOG=1 ";
+  auto h = start_compositor_with_env(env);
+  ScopeExit guard([&]() {
+    stop_compositor(h);
+    if (fs::exists(profile)) {
+      std::error_code ec;
+      fs::remove_all(profile, ec);
+    }
+  });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch terminal via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 200, 100))
+    << "Terminal window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+  // Type chromium command into foot and press enter.
+  ASSERT_TRUE(send_key_replay({
+    { "c", 0 }, { "h", 0 }, { "r", 0 }, { "o", 0 }, { "m", 0 }, { "i", 0 }, { "u", 0 }, { "m", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "o", 0 }, { "z", 0 }, { "o", 0 }, { "n", 0 }, { "e", 0 }, { "minus", 0 },
+    { "p", 0 }, { "l", 0 }, { "a", 0 }, { "t", 0 }, { "f", 0 }, { "o", 0 }, { "r", 0 }, { "m", 0 }, { "equal", 0 }, { "w", 0 }, { "a", 0 }, { "y", 0 }, { "l", 0 }, { "a", 0 }, { "n", 0 }, { "d", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "e", 0 }, { "n", 0 }, { "a", 0 }, { "b", 0 }, { "l", 0 }, { "e", 0 }, { "minus", 0 }, { "f", 0 }, { "e", 0 }, { "a", 0 }, { "t", 0 }, { "u", 0 }, { "r", 0 }, { "e", 0 }, { "s", 0 }, { "equal", 0 }, { "U", 0 }, { "s", 0 }, { "e", 0 }, { "O", 0 }, { "z", 0 }, { "o", 0 }, { "n", 0 }, { "e", 0 }, { "P", 0 }, { "l", 0 }, { "a", 0 }, { "t", 0 }, { "f", 0 }, { "o", 0 }, { "r", 0 }, { "m", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "d", 0 }, { "i", 0 }, { "s", 0 }, { "a", 0 }, { "b", 0 }, { "l", 0 }, { "e", 0 }, { "minus", 0 }, { "g", 0 }, { "p", 0 }, { "u", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "d", 0 }, { "i", 0 }, { "s", 0 }, { "a", 0 }, { "b", 0 }, { "l", 0 }, { "e", 0 }, { "minus", 0 }, { "g", 0 }, { "p", 0 }, { "u", 0 }, { "minus", 0 }, { "s", 0 }, { "a", 0 }, { "n", 0 }, { "d", 0 }, { "b", 0 }, { "o", 0 }, { "x", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "n", 0 }, { "o", 0 }, { "minus", 0 }, { "f", 0 }, { "i", 0 }, { "r", 0 }, { "s", 0 }, { "t", 0 }, { "minus", 0 }, { "r", 0 }, { "u", 0 }, { "n", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "n", 0 }, { "o", 0 }, { "minus", 0 }, { "d", 0 }, { "e", 0 }, { "f", 0 }, { "a", 0 }, { "u", 0 }, { "l", 0 }, { "t", 0 }, { "minus", 0 }, { "b", 0 }, { "r", 0 }, { "o", 0 }, { "w", 0 }, { "s", 0 }, { "e", 0 }, { "r", 0 }, { "minus", 0 }, { "c", 0 }, { "h", 0 }, { "e", 0 }, { "c", 0 }, { "k", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "h", 0 }, { "i", 0 }, { "d", 0 }, { "e", 0 }, { "minus", 0 }, { "s", 0 }, { "c", 0 }, { "r", 0 }, { "o", 0 }, { "l", 0 }, { "l", 0 }, { "b", 0 }, { "a", 0 }, { "r", 0 }, { "s", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "m", 0 }, { "u", 0 }, { "t", 0 }, { "e", 0 }, { "minus", 0 }, { "a", 0 }, { "u", 0 }, { "d", 0 }, { "i", 0 }, { "o", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "u", 0 }, { "s", 0 }, { "e", 0 }, { "r", 0 }, { "minus", 0 }, { "d", 0 }, { "a", 0 }, { "t", 0 }, { "a", 0 }, { "minus", 0 }, { "d", 0 }, { "i", 0 }, { "r", 0 }, { "equal", 0 }, { "slash", 0 }, { "t", 0 }, { "m", 0 }, { "p", 0 }, { "slash", 0 }, { "c", 0 }, { "h", 0 }, { "r", 0 }, { "o", 0 }, { "m", 0 }, { "i", 0 }, { "u", 0 }, { "m", 0 }, { "minus", 0 }, { "w", 0 }, { "l", 0 }, { "r", 0 }, { "o", 0 }, { "o", 0 }, { "t", 0 }, { "s", 0 }, { "minus", 0 }, { "p", 0 }, { "r", 0 }, { "o", 0 }, { "f", 0 }, { "i", 0 }, { "l", 0 }, { "e", 0 }, { "space", 0 },
+    { "minus", 0 }, { "minus", 0 }, { "a", 0 }, { "p", 0 }, { "p", 0 }, { "equal", 0 },
+    { "d", 0 }, { "a", 0 }, { "t", 0 }, { "a", 0 }, { "colon", 0 }, { "t", 0 }, { "e", 0 }, { "x", 0 }, { "t", 0 }, { "slash", 0 },
+    { "h", 0 }, { "t", 0 }, { "m", 0 }, { "l", 0 }, { "comma", 0 }, { "percent", 0 }, { "33", 0 }, { "99", 0 }, { "104", 0 }, { "116", 0 }, { "109", 0 }, { "108", 0 }, { "percent", 0 }, { "33", 0 }, { "50", 0 }, { "51", 0 }, { "50", 0 }, { "99", 0 }, { "37", 0 }, { "50", 0 }, { "50", 0 },
+    { "98", 0 }, { "97", 0 }, { "99", 0 }, { "107", 0 }, { "103", 0 }, { "114", 0 }, { "111", 0 }, { "117", 0 }, { "110", 0 }, { "100", 0 },
+    { "99", 0 }, { "37", 0 }, { "51", 0 }, { "65", 0 }, { "114", 0 }, { "103", 0 }, { "98", 0 }, { "40", 0 }, { "50", 0 }, { "53", 0 }, { "53", 0 }, { "44", 0 }, { "48", 0 }, { "44", 0 }, { "48", 0 }, { "41", 0 }, { "37", 0 }, { "51", 0 }, { "66", 0 }, { "37", 0 }, { "50", 0 }, { "50", 0 }, { "116", 0 }, { "101", 0 }, { "115", 0 }, { "116", 0 }, { "37", 0 }, { "50", 0 }, { "70", 0 }, { "37", 0 }, { "50", 0 }, { "50", 0 }, { "47", 0 }, { "98", 0 }, { "111", 0 }, { "100", 0 }, { "121", 0 }, { "37", 0 }, { "50", 0 }, { "48", 0 }, { "115", 0 }, { "116", 0 }, { "121", 0 }, { "108", 0 }, { "101", 0 }, { "37", 0 }, { "51", 0 }, { "65", 0 }, { "37", 0 }, { "50", 0 }, { "50", 0 }, { "37", 0 }, { "50", 0 }, { "70", 0 }, { "37", 0 }, { "50", 0 }, { "50", 0 }, { "47", 0 }, { "104", 0 }, { "116", 0 }, { "109", 0 }, { "108", 0 }, { "37", 0 }, { "50", 0 }, { "48", 0 }, { "105", 0 }, { "110", 0 }, { "112", 0 }, { "117", 0 }, { "116", 0 }, { "37", 0 }, { "51", 0 }, { "65", 0 }, { "37", 0 }, { "50", 0 }, { "50", 0 }, { "37", 0 }, { "50", 0 }, { "70", 0 }, { "37", 0 }, { "50", 0 }, { "50", 0 }, { "slash", 0 },
+    { "enter", 0 }
+  })) << "Failed to type chromium command";
+  // Wait for a second mapped surface (chromium) to appear.
+  bool mapped = false;
+  for (int i = 0; i < 400; ++i) {
+    if (count_log_occurrences("/tmp/matrix-wlroots-output.log", "mapped") >= 2) {
+      mapped = true;
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  if (!mapped) {
+    std::ifstream clog(chromiumLog);
+    std::string clogStr((std::istreambuf_iterator<char>(clog)), std::istreambuf_iterator<char>());
+    ADD_FAILURE() << "Chromium window never mapped. Log:\n" << clogStr;
+    guard.dismiss();
+    stop_compositor(h);
+    return;
+  }
+
+  // Wait for a sample log and assert non-black pixel.
+  bool sawSample = false;
+  for (int i = 0; i < 120; ++i) {
+    if (count_log_occurrences(markerLog, "wayland-app: sample") >= 2) {
+      sawSample = true;
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  ASSERT_TRUE(sawSample) << "No Wayland sample log for chromium";
+  std::ifstream in(markerLog);
+  std::string line;
+  bool nonBlack = false;
+  while (std::getline(in, line)) {
+    if (line.find("wayland-app: sample") == std::string::npos) {
+      continue;
+    }
+    auto pos = line.find("firstPixel=(");
+    if (pos != std::string::npos) {
+      unsigned r = 0, g = 0, b = 0, a = 0;
+      if (sscanf(line.c_str() + pos, "firstPixel=(%u,%u,%u,%u)", &r, &g, &b, &a) == 4) {
+        if (r | g | b | a) {
+          nonBlack = true;
+        }
+      }
+    }
+  }
+  EXPECT_TRUE(nonBlack) << "Chromium texture appeared black (firstPixel==0)";
 
   guard.dismiss();
   stop_compositor(h);

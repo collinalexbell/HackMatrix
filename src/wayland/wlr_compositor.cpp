@@ -322,11 +322,21 @@ ensure_wayland_apps_registered(WlrServer* server)
         // route to the client when it appears.
         if (server->engine) {
           if (auto wm = server->engine->getWindowManager()) {
-            bool wmHasFocus = wm->getCurrentlyFocusedApp().has_value();
+            auto focused = wm->getCurrentlyFocusedApp();
+            bool focusedValid =
+              focused.has_value() && server->registry &&
+              server->registry->valid(*focused);
+            if (focused.has_value() && !focusedValid) {
+              // Drop stale focus so we don't treat a destroyed app as selected.
+              wm->unfocusApp();
+              focused = std::nullopt;
+            }
             bool seatTargetsSurface =
               server->seat &&
               server->seat->keyboard_state.focused_surface == action.surface;
-            if (!wmHasFocus || seatTargetsSurface) {
+            // Only sync focus when the seat already targets this surface; avoid
+            // automatically selecting brand-new apps on creation.
+            if (seatTargetsSurface) {
               wm->focusApp(entity);
               if (comp && comp->app) {
                 comp->app->takeInputFocus();
@@ -1078,19 +1088,6 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
   if (server->primary_output) {
     wlr_surface_send_enter(xdg_surface->surface, server->primary_output);
   }
-  if (server->seat && server->last_keyboard_device) {
-    auto* kbd = wlr_keyboard_from_input_device(server->last_keyboard_device);
-    wlr_seat_set_keyboard(server->seat, kbd);
-    wlr_seat_keyboard_notify_enter(server->seat,
-                                   xdg_surface->surface,
-                                   kbd->keycodes,
-                                   kbd->num_keycodes,
-                                   &kbd->modifiers);
-    wlr_seat_keyboard_notify_modifiers(server->seat, &kbd->modifiers);
-  }
-  if (server->seat) {
-    wlr_seat_pointer_notify_enter(server->seat, xdg_surface->surface, 0.0, 0.0);
-  }
 }
 
 void
@@ -1101,7 +1098,6 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
   wlr_log(WLR_DEBUG, "new xdg_surface %p", (void*)xdg_surface);
   if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel) {
     wlr_xdg_toplevel_set_size(xdg_surface->toplevel, 1280, 720);
-    wlr_xdg_toplevel_set_activated(xdg_surface->toplevel, true);
     wlr_xdg_surface_schedule_configure(xdg_surface);
   }
 
@@ -1128,7 +1124,6 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
     if (!handle->configured_sent) {
       if (handle->xdg->toplevel) {
         wlr_xdg_toplevel_set_size(handle->xdg->toplevel, 1280, 720);
-        wlr_xdg_toplevel_set_activated(handle->xdg->toplevel, true);
       }
       wlr_log(WLR_DEBUG, "xdg_surface %p initial configure", (void*)handle->xdg);
       wlr_xdg_surface_schedule_configure(handle->xdg);

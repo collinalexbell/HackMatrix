@@ -38,6 +38,11 @@ enum WINDOW_EVENT_TYPE
   SMALLER,
   LARGER
 };
+
+struct ReplayEvent {
+  xkb_keysym_t sym;
+  uint64_t ready_ms;
+};
 struct WindowEvent
 {
   WINDOW_EVENT_TYPE type;
@@ -63,7 +68,7 @@ public:
   virtual void tick() = 0;
   virtual void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld) = 0;
   virtual void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries) = 0;
-  virtual std::vector<xkb_keysym_t> consumeReadyReplaySyms(uint64_t now_ms) = 0;
+  virtual std::vector<ReplayEvent> consumeReadyReplaySyms(uint64_t now_ms) = 0;
   virtual bool hasPendingReplay() const = 0;
   virtual bool consumeScreenshotRequest() = 0;
   virtual void requestScreenshot() = 0;
@@ -130,10 +135,6 @@ class WindowManager : public WindowManagerInterface
   void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
   int findAppsHotKey(entt::entity theApp);
-  struct ReplayEvent {
-    xkb_keysym_t sym;
-    uint64_t ready_ms;
-  };
   std::vector<ReplayEvent> replayQueue;
   size_t replayIndex = 0;
   bool replayActive = false;
@@ -160,7 +161,7 @@ public:
   void tick() override;
   void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld) override;
   void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries) override;
-  std::vector<xkb_keysym_t> consumeReadyReplaySyms(uint64_t now_ms) override;
+  std::vector<ReplayEvent> consumeReadyReplaySyms(uint64_t now_ms) override;
   bool hasPendingReplay() const override { return replayActive; }
   bool consumeScreenshotRequest() override;
   void requestScreenshot() override;

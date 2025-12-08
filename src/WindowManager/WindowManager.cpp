@@ -843,6 +843,9 @@ WindowManager::keyReplay(const std::vector<std::pair<std::string, uint32_t>>& en
     cumulative += e.second;
     replayQueue.push_back(ReplayEvent{ sym, cumulative });
   }
+  WL_WM_LOG("WM: keyReplay queued count=%zu cumulative=%llu\n",
+            replayQueue.size(),
+            (unsigned long long)cumulative);
   replayActive = !replayQueue.empty();
 }
 

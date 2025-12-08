@@ -67,6 +67,18 @@ Api::buildStatus() const
     }
   }
   status.set_wayland_focus(waylandFocus);
+  // Debug: dump registry counts to /tmp when requested.
+  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+  if (f) {
+    std::fprintf(f,
+                 "status: total=%u wayland=%u focus=%d registry_ptr=%p wm_ptr=%p\n",
+                 totalEntities,
+                 status.wayland_apps(),
+                 status.wayland_focus() ? 1 : 0,
+                 registry.get(),
+                 wm.get());
+    std::fclose(f);
+  }
   if (renderer) {
     if (auto* camera = renderer->getCamera()) {
       auto* pos = status.mutable_camera_position();
@@ -76,6 +88,35 @@ Api::buildStatus() const
     }
   }
   return status;
+}
+
+void
+Api::updateCachedStatus()
+{
+  auto newStatus = buildStatus();
+  {
+    char buf[128];
+    snprintf(buf,
+             sizeof(buf),
+             "cachedStatus update wayland=%u total=%u\n",
+             newStatus.wayland_apps(),
+             newStatus.total_entities());
+    log_to_tmp_api(std::string(buf));
+  }
+  std::lock_guard<std::mutex> lk(statusMutex);
+  cachedStatus = newStatus;
+  // Fulfill any pending STATUS requests.
+  for (auto& pending : pendingStatus) {
+    if (!pending) {
+      continue;
+    }
+    pending->response.Clear();
+    pending->response.set_requestid(pending->requestId);
+    pending->response.set_success(true);
+    *pending->response.mutable_status() = cachedStatus;
+    pending->ready = true;
+  }
+  statusCv.notify_all();
 }
 
 Api::Api(std::string bindAddress,
@@ -136,16 +177,35 @@ Api::ProtobufCommandServer::poll()
         // main mutate loop isn't ticking (e.g., in headless tests).
         api->processBatchedRequest(request);
       } else if (apiRequest.type() == STATUS) {
-        ApiRequestResponse response;
-        response.set_requestid(request.id);
-        response.set_success(true);
-        *response.mutable_status() = api->buildStatus();
+        auto pending = std::make_shared<PendingStatusRequest>();
+        pending->requestId = request.id;
+        {
+          std::lock_guard<std::mutex> lk(api->statusMutex);
+          api->pendingStatus.push_back(pending);
+        }
+        api->releaseBatched();
+        // Wait for render thread to fill response
+        std::unique_lock<std::mutex> lk(api->statusMutex);
+        api->statusCv.wait_for(lk, std::chrono::milliseconds(2000), [&pending]() {
+          return pending->ready;
+        });
+        ApiRequestResponse response = pending->response;
+        {
+          char buf[128];
+          snprintf(buf,
+                   sizeof(buf),
+                   "api status reply id=%ld wayland=%u total=%u ready=%d\n",
+                   (long)request.id,
+                   response.status().wayland_apps(),
+                   response.status().total_entities(),
+                   pending->ready ? 1 : 0);
+          log_to_tmp_api(std::string(buf));
+        }
         std::string serializedResponse;
         response.SerializeToString(&serializedResponse);
         zmq::message_t reply(serializedResponse.size());
         memcpy(reply.data(), serializedResponse.c_str(), serializedResponse.size());
         socket.send(reply, zmq::send_flags::none);
-        api->releaseBatched();
         return;
       } else {
         batchedRequests->push(request);
@@ -538,6 +598,7 @@ Api::mutateEntities()
     batchedRequests->pop();
   }
   releaseBatched();
+  updateCachedStatus();
 }
 
 void
