@@ -224,6 +224,27 @@ ensure_wayland_apps_registered(WlrServer* server)
     return;
   }
   FILE* f = nullptr;
+  // Detect cases where surfaces exist but no Wayland apps are registered and
+  // requeue adds so they don't stall.
+  if (server->surface_map.size() > 0) {
+    auto view = server->registry->view<WaylandApp::Component>();
+    if (view.size() == 0) {
+      for (auto& entry : server->surface_map) {
+        auto it = server->surface_map.find(entry.first);
+        if (it != server->surface_map.end()) {
+          entt::entity ent = it->second;
+          if (server->registry->valid(ent)) {
+            if (auto* comp = server->registry->try_get<WaylandApp::Component>(ent)) {
+              if (comp->app) {
+                server->pending_wl_actions.push_back(
+                  PendingWlAction{ PendingWlAction::Add, comp->app, entry.first });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 #if WLROOTS_DEBUG_LOGS
   f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
   if (!server->pending_wl_actions.empty() && f) {
@@ -437,10 +458,25 @@ process_key_sym(WlrServer* server,
   if (!server) {
     return;
   }
+
+  // Detect if a Wayland app currently has WM focus; if so, avoid feeding
+  // movement/game controls so keys pass through to the client.
+  bool waylandFocusActive = false;
+  if (server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      if (auto focused = wm->getCurrentlyFocusedApp()) {
+        if (server->registry &&
+            server->registry->all_of<WaylandApp::Component>(*focused)) {
+          waylandFocusActive = true;
+        }
+      }
+    }
+  }
+
   if (sym == XKB_KEY_Escape && pressed) {
     wl_display_terminate(server->display);
   }
-  if (pressed && server->engine) {
+  if (pressed && server->engine && !waylandFocusActive) {
     if (auto wm = server->engine->getWindowManager()) {
       uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
       bool superHeld = mods & WLR_MODIFIER_LOGO;
@@ -451,23 +487,31 @@ process_key_sym(WlrServer* server,
   switch (sym) {
     case XKB_KEY_w:
     case XKB_KEY_W:
-      server->input.forward = pressed;
+      if (!waylandFocusActive) {
+        server->input.forward = pressed;
+      }
       break;
     case XKB_KEY_s:
     case XKB_KEY_S:
-      server->input.back = pressed;
+      if (!waylandFocusActive) {
+        server->input.back = pressed;
+      }
       break;
     case XKB_KEY_a:
     case XKB_KEY_A:
-      server->input.left = pressed;
+      if (!waylandFocusActive) {
+        server->input.left = pressed;
+      }
       break;
     case XKB_KEY_d:
     case XKB_KEY_D:
-      server->input.right = pressed;
+      if (!waylandFocusActive) {
+        server->input.right = pressed;
+      }
       break;
     case XKB_KEY_r:
     case XKB_KEY_R:
-      if (pressed && server->engine) {
+      if (pressed && server->engine && !waylandFocusActive) {
         if (auto wm = server->engine->getWindowManager()) {
           wm->focusLookedAtApp();
         }
@@ -475,7 +519,7 @@ process_key_sym(WlrServer* server,
       break;
     case XKB_KEY_v:
     case XKB_KEY_V:
-      if (pressed && server->engine) {
+      if (pressed && server->engine && !waylandFocusActive) {
         if (auto wm = server->engine->getWindowManager()) {
           log_to_tmp("menu hotkey pressed (V)\n");
           wm->menu();
@@ -485,21 +529,24 @@ process_key_sym(WlrServer* server,
     default:
       break;
   }
-  FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-  if (f) {
-    std::fprintf(f, "key sym=%u pressed=%d\n", sym, pressed ? 1 : 0);
-    std::fflush(f);
-    std::fclose(f);
+  if constexpr (kWlrootsDebugLogs) {
+    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+    if (f) {
+      std::fprintf(f, "key sym=%u pressed=%d\n", sym, pressed ? 1 : 0);
+      std::fflush(f);
+      std::fclose(f);
+    }
+    wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", sym, pressed ? 1 : 0);
   }
-  wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", sym, pressed ? 1 : 0);
 
   if (server->seat && keyboard && time_msec != 0) {
-    // Only forward keys to the app when the focused surface matches the WM's
-    // focused Wayland app. If the seat focus was lost (e.g., after pointer
-    // focus changes), reassert keyboard enter before delivering the key.
-    wlr_surface* seat_surface = server->seat->keyboard_state.focused_surface;
-    wlr_surface* target_surface = nullptr;
-    if (server->engine) {
+    // Deliver to the seat-focused surface if it maps to a Wayland app; otherwise fall
+    // back to the WM-focused Wayland app.
+    wlr_surface* target_surface = server->seat->keyboard_state.focused_surface;
+    if (!target_surface && server->seat && server->seat->pointer_state.focused_surface) {
+      target_surface = server->seat->pointer_state.focused_surface;
+    }
+    if (!target_surface && server->engine) {
       if (auto wm = server->engine->getWindowManager()) {
         if (auto focused = wm->getCurrentlyFocusedApp()) {
           if (server->registry &&
@@ -511,31 +558,31 @@ process_key_sym(WlrServer* server,
       }
     }
     if (target_surface) {
+      // Keep WM focus in sync with the seat when we can map the surface.
+      if (server->engine) {
+        if (auto wm = server->engine->getWindowManager()) {
+          auto it = server->surface_map.find(target_surface);
+          if (it != server->surface_map.end()) {
+            wm->focusApp(it->second);
+          }
+        }
+      }
       wlr_seat_set_keyboard(server->seat, keyboard);
-      if (seat_surface != target_surface) {
+      if (server->seat->keyboard_state.focused_surface != target_surface) {
         wlr_seat_keyboard_notify_enter(server->seat,
                                        target_surface,
                                        keyboard->keycodes,
                                        keyboard->num_keycodes,
                                        &keyboard->modifiers);
         wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-        seat_surface = server->seat->keyboard_state.focused_surface;
       }
-      if (seat_surface == target_surface) {
-        enum wl_keyboard_key_state state =
-          pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
-        wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
-        wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-      }
-#if WLROOTS_DEBUG_LOGS
-      else if (kWlrootsDebugLogs) {
-        log_to_tmp("key skip: target=%p seat_focus=%p\n",
-                   (void*)target_surface,
-                   (void*)seat_surface);
-      }
-#endif
+      enum wl_keyboard_key_state state =
+        pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
+      wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
+      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
     }
   }
+}
 }
 
 void
@@ -552,7 +599,6 @@ handle_keyboard_key(wl_listener* listener, void* data)
     bool pressed = event->state == WL_KEYBOARD_KEY_STATE_PRESSED;
     process_key_sym(server, handle->keyboard, syms[i], pressed, event->time_msec);
   }
-}
 }
 
 void

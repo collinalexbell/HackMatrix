@@ -1088,6 +1088,11 @@ Renderer::registerApp(AppSurface* app)
   // because deletions means this won't work
   // indices will change.
   auto index = appIndexPool.acquireIndex();
+  if (index < 0) {
+    WL_RENDERER_LOG("registerApp: no available texture slots; using shared slot 0\n");
+    attachSharedAppTexture(app);
+    return;
+  }
   static GLint maxTextureUnits = -1;
   if (maxTextureUnits < 0) {
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
