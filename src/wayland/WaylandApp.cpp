@@ -18,6 +18,12 @@ extern "C" {
 #include <chrono>
 #include <vector>
 
+#ifdef WLROOTS_DEBUG_LOGS
+constexpr bool kWlrootsDebugLogs = true;
+#else
+constexpr bool kWlrootsDebugLogs = false;
+#endif
+
 static glm::mat4
 recomputeHeightScaler(double width, double height)
 {
@@ -91,6 +97,7 @@ WaylandApp::takeInputFocus()
   if (seat && seat_surface) {
     wlr_keyboard* kbd = wlr_seat_get_keyboard(seat);
     if (kbd) {
+      wlr_seat_set_keyboard(seat, kbd);
       wlr_seat_keyboard_notify_enter(
         seat, seat_surface, kbd->keycodes, kbd->num_keycodes, &kbd->modifiers);
       wlr_seat_keyboard_notify_modifiers(seat, &kbd->modifiers);
@@ -159,41 +166,43 @@ WaylandApp::appTexture()
                                        &data,
                                        &format,
                                        &stride)) {
-    static FILE* logFile = []() {
-      FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-      return f ? f : stderr;
-    }();
-    static int lastW = -1;
-    static int lastH = -1;
-    if (width != lastW || height != lastH) {
-      std::fprintf(logFile,
-                   "wayland-app: uploading %dx%d stride=%zu fmt=%u texId=%d unit=%d\n",
-                   width,
-                   height,
-                   stride,
-                   format,
-                   textureId,
-                   textureUnit - GL_TEXTURE0);
-      std::fflush(logFile);
-      lastW = width;
-      lastH = height;
-    }
-    if (!sampleLogged) {
-      const uint8_t* raw = static_cast<const uint8_t*>(data);
-      uint8_t r0 = raw[0], g0 = raw[1], b0 = raw[2], a0 = raw[3];
-      bool ok = (width > 0 && height > 0) && (r0 | g0 | b0 | a0);
-      std::fprintf(logFile,
-                   "wayland-app: sample size=%dx%d fmt=%u firstPixel=(%u,%u,%u,%u) ok=%d\n",
-                   width,
-                   height,
-                   format,
-                   r0,
-                   g0,
-                   b0,
-                   a0,
-                   ok ? 1 : 0);
-      std::fflush(logFile);
-      sampleLogged = true;
+    if constexpr (kWlrootsDebugLogs) {
+      static FILE* logFile = []() {
+        FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
+        return f ? f : stderr;
+      }();
+      static int lastW = -1;
+      static int lastH = -1;
+      if (width != lastW || height != lastH) {
+        std::fprintf(logFile,
+                     "wayland-app: uploading %dx%d stride=%zu fmt=%u texId=%d unit=%d\n",
+                     width,
+                     height,
+                     stride,
+                     format,
+                     textureId,
+                     textureUnit - GL_TEXTURE0);
+        std::fflush(logFile);
+        lastW = width;
+        lastH = height;
+      }
+      if (!sampleLogged) {
+        const uint8_t* raw = static_cast<const uint8_t*>(data);
+        uint8_t r0 = raw[0], g0 = raw[1], b0 = raw[2], a0 = raw[3];
+        bool ok = (width > 0 && height > 0) && (r0 | g0 | b0 | a0);
+        std::fprintf(logFile,
+                     "wayland-app: sample size=%dx%d fmt=%u firstPixel=(%u,%u,%u,%u) ok=%d\n",
+                     width,
+                     height,
+                     format,
+                     r0,
+                     g0,
+                     b0,
+                     a0,
+                     ok ? 1 : 0);
+        std::fflush(logFile);
+        sampleLogged = true;
+      }
     }
     // Convert to RGBA8 if the format isn't directly supported in GLES2.
     const uint8_t* src = static_cast<const uint8_t*>(data);
@@ -377,34 +386,36 @@ WaylandApp::appTexture()
                       converted.data());
       errAfter = glGetError();
     }
-    FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-    if (logFile2) {
-      std::fprintf(logFile2,
-                   "WaylandApp upload: texId=%d unit=%d texSize=%dx%d uploadSize=%dx%d stride=%zu fmt=%u glErr=0x%x firstPixel=0x%08x rawFirst=0x%08x center=0x%08x rawCenter=0x%08x rowChecksum=%u min=(%u,%u,%u,%u) max=(%u,%u,%u,%u)\n",
-                   textureId,
-                   textureUnit - GL_TEXTURE0,
-                   width,
-                   height,
-                   width,
-                   height,
-                   stride,
-                   format,
-                   errAfter,
-                   firstPixel,
-                   rawFirstBytes,
-                   centerPixel,
-                   rawCenterBytes,
-                   rowChecksum,
-                   minR,
-                   minG,
-                   minB,
-                   minA,
-                   maxR,
-                   maxG,
-                   maxB,
-                   maxA);
-      std::fflush(logFile2);
-      std::fclose(logFile2);
+    if constexpr (kWlrootsDebugLogs) {
+      FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
+      if (logFile2) {
+        std::fprintf(logFile2,
+                     "WaylandApp upload: texId=%d unit=%d texSize=%dx%d uploadSize=%dx%d stride=%zu fmt=%u glErr=0x%x firstPixel=0x%08x rawFirst=0x%08x center=0x%08x rawCenter=0x%08x rowChecksum=%u min=(%u,%u,%u,%u) max=(%u,%u,%u,%u)\n",
+                     textureId,
+                     textureUnit - GL_TEXTURE0,
+                     width,
+                     height,
+                     width,
+                     height,
+                     stride,
+                     format,
+                     errAfter,
+                     firstPixel,
+                     rawFirstBytes,
+                     centerPixel,
+                     rawCenterBytes,
+                     rowChecksum,
+                     minR,
+                     minG,
+                     minB,
+                     minA,
+                     maxR,
+                     maxG,
+                     maxB,
+                     maxA);
+        std::fflush(logFile2);
+        std::fclose(logFile2);
+      }
     }
     wlr_buffer_end_data_ptr_access(buffer);
   }

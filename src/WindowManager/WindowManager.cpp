@@ -14,6 +14,10 @@
 #include <X11/Xutil.h>
 #include <algorithm>
 #include <cstddef>
+#include <chrono>
+#include <cerrno>
+#include <cstdio>
+#include <fcntl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
@@ -28,6 +32,36 @@
 #include <thread>
 #include <unistd.h>
 #include <cstdlib>
+#include <sys/wait.h>
+#include <sys/stat.h>
+
+#ifdef WLROOTS_DEBUG_LOGS
+constexpr bool kWlrootsDebugLogs = true;
+#else
+constexpr bool kWlrootsDebugLogs = false;
+#endif
+
+#ifdef WLROOTS_DEBUG_LOGS
+static FILE*
+wlroots_wm_log()
+{
+  static FILE* f = []() {
+    FILE* f2 = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
+    return f2 ? f2 : stderr;
+  }();
+  return f;
+}
+#define WL_WM_LOG(...)                                                            \
+  do {                                                                            \
+    FILE* f = wlroots_wm_log();                                                   \
+    if (f) {                                                                      \
+      std::fprintf(f, __VA_ARGS__);                                               \
+      std::fflush(f);                                                             \
+    }                                                                             \
+  } while (0)
+#else
+#define WL_WM_LOG(...) do { } while (0)
+#endif
 
 #define OBS false
 #define EDGE false
@@ -35,10 +69,120 @@
 // todo: Magica still doesn't work with dynamic loading
 #define MAGICA false
 
+extern char** environ;
+
 namespace WindowManager {
 
+namespace {
+
+void
+appendMenuLog(const std::string& line)
+{
+  FILE* f = std::fopen("/tmp/matrix-wlroots-menu.log", "a");
+  if (!f) {
+    return;
+  }
+  auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::fprintf(f, "[%lld] %s\n", static_cast<long long>(now), line.c_str());
+  std::fclose(f);
+}
+
+const char*
+getEnv(const char* name, char** envp)
+{
+  if (envp) {
+    size_t nlen = std::strlen(name);
+    for (char** p = envp; *p; ++p) {
+      if (std::strncmp(*p, name, nlen) == 0 && (*p)[nlen] == '=') {
+        return *p + nlen + 1;
+      }
+    }
+  }
+  return std::getenv(name);
+}
+
+static std::string
+parseInlineEnvXdg(const std::string& program)
+{
+  std::istringstream iss(program);
+  std::string token;
+  while (iss >> token) {
+    auto eq = token.find('=');
+    if (eq != std::string::npos && eq > 0) {
+      auto key = token.substr(0, eq);
+      auto val = token.substr(eq + 1);
+      if (key == "XDG_RUNTIME_DIR") {
+        return val;
+      }
+      // Continue scanning inline exports until we hit a non-assignment.
+    } else {
+      break;
+    }
+  }
+  return "";
+}
+
+}
+
 void WindowManager::menu() {
-  std::thread([this] { std::system(menuProgram.c_str()); }).detach();
+  auto program = menuProgram;
+  char** envForChild = envp ? envp : environ;
+  std::string runtimeDir = parseInlineEnvXdg(program);
+  std::string waylandDisplay = getEnv("WAYLAND_DISPLAY", envForChild);
+  if (runtimeDir.empty()) {
+    const char* envVal = getEnv("XDG_RUNTIME_DIR", envForChild);
+    if (envVal) {
+      runtimeDir = envVal;
+    }
+  }
+  appendMenuLog("env WAYLAND_DISPLAY=" +
+                (waylandDisplay.empty() ? std::string("(null)") : waylandDisplay) +
+                " XDG_RUNTIME_DIR=" +
+                (runtimeDir.empty() ? std::string("(null)") : runtimeDir));
+  if (!runtimeDir.empty()) {
+    struct stat st;
+    if (stat(runtimeDir.c_str(), &st) != 0) {
+      int mk = mkdir(runtimeDir.c_str(), 0700);
+      if (mk != 0) {
+        appendMenuLog("menu() could not create XDG_RUNTIME_DIR " + runtimeDir +
+                      " errno=" + std::to_string(errno));
+      } else {
+        appendMenuLog("menu() created XDG_RUNTIME_DIR " + runtimeDir);
+      }
+    }
+  }
+  appendMenuLog("menu() launching: " + program);
+  std::thread([program, envForChild, runtimeDir, waylandDisplay] {
+    const std::string ioLog = "/tmp/matrix-wlroots-menu.stderr.log";
+    int fd = ::open(ioLog.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd < 0) {
+      appendMenuLog("menu() failed to open stderr log file");
+      return;
+    }
+    pid_t pid = fork();
+    if (pid == 0) {
+      setsid();
+      dup2(fd, STDOUT_FILENO);
+      dup2(fd, STDERR_FILENO);
+      close(fd);
+      if (!waylandDisplay.empty()) {
+        setenv("WAYLAND_DISPLAY", waylandDisplay.c_str(), 1);
+      }
+      if (!runtimeDir.empty()) {
+        setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
+      }
+      execle("/bin/sh", "sh", "-c", program.c_str(), (char*)nullptr, envForChild);
+      // execle only returns on failure.
+      appendMenuLog("menu() exec failed, errno=" + std::to_string(errno));
+      _exit(127);
+    }
+    close(fd);
+    int status = 0;
+    if (pid > 0) {
+      waitpid(pid, &status, 0);
+    }
+    appendMenuLog("menu() exited rc=" + std::to_string(status));
+  }).detach();
 }
 
 int forkApp(string cmd, char **envp, string args) {
@@ -195,17 +339,11 @@ void WindowManager::goToLookedAtApp() {
     targetPos = appPos + rotationQuat * glm::vec3(0, 0, deltaZ);
     facing = rotationQuat * glm::vec3(0, 0, -1);
 
-    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-    if (f) {
-      std::fprintf(f,
-                   "WM: goToLookedAtApp ent=%d pos=(%.2f,%.2f,%.2f) camPos=(%.2f,%.2f,%.2f) targetPos=(%.2f,%.2f,%.2f)\n",
-                   (int)entt::to_integral(ent),
-                   appPos.x, appPos.y, appPos.z,
-                   camera->position.x, camera->position.y, camera->position.z,
-                   targetPos.x, targetPos.y, targetPos.z);
-      std::fflush(f);
-      std::fclose(f);
-    }
+    WL_WM_LOG("WM: goToLookedAtApp ent=%d pos=(%.2f,%.2f,%.2f) camPos=(%.2f,%.2f,%.2f) targetPos=(%.2f,%.2f,%.2f)\n",
+              (int)entt::to_integral(ent),
+              appPos.x, appPos.y, appPos.z,
+              camera->position.x, camera->position.y, camera->position.z,
+              targetPos.x, targetPos.y, targetPos.z);
   }
   camera->moveTo(targetPos, facing, 0.5f);
 }
@@ -548,16 +686,10 @@ void WindowManager::tick() {
   if (waylandMode) {
     if (camera) {
       camera->tick();
-      FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-      if (f) {
-        std::fprintf(f,
-                     "WM: tick (wayland) camPos=(%.2f,%.2f,%.2f)\n",
-                     camera->position.x,
-                     camera->position.y,
-                     camera->position.z);
-        std::fflush(f);
-        std::fclose(f);
-      }
+      WL_WM_LOG("WM: tick (wayland) camPos=(%.2f,%.2f,%.2f)\n",
+                camera->position.x,
+                camera->position.y,
+                camera->position.z);
     }
     return;
   }
@@ -655,19 +787,13 @@ void WindowManager::focusLookedAtApp() {
   }
   if (auto looked = space->getLookedAtApp()) {
     auto entity = looked.value();
-    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-    if (f) {
-      std::fprintf(f,
-                   "WM: focusLookedAtApp entity=%d isWayland=%d isX11=%d pos=(%.2f,%.2f,%.2f)\n",
-                   (int)entt::to_integral(entity),
-                   registry->all_of<WaylandApp::Component>(entity) ? 1 : 0,
-                   registry->all_of<X11App>(entity) ? 1 : 0,
-                   registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.x : 0.0f,
-                   registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.y : 0.0f,
-                   registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.z : 0.0f);
-      std::fflush(f);
-      std::fclose(f);
-    }
+    WL_WM_LOG("WM: focusLookedAtApp entity=%d isWayland=%d isX11=%d pos=(%.2f,%.2f,%.2f)\n",
+              (int)entt::to_integral(entity),
+              registry->all_of<WaylandApp::Component>(entity) ? 1 : 0,
+              registry->all_of<X11App>(entity) ? 1 : 0,
+              registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.x : 0.0f,
+              registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.y : 0.0f,
+              registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.z : 0.0f);
     if (registry->all_of<WaylandApp::Component>(entity)) {
       // Wayland app path: just record focus and let wlroots handle input.
       currentlyFocusedApp = entity;
@@ -732,12 +858,7 @@ void
 WindowManager::requestScreenshot()
 {
   screenshotRequested = true;
-  FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-  if (f) {
-    std::fprintf(f, "WM: screenshot requested\n");
-    std::fflush(f);
-    std::fclose(f);
-  }
+  WL_WM_LOG("WM: screenshot requested\n");
 }
 
 bool
@@ -851,9 +972,11 @@ void WindowManager::setupLogger() {
   logger->debug("WindowManager()");
 }
 
-WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
-                             spdlog::sink_ptr loggerSink)
-    : matrix(matrix), logSink(loggerSink), registry(registry) {
+WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
+                             Window matrix,
+                             spdlog::sink_ptr loggerSink,
+                             char** envp)
+    : matrix(matrix), logSink(loggerSink), registry(registry), envp(envp) {
 
   menuProgram = Config::singleton()->get<std::string>("menu_program");
   if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
@@ -896,10 +1019,12 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry, Window matrix,
 
 WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
                              spdlog::sink_ptr loggerSink,
-                             bool waylandMode)
+                             bool waylandMode,
+                             char** envp)
   : logSink(loggerSink)
   , registry(registry)
   , waylandMode(waylandMode)
+  , envp(envp)
 {
   menuProgram = Config::singleton()->get<std::string>("menu_program");
   if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
@@ -926,16 +1051,10 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, 
   if (!app || !registry) {
     return entt::null;
   }
-  static FILE* logFile = []() {
-    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-    return f ? f : stderr;
-  }();
-  std::fprintf(logFile,
-               "WM: registerWaylandApp size=%dx%d spawnAtCamera=%d\n",
-               app->getWidth(),
-               app->getHeight(),
-               spawnAtCamera ? 1 : 0);
-  std::fflush(logFile);
+  WL_WM_LOG("WM: registerWaylandApp size=%dx%d spawnAtCamera=%d\n",
+            app->getWidth(),
+            app->getHeight(),
+            spawnAtCamera ? 1 : 0);
   entt::entity entity = registry->create();
   registry->emplace<WaylandApp::Component>(entity, app);
   // For X11 we attach immediately; for wlroots we defer GL texture attach to the
@@ -943,9 +1062,8 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, 
   if (renderer && !waylandMode) {
     renderer->registerApp(app.get());
   } else {
-    std::fprintf(logFile,
-                 "WM: renderer missing; registered component only for entity=%d\n",
-                 (int)entt::to_integral(entity));
+    WL_WM_LOG("WM: renderer missing; registered component only for entity=%d\n",
+              (int)entt::to_integral(entity));
   }
   // Place in world space similar to spawnAtCamera path.
   glm::vec3 pos(0.0f, 3.5f, -2.0f);
@@ -966,15 +1084,13 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, 
   if (auto* p = registry->try_get<Positionable>(entity)) {
     p->damage();
   }
-  std::fprintf(logFile,
-               "WM: WaylandApp entity=%d size=%dx%d pos=(%.2f, %.2f, %.2f)\n",
-               (int)entt::to_integral(entity),
-               app->getWidth(),
-               app->getHeight(),
-               pos.x,
-               pos.y,
-               pos.z);
-  std::fflush(logFile);
+  WL_WM_LOG("WM: WaylandApp entity=%d size=%dx%d pos=(%.2f, %.2f, %.2f)\n",
+            (int)entt::to_integral(entity),
+            app->getWidth(),
+            app->getHeight(),
+            pos.x,
+            pos.y,
+            pos.z);
   appsWithHotKeys.push_back(entity);
   return entity;
 }

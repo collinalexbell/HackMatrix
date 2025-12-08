@@ -48,6 +48,8 @@ LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
 ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o build/time_utils.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp build/wayland/WaylandApp.o
+ALL_OBJECTS_DEBUG = $(filter-out build/renderer.o build/WindowManager/WindowManager.o build/wayland/WaylandApp.o,$(ALL_OBJECTS)) build_debug/renderer.debug.o build_debug/WindowManager/WindowManager.debug.o build_debug/wayland/WaylandApp.debug.o
+DEBUG_FLAGS = $(FLAGS) -DWLROOTS_DEBUG_LOGS
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
@@ -76,8 +78,11 @@ profiled: matrix
 ifeq ($(WLROOTS_AVAILABLE),1)
 wlroots-skeleton: build/wayland/wlroots_skeleton.o
 	g++ -std=c++20 $(FLAGS) -o wlroots-skeleton build/wayland/wlroots_skeleton.o $(WLROOTS_LIBS) -lpthread
-matrix-wlroots: build/wayland/wlr_compositor.o $(ALL_OBJECTS)
+matrix-wlroots: matrix-wlroots-release matrix-wlroots-debug
+matrix-wlroots-release: build/wayland/wlr_compositor.o $(ALL_OBJECTS)
 	g++ -std=c++20 $(FLAGS) -g -o matrix-wlroots build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
+matrix-wlroots-debug: build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG)
+	g++ -std=c++20 $(DEBUG_FLAGS) -g -o matrix-wlroots-debug build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
 else
 wlroots-skeleton:
 	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
@@ -118,13 +123,22 @@ build/wayland/wlroots_skeleton.o: src/wayland/wlroots_skeleton.cpp
 build/wayland/wlr_compositor.o: src/wayland/wlr_compositor.cpp
 	mkdir -p build/wayland
 	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlr_compositor.o -c src/wayland/wlr_compositor.cpp
+build_debug/wayland/wlr_compositor.debug.o: src/wayland/wlr_compositor.cpp
+	mkdir -p build_debug/wayland
+	g++ -std=c++20 $(DEBUG_FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build_debug/wayland/wlr_compositor.debug.o -c src/wayland/wlr_compositor.cpp
 
 build/wayland/WaylandApp.o: src/wayland/WaylandApp.cpp
 	mkdir -p build/wayland
 	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/WaylandApp.o -c src/wayland/WaylandApp.cpp
+build_debug/wayland/WaylandApp.debug.o: src/wayland/WaylandApp.cpp
+	mkdir -p build_debug/wayland
+	g++ -std=c++20 $(DEBUG_FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build_debug/wayland/WaylandApp.debug.o -c src/wayland/WaylandApp.cpp
 
 build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
+build_debug/renderer.debug.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
+	mkdir -p build_debug
+	g++  -std=c++20 $(DEBUG_FLAGS) -o build_debug/renderer.debug.o -c src/renderer.cpp $(INCLUDES)
 
 build/IndexPool.o: include/IndexPool.h src/IndexPool.cpp
 	g++  -std=c++20 $(FLAGS) -o build/IndexPool.o -c src/IndexPool.cpp $(INCLUDES)
@@ -163,6 +177,9 @@ build/screen.o: src/screen.cpp include/screen.h
 
 build/WindowManager/WindowManager.o: src/WindowManager/WindowManager.cpp include/WindowManager/WindowManager.h include/controls.h include/logger.h include/world.h include/WindowManager/Space.h include/systems/Boot.h include/components/Bootable.h include/screen.h include/Config.h
 	g++ -std=c++20 $(FLAGS) -o build/WindowManager/WindowManager.o -c src/WindowManager/WindowManager.cpp $(INCLUDES)
+build_debug/WindowManager/WindowManager.debug.o: src/WindowManager/WindowManager.cpp include/WindowManager/WindowManager.h include/controls.h include/logger.h include/world.h include/WindowManager/Space.h include/systems/Boot.h include/components/Bootable.h include/screen.h include/Config.h
+	mkdir -p build_debug/WindowManager
+	g++ -std=c++20 $(DEBUG_FLAGS) -o build_debug/WindowManager/WindowManager.debug.o -c src/WindowManager/WindowManager.cpp $(INCLUDES)
 
 build/WindowManager/Space.o: src/WindowManager/Space.cpp include/WindowManager/Space.h include/loader.h include/app.h include/camera.h include/renderer.h include/screen.h
 	g++ -std=c++20 $(FLAGS) -o build/WindowManager/Space.o -c src/WindowManager/Space.cpp $(INCLUDES)

@@ -51,6 +51,13 @@ extern "C" {
 #include "entity.h"
 #include "screen.h"
 
+#ifdef WLROOTS_DEBUG_LOGS
+constexpr bool kWlrootsDebugLogs = true;
+#else
+constexpr bool kWlrootsDebugLogs = false;
+#endif
+
+#if WLROOTS_DEBUG_LOGS
 static void
 log_to_tmp(const char* fmt, ...)
 {
@@ -65,6 +72,13 @@ log_to_tmp(const char* fmt, ...)
   va_end(args);
   std::fclose(f);
 }
+#else
+static void
+log_to_tmp(const char* fmt, ...)
+{
+  (void)fmt;
+}
+#endif
 
 namespace {
 
@@ -209,17 +223,30 @@ ensure_wayland_apps_registered(WlrServer* server)
   if (!renderer) {
     return;
   }
-  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+  FILE* f = nullptr;
+#if WLROOTS_DEBUG_LOGS
+  f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
   if (!server->pending_wl_actions.empty() && f) {
     std::fprintf(f,
                  "wayland deferred queue drain: count=%zu\n",
                  server->pending_wl_actions.size());
     std::fflush(f);
   }
+#endif
   auto actions = std::move(server->pending_wl_actions);
   server->pending_wl_actions.clear();
   for (auto& action : actions) {
     if (action.type == PendingWlAction::Add) {
+      // Drop duplicate adds for the same surface if it's already registered.
+      if (server->surface_map.find(action.surface) != server->surface_map.end()) {
+        if (f) {
+          std::fprintf(f,
+                       "wayland app add skipped (already registered): surface=%p\n",
+                       (void*)action.surface);
+          std::fflush(f);
+        }
+        continue;
+      }
       entt::entity entity = entt::null;
       if (auto wm = server->engine->getWindowManager()) {
         entity = wm->registerWaylandApp(action.app, true);
@@ -246,6 +273,12 @@ ensure_wayland_apps_registered(WlrServer* server)
                        (void*)action.app.get());
           std::fflush(f);
         }
+        log_to_tmp("wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
+                   (void*)action.surface,
+                   (int)entt::to_integral(entity),
+                   action.app->getTextureId(),
+                   action.app->getTextureUnit() - GL_TEXTURE0,
+                   (void*)action.app.get());
       } else {
         if (f) {
           std::fprintf(f,
@@ -444,6 +477,7 @@ process_key_sym(WlrServer* server,
     case XKB_KEY_V:
       if (pressed && server->engine) {
         if (auto wm = server->engine->getWindowManager()) {
+          log_to_tmp("menu hotkey pressed (V)\n");
           wm->menu();
         }
       }
@@ -461,28 +495,45 @@ process_key_sym(WlrServer* server,
 
   if (server->seat && keyboard && time_msec != 0) {
     // Only forward keys to the app when the focused surface matches the WM's
-    // focused Wayland app.
-    wlr_surface* focused_surface = server->seat->keyboard_state.focused_surface;
-    bool deliverToApp = false;
+    // focused Wayland app. If the seat focus was lost (e.g., after pointer
+    // focus changes), reassert keyboard enter before delivering the key.
+    wlr_surface* seat_surface = server->seat->keyboard_state.focused_surface;
+    wlr_surface* target_surface = nullptr;
     if (server->engine) {
       if (auto wm = server->engine->getWindowManager()) {
         if (auto focused = wm->getCurrentlyFocusedApp()) {
           if (server->registry &&
               server->registry->all_of<WaylandApp::Component>(*focused)) {
             auto& comp = server->registry->get<WaylandApp::Component>(*focused);
-            if (comp.app && comp.app->getSurface() == focused_surface) {
-              deliverToApp = true;
-            }
+            target_surface = comp.app ? comp.app->getSurface() : nullptr;
           }
         }
       }
     }
-    if (deliverToApp) {
+    if (target_surface) {
       wlr_seat_set_keyboard(server->seat, keyboard);
-      enum wl_keyboard_key_state state =
-        pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
-      wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
-      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+      if (seat_surface != target_surface) {
+        wlr_seat_keyboard_notify_enter(server->seat,
+                                       target_surface,
+                                       keyboard->keycodes,
+                                       keyboard->num_keycodes,
+                                       &keyboard->modifiers);
+        wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+        seat_surface = server->seat->keyboard_state.focused_surface;
+      }
+      if (seat_surface == target_surface) {
+        enum wl_keyboard_key_state state =
+          pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
+        wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
+        wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+      }
+#if WLROOTS_DEBUG_LOGS
+      else if (kWlrootsDebugLogs) {
+        log_to_tmp("key skip: target=%p seat_focus=%p\n",
+                   (void*)target_surface,
+                   (void*)seat_surface);
+      }
+#endif
     }
   }
 }
@@ -693,7 +744,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
   handle->commit.notify = [](wl_listener* listener, void* data) {
     auto* handle = wl_container_of(listener, static_cast<WaylandAppHandle*>(nullptr), commit);
     auto* surf = static_cast<wlr_surface*>(data);
-    if (!handle->server || !surf) {
+    if (!handle->server || !surf || handle->registered) {
       return;
     }
     int w = surf->current.width;
@@ -704,6 +755,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
     // Defer registration to the render loop to avoid GL/context races.
     handle->server->pending_wl_actions.push_back(
       PendingWlAction{ PendingWlAction::Add, handle->app, surf });
+    handle->registered = true;
     log_to_tmp("wayland deferred add queued: surface=%p size=%dx%d app=%p\n",
                (void*)surf,
                w,
@@ -716,6 +768,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
     if (handle->server && handle->surface) {
       handle->server->pending_wl_actions.push_back(
         PendingWlAction{ PendingWlAction::Remove, handle->app, handle->surface });
+      handle->registered = false;
       log_to_tmp("wayland deferred remove queued (unmap): surface=%p app=%p\n",
                  (void*)handle->surface,
                  (void*)handle->app.get());
@@ -728,6 +781,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
     if (handle->server) {
       handle->server->pending_wl_actions.push_back(
         PendingWlAction{ PendingWlAction::Remove, handle->app, surf });
+      handle->registered = false;
       log_to_tmp("wayland deferred remove queued (destroy): surface=%p app=%p\n",
                  (void*)surf,
                  (void*)handle->app.get());
@@ -959,10 +1013,13 @@ handle_output_frame(wl_listener* listener, void* data)
 
   int width = handle->swapchain ? handle->swapchain->width : 1;
   int height = handle->swapchain ? handle->swapchain->height : 1;
-  log_to_tmp("frame: swapchain %dx%d output %s\n",
-             width,
-             height,
-             handle->output ? handle->output->name : "(null)");
+  // Reduce log spam in hot path; enable by setting WLROOTS_FRAME_LOG=1.
+  if (std::getenv("WLROOTS_FRAME_LOG")) {
+    log_to_tmp("frame: swapchain %dx%d output %s\n",
+               width,
+               height,
+               handle->output ? handle->output->name : "(null)");
+  }
 
   ensure_glad(server);
 
@@ -1032,7 +1089,9 @@ handle_output_frame(wl_listener* listener, void* data)
   }
 
   glViewport(0, 0, width, height);
-  log_to_tmp("frame: glViewport %dx%d\n", width, height);
+  if (std::getenv("WLROOTS_FRAME_LOG")) {
+    log_to_tmp("frame: glViewport %dx%d\n", width, height);
+  }
   double frameStart = currentTimeSeconds();
   server->engine->frame(frameStart);
   if (server->engine) {

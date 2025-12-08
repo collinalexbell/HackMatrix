@@ -23,6 +23,33 @@
 #include "tracy/TracyOpenGL.hpp"
 #include "tracy/Tracy.hpp"
 
+#ifdef WLROOTS_DEBUG_LOGS
+constexpr bool kWlrootsDebugLogs = true;
+#else
+constexpr bool kWlrootsDebugLogs = false;
+#endif
+
+static FILE*
+wlroots_renderer_log()
+{
+  if constexpr (kWlrootsDebugLogs) {
+    static FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+    return f ? f : stderr;
+  }
+  return nullptr;
+}
+
+#define WL_RENDERER_LOG(...)                                                      \
+  do {                                                                            \
+    if (kWlrootsDebugLogs) {                                                      \
+      FILE* f = wlroots_renderer_log();                                           \
+      if (f) {                                                                    \
+        std::fprintf(f, __VA_ARGS__);                                             \
+        std::fflush(f);                                                           \
+      }                                                                           \
+    }                                                                             \
+  } while (0)
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 #include <ctime>
@@ -345,25 +372,36 @@ Renderer::initAppTextures()
   // Keep a small pool to avoid exhausting units (GLES2 often has 8).
   int appTextures = std::min(4, maxUnits);
   appIndexPool = IndexPool(appTextures);
-  static FILE* logFile = []() {
-    FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-    return f ? f : stderr;
-  }();
-  std::fprintf(logFile, "initAppTextures: maxUnits=%d appTextures=%d\n", maxUnits, appTextures);
+  if constexpr (kWlrootsDebugLogs) {
+    static FILE* logFile = []() {
+      FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+      return f ? f : stderr;
+    }();
+    std::fprintf(logFile, "initAppTextures: maxUnits=%d appTextures=%d\n", maxUnits, appTextures);
+  }
   for (int index = 0; index < appTextures; index++) {
     int textureN = index;
     int textureUnit = GL_TEXTURE0; // single unit; we'll bind per-app before draw
     string textureName = "app" + to_string(index);
     textures[textureName] = new Texture(textureUnit);
     shader->setInt(textureName, 0); // all samplers map to unit 0
-    std::fprintf(logFile,
-                 "initAppTextures: index=%d texName=%s texId=%u unit=%d\n",
-                 index,
-                 textureName.c_str(),
-                 textures[textureName]->ID,
-                 textureUnit - GL_TEXTURE0);
+    if constexpr (kWlrootsDebugLogs) {
+      static FILE* logFile = []() {
+        FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+        return f ? f : stderr;
+      }();
+      std::fprintf(logFile,
+                   "initAppTextures: index=%d texName=%s texId=%u unit=%d\n",
+                   index,
+                   textureName.c_str(),
+                   textures[textureName]->ID,
+                   textureUnit - GL_TEXTURE0);
+    }
   }
-  std::fflush(logFile);
+  if constexpr (kWlrootsDebugLogs) {
+    static FILE* logFile = wlroots_renderer_log();
+    std::fflush(logFile);
+  }
 }
 
 void
@@ -654,11 +692,13 @@ Renderer::renderChunkMesh()
 void
 Renderer::renderApps()
 {
+#ifdef ENABLE_RENDER_TMP_LOGS
   static FILE* logFile = []() {
     FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
     return f ? f : stderr;
   }();
   static std::unordered_set<void*> loggedApps;
+#endif
   TracyGpuZone("render apps");
   auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
   shader->setBool("appSelected", false);
@@ -705,6 +745,7 @@ Renderer::renderApps()
       shader->setBool("appTransparent", false);
     }
     glDrawArrays(GL_TRIANGLES, 0, 6);
+#ifdef ENABLE_RENDER_TMP_LOGS
     if (loggedApps.insert((void*)&app).second) {
       std::fprintf(logFile,
                    "renderer: first render X11 app idx=%zu size=%dx%d\n",
@@ -713,6 +754,7 @@ Renderer::renderApps()
                    bootable.getHeight());
       std::fflush(logFile);
     }
+#endif
   }
 
   if (lookedAtAppEntity.has_value()) {
@@ -758,6 +800,7 @@ Renderer::renderApps()
     shader->setMatrix4("bootableScale", app->getHeightScalar());
     shader->setInt("appNumber", 0);
     shader->setBool("appTransparent", false);
+#ifdef ENABLE_RENDER_TMP_LOGS
     std::fprintf(logFile,
                  "Renderer: Wayland in-world ent=%d appNumber=%zu texId=%d texUnit=%d size=%dx%d\n",
                  (int)entity,
@@ -766,6 +809,7 @@ Renderer::renderApps()
                  app->getTextureUnit() - GL_TEXTURE0,
                  app->getWidth(),
                  app->getHeight());
+#endif
     glDrawArrays(GL_TRIANGLES, 0, 6);
     // If focused, also draw directly to screen to ensure visibility.
     if (wm && wm->getCurrentlyFocusedApp().has_value() &&
@@ -781,6 +825,7 @@ Renderer::renderApps()
                  static_cast<float>(SCREEN_HEIGHT);
       model = glm::scale(model, glm::vec3(sx, sy, 1.0f));
       shader->setMatrix4("model", model);
+#ifdef ENABLE_RENDER_TMP_LOGS
       std::fprintf(logFile,
                    "Renderer: Wayland direct ent=%d appNumber=%zu texId=%d texUnit=%d screenScale=(%.3f,%.3f)\n",
                    (int)entity,
@@ -789,6 +834,7 @@ Renderer::renderApps()
                    app->getTextureUnit() - GL_TEXTURE0,
                    sx,
                    sy);
+#endif
       glBindVertexArray(DIRECT_RENDER_VAO);
       glDisable(GL_DEPTH_TEST);
       glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -796,6 +842,7 @@ Renderer::renderApps()
       shader->setBool("directRender", false);
       shader->setMatrix4("model", positionable.modelMatrix);
     }
+#ifdef ENABLE_RENDER_TMP_LOGS
     if (loggedApps.insert((void*)app).second) {
       std::fprintf(logFile,
                    "renderer: first render Wayland app size=%dx%d\n",
@@ -803,6 +850,7 @@ Renderer::renderApps()
                    app->getHeight());
       std::fflush(logFile);
     }
+#endif
   }
 
   shader->setBool("isApp", false);
@@ -999,13 +1047,8 @@ Renderer::render(RenderPerspective perspective,
 {
   ZoneScoped;
   TracyGpuZone("render");
-  static FILE* logFile = []() {
-    FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-    return f ? f : stderr;
-  }();
   auto allWl = registry->view<WaylandApp::Component>();
-  std::fprintf(logFile, "Renderer: frame WaylandApp count=%zu\n", allWl.size());
-  std::fflush(logFile);
+  WL_RENDERER_LOG("Renderer: frame WaylandApp count=%zu\n", allWl.size());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glFrontFace(invertY ? GL_CW : GL_CCW);
   if (perspective == CAMERA) {
@@ -1060,7 +1103,7 @@ Renderer::registerApp(AppSurface* app)
     appIndexPool.relinquishIndex(index);
     return;
   }
-  FILE* logFile = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+  FILE* logFile = kWlrootsDebugLogs ? wlroots_renderer_log() : nullptr;
   try {
     int textureId = textures["app" + to_string(index)]->ID;
     int textureUnit = GL_TEXTURE0; // always bind to unit 0; shader samplers set to 0
@@ -1076,14 +1119,12 @@ Renderer::registerApp(AppSurface* app)
   } catch (...) {
     if (logFile) {
       std::fprintf(logFile, "registerApp: exception, releasing index\n");
-      std::fclose(logFile);
     }
     appIndexPool.relinquishIndex(index);
     throw;
   }
   if (logFile) {
     std::fflush(logFile);
-    std::fclose(logFile);
   }
 
   unsigned int framebufferId;
@@ -1095,15 +1136,16 @@ Renderer::registerApp(AppSurface* app)
                          GL_TEXTURE_2D,
                          textures["app" + to_string(index)]->ID,
                          0);
-  FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-  if (logFile2) {
-    std::fprintf(logFile2,
-                 "registerApp: framebuffer %u attached to texId=%u index=%u\n",
-                 framebufferId,
-                 textures["app" + to_string(index)]->ID,
-                 static_cast<unsigned>(index));
-    std::fflush(logFile2);
-    std::fclose(logFile2);
+  if (kWlrootsDebugLogs) {
+    FILE* logFile2 = wlroots_renderer_log();
+    if (logFile2) {
+      std::fprintf(logFile2,
+                   "registerApp: framebuffer %u attached to texId=%u index=%u\n",
+                   framebufferId,
+                   textures["app" + to_string(index)]->ID,
+                   static_cast<unsigned>(index));
+      std::fflush(logFile2);
+    }
   }
 }
 
@@ -1130,14 +1172,15 @@ Renderer::attachSharedAppTexture(AppSurface* app)
   int textureId = it->second->ID;
   app->attachTexture(textureUnit, textureId, 0);
   app->appTexture();
-  FILE* logFile = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-  if (logFile) {
-    std::fprintf(logFile,
-                 "attachSharedAppTexture: texId=%d unit=%d\n",
-                 textureId,
-                 textureUnit - GL_TEXTURE0);
-    std::fflush(logFile);
-    std::fclose(logFile);
+  if (kWlrootsDebugLogs) {
+    FILE* logFile = wlroots_renderer_log();
+    if (logFile) {
+      std::fprintf(logFile,
+                   "attachSharedAppTexture: texId=%d unit=%d\n",
+                   textureId,
+                   textureUnit - GL_TEXTURE0);
+      std::fflush(logFile);
+    }
   }
 }
 
