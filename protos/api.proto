@@ -10,6 +10,7 @@ enum MessageType {
   CONFIRM_ACTION = 6;
   QUIT = 7;
   KEY_REPLAY = 8;
+  STATUS = 9;
 }
 
 message NoPayload {}
@@ -63,6 +64,12 @@ message KeyReplay {
   repeated KeyReplayEntry entries = 1;
 }
 
+message EngineStatus {
+  uint32 total_entities = 1;
+  uint32 wayland_apps = 2;
+  bool wayland_focus = 3;
+}
+
 message Move {
   float xDelta = 1;
   float yDelta = 2;
@@ -93,4 +100,5 @@ message ApiRequestResponse {
   int64 requestId = 1;
   int64 actionId = 2;
   bool success = 3;
+  EngineStatus status = 4;
 }

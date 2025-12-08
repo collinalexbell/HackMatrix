@@ -124,6 +124,7 @@ public:
   void poll();
   void mutateEntities();
   int64_t allocateActionId() { return nextActionId++; }
+  EngineStatus buildStatus() const;
 };
 
 #endif

@@ -31,6 +31,7 @@ struct CompositorHandle {
 
 static bool send_quit_via_api();
 static bool compositor_alive(const CompositorHandle& h);
+static bool fetch_status(ApiRequestResponse* out);
 
 static bool wait_for_file(const std::string& path, int attempts = 50, int millis = 100)
 {
@@ -105,7 +106,7 @@ static bool send_key_replay(const std::vector<std::pair<std::string, uint32_t>>&
 {
   const char* addr = std::getenv("VOXEL_API_ADDR_FOR_TEST");
   std::string endpoint = addr ? addr : "tcp://127.0.0.1:3345";
-  for (int attempt = 0; attempt < 10; ++attempt) {
+  for (int attempt = 0; attempt < 20; ++attempt) {
     try {
       zmq::context_t ctx(1);
       zmq::socket_t sock(ctx, zmq::socket_type::req);
@@ -193,7 +194,8 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
   const char* testLog = "/tmp/matrix-wlroots-output.log";
   std::string truncateCmd = std::string("truncate -s 0 ") + testLog + " >/dev/null 2>&1";
   std::system(truncateCmd.c_str());
-  std::string cmd = extraEnv + " bash -lc './launch --in-wm >/tmp/menu-test.log 2>&1 & echo $!'";
+  std::string cmd = "MATRIX_WLROOTS_BIN=./matrix-wlroots-debug " + extraEnv +
+                    " bash -lc './launch --in-wm >/tmp/menu-test.log 2>&1 & echo $!'";
   FILE* pipe = popen(cmd.c_str(), "r");
   if (pipe) {
     char buf[64] = {0};
@@ -255,6 +257,51 @@ static bool send_quit_via_api()
   return false;
 }
 
+static bool fetch_status(ApiRequestResponse* out)
+{
+  if (!out) {
+    return false;
+  }
+  const char* addr = std::getenv("VOXEL_API_ADDR_FOR_TEST");
+  std::string endpoint = addr ? addr : "tcp://127.0.0.1:3345";
+  for (int attempt = 0; attempt < 10; ++attempt) {
+    try {
+      zmq::context_t ctx(1);
+      zmq::socket_t sock(ctx, zmq::socket_type::req);
+      sock.set(zmq::sockopt::rcvtimeo, 500);
+      sock.set(zmq::sockopt::sndtimeo, 500);
+      sock.set(zmq::sockopt::linger, 100);
+      sock.connect(endpoint);
+
+      ApiRequest req;
+      req.set_entityid(0);
+      req.set_type(MessageType::STATUS);
+      std::string data;
+      if (!req.SerializeToString(&data)) {
+        return false;
+      }
+      zmq::message_t msg(data.size());
+      memcpy(msg.data(), data.data(), data.size());
+      if (!sock.send(msg, zmq::send_flags::none)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        continue;
+      }
+      zmq::message_t reply;
+      auto res = sock.recv(reply, zmq::recv_flags::none);
+      if (!res.has_value()) {
+        continue;
+      }
+      if (!out->ParseFromArray(reply.data(), reply.size())) {
+        return false;
+      }
+      return true;
+    } catch (...) {
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  }
+  return false;
+}
+
 static bool stop_compositor(CompositorHandle& h)
 {
   // Give API a moment to come up before sending quit.
@@ -279,6 +326,12 @@ static bool stop_compositor(CompositorHandle& h)
     std::string killCmd = "kill " + h.pid + " >/dev/null 2>&1";
     std::system(killCmd.c_str());
     std::this_thread::sleep_for(std::chrono::seconds(2));
+    wait_for_exit_pid(h.pid, 20, 100);
+  }
+  if (compositor_alive(h)) {
+    // Last resort: force kill so tests never leave the compositor running.
+    std::string killCmd = "kill -9 " + h.pid + " >/dev/null 2>&1";
+    std::system(killCmd.c_str());
     wait_for_exit_pid(h.pid, 20, 100);
   }
   return quitSent;
@@ -385,6 +438,133 @@ TEST(WaylandMenuSpec, LaunchesMenuProgramViaEnvOverrideWithVKey)
   stop_compositor(h);
 }
 
+TEST(WaylandMenuSpec, FocusesTerminalAndCreatesFileViaTyping)
+{
+  namespace fs = std::filesystem;
+
+  fs::path tmp = fs::temp_directory_path();
+  fs::path target = tmp / "zmq-typed.txt";
+  fs::path script = tmp / "menu-test.sh";
+
+  if (fs::exists(target)) {
+    fs::remove(target);
+  }
+  std::ofstream("/tmp/matrix-wlroots-renderer.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-waylandapp.log", std::ios::trunc).close();
+
+  {
+    std::ofstream out(script);
+    out << "#!/bin/bash\n"
+        << "exec foot\n";
+  }
+  fs::permissions(script,
+                  fs::perms::owner_exec | fs::perms::owner_read | fs::perms::owner_write,
+                  fs::perm_options::add);
+
+  std::string env = "MENU_PROGRAM=" + script.string() + " ";
+  auto h = start_compositor_with_env(env);
+  ScopeExit guard([&]() {
+    stop_compositor(h);
+    if (fs::exists(script)) {
+      fs::remove(script);
+    }
+    if (fs::exists(target)) {
+      fs::remove(target);
+    }
+  });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  // Give the compositor API a brief moment to start listening.
+  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu launch key";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 120, 100))
+    << "Foot window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+
+  bool sent = send_key_replay({
+    { "t", 0 }, { "o", 0 }, { "u", 0 }, { "c", 0 }, { "h", 0 },
+    { "space", 0 },
+    { "slash", 0 }, { "t", 0 }, { "m", 0 }, { "p", 0 }, { "slash", 0 },
+    { "z", 0 }, { "m", 0 }, { "q", 0 }, { "minus", 0 }, { "t", 0 }, { "y", 0 },
+    { "p", 0 }, { "e", 0 }, { "d", 0 }, { "period", 0 }, { "t", 0 }, { "x", 0 }, { "t", 0 },
+    { "Return", 0 }
+  });
+  ASSERT_TRUE(sent) << "Failed to send key replay for terminal typing";
+  wait_for_file(target.string());
+}
+
+TEST(WaylandMenuSpec, RunsNeofetchAndCapturesOutputToFile)
+{
+  namespace fs = std::filesystem;
+
+  if (!command_ok("command -v neofetch >/dev/null 2>&1")) {
+    GTEST_SKIP() << "neofetch not available; skipping";
+  }
+
+  fs::path tmp = fs::temp_directory_path();
+  fs::path target = tmp / "neofetch.txt";
+  fs::path script = tmp / "menu-test.sh";
+
+  if (fs::exists(target)) {
+    fs::remove(target);
+  }
+  std::ofstream("/tmp/matrix-wlroots-renderer.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-waylandapp.log", std::ios::trunc).close();
+
+  {
+    std::ofstream out(script);
+    out << "#!/bin/bash\n"
+        << "exec foot\n";
+  }
+  fs::permissions(script,
+                  fs::perms::owner_exec | fs::perms::owner_read | fs::perms::owner_write,
+                  fs::perm_options::add);
+
+  std::string env = "MENU_PROGRAM=" + script.string() + " ";
+  auto h = start_compositor_with_env(env);
+  ScopeExit guard([&]() {
+    stop_compositor(h);
+    if (fs::exists(script)) {
+      fs::remove(script);
+    }
+    // Leave target for inspection; it is cleaned at test start if present.
+  });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  // Allow API to start before sending the first replay request.
+  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu launch key";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 120, 100))
+    << "Foot window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  bool sent = send_key_replay({
+    { "n", 0 }, { "e", 0 }, { "o", 0 }, { "f", 0 }, { "e", 0 }, { "t", 0 }, { "c", 0 }, { "h", 0 },
+    { "Return", 0 }
+  });
+  ASSERT_TRUE(sent) << "Failed to send key replay for first neofetch";
+
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+
+  sent = send_key_replay({
+    { "n", 0 }, { "e", 0 }, { "o", 0 }, { "f", 0 }, { "e", 0 }, { "t", 0 }, { "c", 0 }, { "h", 0 },
+    { "space", 0 }, { "greater", 0 }, { "space", 0 },
+    { "slash", 0 }, { "t", 0 }, { "m", 0 }, { "p", 0 }, { "slash", 0 },
+    { "n", 0 }, { "e", 0 }, { "o", 0 }, { "f", 0 }, { "e", 0 }, { "t", 0 }, { "c", 0 }, { "h", 0 },
+    { "period", 0 }, { "t", 0 }, { "x", 0 }, { "t", 0 },
+    { "Return", 0 }
+  });
+  ASSERT_TRUE(sent) << "Failed to send key replay for redirected neofetch";
+  ASSERT_TRUE(wait_for_file(target.string(), 80, 100)) << "neofetch output file not created";
+
+  std::ifstream in(target);
+  std::string firstLine;
+  ASSERT_TRUE(std::getline(in, firstLine)) << "neofetch output file empty";
+  EXPECT_FALSE(firstLine.empty());
+}
+
 TEST(WaylandMenuSpec, ScreenshotViaKeyReplay)
 {
   namespace fs = std::filesystem;
@@ -426,11 +606,28 @@ TEST(WaylandMenuSpec, ScreenshotViaKeyReplay)
   EXPECT_TRUE(newShot) << "No new screenshot found in screenshots/";
   if (newShot) {
     ASSERT_FALSE(foundShot.empty());
-    EXPECT_TRUE(fs::file_size(foundShot) > 0);
+  EXPECT_TRUE(fs::file_size(foundShot) > 0);
   }
 
   guard.dismiss();
   stop_compositor(h);
+}
+
+TEST(WaylandMenuSpec, ReportsEngineStatusOverZmq)
+{
+  auto h = start_compositor_with_env();
+  ScopeExit guard([&]() { stop_compositor(h); });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  // Allow API to come up before requesting status.
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  ApiRequestResponse resp;
+  ASSERT_TRUE(fetch_status(&resp)) << "Failed to fetch status over ZMQ";
+  EXPECT_TRUE(resp.success());
+  EXPECT_TRUE(resp.has_status());
+  EXPECT_GT(resp.status().total_entities(), 0u);
+  EXPECT_GE(resp.status().wayland_apps(), 0u);
 }
 
 // Verifies the key handler logs menu key presses.

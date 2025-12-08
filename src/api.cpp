@@ -46,6 +46,30 @@ log_to_tmp_api(const std::string& msg)
 
 int BatchedRequest::nextId = 0;
 
+EngineStatus
+Api::buildStatus() const
+{
+  EngineStatus status;
+  uint32_t totalEntities = 0;
+  if (registry) {
+    auto view = registry->view<entt::entity>();
+    totalEntities = static_cast<uint32_t>(view.size_hint());
+    auto wlView = registry->view<WaylandApp::Component>();
+    status.set_wayland_apps(static_cast<uint32_t>(wlView.size()));
+  }
+  status.set_total_entities(totalEntities);
+  bool waylandFocus = false;
+  if (wm && registry) {
+    if (auto focused = wm->getCurrentlyFocusedApp()) {
+      if (registry->all_of<WaylandApp::Component>(*focused)) {
+        waylandFocus = true;
+      }
+    }
+  }
+  status.set_wayland_focus(waylandFocus);
+  return status;
+}
+
 Api::Api(std::string bindAddress,
          shared_ptr<EntityRegistry> registry,
          Controls* controls,
@@ -103,6 +127,18 @@ Api::ProtobufCommandServer::poll()
         // Process QUIT immediately so the display is terminated even if the
         // main mutate loop isn't ticking (e.g., in headless tests).
         api->processBatchedRequest(request);
+      } else if (apiRequest.type() == STATUS) {
+        ApiRequestResponse response;
+        response.set_requestid(request.id);
+        response.set_success(true);
+        *response.mutable_status() = api->buildStatus();
+        std::string serializedResponse;
+        response.SerializeToString(&serializedResponse);
+        zmq::message_t reply(serializedResponse.size());
+        memcpy(reply.data(), serializedResponse.c_str(), serializedResponse.size());
+        socket.send(reply, zmq::send_flags::none);
+        api->releaseBatched();
+        return;
       } else {
         batchedRequests->push(request);
       }
@@ -256,6 +292,10 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
         }
         wm->keyReplay(entries);
       }
+      break;
+    }
+    case STATUS: {
+      // STATUS requests are handled synchronously in poll().
       break;
     }
     default:
