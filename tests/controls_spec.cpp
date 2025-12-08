@@ -19,6 +19,18 @@ struct CompositorHandle {
   std::string pid;
 };
 
+static void stop_compositor(const CompositorHandle& h);
+
+struct CompositorGuard {
+  CompositorHandle handle;
+  bool active = true;
+  ~CompositorGuard() {
+    if (active && !handle.pid.empty()) {
+      stop_compositor(handle);
+    }
+  }
+};
+
 static std::optional<std::string>
 read_pidfile()
 {
@@ -271,8 +283,8 @@ stop_compositor(const CompositorHandle& h)
 
 TEST(ControlsSpec, SuperEUnfocusesWindowManager)
 {
-  auto comp = start_compositor();
-  ASSERT_FALSE(comp.pid.empty()) << "Failed to start compositor";
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
 
   // Clean logs for deterministic assertions.
   std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
@@ -291,7 +303,15 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to send focus key";
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
-  auto statusBefore = current_status();
+  std::optional<EngineStatus> statusBefore;
+  for (int i = 0; i < 60; ++i) {
+    statusBefore = current_status();
+    if (statusBefore.has_value() && statusBefore->wayland_apps() > 0 &&
+        statusBefore->has_camera_position()) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  }
   ASSERT_TRUE(statusBefore.has_value()) << "Missing engine status before unfocus";
   ASSERT_TRUE(statusBefore->has_camera_position()) << "Camera position missing from status";
 
@@ -313,8 +333,15 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   auto statusAfter = current_status();
   ASSERT_TRUE(statusAfter.has_value()) << "Missing engine status after movement";
   ASSERT_TRUE(statusAfter->has_camera_position()) << "Camera position missing after movement";
+  if (statusBefore->wayland_apps() > 0 && statusAfter->wayland_apps() > 0) {
+    EXPECT_EQ(statusAfter->wayland_apps(), statusBefore->wayland_apps())
+      << "Wayland app count changed after Super+E; foot may have crashed";
+  }
+  bool sawDestroy =
+    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "destroy", 10, 100);
+  EXPECT_FALSE(sawDestroy) << "Wayland surface was destroyed during Super+E test";
 
-  stop_compositor(comp);
+  // Let RAII guard handle shutdown to ensure cleanup even on early failures.
   EXPECT_TRUE(sawUnfocus) << "Expected WM unfocusApp log after Super+E";
   double moved = camera_distance(*statusBefore, *statusAfter);
   EXPECT_GT(moved, 0.01) << "Camera did not move after Super+E and movement keys (delta=" << moved
