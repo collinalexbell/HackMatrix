@@ -350,6 +350,11 @@ ensure_wayland_apps_registered(WlrServer* server)
                    action.app->getTextureId(),
                    action.app->getTextureUnit() - GL_TEXTURE0,
                    (void*)action.app.get());
+        if (server->engine) {
+          if (auto api = server->engine->getApi()) {
+            api->updateCachedStatus();
+          }
+        }
       } else {
         if (f) {
           std::fprintf(f,
