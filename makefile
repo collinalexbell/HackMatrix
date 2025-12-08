@@ -369,8 +369,12 @@ build/testWaylandMenuSpec.o: tests/wayland_menu_spec.cpp
 	mkdir -p build
 	g++ -std=c++20 $(FLAGS) -o build/testWaylandMenuSpec.o -c tests/wayland_menu_spec.cpp $(INCLUDES)
 
-test-wayland-menu: build/testWaylandMenuSpec.o
-	g++ -std=c++20 $(FLAGS) -o build/test-wayland-menu build/testWaylandMenuSpec.o $(ALL_OBJECTS) $(INCLUDES) $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lgtest -lgtest_main -lpthread
+build/testControlsSpec.o: tests/controls_spec.cpp
+	mkdir -p build
+	g++ -std=c++20 $(FLAGS) -o build/testControlsSpec.o -c tests/controls_spec.cpp $(INCLUDES)
+
+test-wayland-menu: build/testWaylandMenuSpec.o build/testControlsSpec.o
+	g++ -std=c++20 $(FLAGS) -o build/test-wayland-menu build/testWaylandMenuSpec.o build/testControlsSpec.o $(ALL_OBJECTS) $(INCLUDES) $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lgtest -lgtest_main -lpthread
 
 
 

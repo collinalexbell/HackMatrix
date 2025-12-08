@@ -46,4 +46,5 @@ if [ -n "$BACKEND" ]; then
 fi
 
 [ "$DELAY" -gt 0 ] && sleep "$DELAY"
-VOXEL_API_BIND=tcp://*:3345 ./matrix-wlroots "$@"
+BIN="${MATRIX_WLROOTS_BIN:-./matrix-wlroots}"
+VOXEL_API_BIND=tcp://*:3345 "$BIN" "$@"
