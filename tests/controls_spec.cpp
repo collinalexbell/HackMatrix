@@ -88,6 +88,17 @@ start_compositor()
       h.pid = *pid;
     }
   }
+  // Wait for compositor to announce startup so API is ready.
+  for (int i = 0; i < 50; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::ifstream in("/tmp/matrix-wlroots-output.log");
+    std::string line;
+    while (std::getline(in, line)) {
+      if (line.find("startup:") != std::string::npos) {
+        return h;
+      }
+    }
+  }
   return h;
 }
 
@@ -307,6 +318,14 @@ stop_compositor(const CompositorHandle& h)
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     std::string kill9 = "kill -9 " + h.pid + " >/dev/null 2>&1";
     std::system(kill9.c_str());
+    for (int i = 0; i < 50; ++i) {
+      std::string check = "kill -0 " + h.pid + " >/dev/null 2>&1";
+      int rc = std::system(check.c_str());
+      if (rc != 0) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
   } else {
     std::system("pkill -f matrix-wlroots >/dev/null 2>&1");
   }
@@ -493,6 +512,12 @@ TEST(ControlsSpec, TwoWaylandWindowsAreRegisteredAndRendered)
   std::this_thread::sleep_for(std::chrono::milliseconds(4000));
 
   // Spawn first and second foot instances.
+  for (int i = 0; i < 3; ++i) {
+    if (send_key_replay({ { "v", 0 } })) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+  }
   ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch first foot";
   ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 200, 50))
     << "First foot window never mapped";
