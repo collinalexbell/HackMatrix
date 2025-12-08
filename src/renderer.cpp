@@ -10,6 +10,7 @@
 #include "app.h"
 #include "screen.h"
 #include "components/Bootable.h"
+#include <SQLiteCpp/SQLiteCpp.h>
 #include <iostream>
 #include <vector>
 #include <glad/glad.h>
@@ -277,12 +278,8 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   shader->setBool("isVoxel", false);
   shader->setBool("voxelsEnabled", voxelsEnabled);
 
-  voxelSpace.add(glm::vec3(0, 4, 4), voxelSize);
-  voxelSpace.add(glm::vec3(voxelSize, 4, 4), voxelSize);
-  voxelSpace.add(glm::vec3(-voxelSize, 4, 4), voxelSize);
-  voxelSpace.add(glm::vec3(0, 4 + voxelSize, 4), voxelSize);
-  voxelSpace.add(glm::vec3(0, 4 - voxelSize, 4), voxelSize);
-  voxelMesh = voxelSpace.render();
+  loadVoxelsFromDb();
+  shader->setBool("voxelsEnabled", voxelsEnabled);
 
   if (isWireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe
@@ -643,6 +640,67 @@ Renderer::renderVoxels()
 }
 
 void
+Renderer::createVoxelTableIfNeeded()
+{
+  registry->getDatabase().exec(
+    "CREATE TABLE IF NOT EXISTS Voxels ("
+    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    "x REAL, y REAL, z REAL, size REAL)");
+}
+
+void
+Renderer::loadVoxelsFromDb()
+{
+  createVoxelTableIfNeeded();
+  voxelSpace.clear();
+
+  SQLite::Database& db = registry->getDatabase();
+  SQLite::Statement query(db, "SELECT x, y, z, size FROM Voxels");
+
+  bool hasRows = false;
+  while (query.executeStep()) {
+    hasRows = true;
+    float x = query.getColumn(0).getDouble();
+    float y = query.getColumn(1).getDouble();
+    float z = query.getColumn(2).getDouble();
+    float size = query.getColumn(3).getDouble();
+    voxelSpace.add(glm::vec3(x, y, z), size);
+    voxelSize = size;
+  }
+
+  if (hasRows) {
+    voxelMesh = voxelSpace.render();
+    voxelsEnabled = true;
+  } else {
+    voxelMesh = RenderedVoxelSpace();
+    voxelsEnabled = false;
+  }
+}
+
+void
+Renderer::saveVoxelsToDb()
+{
+  createVoxelTableIfNeeded();
+  SQLite::Database& db = registry->getDatabase();
+  db.exec("BEGIN TRANSACTION");
+  db.exec("DELETE FROM Voxels");
+
+  SQLite::Statement insert(db,
+                           "INSERT INTO Voxels (x, y, z, size) "
+                           "VALUES (?, ?, ?, ?)");
+  for (const auto& voxel : voxelSpace.getVoxels()) {
+    glm::vec3 pos = voxel.getPosition();
+    insert.bind(1, pos.x);
+    insert.bind(2, pos.y);
+    insert.bind(3, pos.z);
+    insert.bind(4, voxel.getSize());
+    insert.exec();
+    insert.reset();
+  }
+  db.exec("COMMIT");
+}
+
+void
 Renderer::addVoxels(const std::vector<glm::vec3>& positions,
                     bool replace,
                     float size)
@@ -656,6 +714,7 @@ Renderer::addVoxels(const std::vector<glm::vec3>& positions,
   if (positions.empty() && replace) {
     voxelMesh = RenderedVoxelSpace();
     voxelsEnabled = false;
+    saveVoxelsToDb();
     return;
   }
   for (const auto& pos : positions) {
@@ -663,6 +722,7 @@ Renderer::addVoxels(const std::vector<glm::vec3>& positions,
   }
   voxelMesh = voxelSpace.render();
   voxelsEnabled = true;
+  saveVoxelsToDb();
 }
 
 bool
@@ -862,6 +922,7 @@ Renderer::wireWindowManager(shared_ptr<WindowManager::WindowManager> wm,
 
 Renderer::~Renderer()
 {
+  saveVoxelsToDb();
   delete shader;
   for (auto& t : textures) {
     delete t.second;

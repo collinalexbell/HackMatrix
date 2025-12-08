@@ -91,6 +91,9 @@ class Renderer
   void renderDynamicObjects();
   void renderModels(RenderPerspective);
   void renderVoxels();
+  void createVoxelTableIfNeeded();
+  void loadVoxelsFromDb();
+  void saveVoxelsToDb();
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
 

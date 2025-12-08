@@ -53,6 +53,8 @@ public:
   bool has(glm::vec3 position, float size = 1.0f) const;
   RenderedVoxelSpace render() const;
   void clear();
+  const std::vector<Voxel>& getVoxels() const { return voxels; }
+  void setVoxels(std::vector<Voxel> newVoxels) { voxels = std::move(newVoxels); }
 
 private:
   std::vector<Voxel> voxels;
