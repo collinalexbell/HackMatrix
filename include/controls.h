@@ -21,7 +21,7 @@ class Controls
 {
   ControlMappings controlMappings;
   shared_ptr<blocks::TexturePack> texturePack;
-  shared_ptr<WindowManager::WindowManager> wm;
+  WindowManager::WindowManagerPtr wm;
   float windowFlop = 0.25;
   float windowFlop_dt = 0.002;
   World* world;
@@ -65,7 +65,7 @@ class Controls
   void doDeferedActions();
 
 public:
-  Controls(shared_ptr<WindowManager::WindowManager> wm,
+  Controls(WindowManager::WindowManagerPtr wm,
            World* world,
            Camera* camera,
            Renderer* renderer,

@@ -13,15 +13,12 @@
 #include "protos/api.pb.h"
 #include "world.h"
 #include "logger.h"
+#include "WindowManager/WindowManager.h"
 
 using namespace std;
 
 // Forward-declare Wayland display to avoid pulling Wayland headers here.
 struct wl_display;
-
-namespace WindowManager {
-  class WindowManager;
-}
 class Controls;
 class Renderer;
 class Api;
@@ -77,7 +74,7 @@ class Api
   };
 
   Controls* controls;
-  shared_ptr<WindowManager::WindowManager> wm;
+  WindowManager::WindowManagerPtr wm;
 
   shared_ptr<spdlog::logger> logger;
   shared_ptr<EntityRegistry> registry;
@@ -118,7 +115,7 @@ public:
       Controls* controls,
       Renderer* renderer,
       World* world,
-      shared_ptr<WindowManager::WindowManager>);
+      WindowManager::WindowManagerPtr);
   void setDisplay(wl_display* d) { display = d; }
   ~Api();
   void poll();

@@ -122,6 +122,7 @@ shared_ptr<LoggerVector> Engine::setupLogger() {
 
 Engine::Engine(GLFWwindow* window, char** envp, EngineOptions options)
   : window(window)
+  , envp(envp)
   , options(options)
   , frameTimes(20, 0.0)
 {
@@ -181,11 +182,11 @@ Engine::initializeMemberObjs()
   // Wayland-aware WM. For wlroots, matrix window is null so we skip X11 setup.
   if (window != nullptr) {
     wm = make_shared<WindowManager::WindowManager>(
-      registry, glfwGetX11Window(window), loggerSink);
+      registry, glfwGetX11Window(window), loggerSink, envp);
   } else {
     // Wayland-only path (wlroots) doesn't have a GLFW window; build a WM in
     // headless mode so we can still place/render apps.
-    wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true);
+    wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true, envp);
   }
   camera = new Camera();
   world = new World(

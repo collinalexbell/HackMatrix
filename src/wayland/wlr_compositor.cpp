@@ -20,6 +20,7 @@ extern "C" {
 #include <wlr/render/gles2.h>
 #include <wlr/render/swapchain.h>
 #include <wlr/render/wlr_renderer.h>
+#include <wlr/interfaces/wlr_keyboard.h>
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_buffer.h>
@@ -167,6 +168,7 @@ struct WlrServer {
   wlr_input_device* last_pointer_device = nullptr;
   wlr_xcursor_manager* cursor_mgr = nullptr;
   wlr_cursor* cursor = nullptr;
+  bool replaySuperActive = false;
   std::unordered_map<wlr_surface*, entt::entity> surface_map;
   std::vector<wlr_xdg_surface*> pending_surfaces;
   std::vector<PendingWlAction> pending_wl_actions;
@@ -213,6 +215,12 @@ set_default_cursor(WlrServer* server)
   server->pointer_x = server->cursor->x;
   server->pointer_y = server->cursor->y;
   log_pointer_state(server, "default_cursor");
+}
+
+static bool
+isSuperSym(xkb_keysym_t sym)
+{
+  return sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R;
 }
 
 static void
@@ -507,10 +515,41 @@ process_key_sym(WlrServer* server,
                 xkb_keysym_t sym,
                 bool pressed,
                 uint32_t time_msec,
-                uint32_t keycode = 0)
+                uint32_t keycode = 0,
+                bool update_mods = false)
 {
   if (!server) {
     return;
+  }
+
+  if (isSuperSym(sym)) {
+    server->replaySuperActive = pressed;
+  }
+  if (update_mods && keyboard) {
+    uint32_t depressed = keyboard->modifiers.depressed;
+    if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
+      if (pressed) {
+        depressed |= WLR_MODIFIER_SHIFT;
+      } else {
+        depressed &= ~WLR_MODIFIER_SHIFT;
+      }
+    }
+    if (isSuperSym(sym)) {
+      if (pressed) {
+        depressed |= WLR_MODIFIER_LOGO;
+      } else {
+        depressed &= ~WLR_MODIFIER_LOGO;
+      }
+    }
+    keyboard->modifiers.depressed = depressed;
+    wlr_keyboard_notify_modifiers(keyboard,
+                                  keyboard->modifiers.depressed,
+                                  keyboard->modifiers.latched,
+                                  keyboard->modifiers.locked,
+                                  keyboard->modifiers.group);
+    if (server->seat) {
+      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+    }
   }
 
   // Detect if a Wayland app currently has WM focus; if so, avoid feeding
@@ -527,15 +566,37 @@ process_key_sym(WlrServer* server,
     }
   }
 
-  if (sym == XKB_KEY_Escape && pressed) {
+  if (sym == XKB_KEY_Escape && pressed && !waylandFocusActive) {
     wl_display_terminate(server->display);
   }
-  if (pressed && server->engine && !waylandFocusActive) {
+  if (pressed && server->engine) {
     if (auto wm = server->engine->getWindowManager()) {
       uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
-      bool superHeld = mods & WLR_MODIFIER_LOGO;
+      bool superHeld = (mods & WLR_MODIFIER_LOGO) || server->replaySuperActive;
       bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
-      wm->handleHotkeySym(sym, superHeld, shiftHeld);
+      bool consumedHotkey = false;
+      if (superHeld && sym == XKB_KEY_E) {
+        log_to_tmp("super combo: triggered -> unfocus (pressed=%d mods=0x%x replaySuper=%d time=%u keycode=%u)\n",
+                   pressed ? 1 : 0,
+                   mods,
+                   server->replaySuperActive ? 1 : 0,
+                   time_msec,
+                   keycode);
+        wm->unfocusApp();
+        waylandFocusActive = false;
+        if (server->seat) {
+          wlr_seat_keyboard_notify_clear_focus(server->seat);
+          wlr_seat_pointer_notify_clear_focus(server->seat);
+        }
+        consumedHotkey = true;
+        server->replaySuperActive = false;
+      }
+      if (!waylandFocusActive && !consumedHotkey) {
+        wm->handleHotkeySym(sym, superHeld, shiftHeld);
+      }
+      if (consumedHotkey) {
+        return;
+      }
     }
   }
   switch (sym) {
@@ -600,36 +661,36 @@ process_key_sym(WlrServer* server,
     if (!target_surface && server->seat && server->seat->pointer_state.focused_surface) {
       target_surface = server->seat->pointer_state.focused_surface;
     }
-    if (!target_surface && server->engine) {
-      if (auto wm = server->engine->getWindowManager()) {
-        if (auto focused = wm->getCurrentlyFocusedApp()) {
-          if (server->registry &&
-              server->registry->all_of<WaylandApp::Component>(*focused)) {
-            auto& comp = server->registry->get<WaylandApp::Component>(*focused);
-            target_surface = comp.app ? comp.app->getSurface() : nullptr;
-          }
-        }
-      }
-    }
-    if (target_surface) {
-      // Keep WM focus in sync with the seat when we can map the surface.
-      if (server->engine) {
+      if (!target_surface && server->engine) {
         if (auto wm = server->engine->getWindowManager()) {
-          auto it = server->surface_map.find(target_surface);
-          if (it != server->surface_map.end()) {
-            wm->focusApp(it->second);
+          if (auto focused = wm->getCurrentlyFocusedApp()) {
+            if (server->registry &&
+                server->registry->all_of<WaylandApp::Component>(*focused)) {
+              auto& comp = server->registry->get<WaylandApp::Component>(*focused);
+              target_surface = comp.app ? comp.app->getSurface() : nullptr;
+            }
           }
         }
       }
-      wlr_seat_set_keyboard(server->seat, keyboard);
-      if (server->seat->keyboard_state.focused_surface != target_surface) {
-        wlr_seat_keyboard_notify_enter(server->seat,
-                                       target_surface,
-                                       keyboard->keycodes,
-                                       keyboard->num_keycodes,
-                                       &keyboard->modifiers);
-        wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-      }
+      if (target_surface) {
+        // Keep WM focus in sync with the seat when we can map the surface.
+        if (server->engine) {
+          if (auto wm = server->engine->getWindowManager()) {
+            auto it = server->surface_map.find(target_surface);
+            if (it != server->surface_map.end()) {
+              wm->focusApp(it->second);
+            }
+          }
+        }
+        wlr_seat_set_keyboard(server->seat, keyboard);
+        if (server->seat->keyboard_state.focused_surface != target_surface) {
+          wlr_seat_keyboard_notify_enter(server->seat,
+                                         target_surface,
+                                         keyboard->keycodes,
+                                         keyboard->num_keycodes,
+                                         &keyboard->modifiers);
+          wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+        }
       enum wl_keyboard_key_state state =
         pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
       wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
@@ -1187,9 +1248,14 @@ handle_output_frame(wl_listener* listener, void* data)
         logged_missing_keyboard = true;
       }
       auto shift_lookup = keycode_for_keysym(kbd, XKB_KEY_Shift_L);
+      auto super_lookup = keycode_for_keysym(kbd, XKB_KEY_Super_L);
       uint32_t base_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
       uint32_t step = 0;
-      for (auto sym : ready) {
+      bool pending_super = false;
+      uint32_t pending_super_keycode = 0;
+      xkb_keysym_t pending_super_sym = XKB_KEY_NoSymbol;
+      for (size_t i = 0; i < ready.size(); ++i) {
+        auto sym = ready[i];
         auto lookup = keycode_for_keysym(kbd, sym);
         if (!lookup.has_value() || lookup->keycode == 0) {
           log_to_tmp("key replay: no keycode for sym=%u\n", sym);
@@ -1202,6 +1268,17 @@ handle_output_frame(wl_listener* listener, void* data)
                    lookup->keycode,
                    hw_keycode,
                    time_msec);
+        bool is_super_sym = (sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R);
+        bool is_last = (i + 1) == ready.size();
+        if (is_super_sym && super_lookup.has_value() && !is_last) {
+          pending_super = true;
+          pending_super_keycode = hw_keycode;
+          pending_super_sym = sym;
+          process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
+          // Do not release yet; move to next symbol.
+          step += 1;
+          continue;
+        }
         if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
           uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
                                                          : shift_lookup->keycode;
@@ -1210,13 +1287,14 @@ handle_output_frame(wl_listener* listener, void* data)
                           XKB_KEY_Shift_L,
                           true,
                           time_msec,
-                          shift_hw);
+                          shift_hw,
+                          true);
           time_msec += 1;
           step += 1;
         }
-        process_key_sym(server, kbd, sym, true, time_msec, hw_keycode);
+        process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
         // Send a matching release so clients see a full key cycle.
-        process_key_sym(server, kbd, sym, false, time_msec + 1, hw_keycode);
+        process_key_sym(server, kbd, sym, false, time_msec + 1, hw_keycode, true);
         if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
           uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
                                                          : shift_lookup->keycode;
@@ -1225,10 +1303,25 @@ handle_output_frame(wl_listener* listener, void* data)
                           XKB_KEY_Shift_L,
                           false,
                           time_msec + 2,
-                          shift_hw);
+                          shift_hw,
+                          true);
           step += 1;
         }
         step += 2;
+        if (pending_super) {
+          // Release held super after the combo key to preserve modifier state.
+          process_key_sym(server,
+                          kbd,
+                          pending_super_sym,
+                          false,
+                          time_msec + 3,
+                          pending_super_keycode,
+                          true);
+          pending_super = false;
+          pending_super_keycode = 0;
+          pending_super_sym = XKB_KEY_NoSymbol;
+          step += 1;
+        }
       }
     }
   }

@@ -550,6 +550,7 @@ TEST(WaylandMenuSpec, RunsNeofetchAndCapturesOutputToFile)
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   sent = send_key_replay({
+    // neofetch > /tmp/neofetch.txt
     { "n", 50 }, { "e", 50 }, { "o", 50 }, { "f", 50 }, { "e", 50 }, { "t", 50 }, { "c", 50 }, { "h", 50 },
     { "space", 50 }, { "greater", 50 }, { "space", 50 },
     { "slash", 50 }, { "t", 50 }, { "m", 50 }, { "p", 50 }, { "slash", 50 },

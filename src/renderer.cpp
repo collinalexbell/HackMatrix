@@ -1197,7 +1197,7 @@ Renderer::toggleMeshing()
 }
 
 void
-Renderer::wireWindowManager(shared_ptr<WindowManager::WindowManager> wm,
+Renderer::wireWindowManager(WindowManager::WindowManagerPtr wm,
                             shared_ptr<WindowManager::Space> windowManagerSpace)
 {
   this->wm = wm;

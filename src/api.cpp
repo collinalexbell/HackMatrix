@@ -75,7 +75,7 @@ Api::Api(std::string bindAddress,
          Controls* controls,
          Renderer* renderer,
          World* world,
-         shared_ptr<WindowManager::WindowManager> wm)
+         WindowManager::WindowManagerPtr wm)
   : registry(registry)
   , controls(controls)
   , renderer(renderer)

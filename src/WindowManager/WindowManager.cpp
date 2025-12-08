@@ -300,7 +300,7 @@ void WindowManager::captureInput() {
 }
 
 void
-WindowManager::wire(shared_ptr<WindowManager> sharedThis,
+WindowManager::wire(WindowManagerPtr sharedThis,
                     Camera* camera,
                     Renderer* renderer)
 {

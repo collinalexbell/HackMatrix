@@ -31,8 +31,9 @@ class Engine
   Renderer* renderer;
   Controls* controls;
   Camera* camera;
-  shared_ptr<WindowManager::WindowManager> wm;
+  WindowManager::WindowManagerPtr wm;
   GLFWwindow* window;
+  char** envp = nullptr;
   EngineOptions options;
   std::vector<double> frameTimes;
   int frameIndex = 0;
@@ -57,7 +58,8 @@ public:
   shared_ptr<EntityRegistry> getRegistry();
   Camera* getCamera() { return camera; }
   Renderer* getRenderer() { return renderer; }
-  std::shared_ptr<WindowManager::WindowManager> getWindowManager() { return wm; }
+  Api* getApi() { return api; }
+  std::shared_ptr<WindowManager::WindowManagerInterface> getWindowManager() { return wm; }
   void wire();
   void loop();
   void frame(double frameStart);

@@ -77,7 +77,7 @@ class Renderer
   Camera* camera = NULL;
   World* world = NULL;
   shared_ptr<WindowManager::Space> windowManagerSpace;
-  shared_ptr<WindowManager::WindowManager> wm;
+  WindowManager::WindowManagerPtr wm;
 
   unsigned int emacsID;
 
@@ -140,9 +140,10 @@ public:
   void deregisterApp(int index);
   void reloadChunk();
   void screenshot();
+  void screenshotFromCurrentFramebuffer(int width, int height);
   void toggleMeshing();
   void toggleWireframe();
-  void wireWindowManager(shared_ptr<WindowManager::WindowManager>, shared_ptr<WindowManager::Space>);
+  void wireWindowManager(WindowManager::WindowManagerPtr, shared_ptr<WindowManager::Space>);
   void addVoxels(const std::vector<glm::vec3>& positions,
                  bool replace = false,
                  float size = 1.0f,
