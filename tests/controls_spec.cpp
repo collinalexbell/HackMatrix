@@ -11,6 +11,7 @@
 #include <zmq/zmq.hpp>
 #include "protos/api.pb.h"
 #include "WindowManager/WindowManager.h"
+#include <cmath>
 
 namespace {
 
@@ -161,6 +162,76 @@ send_key_replay(const std::vector<std::pair<std::string, uint32_t>>& entries)
   return false;
 }
 
+static bool fetch_status(ApiRequestResponse* out)
+{
+  if (!out) {
+    return false;
+  }
+  const char* addr = std::getenv("VOXEL_API_ADDR_FOR_TEST");
+  std::string endpoint = addr ? addr : "tcp://127.0.0.1:3345";
+  for (int attempt = 0; attempt < 10; ++attempt) {
+    try {
+      zmq::context_t ctx(1);
+      zmq::socket_t sock(ctx, zmq::socket_type::req);
+      sock.set(zmq::sockopt::rcvtimeo, 500);
+      sock.set(zmq::sockopt::sndtimeo, 500);
+      sock.set(zmq::sockopt::linger, 100);
+      sock.connect(endpoint);
+
+      ApiRequest req;
+      req.set_entityid(0);
+      req.set_type(MessageType::STATUS);
+      std::string data;
+      if (!req.SerializeToString(&data)) {
+        return false;
+      }
+      zmq::message_t msg(data.size());
+      memcpy(msg.data(), data.data(), data.size());
+      if (!sock.send(msg, zmq::send_flags::none)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        continue;
+      }
+      zmq::message_t reply;
+      auto res = sock.recv(reply, zmq::recv_flags::none);
+      if (!res.has_value()) {
+        continue;
+      }
+      if (!out->ParseFromArray(reply.data(), reply.size())) {
+        return false;
+      }
+      return true;
+    } catch (...) {
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  }
+  return false;
+}
+
+static std::optional<EngineStatus>
+current_status()
+{
+  ApiRequestResponse resp;
+  if (!fetch_status(&resp) || !resp.has_status()) {
+    return std::nullopt;
+  }
+  return resp.status();
+}
+
+static double
+camera_distance(const EngineStatus& a, const EngineStatus& b)
+{
+  if (!a.has_camera_position() || !b.has_camera_position()) {
+    return 0.0;
+  }
+  double dx = static_cast<double>(a.camera_position().x()) -
+              static_cast<double>(b.camera_position().x());
+  double dy = static_cast<double>(a.camera_position().y()) -
+              static_cast<double>(b.camera_position().y());
+  double dz = static_cast<double>(a.camera_position().z()) -
+              static_cast<double>(b.camera_position().z());
+  return std::sqrt(dx * dx + dy * dy + dz * dz);
+}
+
 static void
 stop_compositor(const CompositorHandle& h)
 {
@@ -220,6 +291,10 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to send focus key";
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
+  auto statusBefore = current_status();
+  ASSERT_TRUE(statusBefore.has_value()) << "Missing engine status before unfocus";
+  ASSERT_TRUE(statusBefore->has_camera_position()) << "Camera position missing from status";
+
   // Super+E should unfocus via WM and log.
   bool sent = send_key_replay({ { "Super_L", 0 }, { "e", 50 } });
   ASSERT_TRUE(sent) << "Failed to send Super+E via key replay";
@@ -227,8 +302,21 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   // Only wait briefly; the unfocus log should be immediate if the combo worked.
   bool sawUnfocus =
     wait_for_log_contains("/tmp/matrix-wlroots-wm.log", "WM: unfocusApp", 20, 100);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  // Try to move the camera via WASD-style input; movement only occurs when WM focus is cleared.
+  ASSERT_TRUE(send_key_replay(
+                { { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 } }))
+    << "Failed to send movement keys";
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+  auto statusAfter = current_status();
+  ASSERT_TRUE(statusAfter.has_value()) << "Missing engine status after movement";
+  ASSERT_TRUE(statusAfter->has_camera_position()) << "Camera position missing after movement";
 
   stop_compositor(comp);
   EXPECT_TRUE(sawUnfocus) << "Expected WM unfocusApp log after Super+E";
+  double moved = camera_distance(*statusBefore, *statusAfter);
+  EXPECT_GT(moved, 0.01) << "Camera did not move after Super+E and movement keys (delta=" << moved
+                         << ")";
 }

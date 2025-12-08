@@ -141,6 +141,13 @@ struct PendingWlAction {
   wlr_surface* surface = nullptr;
 };
 
+struct ReplayKeyRelease {
+  xkb_keysym_t sym = XKB_KEY_NoSymbol;
+  uint32_t release_time_msec = 0;
+  uint32_t keycode = 0;
+  bool update_mods = false;
+};
+
 struct WlrServer {
   wl_display* display = nullptr;
   wlr_backend* backend = nullptr;
@@ -169,6 +176,10 @@ struct WlrServer {
   wlr_xcursor_manager* cursor_mgr = nullptr;
   wlr_cursor* cursor = nullptr;
   bool replaySuperActive = false;
+  bool pendingReplaySuper = false;
+  uint32_t pendingReplaySuperKeycode = 0;
+  xkb_keysym_t pendingReplaySuperSym = XKB_KEY_NoSymbol;
+  std::vector<ReplayKeyRelease> pendingReplayKeyups;
   std::unordered_map<wlr_surface*, entt::entity> surface_map;
   std::vector<wlr_xdg_surface*> pending_surfaces;
   std::vector<PendingWlAction> pending_wl_actions;
@@ -524,6 +535,11 @@ process_key_sym(WlrServer* server,
 
   if (isSuperSym(sym)) {
     server->replaySuperActive = pressed;
+    log_to_tmp("super combo: super key state pressed=%d replaySuper=%d time=%u keycode=%u\n",
+               pressed ? 1 : 0,
+               server->replaySuperActive ? 1 : 0,
+               time_msec,
+               keycode);
   }
   if (update_mods && keyboard) {
     uint32_t depressed = keyboard->modifiers.depressed;
@@ -575,7 +591,16 @@ process_key_sym(WlrServer* server,
       bool superHeld = (mods & WLR_MODIFIER_LOGO) || server->replaySuperActive;
       bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
       bool consumedHotkey = false;
-      if (superHeld && sym == XKB_KEY_E) {
+      if (pressed && (sym == XKB_KEY_e || sym == XKB_KEY_E)) {
+        log_to_tmp("super combo: state pressed mods=0x%x replaySuper=%d superHeld=%d waylandFocus=%d time=%u keycode=%u\n",
+                   mods,
+                   server->replaySuperActive ? 1 : 0,
+                   superHeld ? 1 : 0,
+                   waylandFocusActive ? 1 : 0,
+                   time_msec,
+                   keycode);
+      }
+      if (superHeld && (sym == XKB_KEY_E || sym == XKB_KEY_e)) {
         log_to_tmp("super combo: triggered -> unfocus (pressed=%d mods=0x%x replaySuper=%d time=%u keycode=%u)\n",
                    pressed ? 1 : 0,
                    mods,
@@ -695,6 +720,31 @@ process_key_sym(WlrServer* server,
         pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
       wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
       wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+    }
+  }
+}
+
+static void
+flush_pending_replay_keyups(WlrServer* server,
+                            wlr_keyboard* keyboard,
+                            uint32_t now_msec)
+{
+  if (!server || server->pendingReplayKeyups.empty()) {
+    return;
+  }
+  auto it = server->pendingReplayKeyups.begin();
+  while (it != server->pendingReplayKeyups.end()) {
+    if (now_msec >= it->release_time_msec) {
+      process_key_sym(server,
+                      keyboard,
+                      it->sym,
+                      false,
+                      now_msec,
+                      it->keycode,
+                      it->update_mods);
+      it = server->pendingReplayKeyups.erase(it);
+    } else {
+      ++it;
     }
   }
 }
@@ -1235,6 +1285,7 @@ handle_output_frame(wl_listener* listener, void* data)
       uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                           std::chrono::steady_clock::now().time_since_epoch())
                           .count();
+      uint32_t now_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
       auto ready = wm->consumeReadyReplaySyms(now_ms);
       wlr_keyboard* kbd = nullptr;
       if (server->last_keyboard_device) {
@@ -1242,6 +1293,7 @@ handle_output_frame(wl_listener* listener, void* data)
       } else if (server->seat && server->seat->keyboard_state.keyboard) {
         kbd = server->seat->keyboard_state.keyboard;
       }
+      flush_pending_replay_keyups(server, kbd, now_msec);
       static bool logged_missing_keyboard = false;
       if (!kbd && !logged_missing_keyboard) {
         log_to_tmp("key replay: no keyboard device available for injection\n");
@@ -1249,11 +1301,9 @@ handle_output_frame(wl_listener* listener, void* data)
       }
       auto shift_lookup = keycode_for_keysym(kbd, XKB_KEY_Shift_L);
       auto super_lookup = keycode_for_keysym(kbd, XKB_KEY_Super_L);
-      uint32_t base_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
+      uint32_t base_msec = now_msec;
       uint32_t step = 0;
-      bool pending_super = false;
-      uint32_t pending_super_keycode = 0;
-      xkb_keysym_t pending_super_sym = XKB_KEY_NoSymbol;
+      constexpr uint32_t kReplayHoldMs = 16;
       for (size_t i = 0; i < ready.size(); ++i) {
         auto sym = ready[i];
         auto lookup = keycode_for_keysym(kbd, sym);
@@ -1270,10 +1320,12 @@ handle_output_frame(wl_listener* listener, void* data)
                    time_msec);
         bool is_super_sym = (sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R);
         bool is_last = (i + 1) == ready.size();
-        if (is_super_sym && super_lookup.has_value() && !is_last) {
-          pending_super = true;
-          pending_super_keycode = hw_keycode;
-          pending_super_sym = sym;
+        bool replay_has_future = wm->hasPendingReplay();
+        if (is_super_sym && super_lookup.has_value() &&
+            (replay_has_future || !is_last)) {
+          server->pendingReplaySuper = true;
+          server->pendingReplaySuperKeycode = hw_keycode;
+          server->pendingReplaySuperSym = sym;
           process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
           // Do not release yet; move to next symbol.
           step += 1;
@@ -1293,35 +1345,43 @@ handle_output_frame(wl_listener* listener, void* data)
           step += 1;
         }
         process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
-        // Send a matching release so clients see a full key cycle.
-        process_key_sym(server, kbd, sym, false, time_msec + 1, hw_keycode, true);
+        uint32_t release_time = time_msec + kReplayHoldMs;
+        server->pendingReplayKeyups.push_back(
+          { sym, release_time, hw_keycode, true });
         if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
           uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
                                                          : shift_lookup->keycode;
-          process_key_sym(server,
-                          kbd,
-                          XKB_KEY_Shift_L,
-                          false,
-                          time_msec + 2,
-                          shift_hw,
-                          true);
+          server->pendingReplayKeyups.push_back(
+            { XKB_KEY_Shift_L, release_time + 1, shift_hw, true });
           step += 1;
         }
         step += 2;
-        if (pending_super) {
+        if (server->pendingReplaySuper && !is_super_sym) {
           // Release held super after the combo key to preserve modifier state.
           process_key_sym(server,
                           kbd,
-                          pending_super_sym,
+                          server->pendingReplaySuperSym,
                           false,
                           time_msec + 3,
-                          pending_super_keycode,
+                          server->pendingReplaySuperKeycode,
                           true);
-          pending_super = false;
-          pending_super_keycode = 0;
-          pending_super_sym = XKB_KEY_NoSymbol;
+          server->pendingReplaySuper = false;
+          server->pendingReplaySuperKeycode = 0;
+          server->pendingReplaySuperSym = XKB_KEY_NoSymbol;
           step += 1;
         }
+      }
+      if (server->pendingReplaySuper && !wm->hasPendingReplay()) {
+        process_key_sym(server,
+                        kbd,
+                        server->pendingReplaySuperSym,
+                        false,
+                        base_msec + step + 1,
+                        server->pendingReplaySuperKeycode,
+                        true);
+        server->pendingReplaySuper = false;
+        server->pendingReplaySuperKeycode = 0;
+        server->pendingReplaySuperSym = XKB_KEY_NoSymbol;
       }
     }
   }

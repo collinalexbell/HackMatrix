@@ -770,6 +770,9 @@ void WindowManager::focusApp(entt::entity appEntity) {
 
 void WindowManager::unfocusApp() {
   if (waylandMode) {
+    auto ent = currentlyFocusedApp.has_value() ? (int)entt::to_integral(*currentlyFocusedApp)
+                                               : -1;
+    WL_WM_LOG("WM: unfocusApp (wayland) ent=%d\n", ent);
     currentlyFocusedApp = std::nullopt;
     return;
   }
@@ -778,6 +781,8 @@ void WindowManager::unfocusApp() {
     auto &app = registry->get<X11App>(currentlyFocusedApp.value());
     app.unfocus(matrix);
     currentlyFocusedApp = std::nullopt;
+    WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n",
+              (int)entt::to_integral(currentlyFocusedApp.value()));
   }
 }
 

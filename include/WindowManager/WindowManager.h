@@ -64,6 +64,7 @@ public:
   virtual void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld) = 0;
   virtual void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries) = 0;
   virtual std::vector<xkb_keysym_t> consumeReadyReplaySyms(uint64_t now_ms) = 0;
+  virtual bool hasPendingReplay() const = 0;
   virtual bool consumeScreenshotRequest() = 0;
   virtual void requestScreenshot() = 0;
   virtual entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
@@ -160,6 +161,7 @@ public:
   void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld) override;
   void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries) override;
   std::vector<xkb_keysym_t> consumeReadyReplaySyms(uint64_t now_ms) override;
+  bool hasPendingReplay() const override { return replayActive; }
   bool consumeScreenshotRequest() override;
   void requestScreenshot() override;
   // Wayland-only: register a surface-backed app through the WM for placement

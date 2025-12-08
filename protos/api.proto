@@ -68,6 +68,7 @@ message EngineStatus {
   uint32 total_entities = 1;
   uint32 wayland_apps = 2;
   bool wayland_focus = 3;
+  Vector camera_position = 4;
 }
 
 message Move {

@@ -67,6 +67,14 @@ Api::buildStatus() const
     }
   }
   status.set_wayland_focus(waylandFocus);
+  if (renderer) {
+    if (auto* camera = renderer->getCamera()) {
+      auto* pos = status.mutable_camera_position();
+      pos->set_x(camera->position.x);
+      pos->set_y(camera->position.y);
+      pos->set_z(camera->position.z);
+    }
+  }
   return status;
 }
 
