@@ -100,8 +100,8 @@ public:
   int getHeight() const override { return height; }
   std::array<int, 2> getPosition() const override { return { x, y }; }
   glm::mat4 getHeightScalar() const override { return heightScalar; }
-  int getTextureId() const { return textureId; }
-  int getTextureUnit() const { return textureUnit; }
+  int getTextureId() const override { return textureId; }
+  int getTextureUnit() const override { return textureUnit; }
   wlr_surface* getSurface() const { return surface; }
 
   std::string getWindowName() override { return title; }

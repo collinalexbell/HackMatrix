@@ -139,6 +139,7 @@ WaylandApp::handle_commit(wlr_surface* surface)
           surface->current.height);
   wlr_buffer_lock(buf);
   pending_buffer = buf;
+  sampleLogged = false;
 
   width = surface->current.width;
   height = surface->current.height;
@@ -200,23 +201,6 @@ WaylandApp::appTexture()
         std::fflush(logFile);
         lastW = width;
         lastH = height;
-      }
-      if (!sampleLogged) {
-        const uint8_t* raw = static_cast<const uint8_t*>(data);
-        uint8_t r0 = raw[0], g0 = raw[1], b0 = raw[2], a0 = raw[3];
-        bool ok = (width > 0 && height > 0) && (r0 | g0 | b0 | a0);
-        std::fprintf(logFile,
-                     "wayland-app: sample size=%dx%d fmt=%u firstPixel=(%u,%u,%u,%u) ok=%d\n",
-                     width,
-                     height,
-                     format,
-                     r0,
-                     g0,
-                     b0,
-                     a0,
-                     ok ? 1 : 0);
-        std::fflush(logFile);
-        sampleLogged = true;
       }
     }
     // Convert to RGBA8 if the format isn't directly supported in GLES2.
@@ -360,6 +344,31 @@ WaylandApp::appTexture()
         const uint8_t* dst = converted.data() + y * dstStride + (width / 2) * 4;
         centerPixel = (uint32_t(dst[0]) << 24) | (uint32_t(dst[1]) << 16) |
                       (uint32_t(dst[2]) << 8) | uint32_t(dst[3]);
+      }
+    }
+
+    if (logSamplesEnabled() && !sampleLogged) {
+      FILE* logFile = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
+      if (logFile) {
+        uint8_t firstR = static_cast<uint8_t>((firstPixel >> 24) & 0xFF);
+        uint8_t firstG = static_cast<uint8_t>((firstPixel >> 16) & 0xFF);
+        uint8_t firstB = static_cast<uint8_t>((firstPixel >> 8) & 0xFF);
+        uint8_t firstA = static_cast<uint8_t>(firstPixel & 0xFF);
+        bool ok = (firstR | firstG | firstB | firstA | centerPixel) != 0;
+        std::fprintf(logFile,
+                     "wayland-app: sample firstPixel=(%u,%u,%u,%u) center=%x size=%dx%d fmt=%u ok=%d\n",
+                     firstR,
+                     firstG,
+                     firstB,
+                     firstA,
+                     centerPixel,
+                     width,
+                     height,
+                     format,
+                     ok ? 1 : 0);
+        std::fflush(logFile);
+        std::fclose(logFile);
+        sampleLogged = true;
       }
     }
 

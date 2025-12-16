@@ -97,6 +97,8 @@ public:
   size_t getAppIndex() const override { return appIndex; }
   int getWidth() const override { return width; }
   int getHeight() const override { return height; }
+  int getTextureId() const override { return textureId; }
+  int getTextureUnit() const override { return textureUnit; }
   glm::mat4 getHeightScalar() const override { return heightScalar; }
   void select() override;
   void deselect() override;

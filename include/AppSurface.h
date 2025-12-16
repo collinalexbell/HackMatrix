@@ -28,6 +28,8 @@ public:
   virtual int getHeight() const = 0;
   virtual std::array<int, 2> getPosition() const = 0;
   virtual glm::mat4 getHeightScalar() const = 0;
+  virtual int getTextureId() const = 0;
+  virtual int getTextureUnit() const = 0;
 
   virtual std::string getWindowName() = 0;
   virtual int getPID() = 0;
