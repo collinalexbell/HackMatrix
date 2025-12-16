@@ -108,6 +108,7 @@ public:
   int getPID() override { return 0; }
 
   size_t getAppIndex() const override { return appIndex; }
+  void close();
 
 private:
   void handle_commit(wlr_surface* surface);

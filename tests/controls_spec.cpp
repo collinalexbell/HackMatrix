@@ -205,14 +205,14 @@ send_key_replay(const std::vector<std::pair<std::string, uint32_t>>& entries)
   return false;
 }
 
-static bool fetch_status(ApiRequestResponse* out)
+static bool fetch_status(ApiRequestResponse* out, int attempts = 10, int sleepMs = 200)
 {
   if (!out) {
     return false;
   }
   const char* addr = std::getenv("VOXEL_API_ADDR_FOR_TEST");
   std::string endpoint = addr ? addr : "tcp://127.0.0.1:3345";
-  for (int attempt = 0; attempt < 10; ++attempt) {
+  for (int attempt = 0; attempt < attempts; ++attempt) {
     try {
       zmq::context_t ctx(1);
       zmq::socket_t sock(ctx, zmq::socket_type::req);
@@ -231,7 +231,7 @@ static bool fetch_status(ApiRequestResponse* out)
       zmq::message_t msg(data.size());
       memcpy(msg.data(), data.data(), data.size());
       if (!sock.send(msg, zmq::send_flags::none)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
         continue;
       }
       zmq::message_t reply;
@@ -260,19 +260,37 @@ static bool fetch_status(ApiRequestResponse* out)
       return true;
     } catch (...) {
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
   }
   return false;
 }
 
 static std::optional<EngineStatus>
-current_status()
+current_status(int attempts = 10, int sleepMs = 200)
 {
   ApiRequestResponse resp;
-  if (!fetch_status(&resp) || !resp.has_status()) {
+  if (!fetch_status(&resp, attempts, sleepMs) || !resp.has_status()) {
     return std::nullopt;
   }
   return resp.status();
+}
+
+static std::optional<EngineStatus>
+wait_for_wayland_count(uint32_t expectedCount,
+                       int tries,
+                       int sleepMs,
+                       int statusAttempts = 5,
+                       int statusSleepMs = 100)
+{
+  std::optional<EngineStatus> st;
+  for (int i = 0; i < tries; ++i) {
+    st = current_status(statusAttempts, statusSleepMs);
+    if (st && st->wayland_apps() == expectedCount) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
+  }
+  return st;
 }
 
 static double
@@ -431,6 +449,42 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   double moved = camera_distance(*statusBefore, *statusAfter);
   EXPECT_GT(moved, 0.01) << "Camera did not move after Super+E and movement keys (delta=" << moved
                          << ")";
+}
+
+TEST(ControlsSpec, SuperQClosesWaylandApp)
+{
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-wm.log", std::ios::trunc).close();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 200, 50))
+    << "Foot window never mapped before Super+Q";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before Super+Q";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+  auto statusBefore = current_status();
+  ASSERT_TRUE(statusBefore.has_value()) << "Engine status unavailable before Super+Q";
+  EXPECT_GT(statusBefore->wayland_apps(), 0u) << "No Wayland apps registered before Super+Q";
+
+  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "q", 50 } }))
+    << "Failed to send Super+Q via key replay";
+
+  bool sawRemove = wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                         "wayland app remove (deferred)",
+                                         200,
+                                         50);
+  EXPECT_TRUE(sawRemove) << "Wayland app removal was not logged after Super+Q";
+
+  bool sawDestroy = wait_for_log_contains("/tmp/matrix-wlroots-output.log", "destroy", 120, 50) ||
+                    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "destroyed", 120, 50);
+  EXPECT_TRUE(sawDestroy) << "Wayland surface destroy log missing after Super+Q";
 }
 
 TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)

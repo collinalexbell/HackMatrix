@@ -91,6 +91,14 @@ WaylandApp::handle_destroy()
 }
 
 void
+WaylandApp::close()
+{
+  if (xdg_toplevel) {
+    wlr_xdg_toplevel_send_close(xdg_toplevel);
+  }
+}
+
+void
 WaylandApp::takeInputFocus()
 {
   focused = true;

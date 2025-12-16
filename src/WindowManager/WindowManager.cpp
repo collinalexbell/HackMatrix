@@ -469,12 +469,21 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shift
       break;
     case XKB_KEY_q:
     case XKB_KEY_Q:
-      // Close-on-Super+Q is only supported for X11 apps; for Wayland we just unfocus.
-      unfocusApp();
-      if (!waylandMode && currentlyFocusedApp.has_value()) {
-        auto& app = registry->get<X11App>(currentlyFocusedApp.value());
-        app.close();
+      if (currentlyFocusedApp.has_value()) {
+        if (waylandMode) {
+          if (auto* comp = registry->try_get<WaylandApp::Component>(currentlyFocusedApp.value())) {
+            WL_WM_LOG("WM: hotkey close wayland ent=%d\n",
+                      (int)entt::to_integral(currentlyFocusedApp.value()));
+            if (comp->app) {
+              comp->app->close();
+            }
+          }
+        } else {
+          auto& app = registry->get<X11App>(currentlyFocusedApp.value());
+          app.close();
+        }
       }
+      unfocusApp();
       break;
     case XKB_KEY_0:
       unfocusApp();

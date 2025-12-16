@@ -373,12 +373,18 @@ ensure_wayland_apps_registered(WlrServer* server)
         }
         server->surface_map.erase(it);
       }
+      if (server->engine) {
+        if (auto api = server->engine->getApi()) {
+          api->forceUpdateCachedStatus();
+        }
+      }
       if (f) {
         std::fprintf(f,
                      "wayland app remove (deferred): surface=%p\n",
                      (void*)action.surface);
         std::fflush(f);
       }
+      log_to_tmp("wayland app remove (deferred): surface=%p\n", (void*)action.surface);
     } else {
       if (f) {
         std::fprintf(f,
@@ -1049,6 +1055,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
       log_to_tmp("wayland deferred remove queued (unmap): surface=%p app=%p\n",
                  (void*)handle->surface,
                  (void*)handle->app.get());
+      ensure_wayland_apps_registered(handle->server);
     }
   };
   wl_signal_add(&xdg_surface->surface->events.unmap, &handle->unmap);
@@ -1062,6 +1069,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
       log_to_tmp("wayland deferred remove queued (destroy): surface=%p app=%p\n",
                  (void*)surf,
                  (void*)handle->app.get());
+      ensure_wayland_apps_registered(handle->server);
     }
     wl_list_remove(&handle->destroy.link);
     wl_list_remove(&handle->commit.link);
