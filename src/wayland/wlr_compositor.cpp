@@ -322,25 +322,9 @@ ensure_wayland_apps_registered(WlrServer* server)
         // route to the client when it appears.
         if (server->engine) {
           if (auto wm = server->engine->getWindowManager()) {
-            auto focused = wm->getCurrentlyFocusedApp();
-            bool focusedValid =
-              focused.has_value() && server->registry &&
-              server->registry->valid(*focused);
-            if (focused.has_value() && !focusedValid) {
-              // Drop stale focus so we don't treat a destroyed app as selected.
-              wm->unfocusApp();
-              focused = std::nullopt;
-            }
-            bool seatTargetsSurface =
-              server->seat &&
-              server->seat->keyboard_state.focused_surface == action.surface;
-            // Only sync focus when the seat already targets this surface; avoid
-            // automatically selecting brand-new apps on creation.
-            if (seatTargetsSurface) {
-              wm->focusApp(entity);
-              if (comp && comp->app) {
-                comp->app->takeInputFocus();
-              }
+            wm->focusApp(entity);
+            if (comp && comp->app) {
+              comp->app->takeInputFocus();
             }
           }
         }
