@@ -518,15 +518,39 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
   int appHeight = app->getHeight();
   auto pos = app->getPosition();
   auto fbIt = frameBuffers.find(index);
+
+  auto logRenderAppDirect = [&](const char* status, int destX, int destY) {
+    FILE* rlog = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+    if (!rlog) {
+      return;
+    }
+    std::fprintf(rlog,
+                 "Renderer: renderAppDirect status=%s appNumber=%d texId=%d texUnit=%d dest=(%d,%d) size=%dx%d direct=1 bootable=%d\n",
+                 status,
+                 index,
+                 app->getTextureId(),
+                 app->getTextureUnit() - GL_TEXTURE0,
+                 destX,
+                 destY,
+                 appWidth,
+                 appHeight,
+                 bootable ? 1 : 0);
+    std::fflush(rlog);
+    std::fclose(rlog);
+  };
+
   if (fbIt == frameBuffers.end()) {
+    logRenderAppDirect("missing-fbo", pos[0], pos[1]);
     return;
   }
+
   if (index >= 0) {
     if (!bootable) {
       GLint prevReadFbo = 0;
       GLint prevDrawFbo = 0;
       glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
       glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);
+      logRenderAppDirect("blit", pos[0], pos[1]);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, fbIt->second);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
       glBlitFramebuffer(
@@ -539,19 +563,19 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
         // dest x1,y1,x2,y2
         pos[0],
         pos[1],
-    pos[0] + appWidth,
-    pos[1] + appHeight,
-    GL_COLOR_BUFFER_BIT,
-    GL_NEAREST);
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
-} else {
-  glActiveTexture(GL_TEXTURE0 + index);
-  auto texIt = textures.find("app" + std::to_string(index));
-  if (texIt != textures.end()) {
-    glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
-  }
-  shader->setInt("app0", index);
-  shader->setInt("appNumber", index);
+        pos[0] + appWidth,
+        pos[1] + appHeight,
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST);
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
+    } else {
+      glActiveTexture(GL_TEXTURE0 + index);
+      auto texIt = textures.find("app" + std::to_string(index));
+      if (texIt != textures.end()) {
+        glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
+      }
+      shader->setInt("app0", index);
+      shader->setInt("appNumber", index);
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
       static int x = -1;
@@ -573,7 +597,7 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
                     0));
 
         model = glm::scale(model,
-                           glm::vec3((float)appWidth / ((float)screenWidth),
+          glm::vec3((float)appWidth / ((float)screenWidth),
 
                                      (float)appHeight / ((float)screenHeight),
                                      1));
@@ -581,6 +605,7 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
         x = bootable->x;
         y = bootable->y;
       }
+      logRenderAppDirect("bootable", bootable->x, bootable->y);
       shader->setBool("appTransparent", bootable->transparent);
       shader->setMatrix4("model", model);
       glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -866,6 +891,22 @@ Renderer::renderApps()
                    sx,
                    sy);
 #endif
+      // Always emit a direct-render marker for tests.
+      {
+        FILE* drlog = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+        if (drlog) {
+          std::fprintf(drlog,
+                       "Renderer: Wayland direct ent=%d appNumber=%zu texId=%d texUnit=%d screenScale=(%.3f,%.3f)\n",
+                       (int)entity,
+                       app->getAppIndex(),
+                       app->getTextureId(),
+                       app->getTextureUnit() - GL_TEXTURE0,
+                       sx,
+                       sy);
+          std::fflush(drlog);
+          std::fclose(drlog);
+        }
+      }
       glBindVertexArray(DIRECT_RENDER_VAO);
       glDisable(GL_DEPTH_TEST);
       glDrawArrays(GL_TRIANGLES, 0, 6);

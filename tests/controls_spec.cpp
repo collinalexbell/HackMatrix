@@ -2,7 +2,9 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
@@ -439,6 +441,7 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
   // Clean logs.
   std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
   std::ofstream("/tmp/matrix-wlroots-wm.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-renderer.log", std::ios::trunc).close();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(4000));
 
@@ -483,6 +486,8 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
 
   // Verify we hopped across at least two hotkey indices via compositor log.
   std::set<int> indices;
+  std::vector<int> hotkeyIdxSeen;
+  const std::vector<int> expectedHotkeySequence{ 0, 1, 0 };
   {
     std::ifstream in("/tmp/matrix-wlroots-output.log");
     std::string line;
@@ -493,12 +498,101 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
         try {
           int idx = std::stoi(sub);
           indices.insert(idx);
+          hotkeyIdxSeen.push_back(idx);
         } catch (...) {
         }
       }
     }
   }
   EXPECT_GE(indices.size(), 2u) << "Expected hotkey cycling to hit at least two indices";
+  EXPECT_GE(hotkeyIdxSeen.size(), expectedHotkeySequence.size())
+    << "Did not see all expected super hotkey presses in compositor log";
+  size_t wmUnfocusCount = 0;
+  std::map<int, int> wmHotkeyFocus;
+  {
+    std::ifstream wmLog("/tmp/matrix-wlroots-wm.log");
+    std::string line;
+    while (std::getline(wmLog, line)) {
+      if (line.find("unfocusApp") != std::string::npos) {
+        ++wmUnfocusCount;
+      }
+      auto pos = line.find("WM: hotkey focus idx=");
+      if (pos != std::string::npos) {
+        try {
+          int idx = std::stoi(line.substr(pos + strlen("WM: hotkey focus idx=")));
+          int ent = -1;
+          auto entPos = line.find("ent=", pos);
+          if (entPos != std::string::npos) {
+            ent = std::stoi(line.substr(entPos + strlen("ent=")));
+          }
+          wmHotkeyFocus[idx] = ent;
+        } catch (...) {
+        }
+      }
+    }
+  }
+  EXPECT_GE(wmUnfocusCount, hotkeyIdxSeen.size())
+    << "WindowManager did not log unfocus for each hotkey press";
+  // Dump render log to ensure renderer saw the apps; useful when cycling fails visually.
+  std::ifstream rlog("/tmp/matrix-wlroots-renderer.log");
+  ASSERT_TRUE(rlog.good()) << "Renderer log missing after hotkey cycle";
+  if (rlog.good()) {
+    std::string rline;
+    size_t wlEntries = 0;
+    bool sawDirect = false;
+    std::map<int, size_t> directCounts;
+    std::map<int, size_t> directByEntity;
+    while (std::getline(rlog, rline)) {
+      if (rline.find("Renderer: Wayland") != std::string::npos) {
+        ++wlEntries;
+      }
+      auto appPos = rline.find("appNumber=");
+      if (appPos != std::string::npos) {
+        auto appStr = rline.substr(appPos + strlen("appNumber="));
+        try {
+          int appNum = std::stoi(appStr);
+          if (rline.find("renderAppDirect") != std::string::npos ||
+              rline.find("Wayland direct") != std::string::npos) {
+            ++directCounts[appNum];
+          }
+        } catch (...) {
+        }
+      }
+      auto entPos = rline.find("ent=");
+      if (entPos != std::string::npos &&
+          (rline.find("Wayland direct") != std::string::npos ||
+           rline.find("renderAppDirect") != std::string::npos)) {
+        try {
+          int ent = std::stoi(rline.substr(entPos + strlen("ent=")));
+          ++directByEntity[ent];
+        } catch (...) {
+        }
+      }
+      if ((rline.find("direct=") != std::string::npos &&
+           rline.find("direct=1") != std::string::npos) ||
+          rline.find("Wayland direct ent=") != std::string::npos ||
+          rline.find("renderAppDirect") != std::string::npos) {
+        sawDirect = true;
+      }
+    }
+    EXPECT_GT(wlEntries, 0u) << "Renderer log missing Wayland entries during hotkey test";
+    if (!wmHotkeyFocus.empty()) {
+      for (int idx : indices) {
+        ASSERT_TRUE(wmHotkeyFocus.count(idx))
+          << "WM log missing hotkey focus entry for idx=" << idx;
+        int ent = wmHotkeyFocus[idx];
+        EXPECT_GT(directByEntity[ent], 0u)
+          << "Renderer log missing direct render for focused ent " << ent
+          << " (hotkey idx=" << idx << ")";
+      }
+    } else {
+      for (int idx : indices) {
+        EXPECT_GT(directCounts[idx], 0u)
+          << "Renderer log missing direct render entry for hotkey idx=" << idx;
+      }
+    }
+    EXPECT_TRUE(sawDirect) << "Renderer log did not show direct render of focused app";
+  }
 }
 
 TEST(ControlsSpec, TwoWaylandWindowsAreRegisteredAndRendered)
