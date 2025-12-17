@@ -289,8 +289,9 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
                    bool invertY)
   : texturePack(texturePack)
   , registry(registry)
-  , appIndexPool(IndexPool(9))
+  , appIndexPool(IndexPool(8))
   , invertY(invertY)
+  , appTexturesInitialized(false)
 {
   this->camera = camera;
   this->world = world;
@@ -363,6 +364,17 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
 void
 Renderer::initAppTextures()
 {
+  if (appTexturesInitialized) {
+    if constexpr (kWlrootsDebugLogs) {
+      static FILE* logFile = []() {
+        FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
+        return f ? f : stderr;
+      }();
+      std::fprintf(logFile, "initAppTextures: already initialized, skipping\n");
+      std::fflush(logFile);
+    }
+    return;
+  }
   GLint maxUnits = 0;
   // Fragment shader texture units; use these to stay GLES-compatible.
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxUnits);
@@ -370,16 +382,18 @@ Renderer::initAppTextures()
     maxUnits = 8;
   }
   // Keep a small pool to avoid exhausting units (GLES2 often has 8).
-  int appTextures = std::min(4, maxUnits);
-  appIndexPool = IndexPool(appTextures);
+  appTextureCount = std::min(4, maxUnits);
+  // Ensure pool starts at the same capacity it was constructed with to avoid
+  // silently growing on re-init.
+  appIndexPool = IndexPool(std::max(1, appTextureCount - 1));
   if constexpr (kWlrootsDebugLogs) {
     static FILE* logFile = []() {
       FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
       return f ? f : stderr;
     }();
-    std::fprintf(logFile, "initAppTextures: maxUnits=%d appTextures=%d\n", maxUnits, appTextures);
+    std::fprintf(logFile, "initAppTextures: maxUnits=%d appTextures=%d\n", maxUnits, appTextureCount);
   }
-  for (int index = 0; index < appTextures; index++) {
+  for (int index = 0; index < appTextureCount; index++) {
     int textureN = index;
     int textureUnit = GL_TEXTURE0 + index; // dedicate a unit per app slot
     string textureName = "app" + to_string(index);
@@ -402,6 +416,7 @@ Renderer::initAppTextures()
     static FILE* logFile = wlroots_renderer_log();
     std::fflush(logFile);
   }
+  appTexturesInitialized = true;
 }
 
 void
@@ -717,27 +732,112 @@ Renderer::renderChunkMesh()
 void
 Renderer::renderApps()
 {
-#ifdef ENABLE_RENDER_TMP_LOGS
+  auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
+  // Unconditional logging here to diagnose Wayland focus/unfocus draw issues.
   static FILE* logFile = []() {
     FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
     return f ? f : stderr;
   }();
   static std::unordered_set<void*> loggedApps;
-#endif
+  auto wlPositionable =
+    registry->view<WaylandApp::Component, Positionable>(entt::exclude<Bootable>);
+  size_t wlCount = wlPositionable.size_hint();
+  if (logFile) {
+    int focusedEnt = -1;
+    if (wm && wm->getCurrentlyFocusedApp().has_value()) {
+      focusedEnt = (int)entt::to_integral(wm->getCurrentlyFocusedApp().value());
+    }
+    int lookedEnt = -1;
+    if (lookedAtAppEntity.has_value()) {
+      lookedEnt = (int)entt::to_integral(lookedAtAppEntity.value());
+    }
+    std::fprintf(logFile,
+                 "renderer: frame start focused=%d looked=%d\n",
+                 focusedEnt,
+                 lookedEnt);
+    GLint vaoBound = 0;
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vaoBound);
+    GLint fboBound = 0;
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fboBound);
+    GLint prog = 0;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
+    std::fprintf(logFile,
+                 "renderer: vaoBound=%d fbo=%d program=%d countWayland=%zu\n",
+                 vaoBound,
+                 fboBound,
+                 prog,
+                 wlCount);
+    std::fflush(logFile);
+  }
   TracyGpuZone("render apps");
-  auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
   shader->setBool("appSelected", false);
 
   shader->setBool("isApp", true);
+  shader->setBool("directRender", false);
   glBindVertexArray(APP_VAO);
+  // Defensive: ensure app quad attributes are enabled/bound even if VAO state
+  // was clobbered by other GL paths.
+  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(
+    1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
   glDisable(GL_CULL_FACE);
+  if (logFile) {
+    GLint vaoBound = 0;
+    GLint arrayBuffer = 0;
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vaoBound);
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &arrayBuffer);
+    auto logAttribState = [&](int idx) {
+      GLint enabled = 0;
+      GLint buf = 0;
+      void* ptr = nullptr;
+      glGetVertexAttribiv(idx, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
+      glGetVertexAttribiv(idx, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &buf);
+      glGetVertexAttribPointerv(idx, GL_VERTEX_ATTRIB_ARRAY_POINTER, &ptr);
+      std::fprintf(logFile,
+                   "renderer: attrib%d enabled=%d buf=%d ptr=%p\n",
+                   idx,
+                   enabled,
+                   buf,
+                   ptr);
+    };
+    std::fprintf(logFile,
+                 "renderer: vao state pre-apps vaoBound=%d arrayBuffer=%d\n",
+                 vaoBound,
+                 arrayBuffer);
+    logAttribState(0);
+    logAttribState(1);
+    std::fflush(logFile);
+  }
   auto bindAppTexture = [&](int index) {
     auto it = textures.find("app" + std::to_string(index));
-    if (it != textures.end()) {
+    if (it != textures.end() && it->second && glIsTexture(it->second->ID)) {
       glActiveTexture(GL_TEXTURE0 + index);
       glBindTexture(GL_TEXTURE_2D, it->second->ID);
     }
-    shader->setInt("appNumber", index);
+    // Fallback to app0 if index is out of range or texture missing.
+    int appIdx = index;
+    if (index < 0 || index >= appTextureCount ||
+        it == textures.end() || !it->second || !glIsTexture(it->second->ID)) {
+      auto it0 = textures.find("app0");
+      if (it0 != textures.end() && it0->second && glIsTexture(it0->second->ID)) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, it0->second->ID);
+        appIdx = 0;
+      }
+    }
+    shader->setInt("appNumber", appIdx);
+    if (logFile) {
+      std::fprintf(logFile,
+                   "renderer: bindAppTexture reqIdx=%d boundIdx=%d texId=%d\n",
+                   index,
+                   appIdx,
+                   (textures.count("app" + std::to_string(appIdx)) ?
+                      textures["app" + std::to_string(appIdx)]->ID : -1));
+      std::fflush(logFile);
+    }
   };
 
   // this is LEGACY for msedge
@@ -812,8 +912,6 @@ Renderer::renderApps()
   }
 
   // Wayland apps: render any that were registered by the wlroots backend.
-  auto wlPositionable =
-    registry->view<WaylandApp::Component, Positionable>(entt::exclude<Bootable>);
   for (auto [entity, comp, positionable] : wlPositionable.each()) {
     auto* app = comp.app.get();
     if (!app) {
@@ -852,21 +950,89 @@ Renderer::renderApps()
     int idx = static_cast<int>(app->getAppIndex());
     bindAppTexture(idx);
     app->appTexture();
-    shader->setMatrix4("model", positionable.modelMatrix);
-    shader->setMatrix4("bootableScale", app->getHeightScalar());
+    // Scale the in-world quad to the app's pixel size relative to the current
+    // screen so the non-direct path matches what we present in direct render.
+    float sx = static_cast<float>(app->getWidth()) /
+               static_cast<float>(SCREEN_WIDTH);
+    float sy = static_cast<float>(app->getHeight()) /
+               static_cast<float>(SCREEN_HEIGHT);
+    glm::mat4 model = positionable.modelMatrix;
+    model = glm::scale(model, glm::vec3(sx, sy, 1.0f));
+    shader->setMatrix4("model", model);
+    shader->setMatrix4("bootableScale", glm::mat4(1.0f));
     shader->setInt("appNumber", idx);
     shader->setBool("appTransparent", false);
+    if (logFile) {
+      bool isFocused =
+        wm && wm->getCurrentlyFocusedApp().has_value() &&
+        wm->getCurrentlyFocusedApp().value() == entity;
+      bool isLooked = lookedAtAppEntity.has_value() && lookedAtAppEntity.value() == entity;
+      GLboolean texValid = glIsTexture(app->getTextureId());
+      glm::vec4 center = model * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+      glm::vec4 clip = camera->getProjectionMatrix(true) *
+                       camera->getViewMatrix() * center;
+      float ndcX = clip.w != 0.0f ? clip.x / clip.w : 0.0f;
+      float ndcY = clip.w != 0.0f ? clip.y / clip.w : 0.0f;
+      float ndcZ = clip.w != 0.0f ? clip.z / clip.w : 0.0f;
+      std::fprintf(logFile,
+                   "renderer: wl draw ent=%d appIdx=%d focused=%d looked=%d texId=%d texUnit=%d modelPos=(%.2f,%.2f,%.2f) modelRow0=(%.2f,%.2f,%.2f,%.2f) modelRow1=(%.2f,%.2f,%.2f,%.2f) modelRow2=(%.2f,%.2f,%.2f,%.2f) modelRow3=(%.2f,%.2f,%.2f,%.2f) scale=(%.3f,%.3f) texValid=%d center=(%.2f,%.2f,%.2f,%.2f) ndc=(%.2f,%.2f,%.2f)\n",
+                   (int)entity,
+                   idx,
+                   isFocused ? 1 : 0,
+                   isLooked ? 1 : 0,
+                   app->getTextureId(),
+                   app->getTextureUnit() - GL_TEXTURE0,
+                   positionable.modelMatrix[3][0],
+                   positionable.modelMatrix[3][1],
+                   positionable.modelMatrix[3][2],
+                   model[0][0],
+                   model[0][1],
+                   model[0][2],
+                   model[0][3],
+                   model[1][0],
+                   model[1][1],
+                   model[1][2],
+                   model[1][3],
+                   model[2][0],
+                   model[2][1],
+                   model[2][2],
+                   model[2][3],
+                   model[3][0],
+                   model[3][1],
+                   model[3][2],
+                   model[3][3],
+                   sx,
+                   sy,
+                   texValid,
+                   center.x,
+                   center.y,
+                   center.z,
+                   center.w,
+                   ndcX,
+                   ndcY,
+                   ndcZ);
+      std::fflush(logFile);
+    }
 #ifdef ENABLE_RENDER_TMP_LOGS
     std::fprintf(logFile,
-                 "Renderer: Wayland in-world ent=%d appNumber=%zu texId=%d texUnit=%d size=%dx%d\n",
+                 "Renderer: Wayland in-world ent=%d appNumber=%zu texId=%d texUnit=%d size=%dx%d screenScale=(%.3f,%.3f)\n",
                  (int)entity,
                  app->getAppIndex(),
                  app->getTextureId(),
                  app->getTextureUnit() - GL_TEXTURE0,
                  app->getWidth(),
-                 app->getHeight());
+                 app->getHeight(),
+                 sx,
+                 sy);
 #endif
     glDrawArrays(GL_TRIANGLES, 0, 6);
+    if (logFile) {
+      GLenum err = glGetError();
+      if (err != GL_NO_ERROR) {
+        std::fprintf(logFile, "renderer: gl error after wl draw ent=%d err=0x%x\n", (int)entity, err);
+        std::fflush(logFile);
+      }
+    }
     // If focused, also draw directly to screen to ensure visibility.
     if (wm && wm->getCurrentlyFocusedApp().has_value() &&
         wm->getCurrentlyFocusedApp().value() == entity) {
@@ -908,21 +1074,38 @@ Renderer::renderApps()
         }
       }
       glBindVertexArray(DIRECT_RENDER_VAO);
+      GLboolean depthMask = GL_TRUE;
+      glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
       glDisable(GL_DEPTH_TEST);
+      glDepthMask(GL_FALSE); // avoid clobbering depth for in-world apps
       glDrawArrays(GL_TRIANGLES, 0, 6);
+      glDepthMask(depthMask);
       glEnable(GL_DEPTH_TEST);
       shader->setBool("directRender", false);
+      // Restore model matrix/VAO for subsequent in-world draws.
       shader->setMatrix4("model", positionable.modelMatrix);
-    }
+      glBindVertexArray(APP_VAO);
 #ifdef ENABLE_RENDER_TMP_LOGS
-    if (loggedApps.insert((void*)app).second) {
+      if (logFile) {
+        GLint vaoBound = 0;
+        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vaoBound);
+        std::fprintf(logFile,
+                     "renderer: post-direct restore ent=%d vaoBound=%d\n",
+                     (int)entity,
+                     vaoBound);
+        std::fflush(logFile);
+      }
+#endif
+    }
+    if (logFile && loggedApps.insert((void*)app).second) {
       std::fprintf(logFile,
-                   "renderer: first render Wayland app size=%dx%d\n",
+                   "renderer: first render Wayland app size=%dx%d texId=%d unit=%d\n",
                    app->getWidth(),
-                   app->getHeight());
+                   app->getHeight(),
+                   app->getTextureId(),
+                   app->getTextureUnit() - GL_TEXTURE0);
       std::fflush(logFile);
     }
-#endif
   }
 
   shader->setBool("isApp", false);
