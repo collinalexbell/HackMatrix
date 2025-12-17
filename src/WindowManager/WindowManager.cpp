@@ -314,9 +314,35 @@ WindowManager::wire(WindowManagerPtr sharedThis,
   this->camera = camera;
 }
 
-  optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {
+optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {
     return currentlyFocusedApp;
  }
+
+void WindowManager::moveCameraToApp(entt::entity ent, const char* reasonTag) {
+  if (!space || !camera) {
+    return;
+  }
+  glm::vec3 targetPos = camera->position;
+  glm::vec3 facing = camera->front;
+
+  if (registry->all_of<Positionable>(ent)) {
+    float deltaZ = space->getViewDistanceForWindowSize(ent);
+    glm::vec3 rotationDegrees = space->getAppRotation(ent);
+    glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
+
+    glm::vec3 appPos = space->getAppPosition(ent);
+    targetPos = appPos + rotationQuat * glm::vec3(0, 0, deltaZ);
+    facing = rotationQuat * glm::vec3(0, 0, -1);
+
+    WL_WM_LOG("WM: %s ent=%d pos=(%.2f,%.2f,%.2f) camPos=(%.2f,%.2f,%.2f) targetPos=(%.2f,%.2f,%.2f)\n",
+              reasonTag ? reasonTag : "moveCameraToApp",
+              (int)entt::to_integral(ent),
+              appPos.x, appPos.y, appPos.z,
+              camera->position.x, camera->position.y, camera->position.z,
+              targetPos.x, targetPos.y, targetPos.z);
+  }
+  camera->moveTo(targetPos, facing, 0.5f);
+}
 
 void WindowManager::goToLookedAtApp() {
   if (!space || !camera) {
@@ -326,27 +352,7 @@ void WindowManager::goToLookedAtApp() {
   if (!looked) {
     return;
   }
-  auto ent = looked.value();
-  glm::vec3 targetPos = camera->position;
-  glm::vec3 facing = camera->front;
-  if (registry->all_of<Positionable>(ent)) {
-    // Match the X11 app navigation flow: stand back from the surface based on
-    // its size and face the surface-normal derived from its rotation.
-    float deltaZ = space->getViewDistanceForWindowSize(ent);
-    glm::vec3 rotationDegrees = space->getAppRotation(ent);
-    glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
-
-    glm::vec3 appPos = space->getAppPosition(ent);
-    targetPos = appPos + rotationQuat * glm::vec3(0, 0, deltaZ);
-    facing = rotationQuat * glm::vec3(0, 0, -1);
-
-    WL_WM_LOG("WM: goToLookedAtApp ent=%d pos=(%.2f,%.2f,%.2f) camPos=(%.2f,%.2f,%.2f) targetPos=(%.2f,%.2f,%.2f)\n",
-              (int)entt::to_integral(ent),
-              appPos.x, appPos.y, appPos.z,
-              camera->position.x, camera->position.y, camera->position.z,
-              targetPos.x, targetPos.y, targetPos.z);
-  }
-  camera->moveTo(targetPos, facing, 0.5f);
+  moveCameraToApp(looked.value(), "goToLookedAtApp");
 }
 
 void WindowManager::addApp(X11App *app, entt::entity entity) {
@@ -462,6 +468,22 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shift
                   index,
                   (int)entt::to_integral(ent));
         controls->goToApp(ent);
+      } else if (appsWithHotKeys[index].has_value()) {
+        auto ent = appsWithHotKeys[index].value();
+        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d (no controls)\n",
+                  index,
+                  (int)entt::to_integral(ent));
+        currentlyFocusedApp = ent;
+        // Nudge Wayland focus if available so renderer direct path picks it up.
+        if (registry && waylandMode &&
+            registry->all_of<WaylandApp::Component>(ent)) {
+          if (auto* comp = registry->try_get<WaylandApp::Component>(ent)) {
+            if (comp->app) {
+              comp->app->takeInputFocus();
+            }
+          }
+        }
+        moveCameraToApp(ent, "hotkey focus");
       }
     }
   };

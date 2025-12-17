@@ -135,6 +135,7 @@ class WindowManager : public WindowManagerInterface
   void pruneInvalidFocus();
   void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
+  void moveCameraToApp(entt::entity ent, const char* reasonTag = "moveCameraToApp");
   int findAppsHotKey(entt::entity theApp);
   std::vector<ReplayEvent> replayQueue;
   size_t replayIndex = 0;
