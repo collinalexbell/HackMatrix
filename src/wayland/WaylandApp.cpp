@@ -11,6 +11,8 @@ extern "C" {
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_seat.h>
 }
+#include <signal.h>
+#include <unistd.h>
 #include <drm_fourcc.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <EGL/egl.h>
@@ -48,6 +50,9 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
   this->xdg_toplevel = xdg_surface->toplevel;
   this->surface = xdg_surface->surface;
   this->title = xdg_toplevel && xdg_toplevel->title ? xdg_toplevel->title : "wayland-app";
+  if (surface && surface->resource && surface->resource->client) {
+    wl_client_get_credentials(surface->resource->client, &clientPid, nullptr, nullptr);
+  }
 
   surface_commit.notify = [](wl_listener* listener, void* data) {
     auto* self = wl_container_of(listener, static_cast<WaylandApp*>(nullptr), surface_commit);
@@ -95,6 +100,11 @@ WaylandApp::close()
 {
   if (xdg_toplevel) {
     wlr_xdg_toplevel_send_close(xdg_toplevel);
+  }
+  if (clientPid > 0) {
+    kill(clientPid, SIGTERM);
+    // In case the client ignores SIGTERM, follow up with SIGKILL.
+    kill(clientPid, SIGKILL);
   }
 }
 

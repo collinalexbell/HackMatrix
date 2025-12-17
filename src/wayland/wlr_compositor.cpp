@@ -362,6 +362,11 @@ ensure_wayland_apps_registered(WlrServer* server)
       if (it != server->surface_map.end()) {
         entt::entity e = it->second;
         if (server->registry && server->registry->valid(e)) {
+          if (auto wm = server->engine ? server->engine->getWindowManager() : nullptr) {
+            if (auto focused = wm->getCurrentlyFocusedApp(); focused && *focused == e) {
+              wm->unfocusApp();
+            }
+          }
           if (auto* renderer = server->engine->getRenderer()) {
             if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {
               if (comp->app) {

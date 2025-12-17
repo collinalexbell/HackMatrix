@@ -435,6 +435,9 @@ int WindowManager::findAppsHotKey(entt::entity theApp)
 
 void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld)
 {
+  pruneInvalidFocus();
+  auto focused = currentlyFocusedApp;
+
   // Screenshot hotkey works without modifiers to align with user-facing key.
   if (sym == XKB_KEY_p || sym == XKB_KEY_P) {
     requestScreenshot();
@@ -469,17 +472,17 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shift
       break;
     case XKB_KEY_q:
     case XKB_KEY_Q:
-      if (currentlyFocusedApp.has_value()) {
+      if (focused.has_value()) {
         if (waylandMode) {
-          if (auto* comp = registry->try_get<WaylandApp::Component>(currentlyFocusedApp.value())) {
+          if (auto* comp = registry->try_get<WaylandApp::Component>(*focused)) {
             WL_WM_LOG("WM: hotkey close wayland ent=%d\n",
-                      (int)entt::to_integral(currentlyFocusedApp.value()));
+                      (int)entt::to_integral(*focused));
             if (comp->app) {
               comp->app->close();
             }
           }
         } else {
-          auto& app = registry->get<X11App>(currentlyFocusedApp.value());
+          auto& app = registry->get<X11App>(*focused);
           app.close();
         }
       }
@@ -510,6 +513,7 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shift
 }
 
 void WindowManager::onHotkeyPress(XKeyEvent event) {
+  pruneInvalidFocus();
   KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
   KeyCode qKeyCode = XKeysymToKeycode(display, XK_q);
   KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
@@ -782,6 +786,7 @@ void WindowManager::focusApp(entt::entity appEntity) {
 }
 
 void WindowManager::unfocusApp() {
+  pruneInvalidFocus();
   if (waylandMode) {
     auto ent = currentlyFocusedApp.has_value() ? (int)entt::to_integral(*currentlyFocusedApp)
                                                : -1;
@@ -795,12 +800,33 @@ void WindowManager::unfocusApp() {
     return;
   }
   logger->debug("unfocusing app");
-  if (currentlyFocusedApp.has_value()) {
-    auto &app = registry->get<X11App>(currentlyFocusedApp.value());
-    app.unfocus(matrix);
+  if (!currentlyFocusedApp.has_value()) {
+    return;
+  }
+  auto ent = currentlyFocusedApp.value();
+  if (!registry || !registry->valid(ent)) {
     currentlyFocusedApp = std::nullopt;
-    WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n",
-              (int)entt::to_integral(currentlyFocusedApp.value()));
+    return;
+  }
+  auto& app = registry->get<X11App>(ent);
+  app.unfocus(matrix);
+  currentlyFocusedApp = std::nullopt;
+  WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n", (int)entt::to_integral(ent));
+}
+
+void WindowManager::pruneInvalidFocus()
+{
+  if (!registry) {
+    currentlyFocusedApp = std::nullopt;
+    return;
+  }
+  if (currentlyFocusedApp && !registry->valid(*currentlyFocusedApp)) {
+    currentlyFocusedApp = std::nullopt;
+  }
+  for (auto& opt : appsWithHotKeys) {
+    if (opt && !registry->valid(*opt)) {
+      opt = std::nullopt;
+    }
   }
 }
 

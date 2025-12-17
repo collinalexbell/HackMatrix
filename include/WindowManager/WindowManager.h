@@ -132,6 +132,7 @@ class WindowManager : public WindowManagerInterface
   void logWaitForRemovalChangeSize(int changeSize);
   void adjustAppsToAddAfterAdditions(vector<X11App*>& waitForRemoval);
   void setWMProps(Window root);
+  void pruneInvalidFocus();
   void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
   int findAppsHotKey(entt::entity theApp);

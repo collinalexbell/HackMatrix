@@ -42,6 +42,7 @@ class WaylandApp : public AppSurface {
   size_t appIndex = 0;
   int x = 0;
   int y = 0;
+  int clientPid = -1;
   int uploadedWidth = 0;
   int uploadedHeight = 0;
   bool sampleLogged = false;
@@ -105,7 +106,7 @@ public:
   wlr_surface* getSurface() const { return surface; }
 
   std::string getWindowName() override { return title; }
-  int getPID() override { return 0; }
+  int getPID() override { return clientPid; }
 
   size_t getAppIndex() const override { return appIndex; }
   void close();
