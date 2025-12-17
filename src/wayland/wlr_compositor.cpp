@@ -361,16 +361,6 @@ ensure_wayland_apps_registered(WlrServer* server)
         renderer->registerApp(action.app.get());
         server->surface_map[action.surface] = entity;
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
-        // Keep WM focus aligned with the newly mapped Wayland surface so keys
-        // route to the client when it appears.
-        if (server->engine) {
-          if (auto wm = server->engine->getWindowManager()) {
-            wm->focusApp(entity);
-            if (comp && comp->app) {
-              comp->app->takeInputFocus();
-            }
-          }
-        }
         if (f) {
           std::fprintf(f,
                        "wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
@@ -650,6 +640,7 @@ process_key_sym(WlrServer* server,
   // Detect if a Wayland app currently has WM focus; if so, avoid feeding
   // movement/game controls so keys pass through to the client.
   bool waylandFocusActive = false;
+  bool blockClientDelivery = false;
   if (server->engine) {
     if (auto wm = server->engine->getWindowManager()) {
       if (auto focused = wm->getCurrentlyFocusedApp()) {
@@ -769,6 +760,7 @@ process_key_sym(WlrServer* server,
       if (pressed && server->engine && !waylandFocusActive) {
         if (auto wm = server->engine->getWindowManager()) {
           wm->focusLookedAtApp();
+          blockClientDelivery = true; // consume focus hotkey
         }
       }
       break;
@@ -794,6 +786,9 @@ process_key_sym(WlrServer* server,
     wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", sym, pressed ? 1 : 0);
   }
 
+  if (blockClientDelivery) {
+    return;
+  }
   if (server->seat && keyboard && time_msec != 0) {
     // Deliver to the seat-focused surface if it maps to a Wayland app; otherwise fall
     // back to the WM-focused Wayland app.
@@ -818,7 +813,7 @@ process_key_sym(WlrServer* server,
           if (auto wm = server->engine->getWindowManager()) {
             auto it = server->surface_map.find(target_surface);
             if (it != server->surface_map.end()) {
-              wm->focusApp(it->second);
+              // Do not force WM focus here; explicit hotkeys handle focus.
             }
           }
         }

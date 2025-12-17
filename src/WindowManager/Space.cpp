@@ -119,7 +119,7 @@ Intersection intersectLineAndPlane(glm::vec3 linePos, glm::vec3 lineDir,
 }
 
 optional<entt::entity> Space::getLookedAtApp() {
-  float DIST_LIMIT = 1.5;
+  float DIST_LIMIT = 2.5;
   float height = 0.74;
   float width = 1.0;
   auto checkHit = [&](entt::entity entity, Positionable& positionable) -> optional<entt::entity> {

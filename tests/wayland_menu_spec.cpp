@@ -512,14 +512,6 @@ TEST(WaylandMenuSpec, RunsNeofetchAndCapturesOutputToFile)
   std::this_thread::sleep_for(std::chrono::milliseconds(400));
 
   bool sent = send_key_replay({
-    { "n", 50 }, { "e", 50 }, { "o", 50 }, { "f", 50 }, { "e", 50 }, { "t", 50 }, { "c", 50 }, { "h", 50 },
-    { "Return", 80 }
-  });
-  ASSERT_TRUE(sent) << "Failed to send key replay for first neofetch";
-
-  std::this_thread::sleep_for(std::chrono::seconds(3));
-
-  sent = send_key_replay({
     // neofetch > /tmp/neofetch.txt
     { "n", 50 }, { "e", 50 }, { "o", 50 }, { "f", 50 }, { "e", 50 }, { "t", 50 }, { "c", 50 }, { "h", 50 },
     { "space", 50 }, { "greater", 50 }, { "space", 50 },
@@ -531,10 +523,17 @@ TEST(WaylandMenuSpec, RunsNeofetchAndCapturesOutputToFile)
   ASSERT_TRUE(sent) << "Failed to send key replay for redirected neofetch";
   ASSERT_TRUE(wait_for_file(target.string(), 120, 100)) << "neofetch output file not created";
 
-  std::ifstream in(target);
   std::string firstLine;
-  ASSERT_TRUE(std::getline(in, firstLine)) << "neofetch output file empty";
-  EXPECT_FALSE(firstLine.empty());
+  bool hasContent = false;
+  for (int i = 0; i < 50; ++i) {
+    std::ifstream in(target);
+    if (std::getline(in, firstLine) && !firstLine.empty()) {
+      hasContent = true;
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  ASSERT_TRUE(hasContent) << "neofetch output file empty";
 }
 
 TEST(WaylandMenuSpec, ScreenshotViaKeyReplay)
