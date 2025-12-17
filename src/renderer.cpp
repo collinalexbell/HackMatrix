@@ -589,7 +589,6 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
       if (texIt != textures.end()) {
         glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
       }
-      shader->setInt("app0", index);
       shader->setInt("appNumber", index);
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
@@ -813,31 +812,27 @@ Renderer::renderApps()
   }
   auto bindAppTexture = [&](int index) {
     auto it = textures.find("app" + std::to_string(index));
-    if (it != textures.end() && it->second && glIsTexture(it->second->ID)) {
-      glActiveTexture(GL_TEXTURE0 + index);
-      glBindTexture(GL_TEXTURE_2D, it->second->ID);
-    }
-    // Fallback to app0 if index is out of range or texture missing.
-    int appIdx = index;
     if (index < 0 || index >= appTextureCount ||
         it == textures.end() || !it->second || !glIsTexture(it->second->ID)) {
-      auto it0 = textures.find("app0");
-      if (it0 != textures.end() && it0->second && glIsTexture(it0->second->ID)) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, it0->second->ID);
-        appIdx = 0;
+      if (logFile) {
+        std::fprintf(logFile,
+                     "renderer: bindAppTexture skip idx=%d (missing/invalid)\n",
+                     index);
+        std::fflush(logFile);
       }
+      return false;
     }
-    shader->setInt("appNumber", appIdx);
+    glActiveTexture(GL_TEXTURE0 + index);
+    glBindTexture(GL_TEXTURE_2D, it->second->ID);
+    shader->setInt("appNumber", index);
     if (logFile) {
       std::fprintf(logFile,
-                   "renderer: bindAppTexture reqIdx=%d boundIdx=%d texId=%d\n",
+                   "renderer: bindAppTexture idx=%d texId=%d\n",
                    index,
-                   appIdx,
-                   (textures.count("app" + std::to_string(appIdx)) ?
-                      textures["app" + std::to_string(appIdx)]->ID : -1));
+                   it->second->ID);
       std::fflush(logFile);
     }
+    return true;
   };
 
   // this is LEGACY for msedge
@@ -845,7 +840,9 @@ Renderer::renderApps()
     registry->view<X11App, Positionable>(entt::exclude<Bootable>);
   for (auto [entity, app, positionable] : positionableNonBootable.each()) {
     int idx = static_cast<int>(app.getAppIndex());
-    bindAppTexture(idx);
+    if (!bindAppTexture(idx)) {
+      continue;
+    }
     shader->setMatrix4("model", positionable.modelMatrix);
 
     // OPTIMIZATION
@@ -858,7 +855,9 @@ Renderer::renderApps()
   auto positionableApps = registry->view<X11App, Positionable, Bootable>();
   for (auto [entity, app, positionable, bootable] : positionableApps.each()) {
     int idx = static_cast<int>(app.getAppIndex());
-    bindAppTexture(idx);
+    if (!bindAppTexture(idx)) {
+      continue;
+    }
     shader->setMatrix4("model", positionable.modelMatrix);
     shader->setMatrix4("bootableScale", bootable.getHeightScaler());
     if (app.isSelected()) {
@@ -900,14 +899,18 @@ Renderer::renderApps()
   auto directRenderBlits =
     registry->view<X11App>(entt::exclude<Positionable, Bootable>);
   for (auto [entity, directApp] : directRenderBlits.each()) {
-    bindAppTexture(static_cast<int>(directApp.getAppIndex()));
+    if (!bindAppTexture(static_cast<int>(directApp.getAppIndex()))) {
+      continue;
+    }
     drawAppDirect(&directApp);
   }
 
   auto directRenderNonBlits =
     registry->view<X11App, Bootable>(entt::exclude<Positionable>);
   for (auto [entity, directApp, bootable] : directRenderNonBlits.each()) {
-    bindAppTexture(static_cast<int>(directApp.getAppIndex()));
+    if (!bindAppTexture(static_cast<int>(directApp.getAppIndex()))) {
+      continue;
+    }
     drawAppDirect(&directApp, &bootable);
   }
 
@@ -951,8 +954,9 @@ Renderer::renderApps()
     // Upload latest buffer and bind to the app's dedicated unit to avoid stale
     // or shared textures when multiple Wayland apps are present.
     app->appTexture();
-    glActiveTexture(app->getTextureUnit());
-    glBindTexture(GL_TEXTURE_2D, app->getTextureId());
+    if (!bindAppTexture(idx)) {
+      continue;
+    }
     // Scale the in-world quad to the app's pixel size relative to the current
     // screen so the non-direct path matches what we present in direct render.
     float sx = static_cast<float>(app->getWidth()) /
@@ -1039,8 +1043,9 @@ Renderer::renderApps()
     // If focused, also draw directly to screen to ensure visibility.
     if (wm && wm->getCurrentlyFocusedApp().has_value() &&
         wm->getCurrentlyFocusedApp().value() == entity) {
-      bindAppTexture(idx);
-      shader->setInt("app0", idx);
+      if (!bindAppTexture(idx)) {
+        continue;
+      }
       shader->setBool("directRender", true);
       shader->setInt("appNumber", idx);
       glm::mat4 model = glm::mat4(1.0f);
