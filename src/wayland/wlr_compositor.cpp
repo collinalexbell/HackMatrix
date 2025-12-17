@@ -361,6 +361,10 @@ ensure_wayland_apps_registered(WlrServer* server)
         renderer->registerApp(action.app.get());
         server->surface_map[action.surface] = entity;
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
+        // Request a default window size that matches the X11 defaults.
+        if (comp && comp->app) {
+          comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
+        }
         if (f) {
           std::fprintf(f,
                        "wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",

@@ -126,7 +126,8 @@ parseInlineEnvXdg(const std::string& program)
 
 void WindowManager::menu() {
   auto program = menuProgram;
-  char** envForChild = envp ? envp : environ;
+  // Use current environment so we capture updated WAYLAND_DISPLAY/XDG_RUNTIME_DIR.
+  char** envForChild = environ;
   std::string runtimeDir = parseInlineEnvXdg(program);
   std::string waylandDisplay = getEnv("WAYLAND_DISPLAY", envForChild);
   if (runtimeDir.empty()) {

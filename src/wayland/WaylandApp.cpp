@@ -109,6 +109,18 @@ WaylandApp::close()
 }
 
 void
+WaylandApp::requestSize(int width, int height)
+{
+  if (xdg_toplevel && width > 0 && height > 0) {
+    wlr_xdg_toplevel_set_size(xdg_toplevel, width, height);
+    // Trigger a configure so the client applies the size.
+    if (xdg_surface) {
+      wlr_xdg_surface_schedule_configure(xdg_surface);
+    }
+  }
+}
+
+void
 WaylandApp::takeInputFocus()
 {
   focused = true;

@@ -78,6 +78,7 @@ public:
   void focus(unsigned long /*matrix*/) override { focused = true; }
   void unfocus(unsigned long /*matrix*/) override { focused = false; }
   void takeInputFocus() override;
+  void requestSize(int width, int height);
   void setSeat(wlr_seat* seat, wlr_surface* surface)
   {
     this->seat = seat;
