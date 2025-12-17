@@ -948,8 +948,11 @@ Renderer::renderApps()
     }
 #endif
     int idx = static_cast<int>(app->getAppIndex());
-    bindAppTexture(idx);
+    // Upload latest buffer and bind to the app's dedicated unit to avoid stale
+    // or shared textures when multiple Wayland apps are present.
     app->appTexture();
+    glActiveTexture(app->getTextureUnit());
+    glBindTexture(GL_TEXTURE_2D, app->getTextureId());
     // Scale the in-world quad to the app's pixel size relative to the current
     // screen so the non-direct path matches what we present in direct render.
     float sx = static_cast<float>(app->getWidth()) /
