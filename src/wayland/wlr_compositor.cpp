@@ -21,6 +21,7 @@ extern "C" {
 #include <wlr/render/swapchain.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/interfaces/wlr_keyboard.h>
+#include "interfaces/wlr_input_device.h"
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_buffer.h>
@@ -173,6 +174,7 @@ struct WlrServer {
   wlr_output* primary_output = nullptr;
   wlr_input_device* last_keyboard_device = nullptr;
   wlr_input_device* last_pointer_device = nullptr;
+  wlr_keyboard* virtual_keyboard = nullptr;
   wlr_xcursor_manager* cursor_mgr = nullptr;
   wlr_cursor* cursor = nullptr;
   bool replaySuperActive = false;
@@ -199,6 +201,47 @@ wayland_app_count(WlrServer* server)
   auto view = server->registry->view<WaylandApp::Component>();
   view.each([&](auto /*ent*/, auto& /*comp*/) { ++count; });
   return count;
+}
+
+static const wlr_keyboard_impl kVirtualKeyboardImpl = {
+  .name = "virtual-keyboard",
+  .led_update = nullptr,
+};
+
+static wlr_keyboard*
+ensure_virtual_keyboard(WlrServer* server)
+{
+  log_to_tmp("key replay: ensure_virtual_keyboard\n");
+  if (!server || !server->seat) {
+    log_to_tmp("key replay: virtual keyboard unavailable (missing server/seat)\n");
+    return nullptr;
+  }
+  if (server->virtual_keyboard) {
+    return server->virtual_keyboard;
+  }
+  auto* kbd = new wlr_keyboard();
+  wlr_keyboard_init(kbd, &kVirtualKeyboardImpl, "virtual-keyboard");
+  xkb_context* ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+  if (ctx) {
+    xkb_keymap* keymap =
+      xkb_keymap_new_from_names(ctx, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    if (keymap) {
+      wlr_keyboard_set_keymap(kbd, keymap);
+      xkb_keymap_unref(keymap);
+    } else {
+      log_to_tmp("key replay: virtual keyboard keymap creation failed\n");
+    }
+    xkb_context_unref(ctx);
+  } else {
+    log_to_tmp("key replay: virtual keyboard xkb context creation failed\n");
+  }
+  wlr_keyboard_set_repeat_info(kbd, 25, 600);
+  wlr_seat_set_keyboard(server->seat, kbd);
+  wlr_seat_keyboard_notify_modifiers(server->seat, &kbd->modifiers);
+  server->virtual_keyboard = kbd;
+  server->last_keyboard_device = &kbd->base;
+  log_to_tmp("key replay: installed virtual keyboard for tests\n");
+  return kbd;
 }
 
 static void
@@ -413,7 +456,21 @@ struct WaylandAppHandle {
   wl_listener commit;
   bool registered = false;
   entt::entity entity = entt::null;
+  bool unmapLinked = false;
 };
+
+static void
+safe_remove_listener(wl_listener* listener)
+{
+  if (!listener) {
+    return;
+  }
+  if (listener->link.prev || listener->link.next) {
+    wl_list_remove(&listener->link);
+    listener->link.prev = nullptr;
+    listener->link.next = nullptr;
+  }
+}
 
 struct XdgSurfaceHandle {
   WlrServer* server = nullptr;
@@ -1062,8 +1119,11 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
                  (void*)handle->app.get());
       ensure_wayland_apps_registered(handle->server);
     }
+    safe_remove_listener(&handle->unmap);
+    handle->unmapLinked = false;
   };
   wl_signal_add(&xdg_surface->surface->events.unmap, &handle->unmap);
+  handle->unmapLinked = true;
   handle->destroy.notify = [](wl_listener* listener, void* data) {
     auto* handle = wl_container_of(listener, static_cast<WaylandAppHandle*>(nullptr), destroy);
     auto* surf = static_cast<wlr_surface*>(data);
@@ -1076,8 +1136,18 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
                  (void*)handle->app.get());
       ensure_wayland_apps_registered(handle->server);
     }
-    wl_list_remove(&handle->destroy.link);
-    wl_list_remove(&handle->commit.link);
+    if (surf) {
+      // Make sure no stray unmap listeners remain attached; wlroots asserts this
+      // list is empty during surface destroy.
+      while (!wl_list_empty(&surf->events.unmap.listener_list)) {
+        wl_list_remove(surf->events.unmap.listener_list.next);
+      }
+      wl_list_init(&surf->events.unmap.listener_list);
+    }
+    safe_remove_listener(&handle->unmap);
+    handle->unmapLinked = false;
+    safe_remove_listener(&handle->destroy);
+    safe_remove_listener(&handle->commit);
     delete handle;
   };
   wl_signal_add(&xdg_surface->surface->events.destroy, &handle->destroy);
@@ -1340,6 +1410,8 @@ handle_output_frame(wl_listener* listener, void* data)
         kbd = wlr_keyboard_from_input_device(server->last_keyboard_device);
       } else if (server->seat && server->seat->keyboard_state.keyboard) {
         kbd = server->seat->keyboard_state.keyboard;
+      } else {
+        kbd = ensure_virtual_keyboard(server);
       }
       flush_pending_replay_keyups(server, kbd, now_msec);
       static bool logged_missing_keyboard = false;
@@ -1816,6 +1888,11 @@ main(int argc, char** argv, char** envp)
   }
   if (server.seat) {
     wl_list_remove(&server.request_set_cursor.link);
+  }
+  if (server.virtual_keyboard) {
+    wlr_keyboard_finish(server.virtual_keyboard);
+    delete server.virtual_keyboard;
+    server.virtual_keyboard = nullptr;
   }
   wl_list_remove(&server.new_input.link);
   wl_list_remove(&server.new_output.link);

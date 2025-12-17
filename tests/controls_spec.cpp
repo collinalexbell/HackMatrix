@@ -70,12 +70,11 @@ start_compositor()
   const std::string apiBind = "tcp://*:3345";
   const std::string apiAddr = "tcp://127.0.0.1:3345";
   setenv("VOXEL_API_ADDR_FOR_TEST", apiAddr.c_str(), 1);
-  std::string cmd =
-    "MATRIX_WLROOTS_BIN=./matrix-wlroots-debug MENU_PROGRAM=foot "
-    "VOXEL_API_BIND=" + apiBind + " "
-    "VOXEL_API_ADDR_FOR_TEST=" + apiAddr + " "
-    "bash -lc './launch --in-wm "
-    ">/tmp/controls-test.log 2>&1 & echo $!'";
+  std::string cmd = "MATRIX_WLROOTS_BIN=./matrix-wlroots-debug MENU_PROGRAM=foot "
+                    "VOXEL_API_BIND=" +
+                    apiBind + " VOXEL_API_ADDR_FOR_TEST=" + apiAddr + " " +
+                    "bash -lc './launch --in-wm "
+                    ">/tmp/controls-test.log 2>&1 & echo $!'";
   FILE* pipe = popen(cmd.c_str(), "r");
   if (pipe) {
     char buf[64] = {0};
@@ -102,6 +101,19 @@ start_compositor()
     }
   }
   return h;
+}
+
+static bool
+compositor_alive(const std::string& pid)
+{
+  if (!pid.empty()) {
+    std::string check = "kill -0 " + pid + " >/dev/null 2>&1";
+    if (std::system(check.c_str()) == 0) {
+      return true;
+    }
+  }
+  // Fallback: any matrix-wlroots process (debug or release).
+  return std::system("pgrep -f matrix-wlroots >/dev/null 2>&1") == 0;
 }
 
 static bool
@@ -475,6 +487,11 @@ TEST(ControlsSpec, SuperQClosesWaylandApp)
 
   ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "q", 50 } }))
     << "Failed to send Super+Q via key replay";
+  for (int i = 0; i < 8; ++i) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    ASSERT_TRUE(compositor_alive(compGuard.handle.pid))
+      << "Compositor died after Super+Q (t=" << (i + 1) << "s)";
+  }
 
   bool sawRemove = wait_for_log_contains("/tmp/matrix-wlroots-output.log",
                                          "wayland app remove (deferred)",
@@ -485,6 +502,30 @@ TEST(ControlsSpec, SuperQClosesWaylandApp)
   bool sawDestroy = wait_for_log_contains("/tmp/matrix-wlroots-output.log", "destroy", 120, 50) ||
                     wait_for_log_contains("/tmp/matrix-wlroots-output.log", "destroyed", 120, 50);
   EXPECT_TRUE(sawDestroy) << "Wayland surface destroy log missing after Super+Q";
+
+  // Ensure no new add occurs after the first removal marker.
+  {
+    std::ifstream log("/tmp/matrix-wlroots-output.log");
+    std::string line;
+    bool sawRemoveLine = false;
+    bool addAfterRemove = false;
+    while (std::getline(log, line)) {
+      if (!sawRemoveLine &&
+          line.find("wayland deferred remove queued") != std::string::npos) {
+        sawRemoveLine = true;
+        continue;
+      }
+      if (sawRemoveLine &&
+          line.find("wayland app add (deferred)") != std::string::npos) {
+        addAfterRemove = true;
+        break;
+      }
+    }
+    EXPECT_FALSE(addAfterRemove) << "Wayland app remapped after Super+Q (add logged after remove)";
+  }
+  auto statusAfter = current_status();
+  ASSERT_TRUE(statusAfter.has_value()) << "Engine status unavailable after Super+Q";
+  EXPECT_EQ(statusAfter->wayland_apps(), 0u) << "Wayland app still registered after Super+Q";
 }
 
 TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)

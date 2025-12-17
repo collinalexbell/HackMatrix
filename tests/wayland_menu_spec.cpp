@@ -229,7 +229,8 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
   std::string truncateCmd = std::string("truncate -s 0 ") + testLog + " >/dev/null 2>&1";
   std::system(truncateCmd.c_str());
   std::string cmd = "MATRIX_WLROOTS_BIN=./matrix-wlroots-debug " + extraEnv +
-                    " bash -lc './launch --in-wm >/tmp/menu-test.log 2>&1 & echo $!'";
+                    " bash -lc './launch " +
+                    "--in-wm >/tmp/menu-test.log 2>&1 & echo $!'";
   FILE* pipe = popen(cmd.c_str(), "r");
   if (pipe) {
     char buf[64] = {0};
