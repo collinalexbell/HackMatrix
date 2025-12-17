@@ -13,6 +13,7 @@
 #include "camera.h"
 #include "app.h"
 #include "WindowManager/Space.h"
+#include "gl_resource.h"
 #include <map>
 #include <memory>
 #include <unordered_map>
@@ -38,28 +39,28 @@ class World;
 class Renderer
 {
   shared_ptr<blocks::TexturePack> texturePack;
-  unsigned int APP_VBO;
-  unsigned int APP_VAO;
+  GlBuffer APP_VBO;
+  GlVertexArray APP_VAO;
 
-  unsigned int DIRECT_RENDER_VBO;
-  unsigned int DIRECT_RENDER_VAO;
+  GlBuffer DIRECT_RENDER_VBO;
+  GlVertexArray DIRECT_RENDER_VAO;
 
-  unsigned int LINE_VBO;
-  unsigned int LINE_INSTANCE;
-  unsigned int LINE_VAO;
+  GlBuffer LINE_VBO;
+  GlBuffer LINE_INSTANCE;
+  GlVertexArray LINE_VAO;
 
-  unsigned int MESH_VERTEX;
-  unsigned int MESH_VERTEX_POSITIONS;
-  unsigned int MESH_VERTEX_TEX_COORDS;
-  unsigned int MESH_VERTEX_BLOCK_TYPES;
-  unsigned int MESH_VERTEX_SELECTS;
+  GlVertexArray MESH_VERTEX;
+  GlBuffer MESH_VERTEX_POSITIONS;
+  GlBuffer MESH_VERTEX_TEX_COORDS;
+  GlBuffer MESH_VERTEX_BLOCK_TYPES;
+  GlBuffer MESH_VERTEX_SELECTS;
 
-  unsigned int DYNAMIC_OBJECT_VERTEX;
-  unsigned int DYNAMIC_OBJECT_POSITIONS;
+  GlVertexArray DYNAMIC_OBJECT_VERTEX;
+  GlBuffer DYNAMIC_OBJECT_POSITIONS;
 
-  unsigned int VOXEL_SELECTIONS;
-  unsigned int VOXEL_SELECTION_POSITIONS;
-  unsigned int VOXEL_SELECTION_TEX_COORDS;
+  GlVertexArray VOXEL_SELECTIONS;
+  GlBuffer VOXEL_SELECTION_POSITIONS;
+  GlBuffer VOXEL_SELECTION_TEX_COORDS;
 
   bool isWireframe = false;
 
@@ -114,6 +115,7 @@ class Renderer
   IndexPool appIndexPool;
   int appTextureBaseUnit = 0; // highest usable texture unit index
   int appTextureCount = 0;    // how many app textures we reserve
+  bool appTexturesInitialized = false;
   bool voxelsEnabled = true;
   VoxelSpace voxelSpace;
   RenderedVoxelSpace voxelMesh;

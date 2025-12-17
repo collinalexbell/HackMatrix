@@ -100,36 +100,36 @@ float directRenderQuad[] = {
 void
 Renderer::genMeshResources()
 {
-  glGenVertexArrays(1, &MESH_VERTEX);
-  glGenBuffers(1, &MESH_VERTEX_POSITIONS);
-  glGenBuffers(1, &MESH_VERTEX_TEX_COORDS);
-  glGenBuffers(1, &MESH_VERTEX_BLOCK_TYPES);
-  glGenBuffers(1, &MESH_VERTEX_SELECTS);
+  MESH_VERTEX.create();
+  MESH_VERTEX_POSITIONS.create(GL_ARRAY_BUFFER);
+  MESH_VERTEX_TEX_COORDS.create(GL_ARRAY_BUFFER);
+  MESH_VERTEX_BLOCK_TYPES.create(GL_ARRAY_BUFFER);
+  MESH_VERTEX_SELECTS.create(GL_ARRAY_BUFFER);
 }
 
 void
 Renderer::genDynamicObjectResources()
 {
-  glGenVertexArrays(1, &DYNAMIC_OBJECT_VERTEX);
-  glGenBuffers(1, &DYNAMIC_OBJECT_POSITIONS);
+  DYNAMIC_OBJECT_VERTEX.create();
+  DYNAMIC_OBJECT_POSITIONS.create(GL_ARRAY_BUFFER);
 };
 
 void
 Renderer::genGlResources()
 {
-  glGenVertexArrays(1, &APP_VAO);
-  glGenBuffers(1, &APP_VBO);
+  APP_VAO.create();
+  APP_VBO.create(GL_ARRAY_BUFFER);
 
-  glGenVertexArrays(1, &DIRECT_RENDER_VAO);
-  glGenBuffers(1, &DIRECT_RENDER_VBO);
+  DIRECT_RENDER_VAO.create();
+  DIRECT_RENDER_VBO.create(GL_ARRAY_BUFFER);
 
-  glGenVertexArrays(1, &LINE_VAO);
-  glGenBuffers(1, &LINE_VBO);
-  glGenBuffers(1, &LINE_INSTANCE);
+  LINE_VAO.create();
+  LINE_VBO.create(GL_ARRAY_BUFFER);
+  LINE_INSTANCE.create(GL_ARRAY_BUFFER);
 
-  glGenVertexArrays(1, &VOXEL_SELECTIONS);
-  glGenBuffers(1, &VOXEL_SELECTION_POSITIONS);
-  glGenBuffers(1, &VOXEL_SELECTION_TEX_COORDS);
+  VOXEL_SELECTIONS.create();
+  VOXEL_SELECTION_POSITIONS.create(GL_ARRAY_BUFFER);
+  VOXEL_SELECTION_TEX_COORDS.create(GL_ARRAY_BUFFER);
 
   genMeshResources();
   genDynamicObjectResources();

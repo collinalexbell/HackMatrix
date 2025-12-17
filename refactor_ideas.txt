@@ -1,0 +1,10 @@
+- RAII GL resources (VAO/VBO/FBO/Texture wrappers) to avoid state leaks and manual glDelete/glGen.
+- Renderer state helper to manage shader bools/uniform toggles with RAII guards.
+- Strategy interface for app rendering (X11/Wayland/direct) to unify bind/draw pipeline.
+- Texture unit manager encapsulating IndexPool, sampler bindings, and FBO attachments.
+- Logging facade for renderer/WM/Wayland with per-channel enables instead of scattered FILE*.
+- Split Wayland rendering into dedicated module fed by DTOs (model/scale/focus) to slim renderer.cpp.
+- Command pattern for hotkeys in wlr_compositor/WindowManager.
+- Enumerated render passes instead of many boolean toggles.
+- Simple frame pass scheduler to declare FBO/viewport transitions.
+- Hit-testing helper for Space to isolate ray-plane intersection logic.
