@@ -497,6 +497,26 @@ WaylandApp::appTexture()
       }
     }
 
+    bool forceOpaque = ((maxA == 0 || minA == 0) && (maxR | maxG | maxB));
+    if (forceOpaque) {
+      for (int y = 0; y < height; ++y) {
+        uint8_t* row = converted.data() + y * dstStride;
+        for (int x = 0; x < width; ++x) {
+          row[x * 4 + 3] = 255;
+        }
+      }
+      if (centerPixel != 0 && firstPixel == 0) {
+        firstPixel = centerPixel;
+      }
+      if (firstPixel != 0) {
+        firstPixel |= 0x000000FF;
+      }
+      if (centerPixel != 0) {
+        centerPixel |= 0x000000FF;
+      }
+      maxA = 255;
+    }
+
     if (logSamplesEnabled() && !sampleLogged) {
       FILE* logFile = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
       if (logFile) {
