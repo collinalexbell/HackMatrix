@@ -6,6 +6,8 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstdio>
+#include <cmath>
+#include <set>
 #include <vector>
 #include <zmq/zmq.hpp>
 #include <functional>
@@ -14,6 +16,7 @@
 #include "entity.h"
 #undef Status
 #include "protos/api.pb.h"
+#include "components/Bootable.h"
 
 // This test verifies the menu launcher plumbing itself (WindowManager::menu)
 // honors MENU_PROGRAM override and actually spawns a command. Keyboard
@@ -200,6 +203,41 @@ static std::string find_window_for_pid(const std::string& pid,
     std::this_thread::sleep_for(std::chrono::milliseconds(millis));
   }
   return windowId;
+}
+
+static bool process_cmdline_contains(const std::string& needle)
+{
+  FILE* pipe = popen("ps -eo pid,args", "r");
+  if (!pipe) {
+    return false;
+  }
+  char* line = nullptr;
+  size_t len = 0;
+  bool found = false;
+  while (getline(&line, &len, pipe) != -1) {
+    if (line && std::string(line).find(needle) != std::string::npos) {
+      found = true;
+      break;
+    }
+  }
+  if (line) {
+    free(line);
+  }
+  pclose(pipe);
+  return found;
+}
+
+static bool wait_for_process_cmdline(const std::string& needle,
+                                     int attempts = 80,
+                                     int millis = 100)
+{
+  for (int i = 0; i < attempts; ++i) {
+    if (process_cmdline_contains(needle)) {
+      return true;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(millis));
+  }
+  return false;
 }
 
 struct ScopeExit {
@@ -650,9 +688,64 @@ TEST(WaylandMenuSpec, KeyReplayMovesCamera)
   stop_compositor(h);
 }
 
+TEST(WaylandMenuSpec, WaylandTextureUsesDefaultSizeOnFirstUpload)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+
+  auto h = start_compositor_with_env();
+  ScopeExit guard([&]() { stop_compositor(h); });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 200, 50))
+    << "Foot window never mapped for texture size check";
+
+  // Parse compositor log for commit sizes; expect a follow-up resize toward the default.
+  std::vector<std::pair<int, int>> commits;
+  std::pair<int, int> lastSeen{-1, -1};
+  for (int i = 0; i < 200; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::ifstream in("/tmp/menu-test.log");
+    std::string line;
+    while (std::getline(in, line)) {
+      auto pos = line.find("commit buffer=");
+      if (pos == std::string::npos) {
+        continue;
+      }
+      int w = 0;
+      int hgt = 0;
+      if (std::sscanf(line.c_str() + static_cast<long>(pos),
+                      "commit buffer=%*p size=%dx%d",
+                      &w,
+                      &hgt) == 2) {
+        if (w != lastSeen.first || hgt != lastSeen.second) {
+          commits.emplace_back(w, hgt);
+          lastSeen = { w, hgt };
+        }
+      }
+    }
+  }
+
+  ASSERT_GE(commits.size(), 2u) << "Expected at least two commit sizes (initial + default resize)";
+  auto initial = commits.front();
+  auto final = commits.back();
+  double expectedW = initial.first * 0.85;
+  double expectedH = initial.second * 0.85;
+  int tol = 32;
+  EXPECT_LE(std::abs(final.first - static_cast<int>(expectedW)), tol)
+    << "Final width " << final.first << " not near default request " << expectedW;
+  EXPECT_LE(std::abs(final.second - static_cast<int>(expectedH)), tol)
+    << "Final height " << final.second << " not near default request " << expectedH;
+}
+
 TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
 {
   namespace fs = std::filesystem;
+
+  ASSERT_TRUE(command_ok("xdpyinfo >/dev/null 2>&1"))
+    << "DISPLAY is not available; run inside an X/Wayland session to view chromium.";
 
   auto find_chromium = []() -> std::string {
     const char* candidates[] = { "chromium", "chromium-browser", nullptr };
@@ -679,6 +772,11 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
   fs::path markerLog = "/tmp/matrix-wlroots-waylandapp.log";
   std::ofstream(markerLog, std::ios::trunc).close();
   std::ofstream(chromiumLog, std::ios::trunc).close();
+  auto readChromiumLog = [&]() {
+    std::ifstream clog(chromiumLog);
+    return std::string((std::istreambuf_iterator<char>(clog)),
+                       std::istreambuf_iterator<char>());
+  };
 
   // Create a tiny launcher script for chromium to avoid flaky key replay typing.
   fs::path launcher = tmp / "chromium-menu.sh";
@@ -687,7 +785,7 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
     out << "#!/bin/bash\n";
     out << "\"" << chromeBin << "\" "
         << "--ozone-platform=wayland --enable-features=UseOzonePlatform "
-        << "--disable-gpu --disable-gpu-sandbox --no-first-run --no-default-browser-check "
+        << "--no-first-run --no-default-browser-check "
         << "--hide-scrollbars --mute-audio "
         << "--user-data-dir=\"" << profile.string() << "\" "
         << "--app=data:text/html,'<html><body style=\"background: rgb(255,0,0); color: rgb(0,255,0);\">test</body></html>' "
@@ -707,13 +805,26 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
   ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
 
   std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+   // Fail fast if the compositor fell back to a headless/no-display mode; we
+   // want to see the actual window.
+  int headlessLogs = count_log_occurrences("/tmp/menu-test.log", "Failed to open display") +
+                     count_log_occurrences("/tmp/matrix-wlroots-output.log", "Failed to open display");
+  ASSERT_EQ(headlessLogs, 0) << "Compositor could not open a display (headless fallback); rerun inside a WM.";
+
+  ApiRequestResponse statusBefore;
+  ASSERT_TRUE(fetch_status(&statusBefore)) << "Failed to fetch status before launching chromium";
+  ASSERT_TRUE(statusBefore.has_status()) << "STATUS response missing payload before chromium launch";
+  uint32_t baselineApps = statusBefore.status().wayland_apps();
+
   ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch chromium via menu";
+  ASSERT_TRUE(wait_for_process_cmdline(profile.string(), 120, 100))
+    << "Chromium process with profile marker '" << profile.string()
+    << "' never appeared after menu launch. Log:\n"
+    << readChromiumLog();
   // Wait for chromium to map (first mapped).
   bool mapped = wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 100);
   if (!mapped) {
-    std::ifstream clog(chromiumLog);
-    std::string clogStr((std::istreambuf_iterator<char>(clog)), std::istreambuf_iterator<char>());
-    ADD_FAILURE() << "Chromium window never mapped. Log:\n" << clogStr;
+    ADD_FAILURE() << "Chromium window never mapped. Log:\n" << readChromiumLog();
     guard.dismiss();
     stop_compositor(h);
     return;
@@ -739,10 +850,15 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
   ASSERT_TRUE(sawSample) << "No Wayland sample log for chromium";
+  ApiRequestResponse statusAfter;
+  ASSERT_TRUE(fetch_status(&statusAfter)) << "Failed to fetch status after chromium launch";
+  ASSERT_TRUE(statusAfter.has_status()) << "STATUS response missing payload after chromium launch";
+  EXPECT_GT(statusAfter.status().wayland_apps(), baselineApps)
+    << "Wayland app count did not increase after chromium launch";
   std::ifstream in(markerLog);
   std::string line;
-  unsigned long long sumR = 0, sumG = 0, sumB = 0, sumA = 0;
-  unsigned long long sumCenter = 0;
+  unsigned long long sumR = 0, sumG = 0, sumB = 0;
+  unsigned long long sumCenterR = 0, sumCenterG = 0, sumCenterB = 0;
   size_t samples = 0;
   while (std::getline(in, line)) {
     if (line.find("wayland-app: sample") == std::string::npos) {
@@ -752,11 +868,13 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
     unsigned center = 0;
     if (sscanf(line.c_str(), "%*[^f]firstPixel=(%u,%u,%u,%u) center=%x",
                &r, &g, &b, &a, &center) >= 4) {
+      (void)a;
       sumR += r;
       sumG += g;
       sumB += b;
-      sumA += a;
-      sumCenter += center;
+      sumCenterR += (center >> 24) & 0xFF;
+      sumCenterG += (center >> 16) & 0xFF;
+      sumCenterB += (center >> 8) & 0xFF;
       ++samples;
     }
   }
@@ -764,10 +882,12 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
   double avgR = sumR / static_cast<double>(samples);
   double avgG = sumG / static_cast<double>(samples);
   double avgB = sumB / static_cast<double>(samples);
-  double avgA = sumA / static_cast<double>(samples);
-  double avgCenter = sumCenter / static_cast<double>(samples);
-  EXPECT_TRUE((avgR + avgG + avgB + avgA) > 0.5 || avgCenter > 0.5)
-    << "Chromium texture appeared black (avg firstPixel == 0 and center==0)";
+  double centerRGB = (sumCenterR + sumCenterG + sumCenterB) / static_cast<double>(samples);
+  double firstPixelRGB = avgR + avgG + avgB;
+  EXPECT_TRUE(firstPixelRGB > 20.0 && centerRGB > 20.0)
+    << "Chromium texture appeared black or empty (edge RGB sum=" << firstPixelRGB
+    << ", center RGB sum=" << centerRGB << ")\nChromium log:\n"
+    << readChromiumLog();
 
   guard.dismiss();
   stop_compositor(h);

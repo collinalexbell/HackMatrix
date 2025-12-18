@@ -195,28 +195,114 @@ WaylandApp::appTexture()
     return;
   }
 
-    size_t stride = 0;
-    void* data = nullptr;
-    uint32_t format = 0;
+  size_t stride = 0;
+  void* data = nullptr;
+  uint32_t format = 0;
+  const uint8_t* src = nullptr;
+  size_t srcStride = 0;
+  std::vector<uint8_t> fallbackPixels;
+  bool beganDataPtrAccess = false;
 
   auto logSamplesEnabled = []() {
-    static int enabled = -1;
-    if (enabled == -1) {
-      enabled = (kWlrootsDebugLogs || std::getenv("WLR_APP_SAMPLE_LOG")) ? 1 : 0;
-    }
-    return enabled == 1;
+    return true;
   };
+
+  auto logFileForSamples = []() -> FILE* {
+    static FILE* logFile = []() {
+      FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
+      return f ? f : stderr;
+    }();
+    return logFile;
+  };
+
+  bool haveData = false;
 
   if (wlr_buffer_begin_data_ptr_access(buffer,
                                        WLR_BUFFER_DATA_PTR_ACCESS_READ,
                                        &data,
                                        &format,
                                        &stride)) {
+    src = static_cast<const uint8_t*>(data);
+    srcStride = stride;
+    beganDataPtrAccess = true;
+    haveData = true;
     if (logSamplesEnabled()) {
-      static FILE* logFile = []() {
-        FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-        return f ? f : stderr;
-      }();
+      FILE* logFile = logFileForSamples();
+      if (logFile) {
+        std::fprintf(logFile,
+                     "wayland-app: begin_data_ptr_access ok fmt=%u stride=%zu size=%dx%d\n",
+                     format,
+                     stride,
+                     width,
+                     height);
+        std::fflush(logFile);
+      }
+    }
+  } else if (renderer) {
+    // Fallback: read pixels via wlroots renderer (handles dmabuf-only buffers).
+    wlr_texture* tex = wlr_texture_from_buffer(renderer, buffer);
+    if (tex) {
+      fallbackPixels.resize(static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
+      struct wlr_box srcBox = { 0, 0, width, height };
+      wlr_texture_read_pixels_options opts{
+        fallbackPixels.data(),
+        DRM_FORMAT_ABGR8888,
+        static_cast<uint32_t>(width * 4),
+        0,
+        0,
+        srcBox,
+      };
+      if (wlr_texture_read_pixels(tex, &opts)) {
+        src = fallbackPixels.data();
+        srcStride = opts.stride;
+        stride = srcStride;
+        format = opts.format;
+        haveData = true;
+        if (logSamplesEnabled()) {
+          FILE* logFile = logFileForSamples();
+          if (logFile) {
+            std::fprintf(logFile,
+                         "wayland-app: read_pixels fallback ok fmt=%u stride=%u size=%dx%d\n",
+                         opts.format,
+                         opts.stride,
+                         width,
+                         height);
+            std::fflush(logFile);
+          }
+        }
+      } else if (logSamplesEnabled()) {
+        FILE* logFile = logFileForSamples();
+        if (logFile) {
+          std::fprintf(logFile,
+                       "wayland-app: read_pixels fallback failed size=%dx%d\n",
+                       width,
+                       height);
+          std::fflush(logFile);
+        }
+      }
+      wlr_texture_destroy(tex);
+    }
+  }
+
+  if (!haveData) {
+    if (logSamplesEnabled()) {
+      FILE* logFile = logFileForSamples();
+      if (logFile) {
+        std::fprintf(logFile,
+                     "wayland-app: begin_data_ptr_access failed fmt=%u stride=%zu size=%dx%d\n",
+                     format,
+                     stride,
+                     width,
+                     height);
+        std::fflush(logFile);
+      }
+    }
+    return;
+  }
+
+  if (logSamplesEnabled()) {
+    FILE* logFile = logFileForSamples();
+    if (logFile) {
       static int lastW = -1;
       static int lastH = -1;
       if (width != lastW || height != lastH) {
@@ -224,7 +310,7 @@ WaylandApp::appTexture()
                      "wayland-app: uploading %dx%d stride=%zu fmt=%u texId=%d unit=%d\n",
                      width,
                      height,
-                     stride,
+                     srcStride,
                      format,
                      textureId,
                      textureUnit - GL_TEXTURE0);
@@ -233,10 +319,9 @@ WaylandApp::appTexture()
         lastH = height;
       }
     }
+  }
     // Convert to RGBA8 if the format isn't directly supported in GLES2.
-    const uint8_t* src = static_cast<const uint8_t*>(data);
     std::vector<uint8_t> converted;
-    const size_t srcStride = stride;
     const size_t dstStride = static_cast<size_t>(width) * 4;
     GLenum uploadFormat = GL_RGBA;
     uint32_t firstPixel = 0;
@@ -313,6 +398,41 @@ WaylandApp::appTexture()
             g = (uint8_t)((bg * 255) / 1023);
             b = (uint8_t)((bb * 255) / 1023);
             a = 255;
+            break;
+          }
+          case DRM_FORMAT_XBGR2101010: { // B,G,R,X 10-bit
+            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+            uint32_t br = (v >> 0) & 0x3FF;
+            uint32_t bg = (v >> 10) & 0x3FF;
+            uint32_t bb = (v >> 20) & 0x3FF;
+            r = (uint8_t)((br * 255) / 1023);
+            g = (uint8_t)((bg * 255) / 1023);
+            b = (uint8_t)((bb * 255) / 1023);
+            a = 255;
+            break;
+          }
+          case DRM_FORMAT_ARGB2101010: { // B,G,R,A 10-bit with 2-bit alpha
+            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+            uint32_t br = (v >> 0) & 0x3FF;
+            uint32_t bg = (v >> 10) & 0x3FF;
+            uint32_t bb = (v >> 20) & 0x3FF;
+            uint32_t ba = (v >> 30) & 0x3;
+            r = (uint8_t)((br * 255) / 1023);
+            g = (uint8_t)((bg * 255) / 1023);
+            b = (uint8_t)((bb * 255) / 1023);
+            a = (uint8_t)((ba * 255) / 3);
+            break;
+          }
+          case DRM_FORMAT_ABGR2101010: { // R,G,B,A 10-bit with 2-bit alpha
+            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+            uint32_t br = (v >> 0) & 0x3FF;
+            uint32_t bg = (v >> 10) & 0x3FF;
+            uint32_t bb = (v >> 20) & 0x3FF;
+            uint32_t ba = (v >> 30) & 0x3;
+            b = (uint8_t)((br * 255) / 1023);
+            g = (uint8_t)((bg * 255) / 1023);
+            r = (uint8_t)((bb * 255) / 1023);
+            a = (uint8_t)((ba * 255) / 3);
             break;
           }
           default:
@@ -471,6 +591,7 @@ WaylandApp::appTexture()
         std::fclose(logFile2);
       }
     }
-    wlr_buffer_end_data_ptr_access(buffer);
+    if (beganDataPtrAccess) {
+      wlr_buffer_end_data_ptr_access(buffer);
+    }
   }
-}
