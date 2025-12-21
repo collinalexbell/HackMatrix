@@ -1172,14 +1172,6 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
                  (void*)handle->app.get());
       ensure_wayland_apps_registered(handle->server);
     }
-    if (surf) {
-      // Make sure no stray unmap listeners remain attached; wlroots asserts this
-      // list is empty during surface destroy.
-      while (!wl_list_empty(&surf->events.unmap.listener_list)) {
-        wl_list_remove(surf->events.unmap.listener_list.next);
-      }
-      wl_list_init(&surf->events.unmap.listener_list);
-    }
     safe_remove_listener(&handle->unmap);
     handle->unmapLinked = false;
     safe_remove_listener(&handle->destroy);
