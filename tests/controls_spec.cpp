@@ -73,7 +73,7 @@ start_compositor()
   std::string cmd = "MATRIX_WLROOTS_BIN=./matrix-wlroots-debug MENU_PROGRAM=foot "
                     "VOXEL_API_BIND=" +
                     apiBind + " VOXEL_API_ADDR_FOR_TEST=" + apiAddr + " " +
-                    "bash -lc './launch --in-wm "
+                    "bash -lc './launch"
                     ">/tmp/controls-test.log 2>&1 & echo $!'";
   FILE* pipe = popen(cmd.c_str(), "r");
   if (pipe) {
@@ -377,15 +377,20 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
   // Allow API to come up.
   std::this_thread::sleep_for(std::chrono::milliseconds(4000));
 
+  // Nudge forward a bit so the looked-at target isn't exactly at origin.
+  ASSERT_TRUE(send_key_replay({ { "w", 0 }, { "w", 0 }, { "w", 0 } }))
+    << "Failed to send forward movement before spawning terminal";
+  std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
   // Launch terminal via menu hotkey (v).
   ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu launch key";
   ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 600, 100))
     << "Foot window never mapped";
-  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
   // Focus looked-at app via 'r' so WM focus is set.
   ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to send focus key";
-  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
 
   auto wait_for_status = [](uint32_t minWayland,
                             int maxTries,
@@ -435,13 +440,13 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
     wait_for_log_contains("/tmp/matrix-wlroots-wm.log", "WM: unfocusApp", 20, 100);
   bool sawSuperCombo =
     wait_for_log_contains("/tmp/matrix-wlroots-output.log", "super combo: triggered -> unfocus", 20, 100);
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
   // Try to move the camera via WASD-style input; movement only occurs when WM focus is cleared.
   ASSERT_TRUE(send_key_replay(
                 { { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 } }))
     << "Failed to send movement keys";
-  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   auto statusAfter = wait_for_status(statusBefore->wayland_apps(), /*maxTries=*/40, /*sleepMs=*/250);
   ASSERT_TRUE(statusAfter.has_value()) << "Missing engine status after movement";

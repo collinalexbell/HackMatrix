@@ -5,6 +5,7 @@ extern "C" {
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/render/wlr_texture.h>
 #include <wlr/render/swapchain.h>
+#include <wlr/render/dmabuf.h>
 #include <wlr/util/log.h>
 #include <wlr/types/wlr_buffer.h>
 #include <wlr/types/wlr_xdg_shell.h>
@@ -15,7 +16,14 @@ extern "C" {
 #include <unistd.h>
 #include <drm_fourcc.h>
 #include <glm/gtc/matrix_transform.hpp>
+#ifndef EGL_EGLEXT_PROTOTYPES
+#define EGL_EGLEXT_PROTOTYPES
+#endif
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES
+#endif
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <glad/glad.h>
 #include <chrono>
 #include <vector>
@@ -36,6 +44,28 @@ recomputeHeightScaler(double width, double height)
   glm::mat4 scaler(1.0f);
   scaler = glm::scale(scaler, glm::vec3(1.0f, scale, 1.0f));
   return scaler;
+}
+
+// Minimal declaration to import dmabuf into a GL texture without dragging in
+// GLES extension headers that conflict with glad-provided symbols.
+using GLeglImageOES = void*;
+using PFNGLEGLIMAGETARGETTEXTURE2DOESPROC =
+  void (*)(GLenum target, GLeglImageOES image);
+static PFNGLEGLIMAGETARGETTEXTURE2DOESPROC gEGLImageTargetTexture2DOES = nullptr;
+static PFNEGLCREATEIMAGEKHRPROC gEglCreateImageKHR = nullptr;
+static PFNEGLDESTROYIMAGEKHRPROC gEglDestroyImageKHR = nullptr;
+
+static void
+ensureEglImageFns()
+{
+  if (!gEglCreateImageKHR) {
+    gEglCreateImageKHR = reinterpret_cast<PFNEGLCREATEIMAGEKHRPROC>(
+      eglGetProcAddress("eglCreateImageKHR"));
+  }
+  if (!gEglDestroyImageKHR) {
+    gEglDestroyImageKHR = reinterpret_cast<PFNEGLDESTROYIMAGEKHRPROC>(
+      eglGetProcAddress("eglDestroyImageKHR"));
+  }
 }
 
 WaylandApp::WaylandApp(wlr_renderer* renderer,
@@ -74,6 +104,16 @@ WaylandApp::~WaylandApp()
     wl_list_remove(&surface_destroy.link);
     surface = nullptr;
   }
+  ensureEglImageFns();
+  if (importedImage != EGL_NO_IMAGE_KHR && gEglDestroyImageKHR) {
+    gEglDestroyImageKHR(eglGetCurrentDisplay(), importedImage);
+    importedImage = EGL_NO_IMAGE_KHR;
+  }
+  if (importedBufferLocked && importedBuffer) {
+    wlr_buffer_unlock(importedBuffer);
+  }
+  importedBuffer = nullptr;
+  importedBufferLocked = false;
   if (pending_buffer.has_value()) {
     wlr_buffer_unlock(pending_buffer.value());
   }
@@ -86,6 +126,16 @@ WaylandApp::handle_destroy()
     wlr_buffer_unlock(pending_buffer.value());
     pending_buffer.reset();
   }
+  ensureEglImageFns();
+  if (importedImage != EGL_NO_IMAGE_KHR && gEglDestroyImageKHR) {
+    gEglDestroyImageKHR(eglGetCurrentDisplay(), importedImage);
+    importedImage = EGL_NO_IMAGE_KHR;
+  }
+  if (importedBufferLocked && importedBuffer) {
+    wlr_buffer_unlock(importedBuffer);
+  }
+  importedBufferLocked = false;
+  importedBuffer = nullptr;
   surface = nullptr;
   xdg_surface = nullptr;
   xdg_toplevel = nullptr;
@@ -170,6 +220,7 @@ WaylandApp::handle_commit(wlr_surface* surface)
   wlr_buffer_lock(buf);
   pending_buffer = buf;
   sampleLogged = false;
+  needsImport = true;
 
   width = surface->current.width;
   height = surface->current.height;
@@ -194,7 +245,137 @@ WaylandApp::appTexture()
   if (!buffer) {
     return;
   }
+  ensureEglImageFns();
 
+  auto destroyImportedImage = [&]() {
+    ensureEglImageFns();
+    if (importedImage != EGL_NO_IMAGE_KHR && gEglDestroyImageKHR) {
+      gEglDestroyImageKHR(eglGetCurrentDisplay(), importedImage);
+      importedImage = EGL_NO_IMAGE_KHR;
+    }
+    if (importedBufferLocked && importedBuffer) {
+      wlr_buffer_unlock(importedBuffer);
+    }
+    importedBufferLocked = false;
+    importedBuffer = nullptr;
+  };
+
+  // Skip work if we've already imported this buffer and nothing new was
+  // committed.
+  if (!needsImport && buffer == importedBuffer) {
+    return;
+  }
+
+  // Try zero-copy: import the client's dmabuf into a persistent EGLImage and
+  // bind it to the app's texture. Once imported, the client can update the
+  // buffer contents without us re-uploading.
+  wlr_dmabuf_attributes dmabuf{};
+  if (wlr_buffer_get_dmabuf(buffer, &dmabuf)) {
+    if (!gEGLImageTargetTexture2DOES) {
+      gEGLImageTargetTexture2DOES =
+        reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(
+          eglGetProcAddress("glEGLImageTargetTexture2DOES"));
+    }
+    if (gEGLImageTargetTexture2DOES == nullptr) {
+      // Can't import without the extension.
+    } else {
+    EGLDisplay eglDisplay = eglGetCurrentDisplay();
+    if (eglDisplay != EGL_NO_DISPLAY) {
+      if (buffer != importedBuffer) {
+        destroyImportedImage();
+      }
+
+      static const EGLint planeFdAttrs[WLR_DMABUF_MAX_PLANES] = {
+        EGL_DMA_BUF_PLANE0_FD_EXT,
+        EGL_DMA_BUF_PLANE1_FD_EXT,
+        EGL_DMA_BUF_PLANE2_FD_EXT,
+        EGL_DMA_BUF_PLANE3_FD_EXT,
+      };
+      static const EGLint planeOffsetAttrs[WLR_DMABUF_MAX_PLANES] = {
+        EGL_DMA_BUF_PLANE0_OFFSET_EXT,
+        EGL_DMA_BUF_PLANE1_OFFSET_EXT,
+        EGL_DMA_BUF_PLANE2_OFFSET_EXT,
+        EGL_DMA_BUF_PLANE3_OFFSET_EXT,
+      };
+      static const EGLint planePitchAttrs[WLR_DMABUF_MAX_PLANES] = {
+        EGL_DMA_BUF_PLANE0_PITCH_EXT,
+        EGL_DMA_BUF_PLANE1_PITCH_EXT,
+        EGL_DMA_BUF_PLANE2_PITCH_EXT,
+        EGL_DMA_BUF_PLANE3_PITCH_EXT,
+      };
+      static const EGLint planeModLoAttrs[WLR_DMABUF_MAX_PLANES] = {
+        EGL_DMA_BUF_PLANE0_MODIFIER_LO_EXT,
+        EGL_DMA_BUF_PLANE1_MODIFIER_LO_EXT,
+        EGL_DMA_BUF_PLANE2_MODIFIER_LO_EXT,
+        EGL_DMA_BUF_PLANE3_MODIFIER_LO_EXT,
+      };
+      static const EGLint planeModHiAttrs[WLR_DMABUF_MAX_PLANES] = {
+        EGL_DMA_BUF_PLANE0_MODIFIER_HI_EXT,
+        EGL_DMA_BUF_PLANE1_MODIFIER_HI_EXT,
+        EGL_DMA_BUF_PLANE2_MODIFIER_HI_EXT,
+        EGL_DMA_BUF_PLANE3_MODIFIER_HI_EXT,
+      };
+
+      std::vector<EGLint> imageAttrs;
+      imageAttrs.reserve(4 + dmabuf.n_planes * 6 + 1);
+      imageAttrs.push_back(EGL_WIDTH);
+      imageAttrs.push_back(dmabuf.width);
+      imageAttrs.push_back(EGL_HEIGHT);
+      imageAttrs.push_back(dmabuf.height);
+      imageAttrs.push_back(EGL_LINUX_DRM_FOURCC_EXT);
+      imageAttrs.push_back(static_cast<EGLint>(dmabuf.format));
+
+      for (int i = 0; i < dmabuf.n_planes; ++i) {
+        imageAttrs.push_back(planeFdAttrs[i]);
+        imageAttrs.push_back(dmabuf.fd[i]);
+        imageAttrs.push_back(planeOffsetAttrs[i]);
+        imageAttrs.push_back(static_cast<EGLint>(dmabuf.offset[i]));
+        imageAttrs.push_back(planePitchAttrs[i]);
+        imageAttrs.push_back(static_cast<EGLint>(dmabuf.stride[i]));
+        if (dmabuf.modifier != DRM_FORMAT_MOD_INVALID) {
+          imageAttrs.push_back(planeModLoAttrs[i]);
+          imageAttrs.push_back(static_cast<EGLint>(dmabuf.modifier & 0xFFFFFFFFu));
+          imageAttrs.push_back(planeModHiAttrs[i]);
+      imageAttrs.push_back(static_cast<EGLint>(dmabuf.modifier >> 32));
+        }
+      }
+      imageAttrs.push_back(EGL_NONE);
+
+      EGLImageKHR image = EGL_NO_IMAGE_KHR;
+      if (gEglCreateImageKHR) {
+        image = gEglCreateImageKHR(
+          eglDisplay, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, imageAttrs.data());
+      }
+      if (image != EGL_NO_IMAGE_KHR) {
+        glActiveTexture(textureUnit);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        gEGLImageTargetTexture2DOES(GL_TEXTURE_2D, reinterpret_cast<GLeglImageOES>(image));
+        GLenum importErr = glGetError();
+        if (importErr == GL_NO_ERROR) {
+          destroyImportedImage();
+          wlr_buffer_lock(buffer);
+          importedImage = image;
+          importedBuffer = buffer;
+          importedBufferLocked = true;
+          uploadedWidth = width;
+          uploadedHeight = height;
+          needsImport = false;
+          return;
+        }
+        if (gEglDestroyImageKHR) {
+          gEglDestroyImageKHR(eglDisplay, image);
+        }
+      }
+    }
+  }
+  }
+
+  // Slow fallback: CPU read + GL upload for non-dmabuf buffers.
+  destroyImportedImage();
   size_t stride = 0;
   void* data = nullptr;
   uint32_t format = 0;
@@ -611,6 +792,8 @@ WaylandApp::appTexture()
         std::fclose(logFile2);
       }
     }
+    importedBuffer = buffer;
+    needsImport = false;
     if (beganDataPtrAccess) {
       wlr_buffer_end_data_ptr_access(buffer);
     }

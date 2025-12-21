@@ -36,6 +36,11 @@ if [ -n "$BACKEND" ]; then
   if [ "$BACKEND" = "drm" ]; then
     # Prefer logind for seat access when running on a TTY.
     export LIBSEAT_BACKEND="${LIBSEAT_BACKEND:-logind}"
+    # Pick a predictable primary DRM device when none was provided so hybrid GPU
+    # setups don't accidentally render on a headless card.
+    if [ -z "${WLR_DRM_DEVICES:-}" ] && [ -e /dev/dri/card0 ]; then
+      export WLR_DRM_DEVICES="/dev/dri/card0"
+    fi
     # Ensure XDG_RUNTIME_DIR exists; logind normally sets this.
     if [ -z "${XDG_RUNTIME_DIR:-}" ]; then
       export XDG_RUNTIME_DIR="/run/user/$(id -u)"
@@ -46,5 +51,7 @@ if [ -n "$BACKEND" ]; then
 fi
 
 [ "$DELAY" -gt 0 ] && sleep "$DELAY"
-BIN="${MATRIX_WLROOTS_BIN:-./matrix-wlroots}"
+BIN="${MATRIX_WLROOTS_BIN:-./matrix-wlroots-debug}"
+export ENABLE_RENDER_TMP_LOGS=1
+export WLR_APP_SAMPLE_LOG=1
 VOXEL_API_BIND=tcp://*:3345 "$BIN" "$@"

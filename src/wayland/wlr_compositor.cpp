@@ -112,6 +112,7 @@ struct WlrKeyboardHandle {
   WlrServer* server = nullptr;
   wlr_keyboard* keyboard = nullptr;
   wl_listener key;
+  wl_listener modifiers;
   wl_listener destroy;
 };
 
@@ -178,6 +179,7 @@ struct WlrServer {
   wlr_xcursor_manager* cursor_mgr = nullptr;
   wlr_cursor* cursor = nullptr;
   bool replaySuperActive = false;
+  int replaySuperHeld = 0;
   bool pendingReplaySuper = false;
   uint32_t pendingReplaySuperKeycode = 0;
   xkb_keysym_t pendingReplaySuperSym = XKB_KEY_NoSymbol;
@@ -190,6 +192,20 @@ struct WlrServer {
   double pointer_y = 0.0;
   wl_listener request_set_cursor;
 };
+
+static void
+clear_input_forces(WlrServer* server)
+{
+  if (!server) {
+    return;
+  }
+  server->input.forward = false;
+  server->input.back = false;
+  server->input.left = false;
+  server->input.right = false;
+  server->input.delta_x = 0.0;
+  server->input.delta_y = 0.0;
+}
 
 static size_t
 wayland_app_count(WlrServer* server)
@@ -553,6 +569,7 @@ handle_keyboard_destroy(wl_listener* listener, void* data)
   (void)data;
   auto* handle =
     wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), destroy);
+  wl_list_remove(&handle->modifiers.link);
   wl_list_remove(&handle->key.link);
   wl_list_remove(&handle->destroy.link);
   delete handle;
@@ -607,7 +624,12 @@ process_key_sym(WlrServer* server,
   }
 
   if (isSuperSym(sym)) {
-    server->replaySuperActive = pressed;
+    if (pressed) {
+      ++server->replaySuperHeld;
+    } else if (server->replaySuperHeld > 0) {
+      --server->replaySuperHeld;
+    }
+    server->replaySuperActive = server->replaySuperHeld > 0;
     log_to_tmp("super combo: super key state pressed=%d replaySuper=%d time=%u keycode=%u\n",
                pressed ? 1 : 0,
                server->replaySuperActive ? 1 : 0,
@@ -627,7 +649,10 @@ process_key_sym(WlrServer* server,
       if (pressed) {
         depressed |= WLR_MODIFIER_LOGO;
       } else {
-        depressed &= ~WLR_MODIFIER_LOGO;
+        // Only clear LOGO when no other Super is logically held.
+        if (server->replaySuperHeld <= 0) {
+          depressed &= ~WLR_MODIFIER_LOGO;
+        }
       }
     }
     keyboard->modifiers.depressed = depressed;
@@ -763,7 +788,9 @@ process_key_sym(WlrServer* server,
     case XKB_KEY_R:
       if (pressed && server->engine && !waylandFocusActive) {
         if (auto wm = server->engine->getWindowManager()) {
+          log_to_tmp("focus hotkey: applying focusLookedAtApp\n");
           wm->focusLookedAtApp();
+          clear_input_forces(server);
           blockClientDelivery = true; // consume focus hotkey
         }
       }
@@ -1049,6 +1076,16 @@ handle_new_input(wl_listener* listener, void* data)
     handle_keyboard_key(listener, data);
   };
   wl_signal_add(&keyboard->events.key, &handle->key);
+  handle->modifiers.notify = [](wl_listener* listener, void* data) {
+    (void)data;
+    auto* handle =
+      wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), modifiers);
+    if (handle->server && handle->server->seat) {
+      wlr_seat_keyboard_notify_modifiers(handle->server->seat,
+                                         &handle->keyboard->modifiers);
+    }
+  };
+  wl_signal_add(&keyboard->events.modifiers, &handle->modifiers);
   handle->destroy.notify = handle_keyboard_destroy;
   wl_signal_add(&device->events.destroy, &handle->destroy);
 
@@ -1440,6 +1477,20 @@ handle_output_frame(wl_listener* listener, void* data)
         bool is_super_sym = (sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R);
         bool is_last = (i + 1) == ready.size();
         bool replay_has_future = wm->hasPendingReplay();
+        if (is_super_sym && server->pendingReplaySuper &&
+            server->pendingReplaySuperKeycode != 0) {
+          // Avoid overlapping super presses that clear modifiers out of order.
+          process_key_sym(server,
+                          kbd,
+                          server->pendingReplaySuperSym,
+                          false,
+                          time_msec,
+                          server->pendingReplaySuperKeycode,
+                          true);
+          server->pendingReplaySuper = false;
+          server->pendingReplaySuperKeycode = 0;
+          server->pendingReplaySuperSym = XKB_KEY_NoSymbol;
+        }
         if (is_super_sym && super_lookup.has_value() &&
             (replay_has_future || !is_last)) {
           server->pendingReplaySuper = true;
@@ -1483,14 +1534,15 @@ handle_output_frame(wl_listener* listener, void* data)
         }
         step += 2;
         if (server->pendingReplaySuper && !is_super_sym) {
-          // Release held super after the combo key to preserve modifier state.
-          process_key_sym(server,
-                          kbd,
-                          server->pendingReplaySuperSym,
-                          false,
-                          time_msec + 3,
-                          server->pendingReplaySuperKeycode,
-                          true);
+          // Release held super after the combo key with a realistic hold so the
+          // replay path mirrors physical key timing.
+          uint32_t super_release_time =
+            time_msec + static_cast<uint32_t>(std::max<uint64_t>(hold_ms, kReplayHoldMs));
+          server->pendingReplayKeyups.push_back(
+            ReplayKeyRelease{ server->pendingReplaySuperSym,
+                              super_release_time,
+                              server->pendingReplaySuperKeycode,
+                              true });
           server->pendingReplaySuper = false;
           server->pendingReplaySuperKeycode = 0;
           server->pendingReplaySuperSym = XKB_KEY_NoSymbol;

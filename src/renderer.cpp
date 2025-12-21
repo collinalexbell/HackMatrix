@@ -951,22 +951,24 @@ Renderer::renderApps()
     }
 #endif
     int idx = static_cast<int>(app->getAppIndex());
-    // Upload latest buffer and bind to the app's dedicated unit to avoid stale
-    // or shared textures when multiple Wayland apps are present.
-    app->appTexture();
+    // Upload latest buffer only when a new commit arrived, then bind to the
+    // app's dedicated unit to avoid stale or shared textures when multiple
+    // Wayland apps are present.
+    if (app->needsTextureImport()) {
+      app->appTexture();
+    }
     if (!bindAppTexture(idx)) {
       continue;
     }
-    // Scale the in-world quad to the app's pixel size relative to the current
-    // screen so the non-direct path matches what we present in direct render.
+    // Keep the in-world quad at the positionable's size; just track the app's
+    // pixel size for logging and aspect ratio.
     float sx = static_cast<float>(app->getWidth()) /
                static_cast<float>(SCREEN_WIDTH);
     float sy = static_cast<float>(app->getHeight()) /
                static_cast<float>(SCREEN_HEIGHT);
     glm::mat4 model = positionable.modelMatrix;
-    model = glm::scale(model, glm::vec3(sx, sy, 1.0f));
     shader->setMatrix4("model", model);
-    shader->setMatrix4("bootableScale", glm::mat4(1.0f));
+    shader->setMatrix4("bootableScale", app->getHeightScalar());
     shader->setInt("appNumber", idx);
     shader->setBool("appTransparent", false);
     if (logFile) {

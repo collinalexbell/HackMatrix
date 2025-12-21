@@ -5,6 +5,14 @@
 #include <atomic>
 #include <array>
 #include <optional>
+#ifndef EGL_EGLEXT_PROTOTYPES
+#define EGL_EGLEXT_PROTOTYPES
+#endif
+#ifndef GL_GLEXT_PROTOTYPES
+#define GL_GLEXT_PROTOTYPES
+#endif
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <wayland-server-core.h>
 #include <memory>
 #include "AppSurface.h"
@@ -46,6 +54,10 @@ class WaylandApp : public AppSurface {
   int uploadedWidth = 0;
   int uploadedHeight = 0;
   bool sampleLogged = false;
+  wlr_buffer* importedBuffer = nullptr;
+  EGLImageKHR importedImage = EGL_NO_IMAGE_KHR;
+  bool needsImport = false;
+  bool importedBufferLocked = false;
 
 public:
   int width = 0;
@@ -105,6 +117,7 @@ public:
   int getTextureId() const override { return textureId; }
   int getTextureUnit() const override { return textureUnit; }
   wlr_surface* getSurface() const { return surface; }
+  bool needsTextureImport() const { return needsImport; }
 
   std::string getWindowName() override { return title; }
   int getPID() override { return clientPid; }

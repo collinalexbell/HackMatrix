@@ -318,30 +318,59 @@ optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {
     return currentlyFocusedApp;
  }
 
-void WindowManager::moveCameraToApp(entt::entity ent, const char* reasonTag) {
-  if (!space || !camera) {
+bool WindowManager::computeAppCameraTarget(entt::entity ent,
+                                           glm::vec3& targetPos,
+                                           glm::vec3& rotationDegrees,
+                                           const char* reasonTag) {
+  if (!space || !camera || !registry || !registry->all_of<Positionable>(ent)) {
+    return false;
+  }
+  float deltaZ = space->getViewDistanceForWindowSize(ent);
+  rotationDegrees = space->getAppRotation(ent);
+  glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
+
+  glm::vec3 appPos = space->getAppPosition(ent);
+  targetPos = appPos + rotationQuat * glm::vec3(0, 0, deltaZ);
+
+  WL_WM_LOG("WM: %s ent=%d pos=(%.2f,%.2f,%.2f) camPos=(%.2f,%.2f,%.2f) targetPos=(%.2f,%.2f,%.2f)\n",
+            reasonTag ? reasonTag : "computeAppCameraTarget",
+            (int)entt::to_integral(ent),
+            appPos.x, appPos.y, appPos.z,
+            camera->position.x, camera->position.y, camera->position.z,
+            targetPos.x, targetPos.y, targetPos.z);
+  return true;
+}
+
+std::shared_ptr<bool> WindowManager::moveCameraToApp(entt::entity ent, const char* reasonTag) {
+  glm::vec3 targetPos = camera ? camera->position : glm::vec3{};
+  glm::vec3 rotationDegrees{0.0f};
+  bool haveTarget = computeAppCameraTarget(ent, targetPos, rotationDegrees, reasonTag);
+  if (!haveTarget || !camera) {
+    return {};
+  }
+  glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
+  glm::vec3 facing = rotationQuat * glm::vec3(0, 0, -1);
+  return camera->moveTo(targetPos, facing, 0.5f);
+}
+
+void WindowManager::focusEntityAfterMove(entt::entity ent) {
+  if (!registry || !registry->valid(ent)) {
     return;
   }
-  glm::vec3 targetPos = camera->position;
-  glm::vec3 facing = camera->front;
-
-  if (registry->all_of<Positionable>(ent)) {
-    float deltaZ = space->getViewDistanceForWindowSize(ent);
-    glm::vec3 rotationDegrees = space->getAppRotation(ent);
-    glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
-
-    glm::vec3 appPos = space->getAppPosition(ent);
-    targetPos = appPos + rotationQuat * glm::vec3(0, 0, deltaZ);
-    facing = rotationQuat * glm::vec3(0, 0, -1);
-
-    WL_WM_LOG("WM: %s ent=%d pos=(%.2f,%.2f,%.2f) camPos=(%.2f,%.2f,%.2f) targetPos=(%.2f,%.2f,%.2f)\n",
-              reasonTag ? reasonTag : "moveCameraToApp",
-              (int)entt::to_integral(ent),
-              appPos.x, appPos.y, appPos.z,
-              camera->position.x, camera->position.y, camera->position.z,
-              targetPos.x, targetPos.y, targetPos.z);
+  WL_WM_LOG("WM: focusEntityAfterMove ent=%d isWayland=%d isX11=%d\n",
+            (int)entt::to_integral(ent),
+            registry->all_of<WaylandApp::Component>(ent) ? 1 : 0,
+            registry->all_of<X11App>(ent) ? 1 : 0);
+  if (registry->all_of<WaylandApp::Component>(ent)) {
+    currentlyFocusedApp = ent;
+    if (auto* comp = registry->try_get<WaylandApp::Component>(ent)) {
+      if (comp->app) {
+        comp->app->takeInputFocus();
+      }
+    }
+  } else if (registry->all_of<X11App>(ent)) {
+    focusApp(ent);
   }
-  camera->moveTo(targetPos, facing, 0.5f);
 }
 
 void WindowManager::goToLookedAtApp() {
@@ -462,28 +491,89 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shift
     }
     unfocusApp();
     if (index >= 0 && index < static_cast<int>(appsWithHotKeys.size())) {
-      if (appsWithHotKeys[index].has_value() && controls) {
-        auto ent = appsWithHotKeys[index].value();
-        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d\n",
+      if (!appsWithHotKeys[index].has_value()) {
+        return;
+      }
+      auto ent = appsWithHotKeys[index].value();
+      bool isX11 = registry && registry->all_of<X11App>(ent);
+      currentlyFocusedApp = ent;
+      WL_WM_LOG("WM: hotkey set current ent=%d\n",
+                (int)entt::to_integral(ent));
+      // Ensure renderer/input know the focus immediately; selection happens after the move.
+      focusEntityAfterMove(ent);
+
+      if (isX11) {
+        auto& app = registry->get<X11App>(ent);
+        app.deselect();
+      }
+
+      glm::vec3 targetPos{0.0f};
+      glm::vec3 rotationDegrees{0.0f};
+      if (!computeAppCameraTarget(ent,
+                                  targetPos,
+                                  rotationDegrees,
+                                  "hotkey focus target")) {
+        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d no target -> immediate focus\n",
                   index,
                   (int)entt::to_integral(ent));
-        controls->goToApp(ent);
-      } else if (appsWithHotKeys[index].has_value()) {
-        auto ent = appsWithHotKeys[index].value();
-        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d (no controls)\n",
-                  index,
-                  (int)entt::to_integral(ent));
-        currentlyFocusedApp = ent;
-        // Nudge Wayland focus if available so renderer direct path picks it up.
-        if (registry && waylandMode &&
-            registry->all_of<WaylandApp::Component>(ent)) {
-          if (auto* comp = registry->try_get<WaylandApp::Component>(ent)) {
-            if (comp->app) {
-              comp->app->takeInputFocus();
-            }
-          }
+        if (isX11) {
+          auto& app = registry->get<X11App>(ent);
+          app.select();
         }
-        moveCameraToApp(ent, "hotkey focus");
+        focusEntityAfterMove(ent);
+        return;
+      }
+
+      WL_WM_LOG("WM: hotkey focus idx=%d ent=%d after target controls=%d\n",
+                index,
+                (int)entt::to_integral(ent),
+                controls ? 1 : 0);
+
+      auto finishFocus = [this, ent, isX11]() {
+        WL_WM_LOG("WM: hotkey focus finishing ent=%d isX11=%d\n",
+                  (int)entt::to_integral(ent),
+                  isX11 ? 1 : 0);
+        if (registry && registry->valid(ent) && isX11) {
+          auto& app = registry->get<X11App>(ent);
+          app.select();
+        }
+        focusEntityAfterMove(ent);
+      };
+
+      if (controls) {
+        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d move start (controls)\n",
+                  index,
+                  (int)entt::to_integral(ent));
+        controls->moveTo(targetPos,
+                         rotationDegrees,
+                         0.5f,
+                         finishFocus);
+      } else {
+        // Fallback when controls are unavailable: move via camera then focus.
+        glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
+        glm::vec3 facing = rotationQuat * glm::vec3(0, 0, -1);
+        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d move start (no controls)\n",
+                  index,
+                  (int)entt::to_integral(ent));
+        auto isDone = camera ? camera->moveTo(targetPos, facing, 0.5f) : nullptr;
+        if (!isDone) {
+          finishFocus();
+          return;
+        }
+        auto weakDone = std::weak_ptr<bool>(isDone);
+        std::thread([finishFocus, weakDone]() {
+          while (true) {
+            auto shared = weakDone.lock();
+            if (!shared) {
+              return;
+            }
+            if (*shared) {
+              break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          }
+          finishFocus();
+        }).detach();
       }
     }
   };
@@ -726,10 +816,14 @@ void WindowManager::tick() {
   if (waylandMode) {
     if (camera) {
       camera->tick();
-      WL_WM_LOG("WM: tick (wayland) camPos=(%.2f,%.2f,%.2f)\n",
+      int focusedEnt = currentlyFocusedApp.has_value()
+                         ? (int)entt::to_integral(*currentlyFocusedApp)
+                         : -1;
+      WL_WM_LOG("WM: tick (wayland) camPos=(%.2f,%.2f,%.2f) focused=%d\n",
                 camera->position.x,
                 camera->position.y,
-                camera->position.z);
+                camera->position.z,
+                focusedEnt);
     }
     return;
   }

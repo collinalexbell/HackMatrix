@@ -374,7 +374,7 @@ build/testControlsSpec.o: tests/controls_spec.cpp
 	g++ -std=c++20 $(FLAGS) -o build/testControlsSpec.o -c tests/controls_spec.cpp $(INCLUDES)
 
 test-wayland-menu: build/testWaylandMenuSpec.o build/testControlsSpec.o
-	g++ -std=c++20 $(FLAGS) -o build/test-wayland-menu build/testWaylandMenuSpec.o build/testControlsSpec.o $(ALL_OBJECTS) $(INCLUDES) $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lgtest -lgtest_main -lpthread
+	g++ -std=c++20 $(FLAGS) -o build/test-wayland-menu build/testWaylandMenuSpec.o build/testControlsSpec.o $(ALL_OBJECTS) $(INCLUDES) $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lEGL -lGLESv2 -lgtest -lgtest_main -lpthread
 
 
 
