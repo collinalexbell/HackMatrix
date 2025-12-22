@@ -53,6 +53,7 @@ wlroots_renderer_log()
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image_write.h"
 #include <ctime>
+#include <cmath>
 #include <iomanip>
 #include <cstring>
 #include <cstdio>
@@ -306,6 +307,49 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   // glEnable(GL_MULTISAMPLE);
   genGlResources();
   fillBuffers();
+  // Align global screen dimensions to the actual GL viewport (Wayland context)
+  // so default app sizing (Bootable defaults) matches the compositor output,
+  // then rebuild the app quad with the correct aspect.
+  auto refreshScreenFromViewport = [&]() {
+    GLint vp[4] = { 0, 0, 0, 0 };
+    glGetIntegerv(GL_VIEWPORT, vp);
+    if (vp[2] > 0 && vp[3] > 0) {
+      SCREEN_WIDTH = static_cast<float>(vp[2]);
+      SCREEN_HEIGHT = static_cast<float>(vp[3]);
+      int defaultW =
+        std::max(1, static_cast<int>(std::lround(SCREEN_WIDTH * 0.85f)));
+      int defaultH =
+        std::max(1, static_cast<int>(std::lround(SCREEN_HEIGHT * 0.85f)));
+      Bootable::DEFAULT_WIDTH = defaultW;
+      Bootable::DEFAULT_HEIGHT = defaultH;
+      float newHeight = SCREEN_HEIGHT / SCREEN_WIDTH / 2.0f;
+      float verts[] = {
+        -0.5f, -newHeight, 0, 0.0f, 0.0f, 0.5f,  -newHeight, 0, 1.0f, 0.0f,
+        0.5f,  newHeight,  0, 1.0f, 1.0f, 0.5f,  newHeight,  0, 1.0f, 1.0f,
+        -0.5f, newHeight,  0, 0.0f, 1.0f, -0.5f, -newHeight, 0, 0.0f, 0.0f,
+      };
+      std::memcpy(appVertices, verts, sizeof(appVertices));
+      glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+      glBufferData(
+        GL_ARRAY_BUFFER, sizeof(appVertices), appVertices, GL_STATIC_DRAW);
+      FILE* f = std::fopen("/tmp/matrix-debug.log", "a");
+      if (f) {
+        std::fprintf(f,
+                     "Renderer: viewport=%d x %d -> SCREEN=%d x %d DEFAULT=%d x "
+                     "%d newHeight=%.6f\n",
+                     vp[2],
+                     vp[3],
+                     (int)SCREEN_WIDTH,
+                     (int)SCREEN_HEIGHT,
+                     defaultW,
+                     defaultH,
+                     newHeight);
+        std::fflush(f);
+        std::fclose(f);
+      }
+    }
+  };
+  refreshScreenFromViewport();
   setupVertexAttributePointers();
 
   std::vector<std::string> images = texturePack->imageNames();

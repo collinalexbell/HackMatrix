@@ -16,6 +16,8 @@ extern "C" {
 #include <unistd.h>
 #include <drm_fourcc.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include "screen.h"
+#include "components/Bootable.h"
 #ifndef EGL_EGLEXT_PROTOTYPES
 #define EGL_EGLEXT_PROTOTYPES
 #endif
@@ -40,10 +42,12 @@ recomputeHeightScaler(double width, double height)
   if (height == 0.0) {
     return glm::mat4(1.0f);
   }
-  float scale = static_cast<float>(width / height);
-  glm::mat4 scaler(1.0f);
-  scaler = glm::scale(scaler, glm::vec3(1.0f, scale, 1.0f));
-  return scaler;
+  // Match the X11 path: normalize the surface aspect ratio against the default
+  // screen aspect so in-world quads stay a 1:1 pixel mapping.
+  float standardRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
+  float currentRatio = static_cast<float>(height / width);
+  float scaleFactor = currentRatio / standardRatio;
+  return glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, scaleFactor, 1.0f));
 }
 
 // Minimal declaration to import dmabuf into a GL texture without dragging in
@@ -83,6 +87,14 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
   if (surface && surface->resource && surface->resource->client) {
     wl_client_get_credentials(surface->resource->client, &clientPid, nullptr, nullptr);
   }
+
+  // Default to the same normalized size we ask X11 windows for (85% of screen)
+  // so the initial quad mapping matches screen pixels even before the first
+  // buffer commit provides real dimensions.
+  width = Bootable::DEFAULT_WIDTH;
+  height = Bootable::DEFAULT_HEIGHT;
+  update_height_scalar();
+  requestSize(width, height);
 
   surface_commit.notify = [](wl_listener* listener, void* data) {
     auto* self = wl_container_of(listener, static_cast<WaylandApp*>(nullptr), surface_commit);
