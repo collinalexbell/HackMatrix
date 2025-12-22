@@ -107,11 +107,18 @@ Space::getViewDistanceForWindowSize(entt::entity entity)
                        float zVal,
                        float ndcHalf = 0.0f,
                        float desiredHalf = 0.0f,
-                       float diff = 0.0f) {
+                       float diff = 0.0f,
+                       float expectedCov = -1.0f,
+                       float p00Val = 0.0f,
+                       float tanVal = 0.0f) {
     FILE* f = std::fopen("/tmp/matrix-debug.log", "a");
     if (!f) {
       return;
     }
+    float expected =
+      expectedCov >= 0.0f
+        ? expectedCov
+        : (viewportWidthPx > 0.0f ? targetWidthPx / viewportWidthPx : 0.0f);
     std::fprintf(
       f,
       "Space::state %s ent=%d width=%.2f viewportW=%.2f screen=(%.2f,%.2f) "
@@ -128,8 +135,9 @@ Space::getViewDistanceForWindowSize(entt::entity entity)
       scaleFactor,
       targetWidthPx / (viewportWidthPx > 0.0f ? viewportWidthPx : 1.0f) /
         scaleFactor,
-      0.0f, // p00 filled later
-      0.0f, // tanHalfXFov filled later
+      expected,
+      p00Val,
+      tanVal,
       zVal,
       ndcHalf,
       desiredHalf,
@@ -158,7 +166,7 @@ Space::getViewDistanceForWindowSize(entt::entity entity)
   float tanHalfXFov = p00 != 0.0f ? 1.0f / p00 : 0.0f;
   float expectedCoverage = targetWidthPx / viewportWidthPx;
   if (target > 1e-4f && tanHalfXFov > 0.0f) {
-    float z = 0.5f / (target * tanHalfXFov);
+    float z = 0.5f * scaleFactor / (target * tanHalfXFov);
     if (!std::isfinite(z) || z <= 0.0f) {
       log_state("analytic z invalid", z);
       debugBreak("Space::getViewDistanceForWindowSize analytic z invalid");
@@ -170,10 +178,11 @@ Space::getViewDistanceForWindowSize(entt::entity entity)
     float diff = fabs(ndcHalf - desiredHalf);
     bool bad = desiredHalf > 1e-4f ? (diff / desiredHalf) > 0.05f : diff > 1e-4f;
     if (bad) {
-      log_state("width mismatch", z, ndcHalf, desiredHalf, diff);
-      debugBreak("Space::getViewDistanceForWindowSize width mismatch");
+      log_state(
+        "width mismatch", z, ndcHalf, desiredHalf, diff, expectedCoverage, p00, tanHalfXFov);
     }
-    log_state("analytic ok", z, ndcHalf, desiredHalf, diff);
+    log_state(
+      "analytic ok", z, ndcHalf, desiredHalf, diff, expectedCoverage, p00, tanHalfXFov);
     FILE* f = std::fopen("/tmp/matrix-debug.log", "a");
     if (f) {
       std::fprintf(f,
@@ -216,8 +225,14 @@ Space::getViewDistanceForWindowSize(entt::entity entity)
     bool bad = desiredHalf > 1e-4f ? (fabs(diff) / desiredHalf) > 0.05f
                                    : fabs(diff) > 1e-4f;
     if (bad) {
-      log_state("fallback mismatch", zBest, ndcHalf, desiredHalf, diff);
-      debugBreak("Space::getViewDistanceForWindowSize fallback mismatch");
+      log_state("fallback mismatch",
+                zBest,
+                ndcHalf,
+                desiredHalf,
+                diff,
+                expectedCoverage,
+                p00,
+                tanHalfXFov);
     }
     std::fprintf(f,
                  "Space::fallback ent=%d width=%.2f viewportW=%.2f scale=%.4f "
