@@ -178,6 +178,7 @@ struct WlrServer {
   wlr_keyboard* virtual_keyboard = nullptr;
   wlr_xcursor_manager* cursor_mgr = nullptr;
   wlr_cursor* cursor = nullptr;
+  bool cursor_visible = false;
   bool replaySuperActive = false;
   int replaySuperHeld = 0;
   bool pendingReplaySuper = false;
@@ -278,25 +279,136 @@ log_pointer_state(WlrServer* server, const char* tag)
   if (server->seat && server->seat->pointer_state.focused_surface) {
     surf = server->seat->pointer_state.focused_surface;
   }
-  log_to_tmp("pointer[%s]: pos=(%.1f,%.1f) focus=%p\n",
+  log_to_tmp("pointer[%s]: pos=(%.1f,%.1f) focus=%p visible=%d\n",
              tag ? tag : "",
              px,
              py,
-             (void*)surf);
+             (void*)surf,
+             server->cursor_visible ? 1 : 0);
 }
 
 static void
-set_default_cursor(WlrServer* server)
+set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
 {
   if (!server || !server->cursor || !server->cursor_mgr) {
+    log_to_tmp("cursor: default skipped (missing server/cursor/cursor_mgr)\n");
     return;
   }
-  // Load default theme if not already; reuse per-output scale later.
-  wlr_xcursor_manager_load(server->cursor_mgr, 1);
+  float scale = 1.0f;
+  if (output) {
+    scale = output->scale;
+  } else if (server->primary_output) {
+    scale = server->primary_output->scale;
+  }
+  if (scale <= 0.0f) {
+    scale = 1.0f;
+  }
+  // Load the theme for the target scale and set a sane default pointer image.
+  int loaded = wlr_xcursor_manager_load(server->cursor_mgr, scale);
+  if (loaded < 0) {
+    log_to_tmp("cursor: load failed scale=%.2f -> trying Adwaita\n", scale);
+    wlr_xcursor_manager_destroy(server->cursor_mgr);
+    server->cursor_mgr = wlr_xcursor_manager_create("Adwaita", 24);
+    if (server->cursor_mgr) {
+      loaded = wlr_xcursor_manager_load(server->cursor_mgr, scale);
+    }
+  }
+  if (loaded < 0 ||
+      !wlr_xcursor_manager_get_xcursor(server->cursor_mgr, "left_ptr", scale)) {
+    log_to_tmp("cursor: failed theme scale=%.2f -> using software overlay\n", scale);
+    return;
+  }
+  log_to_tmp("cursor: using theme scale=%.2f\n", scale);
   wlr_cursor_set_xcursor(server->cursor, server->cursor_mgr, "left_ptr");
   server->pointer_x = server->cursor->x;
   server->pointer_y = server->cursor->y;
   log_pointer_state(server, "default_cursor");
+}
+
+static bool
+wayland_pointer_focus_requested(WlrServer* server)
+{
+  if (!server || !server->engine) {
+    return false;
+  }
+  // If the seat already has a focused pointer surface, keep the cursor visible.
+  if (server->seat && server->seat->pointer_state.focused_surface) {
+    return true;
+  }
+  // If the seat has a focused client for the pointer, allow the cursor.
+  if (server->seat && server->seat->pointer_state.focused_client) {
+    return true;
+  }
+  auto wm = server->engine->getWindowManager();
+  if (!wm || !server->registry) {
+    return false;
+  }
+  auto focused = wm->getCurrentlyFocusedApp();
+  if (!focused.has_value() || !server->registry->valid(*focused)) {
+    return false;
+  }
+  return server->registry->all_of<WaylandApp::Component>(*focused);
+}
+
+static void
+ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
+{
+  if (!server || !server->seat || server->seat->pointer_state.focused_surface) {
+    return;
+  }
+  if (!server->engine || !server->registry) {
+    return;
+  }
+  auto wm = server->engine->getWindowManager();
+  if (!wm) {
+    return;
+  }
+  auto focused = wm->getCurrentlyFocusedApp();
+  if (!focused || !server->registry->valid(*focused) ||
+      !server->registry->all_of<WaylandApp::Component>(*focused)) {
+    return;
+  }
+  auto& comp = server->registry->get<WaylandApp::Component>(*focused);
+  auto* app = comp.app.get();
+  wlr_surface* surf = app ? app->getSurface() : nullptr;
+  if (!surf) {
+    return;
+  }
+  if (time_msec == 0) {
+    uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::steady_clock::now().time_since_epoch())
+                        .count();
+    time_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
+  }
+  wlr_seat_pointer_notify_enter(
+    server->seat, surf, server->pointer_x, server->pointer_y);
+  wlr_seat_pointer_notify_motion(
+    server->seat, time_msec, server->pointer_x, server->pointer_y);
+  wlr_seat_pointer_notify_frame(server->seat);
+}
+
+static void
+set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr)
+{
+  if (!server || !server->cursor) {
+    return;
+  }
+  log_to_tmp("cursor: set_cursor_visible visible=%d current=%d\n",
+             visible ? 1 : 0,
+             server->cursor_visible ? 1 : 0);
+  if (visible == server->cursor_visible) {
+    return;
+  }
+  if (visible) {
+    // Always ensure a sane default image; clients can override via set_cursor.
+    set_default_cursor(server, output);
+  } else {
+    wlr_cursor_unset_image(server->cursor);
+    if (server->seat) {
+      wlr_seat_pointer_notify_clear_focus(server->seat);
+    }
+  }
+  server->cursor_visible = visible;
 }
 
 static bool
@@ -922,8 +1034,8 @@ handle_new_input(wl_listener* listener, void* data)
       server->last_pointer_device = device;
       if (server->cursor) {
         wlr_cursor_attach_input_device(server->cursor, device);
-        // Ensure a visible default cursor when a new pointer arrives.
-        set_default_cursor(server);
+        // Only show the cursor when a Wayland app is focused.
+        set_cursor_visible(server, wayland_pointer_focus_requested(server));
       }
       auto* handle = new WlrPointerHandle();
       handle->server = server;
@@ -942,11 +1054,13 @@ handle_new_input(wl_listener* listener, void* data)
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
         }
-        if (handle->server->seat) {
+        if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
+          ensure_pointer_focus(handle->server, event->time_msec);
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
                                          handle->server->pointer_x,
                                          handle->server->pointer_y);
+          wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_rel");
         wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
@@ -976,11 +1090,13 @@ handle_new_input(wl_listener* listener, void* data)
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
         }
-        if (handle->server->seat) {
+        if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
+          ensure_pointer_focus(handle->server, event->time_msec);
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
                                          handle->server->pointer_x,
                                          handle->server->pointer_y);
+          wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_abs");
         FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
@@ -1026,10 +1142,12 @@ handle_new_input(wl_listener* listener, void* data)
           }
         }
         if (handle->server->seat) {
+          ensure_pointer_focus(handle->server, event->time_msec);
           wlr_seat_pointer_notify_button(handle->server->seat,
                                          event->time_msec,
                                          event->button,
                                          event->state);
+          wlr_seat_pointer_notify_frame(handle->server->seat);
         }
       };
       wl_signal_add(&pointer->events.button, &handle->button);
@@ -1549,12 +1667,18 @@ handle_output_frame(wl_listener* listener, void* data)
     if (camera) {
       camera->handleTranslateForce(
         server->input.forward, server->input.back, server->input.left, server->input.right);
-      bool pointerOwnedByApp = wayland_app_has_pointer_focus(server);
-      if (!pointerOwnedByApp &&
+      bool pointerFocusRequested = wayland_pointer_focus_requested(server);
+      if (!pointerFocusRequested &&
           (server->input.delta_x != 0.0 || server->input.delta_y != 0.0)) {
         camera->handleRotateForce(
           nullptr, server->input.delta_x, -server->input.delta_y);
       }
+      // Hide cursor and clear pointer focus when game mode is active so only deltas matter.
+      if (!pointerFocusRequested && server->seat &&
+          server->seat->pointer_state.focused_surface) {
+        wlr_seat_pointer_notify_clear_focus(server->seat);
+      }
+      set_cursor_visible(server, pointerFocusRequested, handle->output);
       // Always clear accumulated deltas so they don't apply after focus changes.
       server->input.delta_x = 0.0;
       server->input.delta_y = 0.0;
@@ -1590,6 +1714,13 @@ handle_output_frame(wl_listener* listener, void* data)
   pixman_region32_init_rect(&cursor_damage, 0, 0, width, height);
   wlr_output_add_software_cursors_to_render_pass(handle->output, pass, &cursor_damage);
   pixman_region32_fini(&cursor_damage);
+  // Draw a compositor-owned software cursor as a fallback when focused.
+  if (server->engine && wayland_pointer_focus_requested(server)) {
+    if (auto* renderer = server->engine->getRenderer()) {
+      float sizePx = 24.0f * (handle->output ? handle->output->scale : 1.0f);
+      renderer->renderSoftwareCursor(server->pointer_x, server->pointer_y, sizePx);
+    }
+  }
   log_pointer_state(server, "frame");
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1690,7 +1821,7 @@ handle_new_output(wl_listener* listener, void* data)
     wlr_cursor_warp(server->cursor, nullptr, server->pointer_x, server->pointer_y);
     if (server->cursor_mgr) {
       wlr_xcursor_manager_load(server->cursor_mgr, output->scale);
-      set_default_cursor(server);
+      set_cursor_visible(server, wayland_pointer_focus_requested(server), output);
     }
   }
   if (!server->primary_output) {
@@ -1840,7 +1971,8 @@ main(int argc, char** argv, char** envp)
   if (server.seat) {
     wlr_seat_set_capabilities(server.seat,
                               WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
-    server.cursor_mgr = wlr_xcursor_manager_create(nullptr, 24);
+    // Prefer the default theme, but allow fallback later if it is missing.
+    server.cursor_mgr = wlr_xcursor_manager_create("default", 24);
     if (server.cursor_mgr) {
       wlr_xcursor_manager_load(server.cursor_mgr, 1);
     }
@@ -1862,13 +1994,14 @@ main(int argc, char** argv, char** envp)
       if (event->surface) {
         wlr_cursor_set_surface(
           server->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+        server->cursor_visible = true;
         log_to_tmp("set_cursor: surface=%p hotspot=%d,%d\n",
                    (void*)event->surface,
                    event->hotspot_x,
                    event->hotspot_y);
       } else {
         log_to_tmp("set_cursor: null surface -> default\n");
-        set_default_cursor(server);
+        set_cursor_visible(server, wayland_pointer_focus_requested(server));
       }
       server->pointer_x = server->cursor->x;
       server->pointer_y = server->cursor->y;
@@ -1876,7 +2009,7 @@ main(int argc, char** argv, char** envp)
     };
     wl_signal_add(&server.seat->events.request_set_cursor, &server.request_set_cursor);
     // Set an initial default cursor.
-    set_default_cursor(&server);
+    set_cursor_visible(&server, wayland_pointer_focus_requested(&server));
   }
   server.data_device_manager = wlr_data_device_manager_create(server.display);
   // Advertise the screencopy protocol so tools like grim can capture frames.

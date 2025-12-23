@@ -5,6 +5,12 @@ export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg-runtime-$USER}"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 export LD_LIBRARY_PATH="$BASE_DIR/wlroots/build:$BASE_DIR/wlroots/build/subprojects/wayland/src:${LD_LIBRARY_PATH}"
+# Force a known-good cursor theme/size so wlroots loads a real arrow instead of a garbled fallback.
+export XCURSOR_THEME="${XCURSOR_THEME:-Adwaita}"
+export XCURSOR_SIZE="${XCURSOR_SIZE:-24}"
+export XCURSOR_PATH="${XCURSOR_PATH:-/usr/share/icons}"
+# Force software cursors; some GPUs/DRM combos show corrupted hardware cursors.
+export WLR_NO_HARDWARE_CURSORS=1
 # Optional flags:
 #   --in-wm     -> delay start when running inside another WM.
 #   --headless  -> force wlroots headless backend (for TTY/headless use).
@@ -51,7 +57,7 @@ if [ -n "$BACKEND" ]; then
 fi
 
 [ "$DELAY" -gt 0 ] && sleep "$DELAY"
-BIN="${MATRIX_WLROOTS_BIN:-./matrix-wlroots-debug}"
+BIN="${MATRIX_WLROOTS_BIN:-./matrix-debug}"
 export ENABLE_RENDER_TMP_LOGS=1
 export WLR_APP_SAMPLE_LOG=1
 VOXEL_API_BIND=tcp://*:3345 "$BIN" "$@"

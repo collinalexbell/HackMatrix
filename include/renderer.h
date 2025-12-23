@@ -44,6 +44,10 @@ class Renderer
 
   GlBuffer DIRECT_RENDER_VBO;
   GlVertexArray DIRECT_RENDER_VAO;
+  GlBuffer CURSOR_VBO;
+  GlVertexArray CURSOR_VAO;
+  unsigned int cursorTexture = 0;
+  bool cursorInitialized = false;
 
   GlBuffer LINE_VBO;
   GlBuffer LINE_INSTANCE;
@@ -68,6 +72,7 @@ class Renderer
   Shader* cameraShader;
   Shader* appShader;
   Shader* depthShader;
+  Shader* cursorShader;
   bool invertY = false;
   std::map<string, Texture*> textures;
   void initAppTextures();
@@ -101,6 +106,7 @@ class Renderer
   void genDynamicObjectResources();
   void fillDynamicObjectBuffers();
   void setupDynamicObjectVertexAttributePointers();
+  void initCursorResources();
 
   void setupMeshVertexAttributePoiners();
   void genGlResources();
@@ -140,6 +146,8 @@ public:
   // Wayland path can reuse a single texture unit to avoid GL unit exhaustion.
   void attachSharedAppTexture(AppSurface* app);
   void deregisterApp(int index);
+  glm::vec2 mapCursorToScreen(float xPixels, float yPixels) const;
+  void renderSoftwareCursor(float xPixels, float yPixels, float sizePixels);
   void reloadChunk();
   void screenshot();
   void screenshotFromCurrentFramebuffer(int width, int height);

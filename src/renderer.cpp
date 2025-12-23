@@ -124,6 +124,9 @@ Renderer::genGlResources()
   DIRECT_RENDER_VAO.create();
   DIRECT_RENDER_VBO.create(GL_ARRAY_BUFFER);
 
+  CURSOR_VAO.create();
+  CURSOR_VBO.create(GL_ARRAY_BUFFER);
+
   LINE_VAO.create();
   LINE_VBO.create(GL_ARRAY_BUFFER);
   LINE_INSTANCE.create(GL_ARRAY_BUFFER);
@@ -211,6 +214,15 @@ Renderer::setupVertexAttributePointers()
 
   glBindBuffer(GL_ARRAY_BUFFER, VOXEL_SELECTION_TEX_COORDS);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(1);
+
+  // software cursor quad (screen-space)
+  glBindVertexArray(CURSOR_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, CURSOR_VBO);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(
+    1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
 }
 
@@ -374,6 +386,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   shader->setBool("SHADOWS_ENABLED", shadowsEnabled);
 
   initAppTextures();
+  cursorShader = new Shader("shaders/cursor.vert", "shaders/cursor.frag");
 
   shader->setBool("lookedAtValid", false);
   shader->setBool("isLookedAt", false);
@@ -463,6 +476,81 @@ Renderer::initAppTextures()
   appTexturesInitialized = true;
 }
 
+void
+Renderer::initCursorResources()
+{
+  if (cursorInitialized) {
+    return;
+  }
+  // Generate a simple fractal tree into a small RGBA texture.
+  constexpr int kCursorSize = 64;
+  std::vector<uint32_t> pixels(kCursorSize * kCursorSize, 0x00000000);
+
+  auto set_px = [&](int x, int y, uint32_t color) {
+    if (x >= 0 && x < kCursorSize && y >= 0 && y < kCursorSize) {
+      pixels[y * kCursorSize + x] = color;
+    }
+  };
+  auto draw_line = [&](int x0, int y0, int x1, int y1, uint32_t color) {
+    int dx = std::abs(x1 - x0);
+    int sx = x0 < x1 ? 1 : -1;
+    int dy = -std::abs(y1 - y0);
+    int sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy;
+    while (true) {
+      set_px(x0, y0, color);
+      if (x0 == x1 && y0 == y1) {
+        break;
+      }
+      int e2 = 2 * err;
+      if (e2 >= dy) {
+        err += dy;
+        x0 += sx;
+      }
+      if (e2 <= dx) {
+        err += dx;
+        y0 += sy;
+      }
+    }
+  };
+
+  std::function<void(int, int, float, float, int)> draw_branch =
+    [&](int x, int y, float angle, float length, int depth) {
+      if (depth <= 0 || length < 2.0f) {
+        return;
+      }
+      int x2 = x + static_cast<int>(std::cos(angle) * length);
+      int y2 = y + static_cast<int>(std::sin(angle) * length);
+      draw_line(x, y, x2, y2, 0xffffffff);
+      float nextLen = length * 0.65f;
+      float spread = 0.6f;
+      draw_branch(x2, y2, angle - spread, nextLen, depth - 1);
+      draw_branch(x2, y2, angle + spread, nextLen, depth - 1);
+    };
+
+  int baseX = kCursorSize / 2;
+  int baseY = kCursorSize - 2;
+  draw_branch(baseX, baseY, -glm::half_pi<float>(), static_cast<float>(kCursorSize) * 0.3f, 7);
+
+  glGenTextures(1, &cursorTexture);
+  glBindTexture(GL_TEXTURE_2D, cursorTexture);
+  glTexImage2D(GL_TEXTURE_2D,
+               0,
+               GL_RGBA,
+               kCursorSize,
+               kCursorSize,
+               0,
+               GL_RGBA,
+               GL_UNSIGNED_BYTE,
+               pixels.data());
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  cursorShader->use();
+  cursorShader->setInt("uTexture", 0);
+  cursorInitialized = true;
+}
 void
 Renderer::updateTransformMatrices()
 {
@@ -721,6 +809,51 @@ Renderer::screenshotFromCurrentFramebuffer(int width, int height)
   saver.detach();
 }
 
+void
+Renderer::renderSoftwareCursor(float xPixels, float yPixels, float sizePixels)
+{
+  initCursorResources();
+  cursorShader->use();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, cursorTexture);
+
+  // Flip Y from top-left pixel coords (Wayland) into GL clip space.
+  glm::vec2 mapped = mapCursorToScreen(xPixels, yPixels);
+  float yFlipped = SCREEN_HEIGHT - mapped.y - sizePixels;
+  float left = static_cast<float>(mapped.x) / SCREEN_WIDTH * 2.0f - 1.0f;
+  float right =
+    static_cast<float>(mapped.x + sizePixels) / SCREEN_WIDTH * 2.0f - 1.0f;
+  float top = 1.0f - static_cast<float>(yFlipped) / SCREEN_HEIGHT * 2.0f;
+  float bottom =
+    1.0f - static_cast<float>(yFlipped + sizePixels) / SCREEN_HEIGHT * 2.0f;
+
+  float verts[] = {
+    left,  bottom, 0.0f, 0.0f, 1.0f, right, bottom, 0.0f, 1.0f, 1.0f,
+    right, top,    0.0f, 1.0f, 0.0f, left,  top,    0.0f, 0.0f, 0.0f,
+    left,  bottom, 0.0f, 0.0f, 1.0f, right, top,    0.0f, 1.0f, 0.0f
+  };
+
+  glBindVertexArray(CURSOR_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, CURSOR_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
+
+  GLboolean depthEnabled = glIsEnabled(GL_DEPTH_TEST);
+  glDisable(GL_DEPTH_TEST);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+  if (depthEnabled) {
+    glEnable(GL_DEPTH_TEST);
+  }
+}
+
+glm::vec2
+Renderer::mapCursorToScreen(float xPixels, float yPixels) const
+{
+  // When the rendered app viewport is centered in the output, shift the cursor
+  // so it lines up with the drawn content.
+  float offsetX = std::max(0.0f, (SCREEN_WIDTH - Bootable::DEFAULT_WIDTH) * 0.5f);
+  float offsetY = std::max(0.0f, (SCREEN_HEIGHT - Bootable::DEFAULT_HEIGHT) * 0.5f);
+  return glm::vec2(xPixels + offsetX, yPixels + offsetY);
+}
 void
 Renderer::renderLookedAtFace()
 {
