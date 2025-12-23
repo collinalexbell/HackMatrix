@@ -345,7 +345,6 @@ wayland_pointer_focus_requested(WlrServer* server)
   }
   auto focused = wm->getCurrentlyFocusedApp();
   if (!focused.has_value() || !server->registry->valid(*focused)) {
-    log_to_tmp("pointer_focus: no WM focused app\n");
     return false;
   }
   return server->registry->all_of<WaylandApp::Component>(*focused);
@@ -527,6 +526,14 @@ ensure_wayland_apps_registered(WlrServer* server)
         // Request a default window size that matches the X11 defaults.
         if (comp && comp->app) {
           comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
+        }
+        // If nothing is focused yet, focus this new app and ensure pointer focus.
+        if (auto wm = server->engine ? server->engine->getWindowManager() : nullptr) {
+          if (!wm->getCurrentlyFocusedApp().has_value()) {
+            wm->focusApp(entity);
+            ensure_pointer_focus(server);
+            set_cursor_visible(server, true);
+          }
         }
         if (f) {
           std::fprintf(f,
