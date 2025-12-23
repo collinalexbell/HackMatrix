@@ -345,8 +345,8 @@ wayland_pointer_focus_requested(WlrServer* server)
   }
   auto focused = wm->getCurrentlyFocusedApp();
   if (!focused.has_value() || !server->registry->valid(*focused)) {
-    // If any Wayland surface exists, allow pointer focus/cursor.
-    return !server->surface_map.empty();
+    log_to_tmp("pointer_focus: no WM focused app\n");
+    return false;
   }
   return server->registry->all_of<WaylandApp::Component>(*focused);
 }
