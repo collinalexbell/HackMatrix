@@ -380,10 +380,9 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
                         .count();
     time_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
   }
-  wlr_seat_pointer_notify_enter(
-    server->seat, surf, server->pointer_x, server->pointer_y);
-  wlr_seat_pointer_notify_motion(
-    server->seat, time_msec, server->pointer_x, server->pointer_y);
+  // Use surface-local coords (0,0) to ensure events are inside the surface.
+  wlr_seat_pointer_notify_enter(server->seat, surf, 0, 0);
+  wlr_seat_pointer_notify_motion(server->seat, time_msec, 0, 0);
   wlr_seat_pointer_notify_frame(server->seat);
 }
 
@@ -1058,8 +1057,8 @@ handle_new_input(wl_listener* listener, void* data)
         if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
-                                         handle->server->pointer_x,
-                                         handle->server->pointer_y);
+                                         0,
+                                         0);
           wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_rel");
@@ -1094,8 +1093,8 @@ handle_new_input(wl_listener* listener, void* data)
         if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
-                                         handle->server->pointer_x,
-                                         handle->server->pointer_y);
+                                         0,
+                                         0);
           wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_abs");
