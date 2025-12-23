@@ -380,15 +380,34 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
   if (!surf) {
     return;
   }
+  // Map global pointer into surface-local coordinates assuming the surface is
+  // centered in the output (matches render overlay).
+  double sx = 0.0;
+  double sy = 0.0;
+  if (server->registry) {
+    auto it = server->surface_map.find(surf);
+    if (it != server->surface_map.end() &&
+        server->registry->valid(it->second) &&
+        server->registry->all_of<WaylandApp::Component>(it->second)) {
+      auto& comp = server->registry->get<WaylandApp::Component>(it->second);
+      if (auto* app = comp.app.get()) {
+        double offsetX = std::max<double>(0.0,
+          (static_cast<double>(SCREEN_WIDTH) - app->getWidth()) * 0.5);
+        double offsetY = std::max<double>(0.0,
+          (static_cast<double>(SCREEN_HEIGHT) - app->getHeight()) * 0.5);
+        sx = server->pointer_x - offsetX;
+        sy = server->pointer_y - offsetY;
+      }
+    }
+  }
   if (time_msec == 0) {
     uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::steady_clock::now().time_since_epoch())
                         .count();
     time_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
   }
-  // Use surface-local coords (0,0) to ensure events are inside the surface.
-  wlr_seat_pointer_notify_enter(server->seat, surf, 0, 0);
-  wlr_seat_pointer_notify_motion(server->seat, time_msec, 0, 0);
+  wlr_seat_pointer_notify_enter(server->seat, surf, sx, sy);
+  wlr_seat_pointer_notify_motion(server->seat, time_msec, sx, sy);
   wlr_seat_pointer_notify_frame(server->seat);
 }
 
@@ -1063,8 +1082,8 @@ handle_new_input(wl_listener* listener, void* data)
         if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
-                                         0,
-                                         0);
+                                         handle->server->pointer_x,
+                                         handle->server->pointer_y);
           wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_rel");
@@ -1099,8 +1118,8 @@ handle_new_input(wl_listener* listener, void* data)
         if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
-                                         0,
-                                         0);
+                                         handle->server->pointer_x,
+                                         handle->server->pointer_y);
           wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_abs");
