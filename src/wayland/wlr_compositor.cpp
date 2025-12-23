@@ -1054,8 +1054,8 @@ handle_new_input(wl_listener* listener, void* data)
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
         }
+        ensure_pointer_focus(handle->server, event->time_msec);
         if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
-          ensure_pointer_focus(handle->server, event->time_msec);
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
                                          handle->server->pointer_x,
@@ -1090,8 +1090,8 @@ handle_new_input(wl_listener* listener, void* data)
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
         }
+        ensure_pointer_focus(handle->server, event->time_msec);
         if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
-          ensure_pointer_focus(handle->server, event->time_msec);
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
                                          handle->server->pointer_x,
