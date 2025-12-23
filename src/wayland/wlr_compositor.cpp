@@ -384,6 +384,8 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
   // centered in the output (matches render overlay).
   double sx = 0.0;
   double sy = 0.0;
+  double surf_w = surf->current.width;
+  double surf_h = surf->current.height;
   if (server->registry) {
     auto it = server->surface_map.find(surf);
     if (it != server->surface_map.end() &&
@@ -397,8 +399,17 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
           (static_cast<double>(SCREEN_HEIGHT) - app->getHeight()) * 0.5);
         sx = server->pointer_x - offsetX;
         sy = server->pointer_y - offsetY;
+        surf_w = app->getWidth();
+        surf_h = app->getHeight();
       }
     }
+  }
+  // Clamp to surface bounds to ensure events land inside.
+  if (surf_w > 0) {
+    sx = std::clamp(sx, 0.0, surf_w - 1.0);
+  }
+  if (surf_h > 0) {
+    sy = std::clamp(sy, 0.0, surf_h - 1.0);
   }
   if (time_msec == 0) {
     uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
