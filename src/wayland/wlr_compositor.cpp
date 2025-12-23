@@ -142,6 +142,10 @@ struct PendingWlAction {
   enum Type { Add, Remove } type;
   std::shared_ptr<WaylandApp> app;
   wlr_surface* surface = nullptr;
+  bool accessory = false;
+  wlr_surface* parent_surface = nullptr;
+  int offset_x = 0;
+  int offset_y = 0;
 };
 
 struct ReplayKeyRelease {
@@ -471,7 +475,13 @@ ensure_wayland_apps_registered(WlrServer* server)
             if (auto* comp = server->registry->try_get<WaylandApp::Component>(ent)) {
               if (comp->app) {
                 server->pending_wl_actions.push_back(
-                  PendingWlAction{ PendingWlAction::Add, comp->app, entry.first });
+                  PendingWlAction{ PendingWlAction::Add,
+                                   comp->app,
+                                   entry.first,
+                                   comp->accessory,
+                                   nullptr,
+                                   comp->offset_x,
+                                   comp->offset_y });
               }
             }
           }
@@ -490,6 +500,7 @@ ensure_wayland_apps_registered(WlrServer* server)
 #endif
   auto actions = std::move(server->pending_wl_actions);
   server->pending_wl_actions.clear();
+  std::vector<PendingWlAction> retry;
   for (auto& action : actions) {
     if (action.type == PendingWlAction::Add) {
       // Drop duplicate adds for the same surface if it's already registered.
@@ -502,33 +513,55 @@ ensure_wayland_apps_registered(WlrServer* server)
         }
         continue;
       }
+      entt::entity parentEnt = entt::null;
+      if (action.parent_surface) {
+        auto pit = server->surface_map.find(action.parent_surface);
+        if (pit != server->surface_map.end()) {
+          parentEnt = pit->second;
+        }
+      }
+      // If this is a popup/accessory whose parent hasn't registered yet, retry
+      // once the parent arrives.
+      if (action.accessory && parentEnt == entt::null) {
+        retry.push_back(action);
+        continue;
+      }
       entt::entity entity = entt::null;
       if (auto wm = server->engine->getWindowManager()) {
-        entity = wm->registerWaylandApp(action.app, true);
+        bool spawnAtCamera = !action.accessory;
+        entity = wm->registerWaylandApp(
+          action.app, spawnAtCamera, action.accessory, parentEnt, action.offset_x, action.offset_y);
         if (entity != entt::null) {
           if (auto* comp = server->registry->try_get<WaylandApp::Component>(entity)) {
             action.app = comp->app;
+            comp->accessory = action.accessory;
+            comp->parent = parentEnt;
+            comp->offset_x = action.offset_x;
+            comp->offset_y = action.offset_y;
           }
         }
       }
       if (entity == entt::null && server->registry) {
         entity = server->registry->create();
-        server->registry->emplace<WaylandApp::Component>(entity, action.app);
+        server->registry->emplace<WaylandApp::Component>(
+          entity, action.app, action.accessory, parentEnt, action.offset_x, action.offset_y);
       }
       if (entity != entt::null) {
         renderer->registerApp(action.app.get());
         server->surface_map[action.surface] = entity;
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
         // Request a default window size that matches the X11 defaults.
-        if (comp && comp->app) {
+        if (comp && comp->app && !action.accessory) {
           comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
         }
         // If nothing is focused yet, focus this new app and ensure pointer focus.
-        if (auto wm = server->engine ? server->engine->getWindowManager() : nullptr) {
-          if (!wm->getCurrentlyFocusedApp().has_value()) {
-            wm->focusApp(entity);
-            ensure_pointer_focus(server);
-            set_cursor_visible(server, true);
+        if (!action.accessory) {
+          if (auto wm = server->engine ? server->engine->getWindowManager() : nullptr) {
+            if (!wm->getCurrentlyFocusedApp().has_value()) {
+              wm->focusApp(entity);
+              ensure_pointer_focus(server);
+              set_cursor_visible(server, true);
+            }
           }
         }
         if (f) {
@@ -541,12 +574,12 @@ ensure_wayland_apps_registered(WlrServer* server)
                        (void*)action.app.get());
           std::fflush(f);
         }
-        log_to_tmp("wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
-                   (void*)action.surface,
-                   (int)entt::to_integral(entity),
-                   action.app->getTextureId(),
-                   action.app->getTextureUnit() - GL_TEXTURE0,
-                   (void*)action.app.get());
+      log_to_tmp("wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
+                 (void*)action.surface,
+                 (int)entt::to_integral(entity),
+                 action.app->getTextureId(),
+                 action.app->getTextureUnit() - GL_TEXTURE0,
+                 (void*)action.app.get());
         if (server->engine) {
           if (auto api = server->engine->getApi()) {
             api->forceUpdateCachedStatus();
@@ -602,6 +635,11 @@ ensure_wayland_apps_registered(WlrServer* server)
       }
     }
   }
+  // Requeue any popup actions that lacked a registered parent when first seen.
+  if (!retry.empty()) {
+    server->pending_wl_actions.insert(
+      server->pending_wl_actions.end(), retry.begin(), retry.end());
+  }
   if (f) {
     std::fclose(f);
   }
@@ -610,7 +648,12 @@ ensure_wayland_apps_registered(WlrServer* server)
 struct WaylandAppHandle {
   WlrServer* server = nullptr;
   std::shared_ptr<WaylandApp> app;
+  wlr_xdg_surface* xdg_surface = nullptr;
   wlr_surface* surface = nullptr;
+  bool accessory = false;
+  wlr_surface* parent_surface = nullptr;
+  int offset_x = 0;
+  int offset_y = 0;
   wl_listener destroy;
   wl_listener unmap;
   wl_listener commit;
@@ -1289,6 +1332,24 @@ handle_new_input(wl_listener* listener, void* data)
 
 static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
 {
+  bool is_popup =
+    xdg_surface && xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP;
+  wlr_surface* parent_surface = nullptr;
+  int offset_x = 0;
+  int offset_y = 0;
+  if (is_popup && xdg_surface && xdg_surface->popup) {
+    parent_surface = xdg_surface->popup->parent;
+    if (parent_surface) {
+      double sx = 0.0;
+      double sy = 0.0;
+      wlr_xdg_popup_get_position(xdg_surface->popup, &sx, &sy);
+      offset_x = static_cast<int>(sx);
+      offset_y = static_cast<int>(sy);
+    } else {
+      // Treat popups without a parent as non-accessory to avoid crashes.
+      is_popup = false;
+    }
+  }
   auto app = std::make_shared<WaylandApp>(server->renderer,
                                           server->allocator,
                                           xdg_surface,
@@ -1298,7 +1359,12 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
   auto* handle = new WaylandAppHandle();
   handle->server = server;
   handle->app = app;
+  handle->xdg_surface = xdg_surface;
   handle->surface = xdg_surface->surface;
+  handle->accessory = is_popup;
+  handle->parent_surface = parent_surface;
+  handle->offset_x = offset_x;
+  handle->offset_y = offset_y;
   handle->entity = entt::null;
   handle->registered = false;
   handle->commit.notify = [](wl_listener* listener, void* data) {
@@ -1312,9 +1378,29 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
     if (w <= 0 || h <= 0) {
       return;
     }
+    if (handle->xdg_surface && handle->xdg_surface->popup) {
+      handle->parent_surface = handle->xdg_surface->popup->parent;
+      if (handle->parent_surface) {
+        double sx = 0.0;
+        double sy = 0.0;
+        wlr_xdg_popup_get_position(handle->xdg_surface->popup, &sx, &sy);
+        handle->offset_x = static_cast<int>(sx);
+        handle->offset_y = static_cast<int>(sy);
+      } else {
+        handle->accessory = false;
+        handle->offset_x = 0;
+        handle->offset_y = 0;
+      }
+    }
     // Defer registration to the render loop to avoid GL/context races.
     handle->server->pending_wl_actions.push_back(
-      PendingWlAction{ PendingWlAction::Add, handle->app, surf });
+      PendingWlAction{ PendingWlAction::Add,
+                       handle->app,
+                       surf,
+                       handle->accessory,
+                       handle->parent_surface,
+                       handle->offset_x,
+                       handle->offset_y });
     handle->registered = true;
     log_to_tmp("wayland deferred add queued: surface=%p size=%dx%d app=%p\n",
                (void*)surf,
@@ -1373,6 +1459,9 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
   if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel) {
     wlr_xdg_toplevel_set_size(xdg_surface->toplevel, 1280, 720);
     wlr_xdg_surface_schedule_configure(xdg_surface);
+  } else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
+    // Popups need an initial configure to define their anchor/geometry.
+    wlr_xdg_surface_schedule_configure(xdg_surface);
   }
 
   auto* handle = new XdgSurfaceHandle();
@@ -1392,11 +1481,12 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
             surface->mapped ? 1 : 0,
             surface->current.width,
             surface->current.height);
-    if (handle->xdg->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL) {
+    if (handle->xdg->role != WLR_XDG_SURFACE_ROLE_TOPLEVEL &&
+        handle->xdg->role != WLR_XDG_SURFACE_ROLE_POPUP) {
       return;
     }
     if (!handle->configured_sent) {
-      if (handle->xdg->toplevel) {
+      if (handle->xdg->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && handle->xdg->toplevel) {
         wlr_xdg_toplevel_set_size(handle->xdg->toplevel, 1280, 720);
       }
       wlr_log(WLR_DEBUG, "xdg_surface %p initial configure", (void*)handle->xdg);

@@ -1216,16 +1216,26 @@ WindowManager::~WindowManager() {
   }
 }
 
-entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, bool spawnAtCamera) {
+entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
+                                               bool spawnAtCamera,
+                                               bool accessory,
+                                               entt::entity parent,
+                                               int offsetX,
+                                               int offsetY) {
   if (!app || !registry) {
     return entt::null;
   }
-  WL_WM_LOG("WM: registerWaylandApp size=%dx%d spawnAtCamera=%d\n",
+  WL_WM_LOG("WM: registerWaylandApp size=%dx%d spawnAtCamera=%d accessory=%d parent=%d offset=(%d,%d)\n",
             app->getWidth(),
             app->getHeight(),
-            spawnAtCamera ? 1 : 0);
+            spawnAtCamera ? 1 : 0,
+            accessory ? 1 : 0,
+            parent == entt::null ? -1 : (int)entt::to_integral(parent),
+            offsetX,
+            offsetY);
   entt::entity entity = registry->create();
-  registry->emplace<WaylandApp::Component>(entity, app);
+  registry->emplace<WaylandApp::Component>(
+    entity, app, accessory, parent, offsetX, offsetY);
   // For X11 we attach immediately; for wlroots we defer GL texture attach to the
   // compositor render loop to avoid context issues.
   if (renderer && !waylandMode) {
@@ -1234,6 +1244,12 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app, 
     WL_WM_LOG("WM: renderer missing; registered component only for entity=%d\n",
               (int)entt::to_integral(entity));
   }
+  // Accessory apps (e.g. popups/menus) should not be positionable or bound to
+  // hotkeys; they are rendered relative to their parent.
+  if (accessory) {
+    return entity;
+  }
+
   // Place in world space similar to spawnAtCamera path.
   glm::vec3 pos(0.0f, 3.5f, -2.0f);
   glm::vec3 rot(0.0f);

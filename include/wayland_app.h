@@ -16,6 +16,7 @@
 #include <wayland-server-core.h>
 #include <memory>
 #include "AppSurface.h"
+#include "entity.h"
 
 struct wlr_surface;
 struct wlr_xdg_surface;
@@ -65,6 +66,10 @@ public:
   glm::mat4 heightScalar = glm::mat4(1.0f);
   struct Component {
     std::shared_ptr<WaylandApp> app;
+    bool accessory = false;
+    entt::entity parent = entt::null;
+    int offset_x = 0;
+    int offset_y = 0;
   };
 
   WaylandApp(wlr_renderer* renderer,

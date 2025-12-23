@@ -15,6 +15,7 @@
 #include "time_utils.h"
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -1011,6 +1012,52 @@ Renderer::renderApps()
     }
     return true;
   };
+  auto renderWaylandPopup = [&](WaylandApp::Component& popup,
+                                WaylandApp::Component& parent) {
+    auto* popupApp = popup.app.get();
+    auto* parentApp = parent.app.get();
+    if (!popupApp || !parentApp) {
+      return;
+    }
+    int popupW = popupApp->getWidth();
+    int popupH = popupApp->getHeight();
+    int parentW = parentApp->getWidth();
+    int parentH = parentApp->getHeight();
+    if (popupW <= 0 || popupH <= 0 || parentW <= 0 || parentH <= 0) {
+      return;
+    }
+    float parentLeft = std::max(0.0f, (SCREEN_WIDTH - parentW) * 0.5f);
+    float parentTop = std::max(0.0f, (SCREEN_HEIGHT - parentH) * 0.5f);
+    int destX = static_cast<int>(parentLeft + popup.offset_x);
+    int destY =
+      static_cast<int>(SCREEN_HEIGHT - (parentTop + popup.offset_y) - popupH);
+
+    if (popupApp->needsTextureImport()) {
+      popupApp->appTexture();
+    }
+    int idx = static_cast<int>(popupApp->getAppIndex());
+    auto fbIt = frameBuffers.find(idx);
+    if (fbIt == frameBuffers.end()) {
+      return;
+    }
+    GLint prevReadFbo = 0;
+    GLint prevDrawFbo = 0;
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbIt->second);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
+    glBlitFramebuffer(0,
+                      popupH,
+                      popupW,
+                      0,
+                      destX,
+                      destY,
+                      destX + popupW,
+                      destY + popupH,
+                      GL_COLOR_BUFFER_BIT,
+                      GL_NEAREST);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
+  };
 
   // this is LEGACY for msedge
   auto positionableNonBootable =
@@ -1292,6 +1339,34 @@ Renderer::renderApps()
                    app->getTextureId(),
                    app->getTextureUnit() - GL_TEXTURE0);
       std::fflush(logFile);
+    }
+  }
+
+  // Direct-render Wayland accessory apps (popups/menus) relative to their
+  // parent surface so they land at the correct on-screen position.
+  if (wm && registry) {
+    auto focused = wm->getCurrentlyFocusedApp();
+    entt::entity focusedEnt =
+      focused.has_value() ? focused.value() : entt::null;
+    if (focusedEnt != entt::null) {
+      auto accessories =
+        registry->view<WaylandApp::Component>(entt::exclude<Positionable>);
+      for (auto [ent, comp] : accessories.each()) {
+        if (!comp.accessory) {
+          continue;
+        }
+        if (comp.parent == entt::null || comp.parent != focusedEnt) {
+          continue;
+        }
+        if (!registry->valid(comp.parent)) {
+          continue;
+        }
+        auto* parentComp = registry->try_get<WaylandApp::Component>(comp.parent);
+        if (!parentComp || !parentComp->app) {
+          continue;
+        }
+        renderWaylandPopup(comp, *parentComp);
+      }
     }
   }
 

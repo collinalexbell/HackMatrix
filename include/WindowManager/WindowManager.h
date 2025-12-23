@@ -73,7 +73,11 @@ public:
   virtual bool consumeScreenshotRequest() = 0;
   virtual void requestScreenshot() = 0;
   virtual entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
-                                          bool spawnAtCamera = true) = 0;
+                                          bool spawnAtCamera = true,
+                                          bool accessory = false,
+                                          entt::entity parent = entt::null,
+                                          int offsetX = 0,
+                                          int offsetY = 0) = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -175,7 +179,11 @@ public:
   // Wayland-only: register a surface-backed app through the WM for placement
   // and rendering.
   entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
-                                  bool spawnAtCamera = true) override;
+                                  bool spawnAtCamera = true,
+                                  bool accessory = false,
+                                  entt::entity parent = entt::null,
+                                  int offsetX = 0,
+                                  int offsetY = 0) override;
 
 private:
   Renderer* renderer = nullptr;
