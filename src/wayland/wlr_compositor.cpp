@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <chrono>
+#include <algorithm>
 #include <pixman-1/pixman.h>
 #include <memory>
 #include <drm_fourcc.h>
@@ -325,19 +326,30 @@ set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
   log_pointer_state(server, "default_cursor");
 }
 
+// Map the global pointer into surface-local coords assuming the surface is
+// centered in the output (matches render overlay) and clamp to surface size.
+static std::pair<double, double>
+map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
+{
+  double sx = server ? server->pointer_x : 0.0;
+  double sy = server ? server->pointer_y : 0.0;
+  double surf_w = surf ? surf->current.width : 0;
+  double surf_h = surf ? surf->current.height : 0;
+  // Use raw pointer coords in layout space and clamp into the surface.
+  if (surf_w > 0) {
+    sx = std::clamp(sx, 0.0, surf_w - 1.0);
+  }
+  if (surf_h > 0) {
+    sy = std::clamp(sy, 0.0, surf_h - 1.0);
+  }
+  return { sx, sy };
+}
+
 static bool
 wayland_pointer_focus_requested(WlrServer* server)
 {
   if (!server || !server->engine) {
     return false;
-  }
-  // If the seat already has a focused pointer surface, keep the cursor visible.
-  if (server->seat && server->seat->pointer_state.focused_surface) {
-    return true;
-  }
-  // If the seat has a focused client for the pointer, allow the cursor.
-  if (server->seat && server->seat->pointer_state.focused_client) {
-    return true;
   }
   auto wm = server->engine->getWindowManager();
   if (!wm || !server->registry) {
@@ -351,13 +363,13 @@ wayland_pointer_focus_requested(WlrServer* server)
 }
 
 static void
-ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
+ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* preferred = nullptr)
 {
   if (!server || !server->seat) {
     return;
   }
   // Prefer an existing focused surface if present.
-  wlr_surface* surf = server->seat->pointer_state.focused_surface;
+  wlr_surface* surf = preferred ? preferred : server->seat->pointer_state.focused_surface;
   if (!surf) {
     if (server->engine && server->registry) {
       if (auto wm = server->engine->getWindowManager()) {
@@ -379,37 +391,9 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
   if (!surf) {
     return;
   }
-  // Map global pointer into surface-local coordinates assuming the surface is
-  // centered in the output (matches render overlay).
-  double sx = 0.0;
-  double sy = 0.0;
-  double surf_w = surf->current.width;
-  double surf_h = surf->current.height;
-  if (server->registry) {
-    auto it = server->surface_map.find(surf);
-    if (it != server->surface_map.end() &&
-        server->registry->valid(it->second) &&
-        server->registry->all_of<WaylandApp::Component>(it->second)) {
-      auto& comp = server->registry->get<WaylandApp::Component>(it->second);
-      if (auto* app = comp.app.get()) {
-        double offsetX = std::max<double>(0.0,
-          (static_cast<double>(SCREEN_WIDTH) - app->getWidth()) * 0.5);
-        double offsetY = std::max<double>(0.0,
-          (static_cast<double>(SCREEN_HEIGHT) - app->getHeight()) * 0.5);
-        sx = server->pointer_x - offsetX;
-        sy = server->pointer_y - offsetY;
-        surf_w = app->getWidth();
-        surf_h = app->getHeight();
-      }
-    }
-  }
-  // Clamp to surface bounds to ensure events land inside.
-  if (surf_w > 0) {
-    sx = std::clamp(sx, 0.0, surf_w - 1.0);
-  }
-  if (surf_h > 0) {
-    sy = std::clamp(sy, 0.0, surf_h - 1.0);
-  }
+  auto mapped = map_pointer_to_surface(server, surf);
+  double sx = mapped.first;
+  double sy = mapped.second;
   if (time_msec == 0) {
     uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::steady_clock::now().time_since_epoch())
@@ -421,6 +405,18 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
   wlr_seat_pointer_notify_frame(server->seat);
 }
 
+static std::pair<wlr_surface*, entt::entity>
+pick_any_surface(WlrServer* server)
+{
+  if (!server) {
+    return { nullptr, entt::null };
+  }
+  if (!server->surface_map.empty()) {
+    auto it = server->surface_map.begin();
+    return { it->first, it->second };
+  }
+  return { nullptr, entt::null };
+}
 static void
 set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr)
 {
@@ -1096,12 +1092,15 @@ handle_new_input(wl_listener* listener, void* data)
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
         }
-        ensure_pointer_focus(handle->server, event->time_msec);
-        if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
+        auto surfEnt = pick_any_surface(handle->server);
+        auto* surf = surfEnt.first;
+        ensure_pointer_focus(handle->server, event->time_msec, surf);
+        if (handle->server->seat && wayland_pointer_focus_requested(handle->server) && surf) {
+          auto mapped = map_pointer_to_surface(handle->server, surf);
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
-                                         handle->server->pointer_x,
-                                         handle->server->pointer_y);
+                                         mapped.first,
+                                         mapped.second);
           wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_rel");
@@ -1132,12 +1131,15 @@ handle_new_input(wl_listener* listener, void* data)
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
         }
-        ensure_pointer_focus(handle->server, event->time_msec);
-        if (handle->server->seat && wayland_pointer_focus_requested(handle->server)) {
+        auto surfEnt = pick_any_surface(handle->server);
+        auto* surf = surfEnt.first;
+        ensure_pointer_focus(handle->server, event->time_msec, surf);
+        if (handle->server->seat && wayland_pointer_focus_requested(handle->server) && surf) {
+          auto mapped = map_pointer_to_surface(handle->server, surf);
           wlr_seat_pointer_notify_motion(handle->server->seat,
                                          event->time_msec,
-                                         handle->server->pointer_x,
-                                         handle->server->pointer_y);
+                                         mapped.first,
+                                         mapped.second);
           wlr_seat_pointer_notify_frame(handle->server->seat);
         }
         log_pointer_state(handle->server, "motion_abs");
@@ -1179,12 +1181,29 @@ handle_new_input(wl_listener* listener, void* data)
               }
             }
             if (!focusedViaPointer) {
+              // Fallback: focus the first known Wayland surface.
+              auto picked = pick_any_surface(handle->server);
+              if (picked.first != nullptr && picked.second != entt::null) {
+                wm->focusApp(picked.second);
+                ensure_pointer_focus(handle->server, event->time_msec);
+              }
+            }
+            if (!focusedViaPointer) {
               wm->focusLookedAtApp();
             }
           }
         }
         if (handle->server->seat) {
-          ensure_pointer_focus(handle->server, event->time_msec);
+          auto surfEnt = pick_any_surface(handle->server);
+          auto* surf = surfEnt.first;
+          ensure_pointer_focus(handle->server, event->time_msec, surf);
+          if (surf) {
+            auto mapped = map_pointer_to_surface(handle->server, surf);
+            wlr_seat_pointer_notify_motion(handle->server->seat,
+                                           event->time_msec,
+                                           mapped.first,
+                                           mapped.second);
+          }
           wlr_seat_pointer_notify_button(handle->server->seat,
                                          event->time_msec,
                                          event->button,
