@@ -345,7 +345,8 @@ wayland_pointer_focus_requested(WlrServer* server)
   }
   auto focused = wm->getCurrentlyFocusedApp();
   if (!focused.has_value() || !server->registry->valid(*focused)) {
-    return false;
+    // If any Wayland surface exists, allow pointer focus/cursor.
+    return !server->surface_map.empty();
   }
   return server->registry->all_of<WaylandApp::Component>(*focused);
 }
@@ -353,24 +354,29 @@ wayland_pointer_focus_requested(WlrServer* server)
 static void
 ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0)
 {
-  if (!server || !server->seat || server->seat->pointer_state.focused_surface) {
+  if (!server || !server->seat) {
     return;
   }
-  if (!server->engine || !server->registry) {
-    return;
+  // Prefer an existing focused surface if present.
+  wlr_surface* surf = server->seat->pointer_state.focused_surface;
+  if (!surf) {
+    if (server->engine && server->registry) {
+      if (auto wm = server->engine->getWindowManager()) {
+        if (auto focused = wm->getCurrentlyFocusedApp();
+            focused && server->registry->valid(*focused) &&
+            server->registry->all_of<WaylandApp::Component>(*focused)) {
+          auto& comp = server->registry->get<WaylandApp::Component>(*focused);
+          if (comp.app) {
+            surf = comp.app->getSurface();
+          }
+        }
+      }
+    }
+    // Fallback: pick the first known Wayland surface.
+    if (!surf && !server->surface_map.empty()) {
+      surf = server->surface_map.begin()->first;
+    }
   }
-  auto wm = server->engine->getWindowManager();
-  if (!wm) {
-    return;
-  }
-  auto focused = wm->getCurrentlyFocusedApp();
-  if (!focused || !server->registry->valid(*focused) ||
-      !server->registry->all_of<WaylandApp::Component>(*focused)) {
-    return;
-  }
-  auto& comp = server->registry->get<WaylandApp::Component>(*focused);
-  auto* app = comp.app.get();
-  wlr_surface* surf = app ? app->getSurface() : nullptr;
   if (!surf) {
     return;
   }
