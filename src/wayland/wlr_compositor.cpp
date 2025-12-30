@@ -939,9 +939,6 @@ process_key_sym(WlrServer* server,
     }
   }
 
-  if (sym == XKB_KEY_Escape && pressed && !waylandFocusActive) {
-    wl_display_terminate(server->display);
-  }
   if (pressed && server->engine) {
     Controls* controls = server->engine->getControls();
     uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
@@ -963,6 +960,10 @@ process_key_sym(WlrServer* server,
         blockClientDelivery = true;
       }
       if (resp.consumed) {
+        return;
+      }
+      if (resp.requestQuit && !waylandFocusActive) {
+        wl_display_terminate(server->display);
         return;
       }
     }
@@ -990,26 +991,6 @@ process_key_sym(WlrServer* server,
     case XKB_KEY_D:
       if (!waylandFocusActive) {
         server->input.right = pressed;
-      }
-      break;
-    case XKB_KEY_r:
-    case XKB_KEY_R:
-      if (pressed && server->engine && !waylandFocusActive) {
-        if (auto wm = server->engine->getWindowManager()) {
-          log_to_tmp("focus hotkey: applying focusLookedAtApp\n");
-          wm->focusLookedAtApp();
-          clear_input_forces(server);
-          blockClientDelivery = true; // consume focus hotkey
-        }
-      }
-      break;
-    case XKB_KEY_v:
-    case XKB_KEY_V:
-      if (pressed && server->engine && !waylandFocusActive) {
-        if (auto wm = server->engine->getWindowManager()) {
-          log_to_tmp("menu hotkey pressed (V)\n");
-          wm->menu();
-        }
       }
       break;
     default:
@@ -1218,31 +1199,19 @@ handle_new_input(wl_listener* listener, void* data)
         auto* event = static_cast<wlr_pointer_button_event*>(data);
         bool handled_by_game = false;
         wlr_surface* preferred_surface = nullptr;
+        Controls* controls =
+          handle->server && handle->server->engine
+            ? handle->server->engine->getControls()
+            : nullptr;
         if (static_cast<uint32_t>(event->state) ==
               static_cast<uint32_t>(WLR_BUTTON_PRESSED) &&
             handle->server && handle->server->engine) {
+          if (controls) {
+            handled_by_game = controls->handlePointerButton(event->button, true);
+          }
           if (auto wm = handle->server->engine->getWindowManager()) {
             // Only focus a Wayland client when the player is looking at it up close;
             // otherwise treat the click as a game interaction.
-            if (event->button == static_cast<uint32_t>(BTN_LEFT)) {
-              auto before = wm->getCurrentlyFocusedApp();
-              wm->focusLookedAtApp();
-              auto after = wm->getCurrentlyFocusedApp();
-              if (after && handle->server->registry &&
-                  handle->server->registry->valid(*after) &&
-                  handle->server->registry->all_of<WaylandApp::Component>(*after)) {
-                if (auto* comp =
-                      handle->server->registry->try_get<WaylandApp::Component>(*after)) {
-                  if (comp->app) {
-                    preferred_surface = comp->app->getSurface();
-                  }
-                }
-              }
-              if (!after || (before && after == before)) {
-                handle->server->engine->action(PLACE_VOXEL);
-                handled_by_game = true;
-              }
-            }
             if (!handled_by_game) {
               // Prefer focusing the surface under the pointer to keep WM focus in sync.
               wlr_surface* pointer_surface = nullptr;

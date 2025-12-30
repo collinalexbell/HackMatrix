@@ -24,6 +24,7 @@ struct ControlResponse
   bool blockClientDelivery = false;
   bool clearInputForces = false;
   bool clearSeatFocus = false;
+   bool requestQuit = false;
 };
 
 class Controls
@@ -100,6 +101,7 @@ public:
                                bool waylandFocusActive);
   void applyMovementInput(bool forward, bool back, bool left, bool right);
   void applyLookDelta(double dx, double dy);
+  bool handlePointerButton(uint32_t button, bool pressed);
   void disableKeys();
   void enableKeys();
   void triggerScreenshot();

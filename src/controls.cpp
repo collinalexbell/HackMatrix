@@ -10,6 +10,7 @@
 #include <ctime>
 #include <xkbcommon/xkbcommon.h>
 #include <glm/gtc/quaternion.hpp>
+#include <linux/input-event-codes.h>
 
 #include "controls.h"
 #include "camera.h"
@@ -205,7 +206,13 @@ Controls::handleClicks(GLFWwindow* window, World* world)
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
     if(grabbedCursor) {
-      world->action(PLACE_VOXEL);
+      auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                    : std::optional<entt::entity>();
+      if (app.has_value()) {
+        goToApp(app.value());
+      } else {
+        world->action(PLACE_VOXEL);
+      }
     } else {
       // move objects
       //
@@ -406,6 +413,34 @@ Controls::handleMakeWindowBootable(GLFWwindow* window)
 {
 }
 
+bool
+Controls::handlePointerButton(uint32_t button, bool pressed)
+{
+  if (!pressed) {
+    return false;
+  }
+  if (!debounce(lastClickTime)) {
+    return false;
+  }
+  if (button == static_cast<uint32_t>(BTN_LEFT)) {
+    if (grabbedCursor) {
+      auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                    : std::optional<entt::entity>();
+      if (app.has_value()) {
+        goToApp(app.value());
+        return true;
+      }
+      world->action(PLACE_VOXEL);
+      return true;
+    }
+  }
+  if (button == static_cast<uint32_t>(BTN_RIGHT)) {
+    // Placeholder for remove voxel or alternate interaction.
+    return false;
+  }
+  return false;
+}
+
 ControlResponse
 Controls::handleKeySym(xkb_keysym_t sym,
                        bool pressed,
@@ -418,8 +453,51 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
+  auto matchesConfiguredKey = [&](const std::string& fn) -> bool {
+    auto keyName = controlMappings.getKeyName(fn);
+    if (!keyName.has_value()) {
+      return false;
+    }
+    xkb_keysym_t configured =
+      xkb_keysym_from_name(keyName->c_str(), XKB_KEYSYM_CASE_INSENSITIVE);
+    return configured != XKB_KEY_NoSymbol && sym == configured;
+  };
+
   auto lookedAtApp = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
                                         : std::optional<entt::entity>();
+
+  if (!waylandFocusActive && matchesConfiguredKey("quit")) {
+    resp.requestQuit = true;
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  if (matchesConfiguredKey("toggle_cursor") && debounce(lastKeyPressTime)) {
+    if (grabbedCursor) {
+      grabbedCursor = false;
+      resetMouse = true;
+      if (wm) {
+        wm->captureInput();
+      }
+    } else {
+      grabbedCursor = true;
+      resetMouse = true;
+      if (wm) {
+        wm->passthroughInput();
+      }
+    }
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  if (matchesConfiguredKey("screenshot") && debounce(lastKeyPressTime)) {
+    triggerScreenshot();
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
 
   // Modifier-driven window manager hotkeys.
   if (modifierHeld && wm) {
@@ -537,17 +615,25 @@ Controls::handleKeySym(xkb_keysym_t sym,
       }
       break;
     case XKB_KEY_0:
-      if (shiftHeld && debounce(lastKeyPressTime)) {
-        camera->resetSpeed();
+      if (shiftHeld) {
+        if (debounce(lastKeyPressTime)) {
+          camera->resetSpeed();
+          resp.consumed = true;
+        }
+      } else {
+        windowFlop += windowFlop_dt;
         resp.consumed = true;
       }
       break;
+    case XKB_KEY_9:
+      windowFlop -= windowFlop_dt;
+      if (windowFlop <= 0.01) {
+        windowFlop = 0.01;
+      }
+      resp.consumed = true;
+      break;
     default:
       break;
-  }
-
-  if (!resp.consumed && wm && !waylandFocusActive) {
-    wm->handleHotkeySym(sym, false, shiftHeld);
   }
 
   return resp;
