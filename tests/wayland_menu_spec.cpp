@@ -639,6 +639,143 @@ TEST(WaylandMenuSpec, ScreenshotViaKeyReplay)
   stop_compositor(h);
 }
 
+TEST(WaylandMenuSpec, AllPrintableKeysDeliveredToClient)
+{
+  namespace fs = std::filesystem;
+
+  fs::path tmp = fs::temp_directory_path();
+  fs::path target = tmp / "allkeys.txt";
+  if (fs::exists(target)) {
+    fs::remove(target);
+  }
+
+  // Reuse menu override to launch foot so we can type into a terminal.
+  fs::path script = tmp / "menu-allkeys.sh";
+  {
+    std::ofstream out(script);
+    out << "#!/bin/bash\n"
+        << "exec foot\n";
+  }
+  fs::permissions(script,
+                  fs::perms::owner_exec | fs::perms::owner_read | fs::perms::owner_write,
+                  fs::perm_options::add);
+
+  std::string env = "MENU_PROGRAM=" + script.string() + " ";
+  auto h = start_compositor_with_env(env);
+  ScopeExit guard([&]() {
+    stop_compositor(h);
+    if (fs::exists(script)) {
+      fs::remove(script);
+    }
+  });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu launch key";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 160, 100))
+    << "Foot window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus terminal";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+  auto key_for_char = [](char c) -> std::string {
+    if (c >= 'a' && c <= 'z') return std::string(1, c);
+    if (c >= 'A' && c <= 'Z') return std::string(1, c);
+    if (c >= '0' && c <= '9') return std::string(1, c);
+    switch (c) {
+      case '-': return "minus";
+      case '=': return "equal";
+      case '[': return "bracketleft";
+      case ']': return "bracketright";
+      case '\\': return "backslash";
+      case ';': return "semicolon";
+      case '\'': return "apostrophe";
+      case ',': return "comma";
+      case '.': return "period";
+      case '/': return "slash";
+      case '`': return "grave";
+      case ' ': return "space";
+      case '~': return "asciitilde";
+      case '!': return "exclam";
+      case '@': return "at";
+      case '#': return "numbersign";
+      case '$': return "dollar";
+      case '%': return "percent";
+      case '^': return "asciicircum";
+      case '&': return "ampersand";
+      case '*': return "asterisk";
+      case '(': return "parenleft";
+      case ')': return "parenright";
+      case '_': return "underscore";
+      case '+': return "plus";
+      case '{': return "braceleft";
+      case '}': return "braceright";
+      case '|': return "bar";
+      case ':': return "colon";
+      case '"': return "quotedbl";
+      case '<': return "less";
+      case '>': return "greater";
+      case '?': return "question";
+      default: return "";
+    }
+  };
+
+  auto append_string = [&](const std::string& s,
+                           std::vector<std::pair<std::string, uint32_t>>& seq) {
+    for (char c : s) {
+      auto name = key_for_char(c);
+      ASSERT_FALSE(name.empty()) << "No keysym mapping for char '" << c << "'";
+      seq.emplace_back(name, 10);
+    }
+    seq.emplace_back("Return", 80);
+  };
+
+  std::vector<std::pair<std::string, uint32_t>> seq = {
+    { "c", 20 }, { "a", 20 }, { "t", 20 }, { "space", 20 },
+    { "less", 20 }, { "less", 20 }, { "apostrophe", 20 }, { "E", 20 },
+    { "O", 20 }, { "F", 20 }, { "apostrophe", 20 }, { "space", 20 },
+    { "greater", 20 }, { "space", 20 },
+    { "slash", 20 }, { "t", 20 }, { "m", 20 }, { "p", 20 }, { "slash", 20 },
+    { "a", 20 }, { "l", 20 }, { "l", 20 }, { "k", 20 }, { "e", 20 },
+    { "y", 20 }, { "s", 20 }, { "period", 20 }, { "t", 20 }, { "x", 20 },
+    { "t", 20 }, { "Return", 80 }
+  };
+
+  const std::string line1 = "abcdefghijklmnopqrstuvwxyz";
+  const std::string line2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const std::string line3 = "0123456789-=[]\\\\;',./`";
+  const std::string line4 = " ~!@#$%^&*()_+{}|:\\\"<>?";
+
+  append_string(line1, seq);
+  append_string(line2, seq);
+  append_string(line3, seq);
+  append_string(line4, seq);
+
+  // Close heredoc.
+  seq.emplace_back("E", 20);
+  seq.emplace_back("O", 20);
+  seq.emplace_back("F", 20);
+  seq.emplace_back("Return", 80);
+
+  ASSERT_TRUE(send_key_replay(seq)) << "Failed to send full key replay";
+  ASSERT_TRUE(wait_for_file(target.string(), 120, 100))
+    << "Target file not created";
+
+  std::string contents;
+  {
+    std::ifstream in(target);
+    std::ostringstream oss;
+    oss << in.rdbuf();
+    contents = oss.str();
+  }
+
+  auto expect_chars = line1 + line2 + line3 + line4;
+  for (char c : expect_chars) {
+    ASSERT_NE(contents.find(std::string(1, c)), std::string::npos)
+      << "Missing character '" << c << "' in captured output";
+  }
+}
+
 TEST(WaylandMenuSpec, ReportsEngineStatusOverZmq)
 {
   auto h = start_compositor_with_env();
