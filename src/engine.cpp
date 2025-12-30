@@ -171,6 +171,14 @@ Engine::~Engine()
 }
 
 void
+Engine::action(Action action)
+{
+  if (world) {
+    world->action(action);
+  }
+}
+
+void
 Engine::initializeMemberObjs()
 {
   const char* apiAddressEnv = std::getenv("VOXEL_API_BIND");
@@ -271,7 +279,7 @@ Engine::frame(double frameStart)
   if (engineGui) {
     disableKeysIfImguiActive();
   }
-  if (controls) {
+  if (controls && window != nullptr) {
     controls->poll(window, camera, world);
   }
   multiplayerClientIteration(frameStart);

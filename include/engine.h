@@ -60,6 +60,8 @@ public:
   Renderer* getRenderer() { return renderer; }
   Api* getApi() { return api; }
   std::shared_ptr<WindowManager::WindowManagerInterface> getWindowManager() { return wm; }
+  Controls* getControls() { return controls; }
+  void action(Action action);
   void wire();
   void loop();
   void frame(double frameStart);

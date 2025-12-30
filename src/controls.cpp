@@ -8,6 +8,7 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <xkbcommon/xkbcommon.h>
 #include <glm/gtc/quaternion.hpp>
 
 #include "controls.h"
@@ -403,4 +404,167 @@ Controls::wireWindowManager(std::shared_ptr<WindowManager::Space> space)
 void
 Controls::handleMakeWindowBootable(GLFWwindow* window)
 {
+}
+
+ControlResponse
+Controls::handleKeySym(xkb_keysym_t sym,
+                       bool pressed,
+                       bool modifierHeld,
+                       bool shiftHeld,
+                       bool waylandFocusActive)
+{
+  ControlResponse resp;
+  if (!pressed) {
+    return resp;
+  }
+
+  auto lookedAtApp = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                        : std::optional<entt::entity>();
+
+  // Modifier-driven window manager hotkeys.
+  if (modifierHeld && wm) {
+    if (sym == XKB_KEY_E || sym == XKB_KEY_e) {
+      wm->unfocusApp();
+      resp.blockClientDelivery = true;
+      resp.clearSeatFocus = true;
+      resp.consumed = true;
+      return resp;
+    }
+    if (sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
+      wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
+      resp.blockClientDelivery = true;
+      resp.consumed = true;
+      return resp;
+    }
+    wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  switch (sym) {
+    case XKB_KEY_Delete:
+      throw "errorEscape";
+    case XKB_KEY_r:
+    case XKB_KEY_R:
+      if (!waylandFocusActive && lookedAtApp.has_value()) {
+        goToApp(lookedAtApp.value());
+        resp.blockClientDelivery = true;
+        resp.clearInputForces = true;
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_v:
+    case XKB_KEY_V:
+      if (!waylandFocusActive && wm && debounce(lastKeyPressTime)) {
+        wm->menu();
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_b:
+    case XKB_KEY_B:
+      if (debounce(lastKeyPressTime)) {
+        texturePack->logCounts();
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_t:
+    case XKB_KEY_T:
+      if (debounce(lastKeyPressTime)) {
+        world->action(LOG_BLOCK_TYPE);
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_comma:
+      if (debounce(lastKeyPressTime)) {
+        world->mesh();
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_m:
+    case XKB_KEY_M:
+      if (debounce(lastKeyPressTime)) {
+        world->mesh(false);
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_slash:
+    case XKB_KEY_question:
+      if (debounce(lastKeyPressTime)) {
+        renderer->toggleWireframe();
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_e:
+    case XKB_KEY_E:
+      // Selection placeholder for parity; no-op beyond debounce.
+      (void)debounce(lastKeyPressTime);
+      resp.consumed = true;
+      break;
+    case XKB_KEY_period:
+    case XKB_KEY_greater:
+      if (debounce(lastKeyPressTime)) {
+        auto newPos = camera->position + camera->front * -3.0f;
+        moveTo(newPos, std::nullopt, 0.5, [this]() -> void {
+          world->action(OPEN_SELECTION_CODE);
+        });
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_l:
+    case XKB_KEY_L:
+      if (debounce(lastKeyPressTime)) {
+        auto t = std::time(nullptr);
+        auto tm = *std::localtime(&t);
+        stringstream filenameSS;
+        filenameSS << "saves/" << std::put_time(&tm, "%Y-%m-%d:%H-%M-%S.save");
+        world->save(filenameSS.str());
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_equal:
+    case XKB_KEY_plus:
+      if (debounce(lastKeyPressTime)) {
+        camera->changeSpeed(0.05f);
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_minus:
+    case XKB_KEY_underscore:
+      if (debounce(lastKeyPressTime)) {
+        camera->changeSpeed(-0.05f);
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_0:
+      if (shiftHeld && debounce(lastKeyPressTime)) {
+        camera->resetSpeed();
+        resp.consumed = true;
+      }
+      break;
+    default:
+      break;
+  }
+
+  if (!resp.consumed && wm && !waylandFocusActive) {
+    wm->handleHotkeySym(sym, false, shiftHeld);
+  }
+
+  return resp;
+}
+
+void
+Controls::applyMovementInput(bool forward, bool back, bool left, bool right)
+{
+  if (camera) {
+    camera->handleTranslateForce(forward, back, left, right);
+  }
+}
+
+void
+Controls::applyLookDelta(double dx, double dy)
+{
+  if (renderer && renderer->getCamera()) {
+    renderer->getCamera()->handleRotateForce(nullptr, dx, dy);
+  }
 }

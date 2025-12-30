@@ -5,6 +5,7 @@
 #include <functional>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <xkbcommon/xkbcommon.h>
 #include <memory>
 #include "app.h"
 #include "world.h"
@@ -15,6 +16,14 @@ struct DeferedAction
 {
   shared_ptr<bool> isDone;
   function<void()> fn;
+};
+
+struct ControlResponse
+{
+  bool consumed = false;
+  bool blockClientDelivery = false;
+  bool clearInputForces = false;
+  bool clearSeatFocus = false;
 };
 
 class Controls
@@ -84,6 +93,13 @@ public:
               optional<glm::vec3> rotation,
               float secs,
               optional<function<void()>> = nullopt);
+  ControlResponse handleKeySym(xkb_keysym_t sym,
+                               bool pressed,
+                               bool modifierHeld,
+                               bool shiftHeld,
+                               bool waylandFocusActive);
+  void applyMovementInput(bool forward, bool back, bool left, bool right);
+  void applyLookDelta(double dx, double dy);
   void disableKeys();
   void enableKeys();
   void triggerScreenshot();

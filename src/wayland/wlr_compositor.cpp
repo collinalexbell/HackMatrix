@@ -33,6 +33,7 @@ extern "C" {
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_cursor.h>
+#include <linux/input-event-codes.h>
 #include <wlr/types/wlr_xcursor_manager.h>
 #define namespace namespace_keyword_workaround
 #include <wlr/types/wlr_layer_shell_v1.h>
@@ -48,12 +49,16 @@ extern "C" {
 #include <cstdarg>
 #include <algorithm>
 #include <string>
+#include <cctype>
+#include <thread>
 
 #include "engine.h"
 #include "wayland_app.h"
 #include "AppSurface.h"
 #include "entity.h"
 #include "screen.h"
+#include "Config.h"
+#include "controls.h"
 
 #ifdef WLROOTS_DEBUG_LOGS
 constexpr bool kWlrootsDebugLogs = true;
@@ -85,6 +90,50 @@ log_to_tmp(const char* fmt, ...)
 #endif
 
 namespace {
+
+enum class HotkeyModifier { Super, Alt };
+
+static const char*
+hotkey_modifier_label(HotkeyModifier mod)
+{
+  return mod == HotkeyModifier::Alt ? "alt" : "super";
+}
+
+static HotkeyModifier
+parse_hotkey_modifier()
+{
+  std::string mod = "alt";
+  try {
+    mod = Config::singleton()->get<std::string>("key_mappings.super_modifier");
+  } catch (...) {
+    // Default to alt when the key is missing.
+  }
+  std::transform(mod.begin(), mod.end(), mod.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  if (mod == "super" || mod == "logo" || mod == "mod4" || mod == "win") {
+    return HotkeyModifier::Super;
+  }
+  return HotkeyModifier::Alt;
+}
+
+static uint32_t
+hotkey_modifier_mask(HotkeyModifier mod)
+{
+  return mod == HotkeyModifier::Alt ? WLR_MODIFIER_ALT : WLR_MODIFIER_LOGO;
+}
+
+static bool
+is_hotkey_sym(HotkeyModifier mod, xkb_keysym_t sym)
+{
+  switch (mod) {
+    case HotkeyModifier::Alt:
+      return sym == XKB_KEY_Alt_L || sym == XKB_KEY_Alt_R;
+    case HotkeyModifier::Super:
+    default:
+      return sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R;
+  }
+}
 
 double
 currentTimeSeconds()
@@ -184,11 +233,13 @@ struct WlrServer {
   wlr_xcursor_manager* cursor_mgr = nullptr;
   wlr_cursor* cursor = nullptr;
   bool cursor_visible = false;
-  bool replaySuperActive = false;
-  int replaySuperHeld = 0;
-  bool pendingReplaySuper = false;
-  uint32_t pendingReplaySuperKeycode = 0;
-  xkb_keysym_t pendingReplaySuperSym = XKB_KEY_NoSymbol;
+  HotkeyModifier hotkeyModifier = HotkeyModifier::Alt;
+  uint32_t hotkeyModifierMask = WLR_MODIFIER_ALT;
+  bool replayModifierActive = false;
+  int replayModifierHeld = 0;
+  bool pendingReplayModifier = false;
+  uint32_t pendingReplayModifierKeycode = 0;
+  xkb_keysym_t pendingReplayModifierSym = XKB_KEY_NoSymbol;
   std::vector<ReplayKeyRelease> pendingReplayKeyups;
   std::unordered_map<wlr_surface*, entt::entity> surface_map;
   std::vector<wlr_xdg_surface*> pending_surfaces;
@@ -339,6 +390,17 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
   double sy = server ? server->pointer_y : 0.0;
   double surf_w = surf ? surf->current.width : 0;
   double surf_h = surf ? surf->current.height : 0;
+  // Subtract the center offset so (0,0) maps to the surface top-left.
+  if (server && server->primary_output) {
+    double out_w = server->primary_output->width;
+    double out_h = server->primary_output->height;
+    if (out_w > surf_w && surf_w > 0) {
+      sx -= (out_w - surf_w) / 2.0;
+    }
+    if (out_h > surf_h && surf_h > 0) {
+      sy -= (out_h - surf_h) / 2.0;
+    }
+  }
   // Use raw pointer coords in layout space and clamp into the surface.
   if (surf_w > 0) {
     sx = std::clamp(sx, 0.0, surf_w - 1.0);
@@ -446,9 +508,12 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr
 }
 
 static bool
-isSuperSym(xkb_keysym_t sym)
+isHotkeySym(const WlrServer* server, xkb_keysym_t sym)
 {
-  return sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R;
+  if (!server) {
+    return false;
+  }
+  return is_hotkey_sym(server->hotkeyModifier, sym);
 }
 
 static void
@@ -816,16 +881,16 @@ process_key_sym(WlrServer* server,
     return;
   }
 
-  if (isSuperSym(sym)) {
+  if (isHotkeySym(server, sym)) {
     if (pressed) {
-      ++server->replaySuperHeld;
-    } else if (server->replaySuperHeld > 0) {
-      --server->replaySuperHeld;
+      ++server->replayModifierHeld;
+    } else if (server->replayModifierHeld > 0) {
+      --server->replayModifierHeld;
     }
-    server->replaySuperActive = server->replaySuperHeld > 0;
-    log_to_tmp("super combo: super key state pressed=%d replaySuper=%d time=%u keycode=%u\n",
+    server->replayModifierActive = server->replayModifierHeld > 0;
+    log_to_tmp("hotkey combo: modifier state pressed=%d replayMod=%d time=%u keycode=%u\n",
                pressed ? 1 : 0,
-               server->replaySuperActive ? 1 : 0,
+               server->replayModifierActive ? 1 : 0,
                time_msec,
                keycode);
   }
@@ -838,13 +903,13 @@ process_key_sym(WlrServer* server,
         depressed &= ~WLR_MODIFIER_SHIFT;
       }
     }
-    if (isSuperSym(sym)) {
+    if (isHotkeySym(server, sym)) {
       if (pressed) {
-        depressed |= WLR_MODIFIER_LOGO;
+        depressed |= server->hotkeyModifierMask;
       } else {
-        // Only clear LOGO when no other Super is logically held.
-        if (server->replaySuperHeld <= 0) {
-          depressed &= ~WLR_MODIFIER_LOGO;
+        // Only clear modifier when no other matching key is logically held.
+        if (server->replayModifierHeld <= 0) {
+          depressed &= ~server->hotkeyModifierMask;
         }
       }
     }
@@ -878,76 +943,26 @@ process_key_sym(WlrServer* server,
     wl_display_terminate(server->display);
   }
   if (pressed && server->engine) {
-    if (auto wm = server->engine->getWindowManager()) {
-      uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
-      bool superHeld = (mods & WLR_MODIFIER_LOGO) || server->replaySuperActive;
-      bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
-      bool consumedHotkey = false;
-      if (pressed && (sym == XKB_KEY_e || sym == XKB_KEY_E)) {
-        log_to_tmp("super combo: state pressed mods=0x%x replaySuper=%d superHeld=%d waylandFocus=%d time=%u keycode=%u\n",
-                   mods,
-                   server->replaySuperActive ? 1 : 0,
-                   superHeld ? 1 : 0,
-                   waylandFocusActive ? 1 : 0,
-                   time_msec,
-                   keycode);
+    Controls* controls = server->engine->getControls();
+    uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
+    bool modifierHeld =
+      (mods & server->hotkeyModifierMask) || server->replayModifierActive;
+    bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
+    if (controls) {
+      auto resp =
+        controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld, waylandFocusActive);
+      if (resp.clearInputForces) {
+        clear_input_forces(server);
       }
-      if (superHeld && (sym == XKB_KEY_E || sym == XKB_KEY_e)) {
-        entt::entity focusedEnt{};
-        bool haveFocus = false;
-        if (auto focused = wm->getCurrentlyFocusedApp()) {
-          focusedEnt = *focused;
-          haveFocus = true;
-        }
-        size_t wlCountBefore = wayland_app_count(server);
-        log_to_tmp("super combo: about to unfocus (pressed=%d mods=0x%x replaySuper=%d time=%u keycode=%u focused=%d wlCount=%zu)\n",
-                   pressed ? 1 : 0,
-                   mods,
-                   server->replaySuperActive ? 1 : 0,
-                   time_msec,
-                   keycode,
-                   haveFocus ? (int)entt::to_integral(focusedEnt) : -1,
-                   wlCountBefore);
-        log_to_tmp("super combo: triggered -> unfocus (pressed=%d mods=0x%x replaySuper=%d time=%u keycode=%u)\n",
-                   pressed ? 1 : 0,
-                   mods,
-                   server->replaySuperActive ? 1 : 0,
-                   time_msec,
-                   keycode);
-        wm->unfocusApp();
-        waylandFocusActive = false;
-        if (server->seat) {
-          wlr_seat_keyboard_notify_clear_focus(server->seat);
-          wlr_seat_pointer_notify_clear_focus(server->seat);
-        }
-        size_t wlCountAfter = wayland_app_count(server);
-        log_to_tmp("super combo: unfocus done focused=%d wlCount=%zu\n",
-                   haveFocus ? (int)entt::to_integral(focusedEnt) : -1,
-                   wlCountAfter);
-        consumedHotkey = true;
-        server->replaySuperActive = false;
+      if (resp.clearSeatFocus && server->seat) {
+        wlr_seat_keyboard_notify_clear_focus(server->seat);
+        wlr_seat_pointer_notify_clear_focus(server->seat);
+        server->replayModifierActive = false;
       }
-      if (superHeld &&
-          (sym >= XKB_KEY_1 && sym <= XKB_KEY_9)) {
-        int idx = static_cast<int>(sym - XKB_KEY_1);
-        log_to_tmp("super hotkey: idx=%d mods=0x%x time=%u keycode=%u\n",
-                   idx,
-                   mods,
-                   time_msec,
-                   keycode);
-        wm->handleHotkeySym(sym, superHeld, shiftHeld);
-        consumedHotkey = true;
-        return;
+      if (resp.blockClientDelivery) {
+        blockClientDelivery = true;
       }
-      if (!consumedHotkey) {
-        if (superHeld) {
-          wm->handleHotkeySym(sym, superHeld, shiftHeld);
-          consumedHotkey = true; // Treat Super combos as compositor-level.
-        } else if (!waylandFocusActive) {
-          wm->handleHotkeySym(sym, superHeld, shiftHeld);
-        }
-      }
-      if (consumedHotkey) {
+      if (resp.consumed) {
         return;
       }
     }
@@ -1201,44 +1216,74 @@ handle_new_input(wl_listener* listener, void* data)
         auto* handle =
           wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), button);
         auto* event = static_cast<wlr_pointer_button_event*>(data);
-        if (event->state == WLR_BUTTON_PRESSED && handle->server && handle->server->engine) {
+        bool handled_by_game = false;
+        wlr_surface* preferred_surface = nullptr;
+        if (static_cast<uint32_t>(event->state) ==
+              static_cast<uint32_t>(WLR_BUTTON_PRESSED) &&
+            handle->server && handle->server->engine) {
           if (auto wm = handle->server->engine->getWindowManager()) {
-            // Prefer focusing the surface under the pointer to keep WM focus in sync.
-            wlr_surface* pointer_surface = nullptr;
-            if (handle->server->seat && handle->server->seat->pointer_state.focused_surface) {
-              pointer_surface = handle->server->seat->pointer_state.focused_surface;
-            }
-            bool focusedViaPointer = false;
-            if (pointer_surface) {
-              auto it = handle->server->surface_map.find(pointer_surface);
-              if (it != handle->server->surface_map.end()) {
-                entt::entity ent = it->second;
-                wm->focusApp(ent);
+            // Only focus a Wayland client when the player is looking at it up close;
+            // otherwise treat the click as a game interaction.
+            if (event->button == static_cast<uint32_t>(BTN_LEFT)) {
+              auto before = wm->getCurrentlyFocusedApp();
+              wm->focusLookedAtApp();
+              auto after = wm->getCurrentlyFocusedApp();
+              if (after && handle->server->registry &&
+                  handle->server->registry->valid(*after) &&
+                  handle->server->registry->all_of<WaylandApp::Component>(*after)) {
                 if (auto* comp =
-                      handle->server->registry->try_get<WaylandApp::Component>(ent)) {
+                      handle->server->registry->try_get<WaylandApp::Component>(*after)) {
                   if (comp->app) {
-                    comp->app->takeInputFocus();
+                    preferred_surface = comp->app->getSurface();
                   }
                 }
-                focusedViaPointer = true;
+              }
+              if (!after || (before && after == before)) {
+                handle->server->engine->action(PLACE_VOXEL);
+                handled_by_game = true;
               }
             }
-            if (!focusedViaPointer) {
-              // Fallback: focus the first known Wayland surface.
-              auto picked = pick_any_surface(handle->server);
-              if (picked.first != nullptr && picked.second != entt::null) {
-                wm->focusApp(picked.second);
-                ensure_pointer_focus(handle->server, event->time_msec);
+            if (!handled_by_game) {
+              // Prefer focusing the surface under the pointer to keep WM focus in sync.
+              wlr_surface* pointer_surface = nullptr;
+              if (handle->server->seat && handle->server->seat->pointer_state.focused_surface) {
+                pointer_surface = handle->server->seat->pointer_state.focused_surface;
               }
-            }
-            if (!focusedViaPointer) {
-              wm->focusLookedAtApp();
+              bool focusedViaPointer = false;
+              if (pointer_surface) {
+                auto it = handle->server->surface_map.find(pointer_surface);
+                if (it != handle->server->surface_map.end()) {
+                  entt::entity ent = it->second;
+                  wm->focusApp(ent);
+                  if (auto* comp =
+                        handle->server->registry->try_get<WaylandApp::Component>(ent)) {
+                    if (comp->app) {
+                      comp->app->takeInputFocus();
+                    }
+                  }
+                  focusedViaPointer = true;
+                }
+              }
+              if (!focusedViaPointer) {
+                // Fallback: focus the first known Wayland surface.
+                auto picked = pick_any_surface(handle->server);
+                if (picked.first != nullptr && picked.second != entt::null) {
+                  wm->focusApp(picked.second);
+                  ensure_pointer_focus(handle->server, event->time_msec);
+                  if (!preferred_surface) {
+                    preferred_surface = picked.first;
+                  }
+                }
+              }
+              if (!focusedViaPointer) {
+                wm->focusLookedAtApp();
+              }
             }
           }
         }
-        if (handle->server->seat) {
+        if (handle->server->seat && !handled_by_game) {
           auto surfEnt = pick_any_surface(handle->server);
-          auto* surf = surfEnt.first;
+          auto* surf = preferred_surface ? preferred_surface : surfEnt.first;
           ensure_pointer_focus(handle->server, event->time_msec, surf);
           if (surf) {
             auto mapped = map_pointer_to_surface(handle->server, surf);
@@ -1676,7 +1721,7 @@ handle_output_frame(wl_listener* listener, void* data)
   ensure_depth_buffer(handle, width, height, fbo);
   if (!server->engine) {
     EngineOptions options;
-    options.enableControls = false; // wlroots path feeds input directly
+    options.enableControls = true; // wlroots path feeds input through Controls
     options.enableGui = false;
     options.invertYAxis = true;
   server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
@@ -1717,7 +1762,9 @@ handle_output_frame(wl_listener* listener, void* data)
         logged_missing_keyboard = true;
       }
       auto shift_lookup = keycode_for_keysym(kbd, XKB_KEY_Shift_L);
-      auto super_lookup = keycode_for_keysym(kbd, XKB_KEY_Super_L);
+      xkb_keysym_t modifier_sym_left =
+        server->hotkeyModifier == HotkeyModifier::Alt ? XKB_KEY_Alt_L : XKB_KEY_Super_L;
+      auto modifier_lookup = keycode_for_keysym(kbd, modifier_sym_left);
       uint32_t base_msec = now_msec;
       uint32_t step = 0;
       constexpr uint32_t kReplayHoldMs = 16;
@@ -1735,28 +1782,28 @@ handle_output_frame(wl_listener* listener, void* data)
                    lookup->keycode,
                    hw_keycode,
                    time_msec);
-        bool is_super_sym = (sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R);
+        bool is_modifier_sym = is_hotkey_sym(server->hotkeyModifier, sym);
         bool is_last = (i + 1) == ready.size();
         bool replay_has_future = wm->hasPendingReplay();
-        if (is_super_sym && server->pendingReplaySuper &&
-            server->pendingReplaySuperKeycode != 0) {
-          // Avoid overlapping super presses that clear modifiers out of order.
+        if (is_modifier_sym && server->pendingReplayModifier &&
+            server->pendingReplayModifierKeycode != 0) {
+          // Avoid overlapping modifier presses that clear modifiers out of order.
           process_key_sym(server,
                           kbd,
-                          server->pendingReplaySuperSym,
+                          server->pendingReplayModifierSym,
                           false,
                           time_msec,
-                          server->pendingReplaySuperKeycode,
+                          server->pendingReplayModifierKeycode,
                           true);
-          server->pendingReplaySuper = false;
-          server->pendingReplaySuperKeycode = 0;
-          server->pendingReplaySuperSym = XKB_KEY_NoSymbol;
+          server->pendingReplayModifier = false;
+          server->pendingReplayModifierKeycode = 0;
+          server->pendingReplayModifierSym = XKB_KEY_NoSymbol;
         }
-        if (is_super_sym && super_lookup.has_value() &&
+        if (is_modifier_sym && modifier_lookup.has_value() &&
             (replay_has_future || !is_last)) {
-          server->pendingReplaySuper = true;
-          server->pendingReplaySuperKeycode = hw_keycode;
-          server->pendingReplaySuperSym = sym;
+          server->pendingReplayModifier = true;
+          server->pendingReplayModifierKeycode = hw_keycode;
+          server->pendingReplayModifierSym = sym;
           process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
           // Do not release yet; move to next symbol.
           step += 1;
@@ -1794,19 +1841,19 @@ handle_output_frame(wl_listener* listener, void* data)
           step += 1;
         }
         step += 2;
-        if (server->pendingReplaySuper && !is_super_sym) {
-          // Release held super after the combo key with a realistic hold so the
+        if (server->pendingReplayModifier && !is_modifier_sym) {
+          // Release held modifier after the combo key with a realistic hold so the
           // replay path mirrors physical key timing.
-          uint32_t super_release_time =
+          uint32_t modifier_release_time =
             time_msec + static_cast<uint32_t>(std::max<uint64_t>(hold_ms, kReplayHoldMs));
           server->pendingReplayKeyups.push_back(
-            ReplayKeyRelease{ server->pendingReplaySuperSym,
-                              super_release_time,
-                              server->pendingReplaySuperKeycode,
+            ReplayKeyRelease{ server->pendingReplayModifierSym,
+                              modifier_release_time,
+                              server->pendingReplayModifierKeycode,
                               true });
-          server->pendingReplaySuper = false;
-          server->pendingReplaySuperKeycode = 0;
-          server->pendingReplaySuperSym = XKB_KEY_NoSymbol;
+          server->pendingReplayModifier = false;
+          server->pendingReplayModifierKeycode = 0;
+          server->pendingReplayModifierSym = XKB_KEY_NoSymbol;
           step += 1;
         }
       }
@@ -1814,15 +1861,25 @@ handle_output_frame(wl_listener* listener, void* data)
   }
 
   if (server->engine) {
+    Controls* controls = server->engine->getControls();
     Camera* camera = server->engine->getCamera();
     if (camera) {
-      camera->handleTranslateForce(
-        server->input.forward, server->input.back, server->input.left, server->input.right);
+      if (controls) {
+        controls->applyMovementInput(
+          server->input.forward, server->input.back, server->input.left, server->input.right);
+      } else {
+        camera->handleTranslateForce(
+          server->input.forward, server->input.back, server->input.left, server->input.right);
+      }
       bool pointerFocusRequested = wayland_pointer_focus_requested(server);
       if (!pointerFocusRequested &&
           (server->input.delta_x != 0.0 || server->input.delta_y != 0.0)) {
-        camera->handleRotateForce(
-          nullptr, server->input.delta_x, -server->input.delta_y);
+        if (controls) {
+          controls->applyLookDelta(server->input.delta_x, -server->input.delta_y);
+        } else {
+          camera->handleRotateForce(
+            nullptr, server->input.delta_x, -server->input.delta_y);
+        }
       }
       // Hide cursor and clear pointer focus when game mode is active so only deltas matter.
       if (!pointerFocusRequested && server->seat &&
@@ -1999,6 +2056,21 @@ main(int argc, char** argv, char** envp)
   (void)argv;
   WlrServer server = {};
   server.envp = envp;
+  server.hotkeyModifier = parse_hotkey_modifier();
+  server.hotkeyModifierMask = hotkey_modifier_mask(server.hotkeyModifier);
+  log_to_tmp("startup: hotkey modifier=%s mask=0x%x\n",
+             hotkey_modifier_label(server.hotkeyModifier),
+             server.hotkeyModifierMask);
+  int delay_secs = 0;
+  for (int i = 1; i < argc; ++i) {
+    if (std::strcmp(argv[i], "--in-wm") == 0) {
+      delay_secs = 5;
+    }
+  }
+  if (delay_secs > 0) {
+    log_to_tmp("startup: --in-wm detected, delaying %d seconds\n", delay_secs);
+    std::this_thread::sleep_for(std::chrono::seconds(delay_secs));
+  }
 
   wlr_log_init(WLR_DEBUG, nullptr);
   // Write PID for test harness so it can kill the compositor reliably.
