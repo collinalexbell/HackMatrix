@@ -52,6 +52,14 @@ extern "C" {
 #include <cctype>
 #include <thread>
 
+static std::string
+keysym_name(xkb_keysym_t sym)
+{
+  char buf[64] = {0};
+  xkb_keysym_get_name(sym, buf, sizeof(buf));
+  return std::string(buf);
+}
+
 #include "engine.h"
 #include "wayland_app.h"
 #include "AppSurface.h"
@@ -66,11 +74,27 @@ constexpr bool kWlrootsDebugLogs = true;
 constexpr bool kWlrootsDebugLogs = false;
 #endif
 
-#if WLROOTS_DEBUG_LOGS
+static bool
+wlroots_debug_logs_enabled()
+{
+  // Allow enabling logs even in non-debug builds via env override.
+  if (const char* env = std::getenv("WLROOTS_DEBUG_LOGS")) {
+    return std::strcmp(env, "0") != 0;
+  }
+  return kWlrootsDebugLogs;
+}
+
 static void
 log_to_tmp(const char* fmt, ...)
 {
-  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+  if (!wlroots_debug_logs_enabled()) {
+    return;
+  }
+  const char* path = std::getenv("MATRIX_WLROOTS_OUTPUT");
+  if (!path) {
+    path = "/tmp/matrix-wlroots-output.log";
+  }
+  FILE* f = std::fopen(path, "a");
   if (!f) {
     return;
   }
@@ -81,13 +105,6 @@ log_to_tmp(const char* fmt, ...)
   va_end(args);
   std::fclose(f);
 }
-#else
-static void
-log_to_tmp(const char* fmt, ...)
-{
-  (void)fmt;
-}
-#endif
 
 namespace {
 
@@ -955,6 +972,10 @@ process_key_sym(WlrServer* server,
         wlr_seat_keyboard_notify_clear_focus(server->seat);
         wlr_seat_pointer_notify_clear_focus(server->seat);
         server->replayModifierActive = false;
+        log_to_tmp("key replay: controls cleared seat focus sym=%s(%u) mods=0x%x\n",
+                   keysym_name(sym).c_str(),
+                   sym,
+                   mods);
       }
       if (resp.blockClientDelivery) {
         blockClientDelivery = true;
@@ -973,6 +994,10 @@ process_key_sym(WlrServer* server,
     case XKB_KEY_W:
       if (!waylandFocusActive) {
         server->input.forward = pressed;
+      } else {
+        log_to_tmp("key replay: dropped movement key sym=%s(%u) because wayland focus\n",
+                   keysym_name(sym).c_str(),
+                   sym);
       }
       break;
     case XKB_KEY_s:
@@ -991,6 +1016,19 @@ process_key_sym(WlrServer* server,
     case XKB_KEY_D:
       if (!waylandFocusActive) {
         server->input.right = pressed;
+      }
+      break;
+    case XKB_KEY_r:
+    case XKB_KEY_R:
+      if (pressed && server->engine && !waylandFocusActive) {
+        if (auto wm = server->engine->getWindowManager()) {
+          wm->focusLookedAtApp();
+          clear_input_forces(server);
+          blockClientDelivery = true; // consume focus hotkey
+          log_to_tmp("key replay: focus hotkey consumed sym=%s(%u)\n",
+                     keysym_name(sym).c_str(),
+                     sym);
+        }
       }
       break;
     default:
@@ -1016,41 +1054,50 @@ process_key_sym(WlrServer* server,
     if (!target_surface && server->seat && server->seat->pointer_state.focused_surface) {
       target_surface = server->seat->pointer_state.focused_surface;
     }
-      if (!target_surface && server->engine) {
-        if (auto wm = server->engine->getWindowManager()) {
-          if (auto focused = wm->getCurrentlyFocusedApp()) {
-            if (server->registry &&
-                server->registry->all_of<WaylandApp::Component>(*focused)) {
-              auto& comp = server->registry->get<WaylandApp::Component>(*focused);
-              target_surface = comp.app ? comp.app->getSurface() : nullptr;
-            }
+    if (!target_surface && server->engine) {
+      if (auto wm = server->engine->getWindowManager()) {
+        if (auto focused = wm->getCurrentlyFocusedApp()) {
+          if (server->registry &&
+              server->registry->all_of<WaylandApp::Component>(*focused)) {
+            auto& comp = server->registry->get<WaylandApp::Component>(*focused);
+            target_surface = comp.app ? comp.app->getSurface() : nullptr;
           }
         }
       }
-      if (target_surface) {
-        // Keep WM focus in sync with the seat when we can map the surface.
-        if (server->engine) {
-          if (auto wm = server->engine->getWindowManager()) {
-            auto it = server->surface_map.find(target_surface);
-            if (it != server->surface_map.end()) {
-              // Do not force WM focus here; explicit hotkeys handle focus.
-            }
+    }
+    if (!target_surface) {
+      log_to_tmp("key replay: no target surface for sym=%s(%u)\n",
+                 keysym_name(sym).c_str(),
+                 sym);
+    }
+    if (target_surface) {
+      // Keep WM focus in sync with the seat when we can map the surface.
+      if (server->engine) {
+        if (auto wm = server->engine->getWindowManager()) {
+          auto it = server->surface_map.find(target_surface);
+          if (it != server->surface_map.end()) {
+            // Do not force WM focus here; explicit hotkeys handle focus.
           }
         }
-        wlr_seat_set_keyboard(server->seat, keyboard);
-        if (server->seat->keyboard_state.focused_surface != target_surface) {
-          wlr_seat_keyboard_notify_enter(server->seat,
-                                         target_surface,
-                                         keyboard->keycodes,
-                                         keyboard->num_keycodes,
-                                         &keyboard->modifiers);
-          wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-        }
-      enum wl_keyboard_key_state state =
-        pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
-      wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
-      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+      }
+      wlr_seat_set_keyboard(server->seat, keyboard);
+      if (server->seat->keyboard_state.focused_surface != target_surface) {
+        wlr_seat_keyboard_notify_enter(server->seat,
+                                       target_surface,
+                                       keyboard->keycodes,
+                                       keyboard->num_keycodes,
+                                       &keyboard->modifiers);
+        wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+      }
+      log_to_tmp("key replay: delivering sym=%s(%u) to surface=%p\n",
+                 keysym_name(sym).c_str(),
+                 sym,
+                 (void*)target_surface);
     }
+    enum wl_keyboard_key_state state =
+      pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
+    wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
+    wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
   }
 }
 
@@ -1421,6 +1468,25 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
                w,
                h,
                (void*)handle->app.get());
+    if (handle->server && handle->server->engine) {
+      if (auto wm = handle->server->engine->getWindowManager()) {
+        if (!wm->getCurrentlyFocusedApp().has_value()) {
+          // Try to focus the newly added app so key replay has a target.
+          auto reg = handle->server->registry;
+          if (reg) {
+            auto view = reg->view<WaylandApp::Component>();
+            for (auto ent : view) {
+              if (reg->valid(ent)) {
+                wm->focusApp(ent);
+                log_to_tmp("wayland focus: auto-focused first app ent=%d\n",
+                           (int)entt::to_integral(ent));
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
   };
   wl_signal_add(&xdg_surface->surface->events.commit, &handle->commit);
   handle->unmap.notify = [](wl_listener* listener, void* /*data*/) {
@@ -1730,6 +1796,11 @@ handle_output_frame(wl_listener* listener, void* data)
         log_to_tmp("key replay: no keyboard device available for injection\n");
         logged_missing_keyboard = true;
       }
+      if (!ready.empty()) {
+        log_to_tmp("key replay: ready=%zu elapsed_ms=%llu\n",
+                   ready.size(),
+                   (unsigned long long)now_ms);
+      }
       auto shift_lookup = keycode_for_keysym(kbd, XKB_KEY_Shift_L);
       xkb_keysym_t modifier_sym_left =
         server->hotkeyModifier == HotkeyModifier::Alt ? XKB_KEY_Alt_L : XKB_KEY_Super_L;
@@ -1746,11 +1817,13 @@ handle_output_frame(wl_listener* listener, void* data)
         }
         uint32_t hw_keycode = lookup->keycode >= 8 ? lookup->keycode - 8 : lookup->keycode;
         uint32_t time_msec = base_msec + step;
-        log_to_tmp("key replay: sym=%u keycode=%u hw=%u time=%u\n",
+        log_to_tmp("key replay: sym=%u (%s) keycode=%u hw=%u time=%u ready_ms=%llu\n",
                    sym,
+                   keysym_name(sym).c_str(),
                    lookup->keycode,
                    hw_keycode,
-                   time_msec);
+                   time_msec,
+                   (unsigned long long)ready[i].ready_ms);
         bool is_modifier_sym = is_hotkey_sym(server->hotkeyModifier, sym);
         bool is_last = (i + 1) == ready.size();
         bool replay_has_future = wm->hasPendingReplay();

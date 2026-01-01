@@ -10,6 +10,7 @@
 #include <vector>
 #include <cstdlib>
 #include <cstdio>
+#include <atomic>
 #include <zmq/zmq.hpp>
 #include "protos/api.pb.h"
 #include "WindowManager/WindowManager.h"
@@ -61,19 +62,40 @@ kill_existing_compositor()
   }
 }
 
+static uint16_t
+next_api_port()
+{
+  static std::atomic<uint16_t> port{ 45000 };
+  uint16_t p = port.fetch_add(1);
+  if (p >= 50000) {
+    port.store(45000);
+    p = port.fetch_add(1);
+  }
+  return p;
+}
+
 static CompositorHandle
 start_compositor()
 {
   kill_existing_compositor();
 
   CompositorHandle h;
-  const std::string apiBind = "tcp://*:3345";
-  const std::string apiAddr = "tcp://127.0.0.1:3345";
+  const uint16_t port = next_api_port();
+  const std::string apiBind = "tcp://*:" + std::to_string(port);
+  const std::string apiAddr = "tcp://127.0.0.1:" + std::to_string(port);
   setenv("VOXEL_API_ADDR_FOR_TEST", apiAddr.c_str(), 1);
-  std::string cmd = "MATRIX_WLROOTS_BIN=./matrix-wlroots-debug MENU_PROGRAM=foot "
-                    "VOXEL_API_BIND=" +
-                    apiBind + " VOXEL_API_ADDR_FOR_TEST=" + apiAddr + " " +
-                    "bash -lc './launch"
+  namespace fs = std::filesystem;
+  std::string bin = "./matrix-wlroots-debug";
+  if (!fs::exists(bin)) {
+    bin = "./matrix-debug";
+  }
+  if (!fs::exists(bin)) {
+    bin = "./matrix-wlroots";
+  }
+  std::string cmd = "MATRIX_WLROOTS_BIN=" + bin +
+                    " MENU_PROGRAM=foot VOXEL_API_BIND=" + apiBind +
+                    " VOXEL_API_ADDR_FOR_TEST=" + apiAddr +
+                    " bash -lc './launch"
                     ">/tmp/controls-test.log 2>&1 & echo $!'";
   FILE* pipe = popen(cmd.c_str(), "r");
   if (pipe) {

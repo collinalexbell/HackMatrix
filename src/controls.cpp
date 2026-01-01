@@ -473,6 +473,13 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
+  // When a Wayland client is focused, let unmodified keys pass through so they reach
+  // the client instead of being eaten by engine controls.
+  const bool allowControls = !waylandFocusActive || modifierHeld;
+  if (!allowControls) {
+    return resp;
+  }
+
   if (matchesConfiguredKey("toggle_cursor") && debounce(lastKeyPressTime)) {
     if (grabbedCursor) {
       grabbedCursor = false;
