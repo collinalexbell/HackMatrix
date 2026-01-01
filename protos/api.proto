@@ -11,6 +11,7 @@ enum MessageType {
   QUIT = 7;
   KEY_REPLAY = 8;
   STATUS = 9;
+  POINTER_REPLAY = 10;
 }
 
 message NoPayload {}
@@ -64,6 +65,16 @@ message KeyReplay {
   repeated KeyReplayEntry entries = 1;
 }
 
+message PointerReplayEntry {
+  uint32 button = 1;    // linux/input-event-codes BTN_* value
+  bool pressed = 2;     // true for press, false for release
+  uint32 delay_ms = 3;  // Wait time after this pointer event before next entry
+}
+
+message PointerReplay {
+  repeated PointerReplayEntry entries = 1;
+}
+
 message EngineStatus {
   uint32 total_entities = 1;
   uint32 wayland_apps = 2;
@@ -94,6 +105,7 @@ message ApiRequest {
     ClearVoxels clearVoxels = 8;
     ConfirmAction confirmAction = 9;
     KeyReplay keyReplay = 10;
+    PointerReplay pointerReplay = 11;
   }
 }
 

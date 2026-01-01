@@ -636,16 +636,6 @@ ensure_wayland_apps_registered(WlrServer* server)
         if (comp && comp->app && !action.accessory) {
           comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
         }
-        // If nothing is focused yet, focus this new app and ensure pointer focus.
-        if (!action.accessory) {
-          if (auto wm = server->engine ? server->engine->getWindowManager() : nullptr) {
-            if (!wm->getCurrentlyFocusedApp().has_value()) {
-              wm->focusApp(entity);
-              ensure_pointer_focus(server);
-              set_cursor_visible(server, true);
-            }
-          }
-        }
         if (f) {
           std::fprintf(f,
                        "wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
@@ -898,6 +888,15 @@ process_key_sym(WlrServer* server,
     return;
   }
 
+  if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
+      sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
+    log_to_tmp("controls debug: entry sym=%u pressed=%d time=%u keycode=%u\n",
+               sym,
+               pressed ? 1 : 0,
+               time_msec,
+               keycode);
+  }
+
   if (isHotkeySym(server, sym)) {
     if (pressed) {
       ++server->replayModifierHeld;
@@ -962,12 +961,37 @@ process_key_sym(WlrServer* server,
     bool modifierHeld =
       (mods & server->hotkeyModifierMask) || server->replayModifierActive;
     bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
+    if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
+        sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
+      log_to_tmp("controls debug: controls_ptr=%p sym=%u mods=0x%x\n",
+                 (void*)controls,
+                 sym,
+                 mods);
+    }
     if (controls) {
+      if (sym == XKB_KEY_f || sym == XKB_KEY_F) {
+        log_to_tmp("controls debug toggle sym=%s(%u) ptr=%p focus=%d modifier=%d\n",
+                   keysym_name(sym).c_str(),
+                   sym,
+                   (void*)controls,
+                   waylandFocusActive ? 1 : 0,
+                   modifierHeld ? 1 : 0);
+      }
       if (pressed && modifierHeld && sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
         log_to_tmp("hotkey: idx=%d\n", static_cast<int>(sym - XKB_KEY_1));
       }
       auto resp =
         controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld, waylandFocusActive);
+      bool handled = resp.consumed || resp.blockClientDelivery || resp.requestQuit ||
+                     resp.clearInputForces || resp.clearSeatFocus;
+      if (handled) {
+        log_to_tmp("controls handled sym=%s(%u) consumed=%d block=%d clearFocus=%d\n",
+                   keysym_name(sym).c_str(),
+                   sym,
+                   resp.consumed ? 1 : 0,
+                   resp.blockClientDelivery ? 1 : 0,
+                   resp.clearSeatFocus ? 1 : 0);
+      }
       if (resp.clearInputForces) {
         clear_input_forces(server);
       }

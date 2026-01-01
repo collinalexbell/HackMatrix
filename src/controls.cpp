@@ -8,6 +8,8 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <cstdarg>
+#include <fstream>
 #include <xkbcommon/xkbcommon.h>
 #include <glm/gtc/quaternion.hpp>
 #include <linux/input-event-codes.h>
@@ -18,6 +20,23 @@
 #include "time_utils.h"
 
 using namespace std;
+
+namespace {
+void
+log_controls(const char* fmt, ...)
+{
+  std::ofstream out("/tmp/matrix-wlroots-output.log", std::ios::app);
+  if (!out.is_open()) {
+    return;
+  }
+  va_list args;
+  va_start(args, fmt);
+  char buf[256];
+  vsnprintf(buf, sizeof(buf), fmt, args);
+  va_end(args);
+  out << buf;
+}
+} // namespace
 
 void
 Controls::mouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -427,9 +446,13 @@ Controls::handlePointerButton(uint32_t button, bool pressed)
       auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
                                     : std::optional<entt::entity>();
       if (app.has_value()) {
+        log_controls("controls: pointer goToApp ent=%d button=%u\n",
+                     (int)entt::to_integral(app.value()),
+                     button);
         goToApp(app.value());
         return true;
       }
+      log_controls("controls: pointer place voxel button=%u\n", button);
       world->action(PLACE_VOXEL);
       return true;
     }
@@ -449,8 +472,19 @@ Controls::handleKeySym(xkb_keysym_t sym,
                        bool waylandFocusActive)
 {
   ControlResponse resp;
+  lastWaylandFocusActive = waylandFocusActive;
   if (!pressed) {
     return resp;
+  }
+
+  if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
+      sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
+    log_controls("controls: debug sym=%u pressed=%d modifier=%d shift=%d focus=%d\n",
+                 sym,
+                 pressed ? 1 : 0,
+                 modifierHeld ? 1 : 0,
+                 shiftHeld ? 1 : 0,
+                 waylandFocusActive ? 1 : 0);
   }
 
   auto matchesConfiguredKey = [&](const std::string& fn) -> bool {
@@ -480,19 +514,24 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
-  if (matchesConfiguredKey("toggle_cursor") && debounce(lastKeyPressTime)) {
+  const bool toggleCursorPressed = matchesConfiguredKey("toggle_cursor") || sym == XKB_KEY_f ||
+                                   sym == XKB_KEY_F;
+  if (toggleCursorPressed) {
+    debounce(lastKeyPressTime);
     if (grabbedCursor) {
       grabbedCursor = false;
       resetMouse = true;
       if (wm) {
         wm->captureInput();
       }
+      log_controls("controls: toggle_cursor=0\n");
     } else {
       grabbedCursor = true;
       resetMouse = true;
       if (wm) {
         wm->passthroughInput();
       }
+      log_controls("controls: toggle_cursor=1\n");
     }
     resp.blockClientDelivery = true;
     resp.consumed = true;
@@ -533,6 +572,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_r:
     case XKB_KEY_R:
       if (!waylandFocusActive && lookedAtApp.has_value()) {
+        log_controls("controls: goToApp ent=%d\n", (int)entt::to_integral(lookedAtApp.value()));
         goToApp(lookedAtApp.value());
         resp.blockClientDelivery = true;
         resp.clearInputForces = true;
@@ -542,6 +582,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_v:
     case XKB_KEY_V:
       if (!waylandFocusActive && wm && debounce(lastKeyPressTime)) {
+        log_controls("controls: menu\n");
         wm->menu();
         resp.consumed = true;
       }
@@ -550,6 +591,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_B:
       if (debounce(lastKeyPressTime)) {
         texturePack->logCounts();
+        log_controls("controls: logCounts\n");
         resp.consumed = true;
       }
       break;
@@ -557,12 +599,14 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_T:
       if (debounce(lastKeyPressTime)) {
         world->action(LOG_BLOCK_TYPE);
+        log_controls("controls: logBlockType\n");
         resp.consumed = true;
       }
       break;
     case XKB_KEY_comma:
       if (debounce(lastKeyPressTime)) {
         world->mesh();
+        log_controls("controls: mesh\n");
         resp.consumed = true;
       }
       break;
@@ -570,6 +614,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_M:
       if (debounce(lastKeyPressTime)) {
         world->mesh(false);
+        log_controls("controls: mesh=false\n");
         resp.consumed = true;
       }
       break;
@@ -577,6 +622,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_question:
       if (debounce(lastKeyPressTime)) {
         renderer->toggleWireframe();
+        log_controls("controls: wireframe toggle\n");
         resp.consumed = true;
       }
       break;
@@ -611,6 +657,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_plus:
       if (debounce(lastKeyPressTime)) {
         camera->changeSpeed(0.05f);
+        log_controls("controls: camera speed delta=+0.05\n");
         resp.consumed = true;
       }
       break;
@@ -618,6 +665,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_underscore:
       if (debounce(lastKeyPressTime)) {
         camera->changeSpeed(-0.05f);
+        log_controls("controls: camera speed delta=-0.05\n");
         resp.consumed = true;
       }
       break;
@@ -625,10 +673,12 @@ Controls::handleKeySym(xkb_keysym_t sym,
       if (shiftHeld) {
         if (debounce(lastKeyPressTime)) {
           camera->resetSpeed();
+          log_controls("controls: camera speed reset\n");
           resp.consumed = true;
         }
       } else {
         windowFlop += windowFlop_dt;
+        log_controls("controls: windowFlop=%.4f\n", windowFlop);
         resp.consumed = true;
       }
       break;
@@ -637,6 +687,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
       if (windowFlop <= 0.01) {
         windowFlop = 0.01;
       }
+      log_controls("controls: windowFlop=%.4f\n", windowFlop);
       resp.consumed = true;
       break;
     default:

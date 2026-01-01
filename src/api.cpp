@@ -371,6 +371,29 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       }
       break;
     }
+    case POINTER_REPLAY: {
+      if (controls) {
+        const auto& replay = batchedRequest.request.pointerreplay();
+        uint64_t cumulative = 0;
+        for (const auto& e : replay.entries()) {
+          cumulative += e.delay_ms();
+          // Deliver immediately; delay handling could be extended later if needed.
+          bool handled = controls->handlePointerButton(e.button(), e.pressed());
+          {
+            char buf[160];
+            snprintf(buf,
+                     sizeof(buf),
+                     "api pointer replay button=%u pressed=%d handled=%d cumulative_ms=%llu\n",
+                     e.button(),
+                     e.pressed() ? 1 : 0,
+                     handled ? 1 : 0,
+                     (unsigned long long)cumulative);
+            log_to_tmp_api(std::string(buf));
+          }
+        }
+      }
+      break;
+    }
     case STATUS: {
       // STATUS requests are handled synchronously in poll().
       break;

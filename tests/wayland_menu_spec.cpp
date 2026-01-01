@@ -300,10 +300,23 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
   const std::string defaultApiAddr = "tcp://127.0.0.1:" + std::to_string(defaultPort);
   auto bindOverride = find_env_override(extraEnv, "VOXEL_API_BIND");
   auto addrOverride = find_env_override(extraEnv, "VOXEL_API_ADDR_FOR_TEST");
+  auto logOverride = find_env_override(extraEnv, "MATRIX_WLROOTS_OUTPUT");
   const std::string apiBind = bindOverride.value_or(defaultApiBind);
   const std::string apiAddr = addrOverride.value_or(defaultApiAddr);
+  const std::string logPath = logOverride.value_or("/tmp/matrix-wlroots-output.log");
   ::setenv("VOXEL_API_BIND", apiBind.c_str(), 1);
   ::setenv("VOXEL_API_ADDR_FOR_TEST", apiAddr.c_str(), 1);
+  ::setenv("MATRIX_WLROOTS_OUTPUT", logPath.c_str(), 1);
+  const char* user = std::getenv("USER");
+  std::string runtimeDir = "/tmp/xdg-runtime-";
+  runtimeDir += (user ? user : "user");
+  std::filesystem::create_directories(runtimeDir);
+  std::error_code ec;
+  std::filesystem::permissions(runtimeDir,
+                               std::filesystem::perms::owner_all,
+                               std::filesystem::perm_options::replace,
+                               ec);
+  ::setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
 
   CompositorHandle h;
   namespace fs = std::filesystem;
@@ -315,9 +328,9 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
     wait_for_exit_pid(existingPid, 50, 100);
   }
   // Fresh log for assertions; use a per-test log to avoid clobbering other runs.
-  const char* testLog = "/tmp/matrix-wlroots-output.log";
-  std::string truncateCmd = std::string("truncate -s 0 ") + testLog + " >/dev/null 2>&1";
-  std::system(truncateCmd.c_str());
+  {
+    std::ofstream truncate(logPath, std::ios::trunc);
+  }
   std::string launchFlags = "--in-wm";
   const bool haveDisplay = std::getenv("DISPLAY") || std::getenv("WAYLAND_DISPLAY");
   if (const char* back = std::getenv("WLR_BACKENDS")) {
@@ -334,11 +347,12 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
   } else if (fs::exists("./matrix-debug")) {
     bin = "./matrix-debug";
   } else if (!fs::exists(bin)) {
-    bin = "./matrix-wlroots";
+    bin = "./matrix";
   }
   // Default API binding for compositor/tests; allow overrides via extraEnv.
   std::string baseEnv =
-    "VOXEL_API_BIND=" + apiBind + " VOXEL_API_ADDR_FOR_TEST=" + apiAddr + " ";
+    "MATRIX_WLROOTS_OUTPUT=" + logPath + " VOXEL_API_BIND=" + apiBind +
+    " VOXEL_API_ADDR_FOR_TEST=" + apiAddr + " XDG_RUNTIME_DIR=" + runtimeDir + " ";
   std::string cmd = baseEnv + "MATRIX_WLROOTS_BIN=" + bin + " " + extraEnv +
                     " bash -lc './launch " + launchFlags +
                     " >/tmp/menu-test.log 2>&1 & echo $!'";
@@ -360,7 +374,7 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
   }
   // Wait for pidfile and startup log so we know the compositor actually booted.
   wait_for_file("/tmp/matrix-wlroots.pid");
-  wait_for_file(testLog);
+  wait_for_file(logPath);
   return h;
 }
 
@@ -455,37 +469,68 @@ static bool fetch_status(ApiRequestResponse* out)
 
 static bool stop_compositor(CompositorHandle& h)
 {
-  // Give API a moment to come up before sending quit.
-  std::this_thread::sleep_for(std::chrono::seconds(4));
-  bool quitSent = send_quit_via_api();
+  const char* addrEnv = std::getenv("VOXEL_API_ADDR_FOR_TEST");
+  std::string endpoint = addrEnv ? addrEnv : "tcp://127.0.0.1:3345";
 
-  if (h.pid.empty()) {
+  auto graceful_quit = [&](int attempts, int sleepMs) {
+    for (int i = 0; i < attempts; ++i) {
+      if (send_quit_via_api()) {
+        return;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
+    }
+  };
+
+  graceful_quit(/*attempts=*/5, /*sleepMs=*/200);
+
+  auto refresh_pid = [&]() {
+    if (!h.pid.empty()) {
+      return;
+    }
     std::ifstream in("/tmp/matrix-wlroots.pid");
     if (in.good()) {
       std::getline(in, h.pid);
     }
-  }
-  if (h.pid.empty()) {
-    return quitSent;
-  }
-  if (!wait_for_exit_pid(h.pid, 50, 100)) {
-    // Retry quit once more before falling back to direct kill so we don't leave orphans.
-    send_quit_via_api();
-    wait_for_exit_pid(h.pid, 50, 100);
-  }
-  if (compositor_alive(h)) {
+  };
+
+  refresh_pid();
+
+  auto wait_for_exit = [&](const std::string& pid, int attempts, int sleepMs) {
+    if (pid.empty()) {
+      return;
+    }
+    for (int i = 0; i < attempts; ++i) {
+      std::string checkCmd = "kill -0 " + pid + " >/dev/null 2>&1";
+      if (std::system(checkCmd.c_str()) != 0) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
+    }
+  };
+
+  wait_for_exit(h.pid, /*attempts=*/10, /*sleepMs=*/100);
+
+  if (!h.pid.empty()) {
     std::string killCmd = "kill " + h.pid + " >/dev/null 2>&1";
     std::system(killCmd.c_str());
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    wait_for_exit_pid(h.pid, 20, 100);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    wait_for_exit(h.pid, /*attempts=*/20, /*sleepMs=*/100);
   }
-  if (compositor_alive(h)) {
-    // Last resort: force kill so tests never leave the compositor running.
-    std::string killCmd = "kill -9 " + h.pid + " >/dev/null 2>&1";
-    std::system(killCmd.c_str());
-    wait_for_exit_pid(h.pid, 20, 100);
+
+  if (!h.pid.empty() && compositor_alive(h)) {
+    std::string kill9 = "kill -9 " + h.pid + " >/dev/null 2>&1";
+    std::system(kill9.c_str());
+    wait_for_exit(h.pid, /*attempts=*/20, /*sleepMs=*/100);
   }
-  return quitSent;
+
+  // Best-effort cleanup if pid was unknown.
+  if (h.pid.empty() || compositor_alive(h)) {
+    std::system("pkill -f matrix-debug >/dev/null 2>&1");
+    std::system("pkill -f matrix >/dev/null 2>&1");
+  }
+
+  std::remove("/tmp/matrix-wlroots.pid");
+  return true;
 }
 
 static bool compositor_alive(const CompositorHandle& h)

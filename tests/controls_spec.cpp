@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <atomic>
 #include <zmq/zmq.hpp>
+#include <linux/input-event-codes.h>
 #include "protos/api.pb.h"
 #include "WindowManager/WindowManager.h"
 #include <cmath>
@@ -81,21 +82,40 @@ start_compositor()
   kill_existing_compositor();
 
   CompositorHandle h;
+  // Ensure fresh logs per test and force compositor to use the expected path.
+  const char* logPath = "/tmp/matrix-wlroots-output.log";
+  const char* wmLogPath = "/tmp/matrix-wlroots-wm.log";
+  const char* rendererLogPath = "/tmp/matrix-wlroots-renderer.log";
+  {
+    std::ofstream(logPath, std::ios::trunc).close();
+    std::ofstream(wmLogPath, std::ios::trunc).close();
+    std::ofstream(rendererLogPath, std::ios::trunc).close();
+  }
+  setenv("MATRIX_WLROOTS_OUTPUT", logPath, 1);
+  const char* user = std::getenv("USER");
+  std::string runtimeDir = "/tmp/xdg-runtime-";
+  runtimeDir += (user ? user : "user");
+  std::filesystem::create_directories(runtimeDir);
+  std::error_code ec;
+  std::filesystem::permissions(runtimeDir,
+                               std::filesystem::perms::owner_all,
+                               std::filesystem::perm_options::replace,
+                               ec);
+  setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
   const uint16_t port = next_api_port();
   const std::string apiBind = "tcp://*:" + std::to_string(port);
   const std::string apiAddr = "tcp://127.0.0.1:" + std::to_string(port);
   setenv("VOXEL_API_ADDR_FOR_TEST", apiAddr.c_str(), 1);
   namespace fs = std::filesystem;
-  std::string bin = "./matrix-wlroots-debug";
+  std::string bin = "./matrix-debug";
   if (!fs::exists(bin)) {
-    bin = "./matrix-debug";
-  }
-  if (!fs::exists(bin)) {
-    bin = "./matrix-wlroots";
+    bin = "./matrix";
   }
   std::string cmd = "MATRIX_WLROOTS_BIN=" + bin +
+                    " MATRIX_WLROOTS_OUTPUT=" + std::string(logPath) +
                     " MENU_PROGRAM=foot VOXEL_API_BIND=" + apiBind +
                     " VOXEL_API_ADDR_FOR_TEST=" + apiAddr +
+                    " XDG_RUNTIME_DIR=" + runtimeDir +
                     " bash -lc './launch"
                     ">/tmp/controls-test.log 2>&1 & echo $!'";
   FILE* pipe = popen(cmd.c_str(), "r");
@@ -172,6 +192,38 @@ count_log_occurrences(const std::string& path, const std::string& needle)
   return count;
 }
 
+static std::optional<double>
+last_window_flop_value()
+{
+  std::ifstream in("/tmp/matrix-wlroots-output.log");
+  std::string line;
+  std::optional<double> value;
+  while (std::getline(in, line)) {
+    auto pos = line.find("windowFlop=");
+    if (pos != std::string::npos) {
+      try {
+        value = std::stod(line.substr(pos + std::string("windowFlop=").size()));
+      } catch (...) {
+      }
+    }
+  }
+  return value;
+}
+
+static int
+count_file_occurrences(const std::string& path, const std::string& needle)
+{
+  std::ifstream in(path);
+  std::string line;
+  int count = 0;
+  while (std::getline(in, line)) {
+    if (line.find(needle) != std::string::npos) {
+      ++count;
+    }
+  }
+  return count;
+}
+
 static std::string
 find_window_for_pid(const std::string& pid,
                     int attempts = 120,
@@ -217,6 +269,50 @@ send_key_replay(const std::vector<std::pair<std::string, uint32_t>>& entries)
         auto* ent = req.mutable_keyreplay()->add_entries();
         ent->set_sym(e.first);
         ent->set_delay_ms(e.second);
+      }
+      std::string data;
+      if (!req.SerializeToString(&data)) {
+        return false;
+      }
+      zmq::message_t msg(data.size());
+      memcpy(msg.data(), data.data(), data.size());
+      if (!sock.send(msg, zmq::send_flags::none)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        continue;
+      }
+      zmq::message_t reply;
+      auto res = sock.recv(reply, zmq::recv_flags::none);
+      if (res.has_value()) {
+        return true;
+      }
+    } catch (...) {
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  }
+  return false;
+}
+
+static bool
+send_pointer_replay(const std::vector<std::tuple<uint32_t, bool, uint32_t>>& entries)
+{
+  const char* addr = std::getenv("VOXEL_API_ADDR_FOR_TEST");
+  std::string endpoint = addr ? addr : "tcp://127.0.0.1:3345";
+  for (int attempt = 0; attempt < 20; ++attempt) {
+    try {
+      zmq::context_t ctx(1);
+      zmq::socket_t sock(ctx, zmq::socket_type::req);
+      sock.set(zmq::sockopt::rcvtimeo, 500);
+      sock.set(zmq::sockopt::sndtimeo, 500);
+      sock.set(zmq::sockopt::linger, 100);
+      sock.connect(endpoint);
+      ApiRequest req;
+      req.set_entityid(0);
+      req.set_type(MessageType::POINTER_REPLAY);
+      for (const auto& e : entries) {
+        auto* ent = req.mutable_pointerreplay()->add_entries();
+        ent->set_button(std::get<0>(e));
+        ent->set_pressed(std::get<1>(e));
+        ent->set_delay_ms(std::get<2>(e));
       }
       std::string data;
       if (!req.SerializeToString(&data)) {
@@ -347,43 +443,73 @@ static void
 stop_compositor(const CompositorHandle& h)
 {
   // Graceful quit via API, then fall back to signals if needed.
-  {
+  const char* addrEnv = std::getenv("VOXEL_API_ADDR_FOR_TEST");
+  std::string endpoint = addrEnv ? addrEnv : "tcp://127.0.0.1:3345";
+  auto graceful_quit = [&](int attempts, int sleepMs) {
     zmq::context_t ctx(1);
     zmq::socket_t sock(ctx, zmq::socket_type::req);
     sock.set(zmq::sockopt::rcvtimeo, 500);
     sock.set(zmq::sockopt::sndtimeo, 500);
     sock.set(zmq::sockopt::linger, 100);
-    sock.connect("tcp://127.0.0.1:3345");
-    ApiRequest req;
-    req.set_entityid(0);
-    req.set_type(MessageType::QUIT);
-    std::string data;
-    if (req.SerializeToString(&data)) {
-      zmq::message_t msg(data.size());
-      memcpy(msg.data(), data.data(), data.size());
-      sock.send(msg, zmq::send_flags::none);
-      zmq::message_t reply;
-      sock.recv(reply, zmq::recv_flags::none);
+    for (int i = 0; i < attempts; ++i) {
+      try {
+        sock.connect(endpoint);
+        ApiRequest req;
+        req.set_entityid(0);
+        req.set_type(MessageType::QUIT);
+        std::string data;
+        if (!req.SerializeToString(&data)) {
+          break;
+        }
+        zmq::message_t msg(data.size());
+        memcpy(msg.data(), data.data(), data.size());
+        if (!sock.send(msg, zmq::send_flags::none)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
+          continue;
+        }
+        zmq::message_t reply;
+        if (sock.recv(reply, zmq::recv_flags::none)) {
+          break;
+        }
+      } catch (...) {
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
     }
-  }
-  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  };
+  graceful_quit(/*attempts=*/5, /*sleepMs=*/200);
+
+  auto wait_for_exit = [&](const std::string& pid, int attempts, int sleepMs) {
+    if (pid.empty()) {
+      return;
+    }
+    for (int i = 0; i < attempts; ++i) {
+      std::string check = "kill -0 " + pid + " >/dev/null 2>&1";
+      if (std::system(check.c_str()) != 0) {
+        break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepMs));
+    }
+  };
+
+  wait_for_exit(h.pid, /*attempts=*/10, /*sleepMs=*/100);
+
   if (!h.pid.empty()) {
     std::string killCmd = "kill " + h.pid + " >/dev/null 2>&1";
     std::system(killCmd.c_str());
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     std::string kill9 = "kill -9 " + h.pid + " >/dev/null 2>&1";
     std::system(kill9.c_str());
-    for (int i = 0; i < 50; ++i) {
-      std::string check = "kill -0 " + h.pid + " >/dev/null 2>&1";
-      int rc = std::system(check.c_str());
-      if (rc != 0) {
-        break;
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    wait_for_exit(h.pid, /*attempts=*/50, /*sleepMs=*/100);
   } else {
-    std::system("pkill -f matrix-wlroots >/dev/null 2>&1");
     std::system("pkill -f matrix-debug >/dev/null 2>&1");
+    std::system("pkill -f matrix >/dev/null 2>&1");
+  }
+
+  // Clean up stale pidfile if present.
+  std::remove("/tmp/matrix-wlroots.pid");
+  if (auto pid = read_pidfile()) {
+    std::string kill9 = "kill -9 " + *pid + " >/dev/null 2>&1";
+    std::system(kill9.c_str());
   }
 }
 
@@ -492,6 +618,128 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
                          << ")";
 }
 
+TEST(ControlsSpec, CameraSpeedHotkeysChangeAndReset)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+  ASSERT_TRUE(send_key_replay({ { "equal", 0 } })) << "Failed to send speed up key";
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+  ASSERT_TRUE(
+    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "camera speed delta=+0.05", 120, 50))
+    << "Speed up log missing after '='";
+
+  ASSERT_TRUE(send_key_replay({ { "minus", 200 } })) << "Failed to send slow down key";
+  std::this_thread::sleep_for(std::chrono::milliseconds(220));
+  ASSERT_TRUE(
+    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "camera speed delta=-0.05", 120, 50))
+    << "Slow down log missing after '-'";
+
+  ASSERT_TRUE(send_key_replay({ { "Shift_L", 0 }, { "0", 180 } }))
+    << "Failed to send speed reset combo";
+  ASSERT_TRUE(
+    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "camera speed reset", 120, 50))
+    << "Speed reset log missing after Shift+0";
+}
+
+TEST(ControlsSpec, CursorToggleLogsWhenUnfocused)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+  ASSERT_TRUE(send_key_replay({ { "f", 0 } })) << "Failed to send toggle_cursor key";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls handled sym=f(102) consumed=1",
+                                    80,
+                                    50))
+    << "Cursor toggle was not consumed when unfocused";
+
+  ASSERT_TRUE(send_key_replay({ { "f", 200 } })) << "Failed to send toggle_cursor key (second)";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls handled sym=f(102) consumed=1",
+                                    80,
+                                    50))
+    << "Cursor toggle reset log missing when unfocused";
+}
+
+TEST(ControlsSpec, WindowFlopHotkeysAdjust)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+  ASSERT_TRUE(send_key_replay({ { "0", 0 }, { "0", 0 }, { "0", 0 } }))
+    << "Failed to send window flop increase";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  auto increased = last_window_flop_value();
+  ASSERT_TRUE(increased.has_value()) << "Window flop increase was not logged";
+  EXPECT_GT(*increased, 0.01) << "windowFlop did not increase after 0 presses";
+
+  std::vector<std::pair<std::string, uint32_t>> decKeys;
+  for (int i = 0; i < 10; ++i) {
+    decKeys.push_back({ "9", 0 });
+  }
+  ASSERT_TRUE(send_key_replay(decKeys)) << "Failed to send window flop decrease";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  auto clamped = last_window_flop_value();
+  ASSERT_TRUE(clamped.has_value()) << "Window flop decrease was not logged";
+  EXPECT_GE(*clamped, 0.01) << "windowFlop dropped below clamp after 9 presses";
+  EXPECT_LE(*clamped, *increased) << "windowFlop did not decrease after 9 presses";
+}
+
+TEST(ControlsSpec, WindowFlopHotkeysBlockedWhenWaylandFocused)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped before window flop gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  // With a Wayland client focused, unmodified controls should be blocked.
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  ASSERT_TRUE(send_key_replay({ { "0", 0 }, { "0", 0 }, { "0", 0 } }))
+    << "Failed to send window flop increase under focus";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  int flopLogs = count_log_occurrences("/tmp/matrix-wlroots-output.log", "windowFlop=");
+  EXPECT_EQ(flopLogs, 0) << "windowFlop logs appeared while Wayland client had focus";
+}
+
+TEST(ControlsSpec, CursorToggleBlockedWhenWaylandFocused)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped before cursor toggle gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  // Focus the app to ensure allowControls blocks unmodified hotkeys.
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before toggle check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  ASSERT_TRUE(send_key_replay({ { "f", 0 } })) << "Failed to send toggle_cursor while focused";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+
+  int toggleLogs = count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: toggle_cursor");
+  EXPECT_EQ(toggleLogs, 0) << "Cursor toggle log appeared while Wayland client had focus";
+}
+
 TEST(ControlsSpec, SuperQClosesWaylandApp)
 {
   CompositorGuard compGuard{ start_compositor() };
@@ -555,6 +803,226 @@ TEST(ControlsSpec, SuperQClosesWaylandApp)
   auto statusAfter = current_status();
   ASSERT_TRUE(statusAfter.has_value()) << "Engine status unavailable after Super+Q";
   EXPECT_EQ(statusAfter->wayland_apps(), 0u) << "Wayland app still registered after Super+Q";
+}
+
+TEST(ControlsSpec, DebugHotkeysLogWhenUnfocused)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+  ASSERT_TRUE(send_key_replay({ { "b", 0 },
+                                { "t", 150 },
+                                { "comma", 150 },
+                                { "m", 150 },
+                                { "slash", 1050 } }))
+    << "Failed to send debug hotkeys";
+  // Wait for each hotkey log to show to avoid race with slow renderer toggles.
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: logCounts",
+                                    120,
+                                    50))
+    << "logCounts hotkey did not log when unfocused";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: logBlockType",
+                                    120,
+                                    50))
+    << "logBlockType hotkey did not log when unfocused";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: mesh=false",
+                                    120,
+                                    50))
+    << "mesh(false) hotkey did not log when unfocused";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: mesh",
+                                    120,
+                                    50))
+    << "mesh hotkey did not log when unfocused";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: wireframe toggle",
+                                    120,
+                                    50))
+    << "wireframe toggle hotkey did not log when unfocused";
+}
+
+TEST(ControlsSpec, MenuHotkeyBlockedWhenWaylandFocused)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  std::ofstream("/tmp/matrix-wlroots-menu.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu (first)";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped before focus check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+  int menuBefore = count_file_occurrences("/tmp/matrix-wlroots-menu.log", "menu() launching");
+
+  // Focus the app, then try menu again; it should be blocked under Wayland focus.
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before menu block check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu hotkey while focused";
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+  int menuAfter = count_file_occurrences("/tmp/matrix-wlroots-menu.log", "menu() launching");
+  EXPECT_EQ(menuAfter, menuBefore) << "Menu launched even though a Wayland client was focused";
+}
+
+TEST(ControlsSpec, GoToAppRequiresUnfocusedClient)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped before go-to check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+
+  // Focus the app so controls are suppressed, then try go-to; expect no goToApp log.
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before go-to block check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to send go-to while focused";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: goToApp"), 0)
+    << "goToApp ran while Wayland client was focused";
+
+  // Unfocus via Super+E, then go-to should log.
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "e", 50 } }))
+    << "Failed to send Super+E to unfocus";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to send go-to after unfocus";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: goToApp",
+                                    120,
+                                    50))
+    << "goToApp did not run after unfocus";
+}
+
+TEST(ControlsSpec, PointerClickRespectsFocusAndGrab)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  ASSERT_TRUE(send_key_replay({ { "f", 0 } })) << "Failed to toggle cursor grab";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: toggle_cursor=1",
+                                    80,
+                                    50))
+    << "Cursor grab toggle log missing before pointer replay";
+
+  // With no Wayland focus, a grabbed left click should place a voxel.
+  ASSERT_TRUE(send_pointer_replay({ std::make_tuple<uint32_t, bool, uint32_t>(BTN_LEFT, true, 0) }))
+    << "Failed to send pointer replay (unfocused)";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: pointer place voxel",
+                                    60,
+                                    50))
+    << "Pointer click did not place voxel when unfocused";
+}
+
+TEST(ControlsSpec, PointerClickGoToAppWhenLookedAt)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  // Spawn a Wayland app in front of the camera so goToApp has a target.
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 800, 50))
+    << "Foot window never mapped before pointer go-to check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+
+  // Now toggle grab after we know an app is present.
+  ASSERT_TRUE(send_key_replay({ { "f", 0 } })) << "Failed to toggle cursor grab";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: toggle_cursor=1",
+                                    80,
+                                    50))
+    << "Cursor grab toggle log missing before pointer replay";
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  ASSERT_TRUE(send_pointer_replay({ std::make_tuple<uint32_t, bool, uint32_t>(BTN_LEFT, true, 0) }))
+    << "Failed to send pointer replay for go-to";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: pointer goToApp",
+                                    120,
+                                    50))
+    << "Pointer click did not trigger goToApp when looking at app";
+}
+
+TEST(ControlsSpec, WaylandWindowSpawnDoesNotStealFocus)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+
+  auto statusBefore = current_status();
+  ASSERT_TRUE(statusBefore.has_value()) << "Missing status before spawn";
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped";
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+  auto statusAfterSpawn = current_status();
+  ASSERT_TRUE(statusAfterSpawn.has_value()) << "Missing status after spawn";
+  EXPECT_FALSE(statusAfterSpawn->wayland_focus()) << "Wayland window stole focus on spawn";
+
+  // Move backward; movement should be processed because focus stays on engine.
+  ASSERT_TRUE(send_key_replay({ { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 } }))
+    << "Failed to send backward movement keys";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+
+  auto statusAfterMove = current_status();
+  ASSERT_TRUE(statusAfterMove.has_value()) << "Missing status after movement";
+  ASSERT_TRUE(statusBefore->has_camera_position()) << "Camera missing before movement";
+  ASSERT_TRUE(statusAfterMove->has_camera_position()) << "Camera missing after movement";
+  double delta = camera_distance(*statusBefore, *statusAfterMove);
+  EXPECT_GT(delta, 0.5) << "Camera did not move after spawn when pressing 's' (delta=" << delta << ")";
+}
+
+TEST(ControlsSpec, DebugHotkeysBlockedWhenWaylandFocused)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped before debug hotkey gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before debug hotkey gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  ASSERT_TRUE(send_key_replay({ { "b", 0 },
+                                { "t", 150 },
+                                { "comma", 150 },
+                                { "m", 150 },
+                                { "slash", 150 } }))
+    << "Failed to send debug hotkeys under focus";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: logCounts"), 0)
+    << "logCounts hotkey logged while Wayland client had focus";
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: logBlockType"), 0)
+    << "logBlockType hotkey logged while Wayland client had focus";
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: mesh"), 0)
+    << "mesh hotkey logged while Wayland client had focus";
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: mesh=false"), 0)
+    << "mesh(false) hotkey logged while Wayland client had focus";
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: wireframe toggle"), 0)
+    << "wireframe toggle hotkey logged while Wayland client had focus";
 }
 
 TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)

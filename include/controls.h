@@ -37,11 +37,12 @@ class Controls
   World* world;
   Camera* camera;
   Renderer* renderer;
-  bool grabbedCursor = true;
+  bool grabbedCursor = false;
   bool appFocused = false;
   double lastClickTime = 0;
   double lastKeyPressTime = 0;
   bool resetMouse = true;
+  bool lastWaylandFocusActive = false;
   float lastX;
   float lastY;
   int clickY = 100;
@@ -86,6 +87,7 @@ public:
     , renderer(renderer)
     , texturePack(texturePack)
   {
+    lastWaylandFocusActive = false;
   }
   void poll(GLFWwindow* window, Camera* camera, World* world);
   void mouseCallback(GLFWwindow* window, double xpos, double ypos);
