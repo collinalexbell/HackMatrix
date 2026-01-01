@@ -1069,7 +1069,6 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
     out << "#!/bin/bash\n";
     out << "\"" << chromeBin << "\" "
         << "--ozone-platform=wayland --enable-features=UseOzonePlatform "
-        << "--no-first-run --no-default-browser-check "
         << "--hide-scrollbars --mute-audio "
         << "--user-data-dir=\"" << profile.string() << "\" "
         << "--app=data:text/html,'<html><body style=\"background: rgb(255,0,0); color: rgb(0,255,0);\">test</body></html>' "
