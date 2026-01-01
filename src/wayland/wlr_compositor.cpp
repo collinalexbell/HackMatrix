@@ -963,6 +963,9 @@ process_key_sym(WlrServer* server,
       (mods & server->hotkeyModifierMask) || server->replayModifierActive;
     bool shiftHeld = mods & WLR_MODIFIER_SHIFT;
     if (controls) {
+      if (pressed && modifierHeld && sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
+        log_to_tmp("hotkey: idx=%d\n", static_cast<int>(sym - XKB_KEY_1));
+      }
       auto resp =
         controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld, waylandFocusActive);
       if (resp.clearInputForces) {

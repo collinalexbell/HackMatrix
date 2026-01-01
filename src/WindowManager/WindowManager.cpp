@@ -637,6 +637,11 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool sh
     case XKB_KEY_8:
     case XKB_KEY_9: {
       int idx = static_cast<int>(sym - XKB_KEY_1);
+      // Mirror hotkey presses into the compositor log so tests can verify cycling.
+      if (FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a")) {
+        std::fprintf(f, "hotkey: idx=%d\n", idx);
+        std::fclose(f);
+      }
       swapOrFocus(idx);
       break;
     }

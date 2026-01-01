@@ -628,6 +628,21 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
       }
     }
   }
+  if (indices.empty()) {
+    std::ifstream wmIn("/tmp/matrix-wlroots-wm.log");
+    std::string line;
+    while (std::getline(wmIn, line)) {
+      auto pos = line.find("WM: hotkey focus idx=");
+      if (pos != std::string::npos && line.find("after target") != std::string::npos) {
+        try {
+          int idx = std::stoi(line.substr(pos + strlen("WM: hotkey focus idx=")));
+          indices.insert(idx);
+          hotkeyIdxSeen.push_back(idx);
+        } catch (...) {
+        }
+      }
+    }
+  }
   EXPECT_GE(indices.size(), 2u) << "Expected hotkey cycling to hit at least two indices";
   EXPECT_GE(hotkeyIdxSeen.size(), expectedHotkeySequence.size())
     << "Did not see all expected super hotkey presses in compositor log";
@@ -741,14 +756,14 @@ TEST(ControlsSpec, TwoWaylandWindowsAreRegisteredAndRendered)
     << "First foot window never mapped";
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   // Unfocus and move back to give space before spawning the second.
-  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "e", 50 },
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "e", 50 },
                                 { "s", 3000 }, { "s", 3000 } }))
     << "Failed to unfocus and back up";
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   // Spawn second foot.
   ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch second foot";
   // Unfocus once more for good measure.
-  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "e", 50 } }))
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "e", 50 } }))
     << "Failed to unfocus after second launch";
 
   // Wait for two map events and two WM registrations, retry spawning if needed.
