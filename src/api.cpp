@@ -35,7 +35,11 @@ namespace {
 void
 log_to_tmp_api(const std::string& msg)
 {
-  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
+  const char* path = std::getenv("MATRIX_WLROOTS_OUTPUT");
+  if (!path) {
+    path = "/tmp/matrix-wlroots-output.log";
+  }
+  FILE* f = std::fopen(path, "a");
   if (!f) {
     return;
   }
@@ -134,6 +138,11 @@ Api::Api(std::string bindAddress,
   context = zmq::context_t(2);
   logger = make_shared<spdlog::logger>("Api", fileSink);
   logger->set_level(spdlog::level::debug);
+  {
+    char buf[256];
+    snprintf(buf, sizeof(buf), "api: binding command server at %s\n", bindAddress.c_str());
+    log_to_tmp_api(std::string(buf));
+  }
   try {
     commandServer = new ProtobufCommandServer(this, bindAddress, context);
   } catch (const std::exception& e) {

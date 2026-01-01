@@ -13,6 +13,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <algorithm>
+#include <cctype>
 #include <cstddef>
 #include <chrono>
 #include <cerrno>
@@ -120,6 +121,25 @@ parseInlineEnvXdg(const std::string& program)
     }
   }
   return "";
+}
+
+static unsigned int
+resolveHotkeyMaskFromConfig()
+{
+  std::string mod = "alt";
+  try {
+    mod = Config::singleton()->get<std::string>("key_mappings.super_modifier");
+  } catch (...) {
+    // Default to "alt" when not provided.
+  }
+  std::transform(mod.begin(), mod.end(), mod.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  if (mod == "alt" || mod == "mod1" || mod == "option") {
+    return Mod1Mask;
+  }
+  // Fallback to the traditional Super/Logo mapping.
+  return Mod4Mask;
 }
 
 }
@@ -469,7 +489,7 @@ int WindowManager::findAppsHotKey(entt::entity theApp)
   return -1;
 }
 
-void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld)
+void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool shiftHeld)
 {
   pruneInvalidFocus();
   auto focused = currentlyFocusedApp;
@@ -479,7 +499,7 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shift
     requestScreenshot();
     return;
   }
-  if (!superHeld) {
+  if (!modifierHeld) {
     return;
   }
 
@@ -634,26 +654,26 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
   KeyCode windowLargerCode = XKeysymToKeycode(display, XK_equal);
   KeyCode windowSmallerCode = XKeysymToKeycode(display, XK_minus);
 
-  if (event.keycode == eKeyCode && event.state & Mod4Mask) {
-    // Windows Key (Super_L) + Ctrl + E is pressed
+  if (event.keycode == eKeyCode && event.state & hotkeyModifierMask) {
+    // Hotkey modifier + E is pressed
     unfocusApp();
   }
-  if (event.keycode == qKeyCode && event.state & Mod4Mask) {
-    // Windows Key (Super_L) + Ctrl + E is pressed
+  if (event.keycode == qKeyCode && event.state & hotkeyModifierMask) {
+    // Hotkey modifier + Q is pressed
     if (currentlyFocusedApp.has_value()) {
       auto& app = registry->get<X11App>(currentlyFocusedApp.value());
       app.close();
     }
   }
 
-  if (event.keycode == windowLargerCode && event.state & Mod4Mask) {
+  if (event.keycode == windowLargerCode && event.state & hotkeyModifierMask) {
     if (currentlyFocusedApp.has_value()) {
       lock_guard<mutex> lock(renderLoopMutex);
       events.push_back(WindowEvent{ LARGER, currentlyFocusedApp.value() });
     }
   }
 
-  if (event.keycode == windowSmallerCode && event.state & Mod4Mask) {
+  if (event.keycode == windowSmallerCode && event.state & hotkeyModifierMask) {
     if (currentlyFocusedApp.has_value()) {
       lock_guard<mutex> lock(renderLoopMutex);
       events.push_back(WindowEvent{ SMALLER, currentlyFocusedApp.value() });
@@ -662,14 +682,14 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
 
   for (int i = 0; i < min((int)appsWithHotKeys.size(), 9); i++) {
     KeyCode code = XKeysymToKeycode(display, XK_1 + i);
-    if (event.keycode == code && event.state & Mod4Mask && event.state & ShiftMask) {
+    if (event.keycode == code && event.state & hotkeyModifierMask && event.state & ShiftMask) {
       if (currentlyFocusedApp.has_value()) {
         int source = findAppsHotKey(currentlyFocusedApp.value());
         swapHotKeys(source, i);
         return;
       }
     }
-    if (event.keycode == code && event.state & Mod4Mask) {
+    if (event.keycode == code && event.state & hotkeyModifierMask) {
       unfocusApp();
       if(appsWithHotKeys[i]) {
         controls->goToApp(appsWithHotKeys[i].value());
@@ -677,7 +697,7 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
     }
   }
   KeyCode code = XKeysymToKeycode(display, XK_0);
-  if (event.keycode == code && event.state & Mod4Mask) {
+  if (event.keycode == code && event.state & hotkeyModifierMask) {
     unfocusApp();
     controls->moveTo(glm::vec3(3.0, 5.0, 16), nullopt, 4);
   }
@@ -993,6 +1013,15 @@ WindowManager::keyReplay(const std::vector<std::pair<std::string, uint32_t>>& en
       continue;
     }
     cumulative += e.second;
+    char name[64] = {0};
+    xkb_keysym_get_name(sym, name, sizeof(name));
+    // Detailed replay log to debug dropped/garbled input; keep to avoid
+    // reintroducing silent failures in future refactors.
+    WL_WM_LOG("WM: keyReplay add sym=%s(%u) delay=%u cumulative=%llu\n",
+              name,
+              sym,
+              e.second,
+              (unsigned long long)cumulative);
     replayQueue.push_back(ReplayEvent{ sym, cumulative });
   }
   WL_WM_LOG("WM: keyReplay queued count=%zu cumulative=%llu\n",
@@ -1151,6 +1180,7 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
   if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
     menuProgram = envMenu;
   }
+  hotkeyModifierMask = resolveHotkeyMaskFromConfig();
   setupLogger();
   display = XOpenDisplay(NULL);
   screen = XDefaultScreen(display);
@@ -1174,8 +1204,8 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
 
   for (int i = 0; i < 10; i++) {
     KeyCode code = XKeysymToKeycode(display, XK_0 + i);
-    XGrabKey(display, code, Mod4Mask, root, true, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, code, Mod4Mask | ShiftMask, root, true, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, code, hotkeyModifierMask, root, true, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, code, hotkeyModifierMask | ShiftMask, root, true, GrabModeAsync, GrabModeAsync);
   }
   XSync(display, false);
   XFlush(display);
@@ -1199,6 +1229,7 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
   if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
     menuProgram = envMenu;
   }
+  hotkeyModifierMask = resolveHotkeyMaskFromConfig();
   setupLogger();
 }
 

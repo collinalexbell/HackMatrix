@@ -59,6 +59,7 @@ kill_existing_compositor()
     std::system(kill9.c_str());
   } else {
     std::system("pkill -f matrix-wlroots >/dev/null 2>&1");
+    std::system("pkill -f matrix-debug >/dev/null 2>&1");
   }
 }
 
@@ -382,6 +383,7 @@ stop_compositor(const CompositorHandle& h)
     }
   } else {
     std::system("pkill -f matrix-wlroots >/dev/null 2>&1");
+    std::system("pkill -f matrix-debug >/dev/null 2>&1");
   }
 }
 
@@ -453,15 +455,15 @@ TEST(ControlsSpec, SuperEUnfocusesWindowManager)
     }
   }
 
-  // Super+E should unfocus via WM and log.
-  bool sent = send_key_replay({ { "Super_L", 0 }, { "e", 50 } });
+  // Super+E (config uses alt as super) should unfocus via WM and log.
+  bool sent = send_key_replay({ { "Alt_L", 0 }, { "e", 50 } });
   ASSERT_TRUE(sent) << "Failed to send Super+E via key replay";
 
   // Only wait briefly; the unfocus log should be immediate if the combo worked.
   bool sawUnfocus =
     wait_for_log_contains("/tmp/matrix-wlroots-wm.log", "WM: unfocusApp", 20, 100);
   bool sawSuperCombo =
-    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "super combo: triggered -> unfocus", 20, 100);
+    wait_for_log_contains("/tmp/matrix-wlroots-output.log", "hotkey combo", 20, 100);
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
   // Try to move the camera via WASD-style input; movement only occurs when WM focus is cleared.
@@ -512,7 +514,7 @@ TEST(ControlsSpec, SuperQClosesWaylandApp)
   ASSERT_TRUE(statusBefore.has_value()) << "Engine status unavailable before Super+Q";
   EXPECT_GT(statusBefore->wayland_apps(), 0u) << "No Wayland apps registered before Super+Q";
 
-  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "q", 50 } }))
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "q", 50 } }))
     << "Failed to send Super+Q via key replay";
   for (int i = 0; i < 8; ++i) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -578,7 +580,7 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   // Unfocus and move backward (hold 's' until next entry).
-  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 }, { "e", 50 }, { "s", 4000 } }))
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "e", 50 }, { "s", 4000 } }))
     << "Failed to unfocus and move back";
   std::this_thread::sleep_for(std::chrono::milliseconds(4500));
 
@@ -597,11 +599,11 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
   // Cycle hotkeys: Super+1 -> Super+2 -> Super+1.
-  ASSERT_TRUE(send_key_replay({ { "Super_L", 0 },
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 },
                                 { "1", 100 },
-                                { "Super_L", 0 },
+                                { "Alt_L", 0 },
                                 { "2", 100 },
-                                { "Super_L", 0 },
+                                { "Alt_L", 0 },
                                 { "1", 100 } }))
     << "Failed to send hotkey replay";
   std::this_thread::sleep_for(std::chrono::milliseconds(1200));
@@ -614,9 +616,9 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
     std::ifstream in("/tmp/matrix-wlroots-output.log");
     std::string line;
     while (std::getline(in, line)) {
-      auto pos = line.find("super hotkey: idx=");
+      auto pos = line.find("hotkey: idx=");
       if (pos != std::string::npos) {
-        auto sub = line.substr(pos + strlen("super hotkey: idx="));
+        auto sub = line.substr(pos + strlen("hotkey: idx="));
         try {
           int idx = std::stoi(sub);
           indices.insert(idx);

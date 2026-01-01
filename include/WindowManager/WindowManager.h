@@ -66,7 +66,7 @@ public:
   virtual std::shared_ptr<Space> getSpace() = 0;
   virtual void registerControls(Controls* controls) = 0;
   virtual void tick() = 0;
-  virtual void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld) = 0;
+  virtual void handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool shiftHeld) = 0;
   virtual void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries) = 0;
   virtual std::vector<ReplayEvent> consumeReadyReplaySyms(uint64_t now_ms) = 0;
   virtual bool hasPendingReplay() const = 0;
@@ -151,6 +151,7 @@ class WindowManager : public WindowManagerInterface
   bool replayActive = false;
   std::chrono::steady_clock::time_point replayStart;
   std::atomic_bool screenshotRequested = false;
+  unsigned int hotkeyModifierMask = Mod4Mask;
 
 public:
   void unfocusApp() override;

@@ -11,18 +11,13 @@ export XCURSOR_SIZE="${XCURSOR_SIZE:-24}"
 export XCURSOR_PATH="${XCURSOR_PATH:-/usr/share/icons}"
 # Force software cursors; some GPUs/DRM combos show corrupted hardware cursors.
 export WLR_NO_HARDWARE_CURSORS=1
-# Optional flags:
+# Optional flags (handled by the compositor binary):
 #   --in-wm     -> delay start when running inside another WM.
 #   --headless  -> force wlroots headless backend (for TTY/headless use).
 #   --drm       -> force wlroots DRM backend (run as a real compositor on TTY).
-DELAY=0
 BACKEND=""
 while [ $# -gt 0 ]; do
   case "$1" in
-    --in-wm)
-      DELAY=5
-      shift
-      ;;
     --headless)
       BACKEND="headless"
       shift
@@ -56,8 +51,8 @@ if [ -n "$BACKEND" ]; then
   fi
 fi
 
-[ "$DELAY" -gt 0 ] && sleep "$DELAY"
 BIN="${MATRIX_WLROOTS_BIN:-./matrix-debug}"
 export ENABLE_RENDER_TMP_LOGS=1
 export WLR_APP_SAMPLE_LOG=1
-VOXEL_API_BIND=tcp://*:3345 "$BIN" "$@"
+export VOXEL_API_BIND="${VOXEL_API_BIND:-tcp://*:3345}"
+"${BIN}" "$@"

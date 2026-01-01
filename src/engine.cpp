@@ -32,6 +32,7 @@
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
+#include <fstream>
 
 #include "imgui/imgui_impl_opengl3.h"
 
@@ -184,6 +185,10 @@ Engine::initializeMemberObjs()
   const char* apiAddressEnv = std::getenv("VOXEL_API_BIND");
   std::string apiAddress =
     apiAddressEnv != nullptr ? apiAddressEnv : "tcp://*:4455";
+  if (const char* logPath = std::getenv("MATRIX_WLROOTS_OUTPUT")) {
+    std::ofstream out(logPath, std::ios::app);
+    out << "engine: VOXEL_API_BIND=" << apiAddress << "\n";
+  }
 
   auto texturePack = blocks::initializeBasicPack();
   // Default to X11 WM only when we have a GLFW X11 window; wlroots path uses a
