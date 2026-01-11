@@ -486,6 +486,8 @@ Renderer::initCursorResources()
   // Generate a simple fractal tree into a small RGBA texture.
   constexpr int kCursorSize = 64;
   std::vector<uint32_t> pixels(kCursorSize * kCursorSize, 0x00000000);
+  // Dark burgundy with full opacity for legibility on light backgrounds.
+  constexpr uint32_t kCursorColor = 0x5a1020ff; // RGBA
 
   auto set_px = [&](int x, int y, uint32_t color) {
     if (x >= 0 && x < kCursorSize && y >= 0 && y < kCursorSize) {
@@ -493,13 +495,21 @@ Renderer::initCursorResources()
     }
   };
   auto draw_line = [&](int x0, int y0, int x1, int y1, uint32_t color) {
+    // Thicken strokes by writing a small square around each point.
+    auto stamp = [&](int px, int py) {
+      for (int dx = -1; dx <= 1; ++dx) {
+        for (int dy = -1; dy <= 1; ++dy) {
+          set_px(px + dx, py + dy, color);
+        }
+      }
+    };
     int dx = std::abs(x1 - x0);
     int sx = x0 < x1 ? 1 : -1;
     int dy = -std::abs(y1 - y0);
     int sy = y0 < y1 ? 1 : -1;
     int err = dx + dy;
     while (true) {
-      set_px(x0, y0, color);
+      stamp(x0, y0);
       if (x0 == x1 && y0 == y1) {
         break;
       }
@@ -522,7 +532,7 @@ Renderer::initCursorResources()
       }
       int x2 = x + static_cast<int>(std::cos(angle) * length);
       int y2 = y + static_cast<int>(std::sin(angle) * length);
-      draw_line(x, y, x2, y2, 0xffffffff);
+      draw_line(x, y, x2, y2, kCursorColor);
       float nextLen = length * 0.65f;
       float spread = 0.6f;
       draw_branch(x2, y2, angle - spread, nextLen, depth - 1);
@@ -849,11 +859,8 @@ Renderer::renderSoftwareCursor(float xPixels, float yPixels, float sizePixels)
 glm::vec2
 Renderer::mapCursorToScreen(float xPixels, float yPixels) const
 {
-  // When the rendered app viewport is centered in the output, shift the cursor
-  // so it lines up with the drawn content.
-  float offsetX = std::max(0.0f, (SCREEN_WIDTH - Bootable::DEFAULT_WIDTH) * 0.5f);
-  float offsetY = std::max(0.0f, (SCREEN_HEIGHT - Bootable::DEFAULT_HEIGHT) * 0.5f);
-  return glm::vec2(xPixels + offsetX, yPixels + offsetY);
+  // Use raw output pixel coordinates so drawn cursor matches input hit-testing.
+  return glm::vec2(xPixels, yPixels);
 }
 void
 Renderer::renderLookedAtFace()
