@@ -67,14 +67,23 @@ public:
   struct Component {
     std::shared_ptr<WaylandApp> app;
     bool accessory = false;
+    bool layer_shell = false;
     entt::entity parent = entt::null;
     int offset_x = 0;
     int offset_y = 0;
+    int screen_x = 0;
+    int screen_y = 0;
   };
 
   WaylandApp(wlr_renderer* renderer,
              wlr_allocator* allocator,
              wlr_xdg_surface* xdg,
+             size_t index);
+  // Construct a Wayland-backed app for a non-xdg surface (e.g. layer-shell).
+  WaylandApp(wlr_renderer* renderer,
+             wlr_allocator* allocator,
+             wlr_surface* surface,
+             const std::string& titleHint,
              size_t index);
   ~WaylandApp();
 

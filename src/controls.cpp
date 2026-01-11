@@ -477,6 +477,15 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
+  if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
+    lastShiftPressTime = nowSeconds();
+    log_controls("controls: shift pressed\n");
+  }
+
+  if (shiftHeld) {
+    lastShiftPressTime = nowSeconds();
+  }
+
   if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
       sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
     log_controls("controls: debug sym=%u pressed=%d modifier=%d shift=%d focus=%d\n",
@@ -500,7 +509,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
   auto lookedAtApp = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
                                         : std::optional<entt::entity>();
 
-  if (!waylandFocusActive && matchesConfiguredKey("quit")) {
+  if (matchesConfiguredKey("quit")) {
     resp.requestQuit = true;
     resp.blockClientDelivery = true;
     resp.consumed = true;
@@ -539,6 +548,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
   }
 
   if (matchesConfiguredKey("screenshot") && debounce(lastKeyPressTime)) {
+    log_controls("controls: screenshot\n");
     triggerScreenshot();
     resp.blockClientDelivery = true;
     resp.consumed = true;
@@ -636,6 +646,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     case XKB_KEY_greater:
       if (debounce(lastKeyPressTime)) {
         auto newPos = camera->position + camera->front * -3.0f;
+        log_controls("controls: code block move distance=3.0\n");
         moveTo(newPos, std::nullopt, 0.5, [this]() -> void {
           world->action(OPEN_SELECTION_CODE);
         });
@@ -650,6 +661,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
         stringstream filenameSS;
         filenameSS << "saves/" << std::put_time(&tm, "%Y-%m-%d:%H-%M-%S.save");
         world->save(filenameSS.str());
+        log_controls("controls: save %s\n", filenameSS.str().c_str());
         resp.consumed = true;
       }
       break;
@@ -670,7 +682,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
       }
       break;
     case XKB_KEY_0:
-      if (shiftHeld) {
+      if (shiftHeld || (nowSeconds() - lastShiftPressTime) < 0.25) {
         if (debounce(lastKeyPressTime)) {
           camera->resetSpeed();
           log_controls("controls: camera speed reset\n");

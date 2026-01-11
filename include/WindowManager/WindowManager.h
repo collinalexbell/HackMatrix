@@ -77,7 +77,10 @@ public:
                                           bool accessory = false,
                                           entt::entity parent = entt::null,
                                           int offsetX = 0,
-                                          int offsetY = 0) = 0;
+                                          int offsetY = 0,
+                                          bool layerShell = false,
+                                          int screenX = 0,
+                                          int screenY = 0) = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -184,7 +187,10 @@ public:
                                   bool accessory = false,
                                   entt::entity parent = entt::null,
                                   int offsetX = 0,
-                                  int offsetY = 0) override;
+                                  int offsetY = 0,
+                                  bool layerShell = false,
+                                  int screenX = 0,
+                                  int screenY = 0) override;
 
 private:
   Renderer* renderer = nullptr;

@@ -41,6 +41,7 @@ class Controls
   bool appFocused = false;
   double lastClickTime = 0;
   double lastKeyPressTime = 0;
+  double lastShiftPressTime = 0;
   bool resetMouse = true;
   bool lastWaylandFocusActive = false;
   float lastX;

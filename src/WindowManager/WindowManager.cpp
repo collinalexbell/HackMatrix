@@ -36,6 +36,10 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#ifndef WLROOTS_DEBUG_LOGS
+#define WLROOTS_DEBUG_LOGS
+#endif
+
 #ifdef WLROOTS_DEBUG_LOGS
 constexpr bool kWlrootsDebugLogs = true;
 #else
@@ -642,6 +646,7 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool sh
         std::fprintf(f, "hotkey: idx=%d\n", idx);
         std::fclose(f);
       }
+      WL_WM_LOG("WM: unfocusApp (hotkey) idx=%d\n", idx);
       swapOrFocus(idx);
       break;
     }
@@ -1257,7 +1262,10 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
                                                bool accessory,
                                                entt::entity parent,
                                                int offsetX,
-                                               int offsetY) {
+                                               int offsetY,
+                                               bool layerShell,
+                                               int screenX,
+                                               int screenY) {
   if (!app || !registry) {
     return entt::null;
   }
@@ -1271,7 +1279,7 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
             offsetY);
   entt::entity entity = registry->create();
   registry->emplace<WaylandApp::Component>(
-    entity, app, accessory, parent, offsetX, offsetY);
+    entity, app, accessory, layerShell, parent, offsetX, offsetY, screenX, screenY);
   // For X11 we attach immediately; for wlroots we defer GL texture attach to the
   // compositor render loop to avoid context issues.
   if (renderer && !waylandMode) {
@@ -1317,3 +1325,6 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
 }
 
 } // namespace WindowManager
+#ifndef WLROOTS_DEBUG_LOGS
+#define WLROOTS_DEBUG_LOGS
+#endif

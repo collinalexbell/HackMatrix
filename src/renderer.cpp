@@ -1058,6 +1058,44 @@ Renderer::renderApps()
                       GL_NEAREST);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
   };
+  auto renderLayerShell = [&](WaylandApp::Component& comp) {
+    auto* app = comp.app.get();
+    if (!app) {
+      return;
+    }
+    int w = app->getWidth();
+    int h = app->getHeight();
+    if (w <= 0 || h <= 0) {
+      return;
+    }
+    if (app->needsTextureImport()) {
+      app->appTexture();
+    }
+    int idx = static_cast<int>(app->getAppIndex());
+    auto fbIt = frameBuffers.find(idx);
+    if (fbIt == frameBuffers.end()) {
+      return;
+    }
+    GLint prevReadFbo = 0;
+    GLint prevDrawFbo = 0;
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbIt->second);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
+    int destX = comp.screen_x;
+    int destY = static_cast<int>(SCREEN_HEIGHT - comp.screen_y - h);
+    glBlitFramebuffer(0,
+                      h,
+                      w,
+                      0,
+                      destX,
+                      destY,
+                      destX + w,
+                      destY + h,
+                      GL_COLOR_BUFFER_BIT,
+                      GL_NEAREST);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
+  };
 
   // this is LEGACY for msedge
   auto positionableNonBootable =
@@ -1348,11 +1386,22 @@ Renderer::renderApps()
     auto focused = wm->getCurrentlyFocusedApp();
     entt::entity focusedEnt =
       focused.has_value() ? focused.value() : entt::null;
+    auto layerShells =
+      registry->view<WaylandApp::Component>(entt::exclude<Positionable>);
+    for (auto [ent, comp] : layerShells.each()) {
+      if (!comp.layer_shell) {
+        continue;
+      }
+      renderLayerShell(comp);
+    }
     if (focusedEnt != entt::null) {
       auto accessories =
         registry->view<WaylandApp::Component>(entt::exclude<Positionable>);
       for (auto [ent, comp] : accessories.each()) {
         if (!comp.accessory) {
+          continue;
+        }
+        if (comp.layer_shell) {
           continue;
         }
         if (comp.parent == entt::null || comp.parent != focusedEnt) {

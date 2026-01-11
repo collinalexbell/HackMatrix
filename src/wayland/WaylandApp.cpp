@@ -109,6 +109,44 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
   wl_signal_add(&surface->events.destroy, &surface_destroy);
 }
 
+WaylandApp::WaylandApp(wlr_renderer* renderer,
+                       wlr_allocator* allocator,
+                       wlr_surface* surf,
+                       const std::string& titleHint,
+                       size_t index)
+  : renderer(renderer)
+  , allocator(allocator)
+  , appIndex(index)
+{
+  this->surface = surf;
+  this->xdg_surface = nullptr;
+  this->xdg_toplevel = nullptr;
+  this->title = titleHint;
+  if (surface && surface->resource && surface->resource->client) {
+    wl_client_get_credentials(surface->resource->client, &clientPid, nullptr, nullptr);
+  }
+
+  width = surface ? surface->current.width : Bootable::DEFAULT_WIDTH;
+  height = surface ? surface->current.height : Bootable::DEFAULT_HEIGHT;
+  if (width <= 0 || height <= 0) {
+    width = Bootable::DEFAULT_WIDTH;
+    height = Bootable::DEFAULT_HEIGHT;
+  }
+  update_height_scalar();
+
+  surface_commit.notify = [](wl_listener* listener, void* data) {
+    auto* self = wl_container_of(listener, static_cast<WaylandApp*>(nullptr), surface_commit);
+    self->handle_commit(static_cast<wlr_surface*>(data));
+  };
+  wl_signal_add(&surface->events.commit, &surface_commit);
+
+  surface_destroy.notify = [](wl_listener* listener, void* /*data*/) {
+    auto* self = wl_container_of(listener, static_cast<WaylandApp*>(nullptr), surface_destroy);
+    self->handle_destroy();
+  };
+  wl_signal_add(&surface->events.destroy, &surface_destroy);
+}
+
 WaylandApp::~WaylandApp()
 {
   if (surface) {
