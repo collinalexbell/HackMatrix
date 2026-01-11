@@ -1280,9 +1280,8 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
   entt::entity entity = registry->create();
   registry->emplace<WaylandApp::Component>(
     entity, app, accessory, layerShell, parent, offsetX, offsetY, screenX, screenY);
-  // For X11 we attach immediately; for wlroots we defer GL texture attach to the
-  // compositor render loop to avoid context issues.
-  if (renderer && !waylandMode) {
+  // Attach textures immediately so layer shells/popups can be blitted directly.
+  if (renderer) {
     renderer->registerApp(app.get());
   } else {
     WL_WM_LOG("WM: renderer missing; registered component only for entity=%d\n",

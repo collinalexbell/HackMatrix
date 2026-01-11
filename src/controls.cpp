@@ -516,6 +516,15 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
+  // Allow menu toggle regardless of Wayland focus so the launcher is always reachable.
+  if ((sym == XKB_KEY_v || sym == XKB_KEY_V) && wm && debounce(lastKeyPressTime)) {
+    log_controls("controls: menu\n");
+    wm->menu();
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
   // When a Wayland client is focused, let unmodified keys pass through so they reach
   // the client instead of being eaten by engine controls.
   const bool allowControls = !waylandFocusActive || modifierHeld;
@@ -586,14 +595,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
         goToApp(lookedAtApp.value());
         resp.blockClientDelivery = true;
         resp.clearInputForces = true;
-        resp.consumed = true;
-      }
-      break;
-    case XKB_KEY_v:
-    case XKB_KEY_V:
-      if (!waylandFocusActive && wm && debounce(lastKeyPressTime)) {
-        log_controls("controls: menu\n");
-        wm->menu();
         resp.consumed = true;
       }
       break;

@@ -92,6 +92,7 @@ start_compositor()
     std::ofstream(rendererLogPath, std::ios::trunc).close();
   }
   setenv("MATRIX_WLROOTS_OUTPUT", logPath, 1);
+  setenv("WLROOTS_DEBUG_LOGS", "1", 1);
   const char* user = std::getenv("USER");
   std::string runtimeDir = "/tmp/xdg-runtime-";
   runtimeDir += (user ? user : "user");
@@ -222,6 +223,53 @@ count_file_occurrences(const std::string& path, const std::string& needle)
     }
   }
   return count;
+}
+
+struct FileSnapshot {
+  size_t count{0};
+  std::filesystem::file_time_type latest = std::filesystem::file_time_type::min();
+};
+
+static FileSnapshot
+snapshot_dir(const std::string& dir, const std::string& ext)
+{
+  namespace fs = std::filesystem;
+  FileSnapshot snap;
+  try {
+    fs::create_directories(dir);
+    for (const auto& entry : fs::directory_iterator(dir)) {
+      if (!entry.is_regular_file()) {
+        continue;
+      }
+      if (!ext.empty() && entry.path().extension() != ext) {
+        continue;
+      }
+      ++snap.count;
+      auto t = entry.last_write_time();
+      if (snap.latest < t) {
+        snap.latest = t;
+      }
+    }
+  } catch (...) {
+  }
+  return snap;
+}
+
+static bool
+wait_for_new_file(const std::string& dir,
+                  const std::string& ext,
+                  const FileSnapshot& before,
+                  int attempts = 60,
+                  int millis = 100)
+{
+  for (int i = 0; i < attempts; ++i) {
+    auto snap = snapshot_dir(dir, ext);
+    if (snap.count > before.count || snap.latest > before.latest) {
+      return true;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(millis));
+  }
+  return false;
 }
 
 static std::string
@@ -677,7 +725,11 @@ TEST(ControlsSpec, WindowFlopHotkeysAdjust)
   std::this_thread::sleep_for(std::chrono::milliseconds(2500));
   ASSERT_TRUE(send_key_replay({ { "0", 0 }, { "0", 0 }, { "0", 0 } }))
     << "Failed to send window flop increase";
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "windowFlop=",
+                                    /*attempts=*/120,
+                                    /*millis=*/50))
+    << "windowFlop increase log missing";
   auto increased = last_window_flop_value();
   ASSERT_TRUE(increased.has_value()) << "Window flop increase was not logged";
   EXPECT_GT(*increased, 0.01) << "windowFlop did not increase after 0 presses";
@@ -687,7 +739,11 @@ TEST(ControlsSpec, WindowFlopHotkeysAdjust)
     decKeys.push_back({ "9", 0 });
   }
   ASSERT_TRUE(send_key_replay(decKeys)) << "Failed to send window flop decrease";
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "windowFlop=",
+                                    /*attempts=*/120,
+                                    /*millis=*/50))
+    << "windowFlop decrease log missing";
   auto clamped = last_window_flop_value();
   ASSERT_TRUE(clamped.has_value()) << "Window flop decrease was not logged";
   EXPECT_GE(*clamped, 0.01) << "windowFlop dropped below clamp after 9 presses";
@@ -706,6 +762,11 @@ TEST(ControlsSpec, WindowFlopHotkeysBlockedWhenWaylandFocused)
   ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
     << "Foot window never mapped before window flop gate check";
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+  // Focus the Wayland app so unmodified controls are suppressed under focus.
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before flop gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
 
   // With a Wayland client focused, unmodified controls should be blocked.
   std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
@@ -729,8 +790,9 @@ TEST(ControlsSpec, CursorToggleBlockedWhenWaylandFocused)
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   // Focus the app to ensure allowControls blocks unmodified hotkeys.
-  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before toggle check";
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before toggle check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
 
   std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
   ASSERT_TRUE(send_key_replay({ { "f", 0 } })) << "Failed to send toggle_cursor while focused";
@@ -755,8 +817,9 @@ TEST(ControlsSpec, SuperQClosesWaylandApp)
     << "Foot window never mapped before Super+Q";
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before Super+Q";
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before Super+Q";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
 
   auto statusBefore = current_status();
   ASSERT_TRUE(statusBefore.has_value()) << "Engine status unavailable before Super+Q";
@@ -861,8 +924,9 @@ TEST(ControlsSpec, MenuHotkeyBlockedWhenWaylandFocused)
   int menuBefore = count_file_occurrences("/tmp/matrix-wlroots-menu.log", "menu() launching");
 
   // Focus the app, then try menu again; it should be blocked under Wayland focus.
-  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before menu block check";
-  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before menu block check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
   ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu hotkey while focused";
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
@@ -883,8 +947,9 @@ TEST(ControlsSpec, GoToAppRequiresUnfocusedClient)
   std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
   // Focus the app so controls are suppressed, then try go-to; expect no goToApp log.
-  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before go-to block check";
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before go-to block check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
   std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
   ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to send go-to while focused";
   std::this_thread::sleep_for(std::chrono::milliseconds(400));
@@ -901,6 +966,124 @@ TEST(ControlsSpec, GoToAppRequiresUnfocusedClient)
                                     120,
                                     50))
     << "goToApp did not run after unfocus";
+}
+
+TEST(ControlsSpec, ScreenshotHotkeyCreatesFileWhenUnfocused)
+{
+  FileSnapshot before = snapshot_dir("screenshots", ".png");
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  ASSERT_TRUE(send_key_replay({ { "p", 0 } })) << "Failed to send screenshot hotkey";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: screenshot",
+                                    120,
+                                    50))
+    << "Screenshot hotkey was not logged";
+  EXPECT_TRUE(wait_for_new_file("screenshots", ".png", before, 120, 100))
+    << "Screenshot hotkey did not create a new file";
+}
+
+TEST(ControlsSpec, ScreenshotHotkeyBlockedWhenWaylandFocused)
+{
+  FileSnapshot before = snapshot_dir("screenshots", ".png");
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped before screenshot gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before screenshot gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  auto focusStatus = current_status();
+  ASSERT_TRUE(focusStatus.has_value()) << "Missing status after focusing app";
+  EXPECT_TRUE(focusStatus->wayland_focus()) << "Wayland focus not active before screenshot gate";
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  ASSERT_TRUE(send_key_replay({ { "p", 0 } })) << "Failed to send screenshot hotkey while focused";
+  bool created =
+    wait_for_new_file("screenshots", ".png", before, /*attempts=*/60, /*millis=*/100);
+  EXPECT_FALSE(created) << "Screenshot created while Wayland client had focus";
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: screenshot"), 0)
+    << "Screenshot log appeared while Wayland client had focus";
+}
+
+TEST(ControlsSpec, SaveHotkeyCreatesFileWhenUnfocused)
+{
+  FileSnapshot before = snapshot_dir("saves", ".save");
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  ASSERT_TRUE(send_key_replay({ { "l", 0 } })) << "Failed to send save hotkey";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: save",
+                                    120,
+                                    50))
+    << "Save hotkey was not logged";
+  EXPECT_TRUE(wait_for_new_file("saves", ".save", before, 120, 100))
+    << "Save hotkey did not create a new file";
+}
+
+TEST(ControlsSpec, SaveHotkeyBlockedWhenWaylandFocused)
+{
+  FileSnapshot before = snapshot_dir("saves", ".save");
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
+    << "Foot window never mapped before save gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(600));
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before save gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+  auto saveFocus = current_status();
+  ASSERT_TRUE(saveFocus.has_value()) << "Missing status after focusing app for save gate";
+  EXPECT_TRUE(saveFocus->wayland_focus()) << "Wayland focus not active before save gate check";
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  ASSERT_TRUE(send_key_replay({ { "l", 0 } })) << "Failed to send save hotkey while focused";
+  bool created =
+    wait_for_new_file("saves", ".save", before, /*attempts=*/60, /*millis=*/100);
+  EXPECT_FALSE(created) << "Save file created while Wayland client had focus";
+  EXPECT_EQ(count_log_occurrences("/tmp/matrix-wlroots-output.log", "controls: save"), 0)
+    << "Save log appeared while Wayland client had focus";
+}
+
+TEST(ControlsSpec, CodeBlockHotkeyMovesCamera)
+{
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  CompositorGuard compGuard{ start_compositor() };
+  ASSERT_FALSE(compGuard.handle.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(3000));
+  auto before = current_status(/*attempts=*/20, /*sleepMs=*/200);
+  ASSERT_TRUE(before.has_value()) << "Missing status before code block hotkey";
+  ASSERT_TRUE(before->has_camera_position()) << "Camera position missing before code block hotkey";
+
+  ASSERT_TRUE(send_key_replay({ { "period", 0 } })) << "Failed to send code block hotkey";
+  EXPECT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                    "controls: code block move distance=3.0",
+                                    120,
+                                    50))
+    << "Code block hotkey was not logged";
+  std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+
+  auto after = current_status(/*attempts=*/20, /*sleepMs=*/200);
+  ASSERT_TRUE(after.has_value()) << "Missing status after code block hotkey";
+  ASSERT_TRUE(after->has_camera_position()) << "Camera position missing after code block hotkey";
+  double dist = camera_distance(*before, *after);
+  EXPECT_GT(dist, 0.25) << "Camera did not move after code block hotkey (delta=" << dist << ")";
 }
 
 TEST(ControlsSpec, PointerClickRespectsFocusAndGrab)
@@ -978,7 +1161,13 @@ TEST(ControlsSpec, WaylandWindowSpawnDoesNotStealFocus)
   EXPECT_FALSE(statusAfterSpawn->wayland_focus()) << "Wayland window stole focus on spawn";
 
   // Move backward; movement should be processed because focus stays on engine.
-  ASSERT_TRUE(send_key_replay({ { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 }, { "s", 0 } }))
+  ASSERT_TRUE(send_key_replay({ { "s", 0 },
+                                { "s", 150 },
+                                { "s", 150 },
+                                { "s", 150 },
+                                { "s", 150 },
+                                { "s", 150 },
+                                { "s", 150 } }))
     << "Failed to send backward movement keys";
   std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
@@ -1001,8 +1190,9 @@ TEST(ControlsSpec, DebugHotkeysBlockedWhenWaylandFocused)
   ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 400, 50))
     << "Foot window never mapped before debug hotkey gate check";
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus app before debug hotkey gate check";
-  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus app before debug hotkey gate check";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
 
   std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
   ASSERT_TRUE(send_key_replay({ { "b", 0 },
@@ -1044,7 +1234,8 @@ TEST(ControlsSpec, SuperHotkeysCycleWaylandApps)
   std::this_thread::sleep_for(std::chrono::milliseconds(800));
 
   // Focus looked-at app so it registers.
-  ASSERT_TRUE(send_key_replay({ { "r", 0 } })) << "Failed to focus first app";
+  ASSERT_TRUE(send_key_replay({ { "Alt_L", 0 }, { "1", 50 } }))
+    << "Failed to focus first app";
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   // Unfocus and move backward (hold 's' until next entry).
