@@ -301,12 +301,16 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
   auto bindOverride = find_env_override(extraEnv, "VOXEL_API_BIND");
   auto addrOverride = find_env_override(extraEnv, "VOXEL_API_ADDR_FOR_TEST");
   auto logOverride = find_env_override(extraEnv, "MATRIX_WLROOTS_OUTPUT");
+  auto backendOverride = find_env_override(extraEnv, "WLR_BACKENDS");
   const std::string apiBind = bindOverride.value_or(defaultApiBind);
   const std::string apiAddr = addrOverride.value_or(defaultApiAddr);
   const std::string logPath = logOverride.value_or("/tmp/matrix-wlroots-output.log");
   ::setenv("VOXEL_API_BIND", apiBind.c_str(), 1);
   ::setenv("VOXEL_API_ADDR_FOR_TEST", apiAddr.c_str(), 1);
   ::setenv("MATRIX_WLROOTS_OUTPUT", logPath.c_str(), 1);
+  if (backendOverride) {
+    ::setenv("WLR_BACKENDS", backendOverride->c_str(), 1);
+  }
   const char* user = std::getenv("USER");
   std::string runtimeDir = "/tmp/xdg-runtime-";
   runtimeDir += (user ? user : "user");
@@ -333,9 +337,16 @@ static CompositorHandle start_compositor_with_env(const std::string& extraEnv = 
   }
   std::string launchFlags = "--in-wm";
   const bool haveDisplay = std::getenv("DISPLAY") || std::getenv("WAYLAND_DISPLAY");
-  if (const char* back = std::getenv("WLR_BACKENDS")) {
-    (void)back;
-    launchFlags.clear();
+  const char* back = std::getenv("WLR_BACKENDS");
+  if (back) {
+    std::string backStr = back;
+    if (backStr == "headless") {
+      launchFlags = "--headless";
+    } else if (backStr == "drm") {
+      launchFlags = "--drm";
+    } else {
+      launchFlags.clear();
+    }
   } else if (!haveDisplay) {
     // Prefer DRM when no existing display is present (e.g., on a TTY).
     launchFlags = "--drm";
@@ -1030,6 +1041,9 @@ TEST(WaylandMenuSpec, WaylandTextureUsesDefaultSizeOnFirstUpload)
   ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
 
   std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "startup:", 120, 50))
+    << "Compositor did not announce startup";
+  std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to launch foot via menu";
   ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 200, 50))
@@ -1231,6 +1245,106 @@ TEST(WaylandMenuSpec, ChromiumRendersNonBlackWindow)
 
   guard.dismiss();
   stop_compositor(h);
+}
+
+// Launch wofi via menu hotkey, type "foot" and expect the foot process to spawn.
+TEST(WaylandMenuSpec, WofiMenuLaunchesFoot)
+{
+  namespace fs = std::filesystem;
+
+  std::ofstream("/tmp/matrix-wlroots-output.log", std::ios::trunc).close();
+  // Require a Wayland-capable launcher; prefer wofi.
+  auto find_wofi = []() -> std::string {
+    if (std::system("command -v wofi >/dev/null 2>&1") == 0) {
+      return "wofi";
+    }
+    return "";
+  };
+  std::string launcherBin = find_wofi();
+  if (launcherBin.empty()) {
+    GTEST_SKIP() << "wofi not available; skipping";
+  }
+  fs::path tmp = fs::temp_directory_path();
+  fs::path script = tmp / "wofi-menu.sh";
+  {
+    std::ofstream out(script);
+    out << "#!/bin/bash\n";
+    out << "unset DISPLAY\n";
+    out << "echo \"WAYLAND_DISPLAY=$WAYLAND_DISPLAY\" >> /tmp/wofi-menu.log\n";
+    out << "echo \"XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR\" >> /tmp/wofi-menu.log\n";
+    out << "exec " << launcherBin << " --show drun \"$@\" 2>>/tmp/wofi-menu.log\n";
+  }
+  fs::permissions(script,
+                  fs::perms::owner_exec | fs::perms::owner_read | fs::perms::owner_write,
+                  fs::perm_options::add);
+
+  uint16_t port = next_api_port();
+  std::string apiBind = "tcp://*:" + std::to_string(port);
+  std::string apiAddr = "tcp://127.0.0.1:" + std::to_string(port);
+
+  std::string env = std::string("VOXEL_API_BIND=") + apiBind + " " +
+                    std::string("VOXEL_API_ADDR_FOR_TEST=") + apiAddr + " " +
+                    std::string("WLROOTS_DEBUG_LOGS=1 ") +
+                    std::string("MENU_PROGRAM=") + script.string();
+
+  auto h = start_compositor_with_env(env);
+  ScopeExit guard([&]() {
+    std::system("pkill -x wofi >/dev/null 2>&1");
+    stop_compositor(h);
+    if (fs::exists(script)) {
+      fs::remove(script);
+    }
+  });
+  ASSERT_FALSE(h.pid.empty()) << "Failed to start compositor";
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+  ASSERT_TRUE(wait_for_log_contains("/tmp/matrix-wlroots-output.log", "startup:", 120, 50))
+    << "Compositor did not announce startup";
+
+  ApiRequestResponse statusBefore;
+  ASSERT_TRUE(fetch_status(&statusBefore)) << "Failed to fetch baseline status before rofi";
+  ASSERT_TRUE(statusBefore.has_status()) << "Missing status payload before rofi launch";
+  uint32_t baselineApps = statusBefore.status().wayland_apps();
+
+  ASSERT_TRUE(send_key_replay({ { "v", 0 } })) << "Failed to send menu hotkey for launcher";
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  ASSERT_TRUE(compositor_alive(h)) << "Compositor died after launching wofi";
+  bool rofiMapped = wait_for_log_contains("/tmp/matrix-wlroots-output.log", "mapped", 200, 50) ||
+                    wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                           "layer-shell deferred add",
+                                           200,
+                                           50) ||
+                    wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                           "wayland app add (deferred)",
+                                           200,
+                                           50) ||
+                    wait_for_log_contains("/tmp/matrix-wlroots-output.log",
+                                           "wayland app add",
+                                           200,
+                                           50);
+  if (!rofiMapped) {
+    ApiRequestResponse statusAfter;
+    if (fetch_status(&statusAfter) && statusAfter.has_status()) {
+      rofiMapped = statusAfter.status().wayland_apps() > baselineApps;
+    }
+  }
+  ASSERT_TRUE(rofiMapped) << "Rofi surface never mapped or registered";
+  std::this_thread::sleep_for(std::chrono::milliseconds(400));
+
+  ASSERT_TRUE(send_key_replay({ { "f", 0 }, { "o", 0 }, { "o", 0 }, { "t", 0 }, { "Return", 120 } }))
+    << "Failed to type foot into rofi";
+  std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+  bool footRunning = false;
+  for (int i = 0; i < 40; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    int rc = std::system("pgrep -x foot >/dev/null 2>&1");
+    if (rc == 0) {
+      footRunning = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(footRunning) << "foot did not launch after rofi selection";
 }
 
 int main(int argc, char** argv)

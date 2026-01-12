@@ -1,5 +1,5 @@
 database_file: "./db/matrix.db"
-menu_program: "foot"
+menu_program: "wofi --show drun"
 fov: 45.0
 zFar: 400.0
 key_mappings:

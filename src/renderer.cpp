@@ -1092,9 +1092,9 @@ Renderer::renderApps()
     int destX = comp.screen_x;
     int destY = static_cast<int>(SCREEN_HEIGHT - comp.screen_y - h);
     glBlitFramebuffer(0,
-                      h,
-                      w,
                       0,
+                      w,
+                      h,
                       destX,
                       destY,
                       destX + w,
