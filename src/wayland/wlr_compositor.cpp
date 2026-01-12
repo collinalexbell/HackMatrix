@@ -679,9 +679,15 @@ ensure_wayland_apps_registered(WlrServer* server)
           action.screen_y);
       }
       if (entity != entt::null) {
-        renderer->registerApp(action.app.get());
-        server->surface_map[action.surface] = entity;
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
+        if (renderer && comp && comp->app) {
+          bool needsTexture =
+            comp->app->getTextureId() <= 0 || comp->app->getTextureUnit() < 0;
+          if (needsTexture) {
+            renderer->registerApp(comp->app.get());
+          }
+        }
+        server->surface_map[action.surface] = entity;
         // Request a default window size that matches the X11 defaults.
         if (comp && comp->app && !action.accessory) {
           comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
