@@ -1110,10 +1110,28 @@ process_key_sym(WlrServer* server,
       break;
     case XKB_KEY_r:
     case XKB_KEY_R:
-      if (pressed && server->engine && !waylandFocusActive) {
+      if (pressed && server->engine) {
         if (auto wm = server->engine->getWindowManager()) {
           wm->focusLookedAtApp();
           clear_input_forces(server);
+          // Mirror pointer focus/visibility a real click would provide so the
+          // focused app receives mouse input immediately.
+          wlr_surface* focused_surface = nullptr;
+          if (server->registry) {
+            if (auto focused = wm->getCurrentlyFocusedApp();
+                focused && server->registry->valid(*focused) &&
+                server->registry->all_of<WaylandApp::Component>(*focused)) {
+              if (auto* comp = server->registry->try_get<WaylandApp::Component>(*focused)) {
+                if (comp->app) {
+                  focused_surface = comp->app->getSurface();
+                }
+              }
+            }
+          }
+          if (focused_surface) {
+            ensure_pointer_focus(server, time_msec, focused_surface);
+            set_cursor_visible(server, true);
+          }
           blockClientDelivery = true; // consume focus hotkey
           log_to_tmp("key replay: focus hotkey consumed sym=%s(%u)\n",
                      keysym_name(sym).c_str(),
@@ -1273,16 +1291,11 @@ handle_new_input(wl_listener* listener, void* data)
                                                        handle->server->input.mouse_buttons);
           }
         }
-        auto surfEnt = pick_any_surface(handle->server);
-        auto* surf = surfEnt.first;
-        ensure_pointer_focus(handle->server, event->time_msec, surf);
-        if (handle->server->seat && wayland_pointer_focus_requested(handle->server) && surf) {
-          auto mapped = map_pointer_to_surface(handle->server, surf);
-          wlr_seat_pointer_notify_motion(handle->server->seat,
-                                         event->time_msec,
-                                         mapped.first,
-                                         mapped.second);
-          wlr_seat_pointer_notify_frame(handle->server->seat);
+        bool focusRequested = wayland_pointer_focus_requested(handle->server);
+        if (focusRequested) {
+          auto surfEnt = pick_any_surface(handle->server);
+          auto* surf = surfEnt.first;
+          ensure_pointer_focus(handle->server, event->time_msec, surf);
         }
         log_pointer_state(handle->server, "motion_rel");
         wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
@@ -1317,16 +1330,11 @@ handle_new_input(wl_listener* listener, void* data)
                                                        handle->server->input.mouse_buttons);
           }
         }
-        auto surfEnt = pick_any_surface(handle->server);
-        auto* surf = surfEnt.first;
-        ensure_pointer_focus(handle->server, event->time_msec, surf);
-        if (handle->server->seat && wayland_pointer_focus_requested(handle->server) && surf) {
-          auto mapped = map_pointer_to_surface(handle->server, surf);
-          wlr_seat_pointer_notify_motion(handle->server->seat,
-                                         event->time_msec,
-                                         mapped.first,
-                                         mapped.second);
-          wlr_seat_pointer_notify_frame(handle->server->seat);
+        bool focusRequested = wayland_pointer_focus_requested(handle->server);
+        if (focusRequested) {
+          auto surfEnt = pick_any_surface(handle->server);
+          auto* surf = surfEnt.first;
+          ensure_pointer_focus(handle->server, event->time_msec, surf);
         }
         log_pointer_state(handle->server, "motion_abs");
         FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");

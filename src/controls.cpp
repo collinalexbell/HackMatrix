@@ -506,9 +506,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return configured != XKB_KEY_NoSymbol && sym == configured;
   };
 
-  auto lookedAtApp = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
-                                        : std::optional<entt::entity>();
-
   if (matchesConfiguredKey("quit")) {
     resp.requestQuit = true;
     resp.blockClientDelivery = true;
@@ -527,7 +524,8 @@ Controls::handleKeySym(xkb_keysym_t sym,
 
   // When a Wayland client is focused, let unmodified keys pass through so they reach
   // the client instead of being eaten by engine controls.
-  const bool allowControls = !waylandFocusActive || modifierHeld;
+  const bool allowControls =
+    !waylandFocusActive || modifierHeld || sym == XKB_KEY_r || sym == XKB_KEY_R;
   if (!allowControls) {
     return resp;
   }
@@ -590,16 +588,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
   switch (sym) {
     case XKB_KEY_Delete:
       throw "errorEscape";
-    case XKB_KEY_r:
-    case XKB_KEY_R:
-      if (!waylandFocusActive && lookedAtApp.has_value()) {
-        log_controls("controls: goToApp ent=%d\n", (int)entt::to_integral(lookedAtApp.value()));
-        goToApp(lookedAtApp.value());
-        resp.blockClientDelivery = true;
-        resp.clearInputForces = true;
-        resp.consumed = true;
-      }
-      break;
     case XKB_KEY_b:
     case XKB_KEY_B:
       if (debounce(lastKeyPressTime)) {

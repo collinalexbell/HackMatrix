@@ -923,6 +923,15 @@ void WindowManager::focusApp(entt::entity appEntity) {
   if (waylandMode) {
     // Wayland focus is handled via wlroots; record focus only.
     currentlyFocusedApp = appEntity;
+    if (registry && registry->valid(appEntity) &&
+        registry->all_of<WaylandApp::Component>(appEntity)) {
+      // Notify the Wayland client so keyboard/pointer focus matches click focus.
+      if (auto* comp = registry->try_get<WaylandApp::Component>(appEntity)) {
+        if (comp->app) {
+          comp->app->takeInputFocus();
+        }
+      }
+    }
     // Also move camera toward the app for waylandMode when focused via API.
     goToLookedAtApp();
     return;
