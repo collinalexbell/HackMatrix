@@ -46,6 +46,7 @@ class Engine
   spdlog::sink_ptr loggerSink;
   std::shared_ptr<LoggerVector> setupLogger();
   void disableKeysIfImguiActive();
+  bool imguiMouseCapture = false;
 
   friend void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void setupRegistry();
@@ -68,4 +69,7 @@ public:
   void registerCursorCallback();
   void registerServer(shared_ptr<MultiPlayer::Server>);
   void registerClient(shared_ptr<MultiPlayer::Client>);
+  void updateImGuiPointer(float xPixels, float yPixels, const bool buttons[3]);
+  void setImguiWantsMouse(bool wants) { imguiMouseCapture = wants; }
+  bool imguiWantsMouse() const { return imguiMouseCapture; }
 };

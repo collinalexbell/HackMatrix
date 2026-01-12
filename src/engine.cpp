@@ -353,6 +353,20 @@ Engine::disableKeysIfImguiActive() {
 }
 
 void
+Engine::updateImGuiPointer(float xPixels, float yPixels, const bool buttons[3])
+{
+  if (!engineGui || window != nullptr) {
+    return;
+  }
+  ImGuiIO& io = ImGui::GetIO();
+  io.MousePos = ImVec2(xPixels, yPixels);
+  io.MouseDown[0] = buttons[0];
+  io.MouseDown[1] = buttons[1];
+  io.MouseDown[2] = buttons[2];
+  setImguiWantsMouse(io.WantCaptureMouse);
+}
+
+void
 Engine::registerClient(shared_ptr<MultiPlayer::Client> _client)
 {
   client = _client;

@@ -133,6 +133,7 @@ EngineGui::render(double& fps, int frameIndex, vector<double>& frameTimes)
     ImGui::EndTabBar(); // Close the tab bar
   }
   ImGui::End();
+  engine->setImguiWantsMouse(ImGui::GetIO().WantCaptureMouse);
   ImGui::Render();
   // Restore GL bindings to minimize GL_INVALID_* spam on GLES2 drivers.
   glUseProgram(prevProgram);

@@ -541,6 +541,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
       resetMouse = true;
       if (wm) {
         wm->captureInput();
+        wm->setCursorVisible(true);
       }
       log_controls("controls: toggle_cursor=0\n");
     } else {
@@ -548,6 +549,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
       resetMouse = true;
       if (wm) {
         wm->passthroughInput();
+        wm->setCursorVisible(false);
       }
       log_controls("controls: toggle_cursor=1\n");
     }

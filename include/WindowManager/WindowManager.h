@@ -81,6 +81,8 @@ public:
                                           bool layerShell = false,
                                           int screenX = 0,
                                           int screenY = 0) = 0;
+  virtual std::optional<bool> getCursorVisibleOverride() const = 0;
+  virtual void setCursorVisible(bool visible) = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -155,6 +157,7 @@ class WindowManager : public WindowManagerInterface
   std::chrono::steady_clock::time_point replayStart;
   std::atomic_bool screenshotRequested = false;
   unsigned int hotkeyModifierMask = Mod4Mask;
+  std::optional<bool> cursorVisible;
 
 public:
   void unfocusApp() override;
@@ -171,6 +174,7 @@ public:
   void handleSubstructure() override;
   void goToLookedAtApp() override;
   void focusLookedAtApp() override;
+  void setCursorVisible(bool visible) override;
   std::shared_ptr<Space> getSpace() override { return space; }
   void registerControls(Controls* controls) override;
   void tick() override;
@@ -191,6 +195,7 @@ public:
                                   bool layerShell = false,
                                   int screenX = 0,
                                   int screenY = 0) override;
+  std::optional<bool> getCursorVisibleOverride() const override { return cursorVisible; }
 
 private:
   Renderer* renderer = nullptr;

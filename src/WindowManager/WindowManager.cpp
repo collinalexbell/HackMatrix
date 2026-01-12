@@ -1006,6 +1006,12 @@ void WindowManager::focusLookedAtApp() {
 }
 
 void
+WindowManager::setCursorVisible(bool visible)
+{
+  cursorVisible = visible;
+}
+
+void
 WindowManager::keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries)
 {
   replayQueue.clear();

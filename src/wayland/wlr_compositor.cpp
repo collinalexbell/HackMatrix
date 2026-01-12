@@ -202,6 +202,7 @@ struct InputState {
   bool have_abs = false;
   double last_abs_x = 0.0;
   double last_abs_y = 0.0;
+  bool mouse_buttons[3] = { false, false, false };
 };
 
 struct PendingWlAction {
@@ -440,6 +441,10 @@ wayland_pointer_focus_requested(WlrServer* server)
   if (!server || !server->engine) {
     return false;
   }
+  // If ImGui wants the mouse, honor that as a pointer focus request.
+  if (server->engine->imguiWantsMouse()) {
+    return true;
+  }
   auto wm = server->engine->getWindowManager();
   if (!wm || !server->registry) {
     return false;
@@ -511,6 +516,14 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr
 {
   if (!server || !server->cursor) {
     return;
+  }
+  if (server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      // If WM tracks a visibility override, respect it.
+      if (auto sp = wm->getCursorVisibleOverride()) {
+        visible = *sp;
+      }
+    }
   }
   log_to_tmp("cursor: set_cursor_visible visible=%d current=%d\n",
              visible ? 1 : 0,
@@ -1254,6 +1267,11 @@ handle_new_input(wl_listener* listener, void* data)
                           event->delta_y);
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
+          if (handle->server->engine) {
+            handle->server->engine->updateImGuiPointer(handle->server->pointer_x,
+                                                       handle->server->pointer_y,
+                                                       handle->server->input.mouse_buttons);
+          }
         }
         auto surfEnt = pick_any_surface(handle->server);
         auto* surf = surfEnt.first;
@@ -1293,6 +1311,11 @@ handle_new_input(wl_listener* listener, void* data)
                                    event->y);
           handle->server->pointer_x = handle->server->cursor->x;
           handle->server->pointer_y = handle->server->cursor->y;
+          if (handle->server->engine) {
+            handle->server->engine->updateImGuiPointer(handle->server->pointer_x,
+                                                       handle->server->pointer_y,
+                                                       handle->server->input.mouse_buttons);
+          }
         }
         auto surfEnt = pick_any_surface(handle->server);
         auto* surf = surfEnt.first;
@@ -1327,9 +1350,27 @@ handle_new_input(wl_listener* listener, void* data)
           handle->server && handle->server->engine
             ? handle->server->engine->getControls()
             : nullptr;
+        auto update_mouse_button = [&](uint32_t button, bool pressed) {
+          if (!handle->server) {
+            return;
+          }
+          if (button == BTN_LEFT) {
+            handle->server->input.mouse_buttons[0] = pressed;
+          } else if (button == BTN_RIGHT) {
+            handle->server->input.mouse_buttons[1] = pressed;
+          } else if (button == BTN_MIDDLE) {
+            handle->server->input.mouse_buttons[2] = pressed;
+          }
+          if (handle->server->engine) {
+            handle->server->engine->updateImGuiPointer(handle->server->pointer_x,
+                                                       handle->server->pointer_y,
+                                                       handle->server->input.mouse_buttons);
+          }
+        };
         if (static_cast<uint32_t>(event->state) ==
               static_cast<uint32_t>(WLR_BUTTON_PRESSED) &&
             handle->server && handle->server->engine) {
+          update_mouse_button(event->button, true);
           if (controls) {
             handled_by_game = controls->handlePointerButton(event->button, true);
           }
@@ -1390,6 +1431,10 @@ handle_new_input(wl_listener* listener, void* data)
                                          event->button,
                                          event->state);
           wlr_seat_pointer_notify_frame(handle->server->seat);
+          if (static_cast<uint32_t>(event->state) ==
+              static_cast<uint32_t>(WLR_BUTTON_RELEASED)) {
+            update_mouse_button(event->button, false);
+          }
         }
       };
       wl_signal_add(&pointer->events.button, &handle->button);
@@ -2115,7 +2160,18 @@ handle_output_frame(wl_listener* listener, void* data)
           server->input.forward, server->input.back, server->input.left, server->input.right);
       }
       bool pointerFocusRequested = wayland_pointer_focus_requested(server);
-      if (!pointerFocusRequested &&
+      bool cursorOverrideVisible = false;
+      bool cursorOverrideSet = false;
+      if (server->engine) {
+        if (auto wm = server->engine->getWindowManager()) {
+          if (auto ov = wm->getCursorVisibleOverride()) {
+            cursorOverrideSet = true;
+            cursorOverrideVisible = *ov;
+          }
+        }
+      }
+      bool pointerVisible = pointerFocusRequested || (cursorOverrideSet && cursorOverrideVisible);
+      if (!pointerVisible &&
           (server->input.delta_x != 0.0 || server->input.delta_y != 0.0)) {
         if (controls) {
           controls->applyLookDelta(server->input.delta_x, -server->input.delta_y);
@@ -2125,11 +2181,11 @@ handle_output_frame(wl_listener* listener, void* data)
         }
       }
       // Hide cursor and clear pointer focus when game mode is active so only deltas matter.
-      if (!pointerFocusRequested && server->seat &&
+      if (!pointerVisible && server->seat &&
           server->seat->pointer_state.focused_surface) {
         wlr_seat_pointer_notify_clear_focus(server->seat);
       }
-      set_cursor_visible(server, pointerFocusRequested, handle->output);
+      set_cursor_visible(server, pointerVisible, handle->output);
       // Always clear accumulated deltas so they don't apply after focus changes.
       server->input.delta_x = 0.0;
       server->input.delta_y = 0.0;
@@ -2165,8 +2221,17 @@ handle_output_frame(wl_listener* listener, void* data)
   pixman_region32_init_rect(&cursor_damage, 0, 0, width, height);
   wlr_output_add_software_cursors_to_render_pass(handle->output, pass, &cursor_damage);
   pixman_region32_fini(&cursor_damage);
-  // Draw a compositor-owned software cursor as a fallback when focused.
-  if (server->engine && wayland_pointer_focus_requested(server)) {
+  // Draw a compositor-owned software cursor when either a Wayland surface has focus
+  // or the WM explicitly requested visibility (e.g., toggle_cursor hotkey).
+  bool cursorVisibleOverride = false;
+  if (server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      if (auto ov = wm->getCursorVisibleOverride()) {
+        cursorVisibleOverride = *ov;
+      }
+    }
+  }
+  if (server->engine && (wayland_pointer_focus_requested(server) || cursorVisibleOverride)) {
     if (auto* renderer = server->engine->getRenderer()) {
       float sizePx = 24.0f * (handle->output ? handle->output->scale : 1.0f);
       renderer->renderSoftwareCursor(server->pointer_x, server->pointer_y, sizePx);
