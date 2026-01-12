@@ -524,8 +524,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
 
   // When a Wayland client is focused, let unmodified keys pass through so they reach
   // the client instead of being eaten by engine controls.
-  const bool allowControls =
-    !waylandFocusActive || modifierHeld || sym == XKB_KEY_r || sym == XKB_KEY_R;
+  const bool allowControls = !waylandFocusActive || modifierHeld;
   if (!allowControls) {
     return resp;
   }

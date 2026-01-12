@@ -1110,28 +1110,37 @@ process_key_sym(WlrServer* server,
       break;
     case XKB_KEY_r:
     case XKB_KEY_R:
-      if (pressed && server->engine) {
+      if (pressed && server->engine && !waylandFocusActive) {
         if (auto wm = server->engine->getWindowManager()) {
-          wm->focusLookedAtApp();
-          clear_input_forces(server);
-          // Mirror pointer focus/visibility a real click would provide so the
-          // focused app receives mouse input immediately.
           wlr_surface* focused_surface = nullptr;
-          if (server->registry) {
-            if (auto focused = wm->getCurrentlyFocusedApp();
-                focused && server->registry->valid(*focused) &&
-                server->registry->all_of<WaylandApp::Component>(*focused)) {
-              if (auto* comp = server->registry->try_get<WaylandApp::Component>(*focused)) {
-                if (comp->app) {
-                  focused_surface = comp->app->getSurface();
+          entt::entity target = entt::null;
+          // Prefer the surface currently under the pointer, just like a click.
+          if (server->seat && server->seat->pointer_state.focused_surface) {
+            auto* pointer_surface = server->seat->pointer_state.focused_surface;
+            auto it = server->surface_map.find(pointer_surface);
+            if (it != server->surface_map.end()) {
+              target = it->second;
+              focused_surface = pointer_surface;
+            }
+          }
+          if (target != entt::null) {
+            wm->focusApp(target);
+          } else {
+            wm->focusLookedAtApp();
+            if (server->registry) {
+              if (auto focused = wm->getCurrentlyFocusedApp();
+                  focused && server->registry->valid(*focused) &&
+                  server->registry->all_of<WaylandApp::Component>(*focused)) {
+                if (auto* comp = server->registry->try_get<WaylandApp::Component>(*focused)) {
+                  if (comp->app) {
+                    focused_surface = comp->app->getSurface();
+                  }
                 }
               }
             }
           }
-          if (focused_surface) {
-            ensure_pointer_focus(server, time_msec, focused_surface);
-            set_cursor_visible(server, true);
-          }
+          ensure_pointer_focus(server, time_msec, focused_surface);
+          set_cursor_visible(server, true);
           blockClientDelivery = true; // consume focus hotkey
           log_to_tmp("key replay: focus hotkey consumed sym=%s(%u)\n",
                      keysym_name(sym).c_str(),
