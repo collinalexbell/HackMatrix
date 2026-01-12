@@ -34,6 +34,7 @@
 #include <GLFW/glfw3native.h>
 #include <fstream>
 
+#include "imgui/imgui.h"
 #include "imgui/imgui_impl_opengl3.h"
 
 namespace {
@@ -151,8 +152,8 @@ Engine::Engine(GLFWwindow* window, char** envp, EngineOptions options)
     registerCursorCallback();
   }
   // Has to be be created after the cursorCallback because gui wraps the
-  // callback
-  if (options.enableGui && window != nullptr) {
+  // callback. In wlroots mode window is null; EngineGui handles a headless path.
+  if (options.enableGui) {
     engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
   }
 }
@@ -289,9 +290,41 @@ Engine::frame(double frameStart)
   }
   multiplayerClientIteration(frameStart);
 
+  // Save state ImGui might clobber on GLES2 (primitive restart/poly mode).
+  GLint prevProgram = 0;
+  GLint prevArray = 0;
+  GLint prevTexture = 0;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &prevProgram);
+  glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &prevArray);
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &prevTexture);
+
+  // Flip ImGui draw data vertically when running headless (wlroots) so it matches compositor output.
+  ImDrawData* draw_data = ImGui::GetDrawData();
+  if (window == nullptr && draw_data) {
+    const float fb_height = draw_data->DisplaySize.y * draw_data->FramebufferScale.y;
+    for (int n = 0; n < draw_data->CmdListsCount; n++) {
+      ImDrawList* cmd_list = draw_data->CmdLists[n];
+      for (int v = 0; v < cmd_list->VtxBuffer.Size; v++) {
+        cmd_list->VtxBuffer[v].pos.y = fb_height - cmd_list->VtxBuffer[v].pos.y;
+      }
+      for (int c = 0; c < cmd_list->CmdBuffer.Size; c++) {
+        ImDrawCmd& cmd = cmd_list->CmdBuffer[c];
+        const float old_y0 = cmd.ClipRect.y;
+        const float old_y1 = cmd.ClipRect.w;
+        cmd.ClipRect.y = fb_height - old_y1;
+        cmd.ClipRect.w = fb_height - old_y0;
+      }
+    }
+  }
+
   if (engineGui) {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
   }
+
+  // Restore to avoid GL_INVALID_ENUM/OPERATION spam on GLES2 drivers.
+  glUseProgram(prevProgram);
+  glBindBuffer(GL_ARRAY_BUFFER, prevArray);
+  glBindTexture(GL_TEXTURE_2D, prevTexture);
 
   TracyGpuCollect;
   FrameMark;

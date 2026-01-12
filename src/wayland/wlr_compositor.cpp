@@ -1953,7 +1953,7 @@ handle_output_frame(wl_listener* listener, void* data)
   if (!server->engine) {
     EngineOptions options;
     options.enableControls = true; // wlroots path feeds input through Controls
-    options.enableGui = false;
+    options.enableGui = true; // draw HackMatrix ImGui overlay inside compositor
     options.invertYAxis = true;
   server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
   // Surface API quit handling through wl_display so tests can terminate cleanly.
