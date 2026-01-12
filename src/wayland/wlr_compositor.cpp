@@ -441,6 +441,16 @@ wayland_pointer_focus_requested(WlrServer* server)
   if (!server || !server->engine) {
     return false;
   }
+  if (server->seat) {
+    // If the seat already has a focused surface (pointer or keyboard), treat that
+    // as an active Wayland focus so we keep routing input and avoid flicker.
+    if (server->seat->pointer_state.focused_surface) {
+      return true;
+    }
+    if (server->seat->keyboard_state.focused_surface) {
+      return true;
+    }
+  }
   // If ImGui wants the mouse, honor that as a pointer focus request.
   if (server->engine->imguiWantsMouse()) {
     return true;
