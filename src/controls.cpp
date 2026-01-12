@@ -506,6 +506,12 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return configured != XKB_KEY_NoSymbol && sym == configured;
   };
 
+  // If a Wayland client holds focus and no modifier is pressed, let the app see
+  // the key (except for modifier-based WM hotkeys handled later).
+  if (waylandFocusActive && !modifierHeld) {
+    return resp;
+  }
+
   if (matchesConfiguredKey("quit")) {
     resp.requestQuit = true;
     resp.blockClientDelivery = true;
@@ -513,8 +519,10 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
-  // Allow menu toggle regardless of Wayland focus so the launcher is always reachable.
-  if ((sym == XKB_KEY_v || sym == XKB_KEY_V) && wm && debounce(lastKeyPressTime)) {
+  // Only allow menu toggle when no Wayland client has focus, or when modifier
+  // is held (so unmodified 'v' passes through to focused apps).
+  if ((sym == XKB_KEY_v || sym == XKB_KEY_V) && wm && debounce(lastKeyPressTime) &&
+      (!waylandFocusActive || modifierHeld)) {
     log_controls("controls: menu\n");
     wm->menu();
     resp.blockClientDelivery = true;
