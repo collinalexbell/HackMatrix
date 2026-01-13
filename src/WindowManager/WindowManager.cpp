@@ -520,11 +520,8 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool sh
       }
       auto ent = appsWithHotKeys[index].value();
       bool isX11 = registry && registry->all_of<X11App>(ent);
-      currentlyFocusedApp = ent;
-      WL_WM_LOG("WM: hotkey set current ent=%d\n",
+      WL_WM_LOG("WM: hotkey preparing focus ent=%d\n",
                 (int)entt::to_integral(ent));
-      // Ensure renderer/input know the focus immediately; selection happens after the move.
-      focusEntityAfterMove(ent);
 
       if (isX11) {
         auto& app = registry->get<X11App>(ent);
