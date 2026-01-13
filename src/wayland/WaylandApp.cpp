@@ -75,7 +75,8 @@ ensureEglImageFns()
 WaylandApp::WaylandApp(wlr_renderer* renderer,
                        wlr_allocator* allocator,
                        wlr_xdg_surface* xdg,
-                       size_t index)
+                       size_t index,
+                       bool request_initial_size)
   : renderer(renderer)
   , allocator(allocator)
   , appIndex(index)
@@ -94,7 +95,9 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
   width = Bootable::DEFAULT_WIDTH;
   height = Bootable::DEFAULT_HEIGHT;
   update_height_scalar();
-  requestSize(width, height);
+  if (request_initial_size) {
+    requestSize(width, height);
+  }
 
   surface_commit.notify = [](wl_listener* listener, void* data) {
     auto* self = wl_container_of(listener, static_cast<WaylandApp*>(nullptr), surface_commit);

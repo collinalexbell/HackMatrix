@@ -217,6 +217,8 @@ struct PendingWlAction {
   int offset_y = 0;
   int screen_x = 0;
   int screen_y = 0;
+  int screen_w = 0;
+  int screen_h = 0;
 };
 
 struct ReplayKeyRelease {
@@ -415,8 +417,40 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
   double sy = server ? server->pointer_y : 0.0;
   double surf_w = surf ? surf->current.width : 0;
   double surf_h = surf ? surf->current.height : 0;
+  bool handledPopupCoords = false;
+  // For popup/accessory surfaces, place the pointer relative to the parent's
+  // top-left using the same math as renderWaylandPopup().
+  if (server && surf && server->registry) {
+    auto it = server->surface_map.find(surf);
+    if (it != server->surface_map.end() &&
+        server->registry->valid(it->second) &&
+        server->registry->all_of<WaylandApp::Component>(it->second)) {
+      auto& comp = server->registry->get<WaylandApp::Component>(it->second);
+      if (comp.accessory && !comp.layer_shell && comp.parent != entt::null &&
+          server->registry->valid(comp.parent) &&
+          server->registry->all_of<WaylandApp::Component>(comp.parent)) {
+        auto& parentComp = server->registry->get<WaylandApp::Component>(comp.parent);
+        if (parentComp.app) {
+          int parentW = parentComp.app->getWidth();
+          int parentH = parentComp.app->getHeight();
+          double out_w =
+            server->primary_output ? server->primary_output->width : SCREEN_WIDTH;
+          double out_h =
+            server->primary_output ? server->primary_output->height : SCREEN_HEIGHT;
+          double parentLeft = std::max(0.0, (out_w - parentW) * 0.5);
+          double parentTop = std::max(0.0, (out_h - parentH) * 0.5);
+          double popupLeft = parentLeft + comp.offset_x;
+          double popupTop = parentTop + comp.offset_y;
+          sx -= popupLeft;
+          sy -= popupTop;
+          handledPopupCoords = true;
+        }
+      }
+    }
+  }
   // Subtract the center offset so (0,0) maps to the surface top-left.
-  if (server && server->primary_output) {
+  // Skip this for popups, which already derived screen-relative coords.
+  if (!handledPopupCoords && server && server->primary_output) {
     double out_w = server->primary_output->width;
     double out_h = server->primary_output->height;
     if (out_w > surf_w && surf_w > 0) {
@@ -680,7 +714,9 @@ ensure_wayland_apps_registered(WlrServer* server)
                                         action.offset_y,
                                         action.layer_shell,
                                         action.screen_x,
-                                        action.screen_y);
+                                        action.screen_y,
+                                        action.screen_w,
+                                        action.screen_h);
         if (entity != entt::null) {
           if (auto* comp = server->registry->try_get<WaylandApp::Component>(entity)) {
             action.app = comp->app;
@@ -691,6 +727,8 @@ ensure_wayland_apps_registered(WlrServer* server)
             comp->layer_shell = action.layer_shell;
             comp->screen_x = action.screen_x;
             comp->screen_y = action.screen_y;
+            comp->screen_w = action.screen_w > 0 ? action.screen_w : comp->screen_w;
+            comp->screen_h = action.screen_h > 0 ? action.screen_h : comp->screen_h;
           }
         }
       }
@@ -705,7 +743,9 @@ ensure_wayland_apps_registered(WlrServer* server)
           action.offset_x,
           action.offset_y,
           action.screen_x,
-          action.screen_y);
+          action.screen_y,
+          action.screen_w,
+          action.screen_h);
       }
       if (entity != entt::null) {
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
@@ -1489,11 +1529,21 @@ handle_new_input(wl_listener* listener, void* data)
                 auto it = handle->server->surface_map.find(pointer_surface);
                 if (it != handle->server->surface_map.end()) {
                   entt::entity ent = it->second;
-                  wm->focusApp(ent);
+                  // If we clicked a popup/accessory, focus its parent instead of
+                  // trying to activate the popup (which has no toplevel).
+                  entt::entity focusEnt = ent;
                   if (auto* comp =
                         handle->server->registry->try_get<WaylandApp::Component>(ent)) {
-                    if (comp->app) {
-                      comp->app->takeInputFocus();
+                    if (comp->accessory && comp->parent != entt::null &&
+                        handle->server->registry->valid(comp->parent)) {
+                      focusEnt = comp->parent;
+                    }
+                  }
+                  wm->focusApp(focusEnt);
+                  if (auto* focusComp =
+                        handle->server->registry->try_get<WaylandApp::Component>(focusEnt)) {
+                    if (focusComp->app) {
+                      focusComp->app->takeInputFocus();
                     }
                   }
                   focusedViaPointer = true;
@@ -1637,7 +1687,8 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
   auto app = std::make_shared<WaylandApp>(server->renderer,
                                           server->allocator,
                                           xdg_surface,
-                                          0);
+                                          0,
+                                          /*request_initial_size=*/!is_popup);
   app->setSeat(server->seat, xdg_surface->surface);
 
   auto* handle = new WaylandAppHandle();
@@ -1844,7 +1895,11 @@ handle_new_layer_surface(wl_listener* listener, void* data)
                        0,
                        0,
                        pos.first,
-                       pos.second });
+                       pos.second,
+                       handle->server->primary_output ? handle->server->primary_output->width
+                                                      : static_cast<int>(SCREEN_WIDTH),
+                       handle->server->primary_output ? handle->server->primary_output->height
+                                                      : static_cast<int>(SCREEN_HEIGHT) });
     handle->registered = true;
     log_to_tmp("layer-shell deferred add queued: surface=%p size=%dx%d pos=%d,%d app=%p\n",
                (void*)surf,
@@ -2059,6 +2114,8 @@ ensure_depth_buffer(WlrOutputHandle* handle, int width, int height, GLuint fbo)
                  status,
                  width,
                  height);
+  } else {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   }
 }
 
@@ -2323,12 +2380,14 @@ handle_output_frame(wl_listener* listener, void* data)
   }
   double frameStart = currentTimeSeconds();
   server->engine->frame(frameStart);
-  if (server->engine) {
-    if (auto wm = server->engine->getWindowManager()) {
-      if (wm->consumeScreenshotRequest()) {
-        if (auto renderer = server->engine->getRenderer()) {
-          renderer->screenshotFromCurrentFramebuffer(width, height);
-        }
+  // Run screenshot capture after the frame has been drawn so the image matches
+  // what was just rendered.
+  if (server->engine && server->engine->getWindowManager() &&
+      server->engine->getRenderer()) {
+    auto wm = server->engine->getWindowManager();
+    if (wm && wm->consumeScreenshotRequest()) {
+      if (auto* renderer = server->engine->getRenderer()) {
+        renderer->screenshotFromCurrentFramebuffer(width, height, fbo);
       }
     }
   }

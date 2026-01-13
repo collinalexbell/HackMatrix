@@ -127,6 +127,7 @@ class Renderer
   RenderedVoxelSpace voxelMesh;
   float voxelSize = 2.0f;
   bool shadowsEnabled = true;
+  unsigned int currentFbo = 0;
 
 public:
   Renderer(shared_ptr<EntityRegistry> registry,
@@ -142,6 +143,7 @@ public:
   void updateDynamicObjects(shared_ptr<DynamicObject> obj);
   void updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>>& meshes);
   void addLine(int index, Line line);
+  unsigned int getCurrentFbo() const { return currentFbo; }
   void registerApp(AppSurface* app);
   // Wayland path can reuse a single texture unit to avoid GL unit exhaustion.
   void attachSharedAppTexture(AppSurface* app);
@@ -150,7 +152,7 @@ public:
   void renderSoftwareCursor(float xPixels, float yPixels, float sizePixels);
   void reloadChunk();
   void screenshot();
-  void screenshotFromCurrentFramebuffer(int width, int height);
+  void screenshotFromCurrentFramebuffer(int width, int height, unsigned int fbo = 0);
   void toggleMeshing();
   void toggleWireframe();
   void wireWindowManager(WindowManager::WindowManagerPtr, shared_ptr<WindowManager::Space>);

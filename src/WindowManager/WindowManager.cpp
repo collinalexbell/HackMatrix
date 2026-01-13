@@ -1280,7 +1280,9 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
                                                int offsetY,
                                                bool layerShell,
                                                int screenX,
-                                               int screenY) {
+                                               int screenY,
+                                               int screenW,
+                                               int screenH) {
   if (!app || !registry) {
     return entt::null;
   }
@@ -1294,7 +1296,15 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
             offsetY);
   entt::entity entity = registry->create();
   registry->emplace<WaylandApp::Component>(
-    entity, app, accessory, layerShell, parent, offsetX, offsetY, screenX, screenY);
+    entity, app, accessory, layerShell, parent, offsetX, offsetY, screenX, screenY, screenW, screenH);
+  if (auto* comp = registry->try_get<WaylandApp::Component>(entity)) {
+    if (comp->screen_w == 0) {
+      comp->screen_w = static_cast<int>(SCREEN_WIDTH);
+    }
+    if (comp->screen_h == 0) {
+      comp->screen_h = static_cast<int>(SCREEN_HEIGHT);
+    }
+  }
   // Attach textures immediately so layer shells/popups can be blitted directly.
   if (renderer) {
     renderer->registerApp(app.get());

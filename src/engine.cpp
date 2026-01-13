@@ -309,8 +309,11 @@ Engine::frame(double frameStart)
   if (engineGui) {
     disableKeysIfImguiActive();
   }
-  if (controls && window != nullptr) {
-    controls->poll(window, camera, world);
+  if (controls) {
+    controls->runQueuedActions();
+    if (window != nullptr) {
+      controls->poll(window, camera, world);
+    }
   }
   multiplayerClientIteration(frameStart);
 

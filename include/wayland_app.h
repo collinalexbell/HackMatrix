@@ -73,12 +73,15 @@ public:
     int offset_y = 0;
     int screen_x = 0;
     int screen_y = 0;
+    int screen_w = 0;
+    int screen_h = 0;
   };
 
   WaylandApp(wlr_renderer* renderer,
              wlr_allocator* allocator,
              wlr_xdg_surface* xdg,
-             size_t index);
+             size_t index,
+             bool request_initial_size = true);
   // Construct a Wayland-backed app for a non-xdg surface (e.g. layer-shell).
   WaylandApp(wlr_renderer* renderer,
              wlr_allocator* allocator,

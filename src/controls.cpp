@@ -10,6 +10,7 @@
 #include <ctime>
 #include <cstdarg>
 #include <fstream>
+#include <mutex>
 #include <xkbcommon/xkbcommon.h>
 #include <glm/gtc/quaternion.hpp>
 #include <linux/input-event-codes.h>
@@ -59,6 +60,7 @@ Controls::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 void
 Controls::poll(GLFWwindow* window, Camera* camera, World* world)
 {
+  runQueuedActions();
   handleKeys(window, camera, world);
   handleClicks(window, world);
   doDeferedActions();
@@ -207,14 +209,19 @@ Controls::handleScreenshot(GLFWwindow* window)
   int screenshotKey = controlMappings.getKey("screenshot");
   bool shouldCapture = glfwGetKey(window, screenshotKey) == GLFW_PRESS;
   if (shouldCapture && debounce(lastKeyPressTime)) {
-    renderer->screenshot();
+    triggerScreenshot();
   }
 }
 
 void
 Controls::triggerScreenshot()
 {
-  if (renderer) {
+  // Wayland mode consumes screenshot requests in the compositor render loop so
+  // that the capture happens on the swapchain framebuffer. X11 uses the legacy
+  // renderer path.
+  if (wm && wm->isWaylandMode()) {
+    wm->requestScreenshot();
+  } else if (renderer) {
     renderer->screenshot();
   }
 }
@@ -565,7 +572,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
 
   if (matchesConfiguredKey("screenshot") && debounce(lastKeyPressTime)) {
     log_controls("controls: screenshot\n");
-    triggerScreenshot();
+    enqueueAction([this]() { triggerScreenshot(); });
     resp.blockClientDelivery = true;
     resp.consumed = true;
     return resp;
@@ -705,6 +712,28 @@ Controls::handleKeySym(xkb_keysym_t sym,
   }
 
   return resp;
+}
+
+void
+Controls::enqueueAction(std::function<void()> fn)
+{
+  std::lock_guard<std::mutex> lock(queuedActionsMutex);
+  queuedActions.push_back(std::move(fn));
+}
+
+void
+Controls::runQueuedActions()
+{
+  std::vector<std::function<void()>> actions;
+  {
+    std::lock_guard<std::mutex> lock(queuedActionsMutex);
+    actions.swap(queuedActions);
+  }
+  for (auto& fn : actions) {
+    if (fn) {
+      fn();
+    }
+  }
 }
 
 void

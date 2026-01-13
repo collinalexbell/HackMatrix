@@ -3,6 +3,7 @@
 #include "blocks.h"
 #include "camera.h"
 #include <functional>
+#include <mutex>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <xkbcommon/xkbcommon.h>
@@ -48,6 +49,8 @@ class Controls
   float lastY;
   int clickY = 100;
   vector<DeferedAction> deferedActions;
+  std::vector<std::function<void()>> queuedActions;
+  std::mutex queuedActionsMutex;
   shared_ptr<WindowManager::Space> windowManagerSpace;
   bool keysEnabled = true;
 
@@ -75,6 +78,7 @@ class Controls
   void handleClicks(GLFWwindow* window, World* world);
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
+  void enqueueAction(std::function<void()> fn);
 
 public:
   Controls(WindowManager::WindowManagerPtr wm,
@@ -97,6 +101,7 @@ public:
               optional<glm::vec3> rotation,
               float secs,
               optional<function<void()>> = nullopt);
+  void runQueuedActions();
   ControlResponse handleKeySym(xkb_keysym_t sym,
                                bool pressed,
                                bool modifierHeld,

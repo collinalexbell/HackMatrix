@@ -666,6 +666,51 @@ Renderer::renderDynamicObjects()
   shader->setBool("isDynamicObject", false);
 }
 
+static bool
+supportsFramebufferBlit()
+{
+  return (GLAD_GL_VERSION_3_0
+#ifdef GLAD_GL_ES_VERSION_3_0
+          || GLAD_GL_ES_VERSION_3_0
+#endif
+#ifdef GLAD_GL_EXT_framebuffer_blit
+          || GLAD_GL_EXT_framebuffer_blit
+#endif
+          ) &&
+         glBlitFramebuffer != nullptr;
+}
+
+static void
+readFramebufferToRgba(int width, int height, std::vector<unsigned char>& out)
+{
+  out.resize(static_cast<size_t>(width) * static_cast<size_t>(height) * 4);
+  GLint prevPack = 0;
+  glGetIntegerv(GL_PACK_ALIGNMENT, &prevPack);
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+  GLenum readFmt =
+#ifdef GL_BGRA
+    GL_BGRA
+#elif defined(GL_BGRA_EXT)
+    GL_BGRA_EXT
+#else
+    GL_RGBA
+#endif
+    ;
+  bool swapRB = (readFmt != GL_RGBA);
+
+  glReadPixels(0, 0, width, height, readFmt, GL_UNSIGNED_BYTE, out.data());
+
+  if (swapRB) {
+    size_t total = static_cast<size_t>(width) * static_cast<size_t>(height);
+    for (size_t i = 0; i < total; ++i) {
+      auto* px = out.data() + i * 4;
+      std::swap(px[0], px[2]);
+    }
+  }
+  glPixelStorei(GL_PACK_ALIGNMENT, prevPack);
+}
+
 void
 Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
 {
@@ -704,6 +749,10 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
 
   if (index >= 0) {
     if (!bootable) {
+      if (!supportsFramebufferBlit()) {
+        logRenderAppDirect("no-blit-support", pos[0], pos[1]);
+        return;
+      }
       GLint prevReadFbo = 0;
       GLint prevDrawFbo = 0;
       glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
@@ -786,20 +835,34 @@ Renderer::screenshot()
   // Capture the screenshot and save it as a PNG file
   int width = getScreenWidth();  // Width of your rendering area
   int height = getScreenHeight(); // Height of your rendering area
-  int channels = 4;  // 4 for RGBA
-  unsigned char* data = new unsigned char[width * height * channels];
-  glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-  std::thread saver([filename, width, height, channels, data]() {
+  std::vector<unsigned char> data;
+  readFramebufferToRgba(width, height, data);
+  std::thread saver([filename, width, height, data = std::move(data)]() mutable {
+    int channels = 4;  // 4 for RGBA
     stbi_write_png(
-      filename.c_str(), width, height, channels, data, width * channels);
-    delete[] data;
+      filename.c_str(), width, height, channels, data.data(), width * channels);
   });
   saver.detach();
 }
 
 void
-Renderer::screenshotFromCurrentFramebuffer(int width, int height)
+Renderer::screenshotFromCurrentFramebuffer(int width, int height, unsigned int fbo)
 {
+  GLint prevReadFbo = 0;
+  GLint prevDrawFbo = 0;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);
+  if (fbo == 0 && currentFbo != 0) {
+    fbo = currentFbo;
+  }
+  if (fbo != 0) {
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLint>(fbo));
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<GLint>(fbo));
+#ifdef GL_COLOR_ATTACHMENT0
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+#endif
+  }
+
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   stringstream filenameSS;
@@ -807,16 +870,18 @@ Renderer::screenshotFromCurrentFramebuffer(int width, int height)
 
   string filename = filenameSS.str();
 
-  int channels = 4; // 4 for RGBA
-  unsigned char* data = new unsigned char[width * height * channels];
-  glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-  std::thread saver([filename, width, height, channels, data]() {
-    // Wayland framebuffer is already oriented correctly; avoid flipping.
+  std::vector<unsigned char> data;
+  readFramebufferToRgba(width, height, data);
+  std::thread saver([filename, width, height, data = std::move(data)]() mutable {
+    int channels = 4; // 4 for RGBA
+    // Do not flip here; wlr path already reads from the onscreen-oriented FBO.
     stbi_flip_vertically_on_write(false);
     stbi_write_png(
-      filename.c_str(), width, height, channels, data, width * channels);
-    delete[] data;
+      filename.c_str(), width, height, channels, data.data(), width * channels);
   });
+  // Restore previous framebuffer bindings.
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
   saver.detach();
 }
 
@@ -1036,8 +1101,8 @@ Renderer::renderApps()
     float parentLeft = std::max(0.0f, (SCREEN_WIDTH - parentW) * 0.5f);
     float parentTop = std::max(0.0f, (SCREEN_HEIGHT - parentH) * 0.5f);
     int destX = static_cast<int>(parentLeft + popup.offset_x);
-    int destY =
-      static_cast<int>(SCREEN_HEIGHT - (parentTop + popup.offset_y) - popupH);
+    // Keep popups positioned in the same top-origin space as their parent.
+    int destY = static_cast<int>(parentTop + popup.offset_y);
 
     if (popupApp->needsTextureImport()) {
       popupApp->appTexture();
@@ -1047,6 +1112,9 @@ Renderer::renderApps()
     if (fbIt == frameBuffers.end()) {
       return;
     }
+    if (!supportsFramebufferBlit()) {
+      return;
+    }
     GLint prevReadFbo = 0;
     GLint prevDrawFbo = 0;
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
@@ -1054,9 +1122,9 @@ Renderer::renderApps()
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbIt->second);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
     glBlitFramebuffer(0,
-                      popupH,
-                      popupW,
                       0,
+                      popupW,
+                      popupH,
                       destX,
                       destY,
                       destX + popupW,
@@ -1083,22 +1151,30 @@ Renderer::renderApps()
     if (fbIt == frameBuffers.end()) {
       return;
     }
+    if (!supportsFramebufferBlit()) {
+      return;
+    }
     GLint prevReadFbo = 0;
     GLint prevDrawFbo = 0;
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
     glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fbIt->second);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
+    const int targetW = comp.screen_w > 0 ? comp.screen_w : static_cast<int>(SCREEN_WIDTH);
+    const int targetH = comp.screen_h > 0 ? comp.screen_h : static_cast<int>(SCREEN_HEIGHT);
+    int destW = w;
+    int destH = h;
     int destX = comp.screen_x;
-    int destY = static_cast<int>(SCREEN_HEIGHT - comp.screen_y - h);
+    // comp.screen_y is in top-origin space; OpenGL blit target uses bottom-origin.
+    int destY = targetH - comp.screen_y - destH;
     glBlitFramebuffer(0,
                       0,
                       w,
                       h,
                       destX,
                       destY,
-                      destX + w,
-                      destY + h,
+                      destX + destW,
+                      destY + destH,
                       GL_COLOR_BUFFER_BIT,
                       GL_NEAREST);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
@@ -1633,6 +1709,9 @@ Renderer::render(RenderPerspective perspective,
                     comp.app ? (void*)comp.app->getSurface() : nullptr);
   });
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  GLint boundFbo = 0;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &boundFbo);
+  currentFbo = static_cast<unsigned int>(boundFbo);
   glFrontFace(invertY ? GL_CW : GL_CCW);
   if (perspective == CAMERA) {
     shader = cameraShader;

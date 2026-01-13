@@ -80,9 +80,12 @@ public:
                                           int offsetY = 0,
                                           bool layerShell = false,
                                           int screenX = 0,
-                                          int screenY = 0) = 0;
+                                          int screenY = 0,
+                                          int screenW = 0,
+                                          int screenH = 0) = 0;
   virtual std::optional<bool> getCursorVisibleOverride() const = 0;
   virtual void setCursorVisible(bool visible) = 0;
+  virtual bool isWaylandMode() const = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -167,6 +170,7 @@ public:
   void createAndRegisterApps(char** envp) override;
   WindowManager(shared_ptr<EntityRegistry>, Window, spdlog::sink_ptr, char** envp = nullptr);
   WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, bool waylandMode, char** envp = nullptr);
+  bool isWaylandMode() const override { return waylandMode; }
   ~WindowManager();
   optional<entt::entity> getCurrentlyFocusedApp() override;
   void focusApp(entt::entity) override;
@@ -194,7 +198,9 @@ public:
                                   int offsetY = 0,
                                   bool layerShell = false,
                                   int screenX = 0,
-                                  int screenY = 0) override;
+                                  int screenY = 0,
+                                  int screenW = 0,
+                                  int screenH = 0) override;
   std::optional<bool> getCursorVisibleOverride() const override { return cursorVisible; }
 
 private:
