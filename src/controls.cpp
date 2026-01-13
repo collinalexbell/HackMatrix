@@ -578,6 +578,29 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
+  // Focus key (mirrors click focus) is handled on the main thread via the
+  // queued action system to match engine timing.
+  if ((sym == XKB_KEY_r || sym == XKB_KEY_R) && debounce(lastKeyPressTime)) {
+    enqueueAction([this]() {
+      if (!wm) {
+        return;
+      }
+      // Prefer the app currently looked at; fall back to focusLookedAtApp to
+      // keep parity with click-based focus.
+      if (windowManagerSpace) {
+        if (auto looked = windowManagerSpace->getLookedAtApp()) {
+          wm->focusApp(*looked);
+          wm->goToLookedAtApp();
+          return;
+        }
+      }
+      wm->focusLookedAtApp();
+    });
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
   // Modifier-driven window manager hotkeys.
   if (modifierHeld && wm) {
     if (sym == XKB_KEY_E || sym == XKB_KEY_e) {

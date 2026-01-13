@@ -903,6 +903,7 @@ void WindowManager::tick() {
 
           auto spawnAtCamera = !currentlyFocusedApp.has_value();
           space->addApp(appEntity, spawnAtCamera);
+          positionRelativeToFocus(appEntity);
 
           if(registry->all_of<X11App>(appEntity)) {
             createUnfocusHackThread(appEntity);
@@ -984,6 +985,38 @@ void WindowManager::pruneInvalidFocus()
       opt = std::nullopt;
     }
   }
+}
+
+bool
+WindowManager::computeFocusedSpawn(glm::vec3& pos, glm::vec3& rot) const
+{
+  if (!registry || !currentlyFocusedApp || !registry->valid(*currentlyFocusedApp)) {
+    return false;
+  }
+  if (!registry->all_of<Positionable>(*currentlyFocusedApp)) {
+    return false;
+  }
+  auto& focusPos = registry->get<Positionable>(*currentlyFocusedApp);
+  pos = focusPos.pos + glm::vec3(1.2f, 0.0f, 0.0f);
+  rot = focusPos.rotate;
+  return true;
+}
+
+void
+WindowManager::positionRelativeToFocus(entt::entity appEntity)
+{
+  if (!registry || !registry->valid(appEntity) || !registry->all_of<Positionable>(appEntity)) {
+    return;
+  }
+  glm::vec3 pos;
+  glm::vec3 rot;
+  if (!computeFocusedSpawn(pos, rot)) {
+    return;
+  }
+  auto& positionable = registry->get<Positionable>(appEntity);
+  positionable.pos = pos;
+  positionable.rotate = rot;
+  positionable.damage();
 }
 
 void WindowManager::focusLookedAtApp() {
@@ -1321,7 +1354,8 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
   // Place in world space similar to spawnAtCamera path.
   glm::vec3 pos(0.0f, 3.5f, -2.0f);
   glm::vec3 rot(0.0f);
-  if (spawnAtCamera && camera) {
+  bool placedFromFocus = computeFocusedSpawn(pos, rot);
+  if (!placedFromFocus && spawnAtCamera && camera) {
     float yaw = camera->getYaw();
     float pitch = camera->getPitch();
     glm::quat yawRotation =
