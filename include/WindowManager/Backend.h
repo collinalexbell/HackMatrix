@@ -21,6 +21,8 @@ public:
   virtual void focusApp(entt::entity entity) = 0;
   virtual void unfocusApp() = 0;
   virtual std::optional<entt::entity> getCurrentlyFocusedApp() = 0;
+  // Pending focus target during in-flight camera moves (used to gate compositor input).
+  virtual std::optional<entt::entity> getPendingFocusedApp() = 0;
   virtual void tick() = 0;
 };
 

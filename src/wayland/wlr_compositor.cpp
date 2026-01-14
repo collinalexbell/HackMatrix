@@ -1110,9 +1110,13 @@ process_key_sym(WlrServer* server,
   bool blockClientDelivery = false;
   if (server->engine) {
     if (auto wm = server->engine->getWindowManager()) {
-      if (auto focused = wm->getCurrentlyFocusedApp()) {
+      std::optional<entt::entity> focusCandidate = wm->getPendingFocusedApp();
+      if (!focusCandidate) {
+        focusCandidate = wm->getCurrentlyFocusedApp();
+      }
+      if (focusCandidate) {
         if (server->registry &&
-            server->registry->all_of<WaylandApp::Component>(*focused)) {
+            server->registry->all_of<WaylandApp::Component>(*focusCandidate)) {
           waylandFocusActive = true;
         }
       }

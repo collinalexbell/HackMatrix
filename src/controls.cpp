@@ -757,6 +757,9 @@ Controls::runQueuedActions()
       fn();
     }
   }
+  // Also process any deferred callbacks (e.g., moveTo completion) so they run
+  // even when no GLFW window is present (Wayland compositor path).
+  doDeferedActions();
 }
 
 void

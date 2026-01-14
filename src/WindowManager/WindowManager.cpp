@@ -381,6 +381,7 @@ void WindowManager::focusEntityAfterMove(entt::entity ent) {
   if (!registry || !registry->valid(ent)) {
     return;
   }
+  pendingFocusedApp = std::nullopt;
   WL_WM_LOG("WM: focusEntityAfterMove ent=%d isWayland=%d isX11=%d\n",
             (int)entt::to_integral(ent),
             registry->all_of<WaylandApp::Component>(ent) ? 1 : 0,
@@ -522,6 +523,7 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool sh
       bool isX11 = registry && registry->all_of<X11App>(ent);
       WL_WM_LOG("WM: hotkey preparing focus ent=%d\n",
                 (int)entt::to_integral(ent));
+      pendingFocusedApp = ent;
 
       if (isX11) {
         auto& app = registry->get<X11App>(ent);
@@ -554,6 +556,7 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool sh
         WL_WM_LOG("WM: hotkey focus finishing ent=%d isX11=%d\n",
                   (int)entt::to_integral(ent),
                   isX11 ? 1 : 0);
+        pendingFocusedApp = std::nullopt;
         if (registry && registry->valid(ent) && isX11) {
           auto& app = registry->get<X11App>(ent);
           app.select();
@@ -920,6 +923,7 @@ void WindowManager::tick() {
 void WindowManager::focusApp(entt::entity appEntity) {
   if (waylandMode) {
     // Wayland focus is handled via wlroots; record focus only.
+    pendingFocusedApp = std::nullopt;
     currentlyFocusedApp = appEntity;
     if (registry && registry->valid(appEntity) &&
         registry->all_of<WaylandApp::Component>(appEntity)) {
@@ -935,6 +939,7 @@ void WindowManager::focusApp(entt::entity appEntity) {
     return;
   }
   currentlyFocusedApp = appEntity;
+  pendingFocusedApp = std::nullopt;
   auto &app = registry->get<X11App>(appEntity);
   app.focus(matrix);
 }
@@ -951,6 +956,7 @@ void WindowManager::unfocusApp() {
     }
     WL_WM_LOG("WM: unfocusApp (wayland) ent=%d wlCount=%zu\n", ent, wlCount);
     currentlyFocusedApp = std::nullopt;
+    pendingFocusedApp = std::nullopt;
     return;
   }
   logger->debug("unfocusing app");
@@ -965,6 +971,7 @@ void WindowManager::unfocusApp() {
   auto& app = registry->get<X11App>(ent);
   app.unfocus(matrix);
   currentlyFocusedApp = std::nullopt;
+  pendingFocusedApp = std::nullopt;
   WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n", (int)entt::to_integral(ent));
 }
 
@@ -1031,6 +1038,7 @@ void WindowManager::focusLookedAtApp() {
               registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.z : 0.0f);
     if (registry->all_of<WaylandApp::Component>(entity)) {
       // Wayland app path: just record focus and let wlroots handle input.
+      pendingFocusedApp = std::nullopt;
       currentlyFocusedApp = entity;
       if (auto* comp = registry->try_get<WaylandApp::Component>(entity)) {
         if (comp->app) {

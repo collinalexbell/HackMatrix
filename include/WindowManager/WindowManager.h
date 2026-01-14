@@ -58,6 +58,7 @@ public:
   virtual void captureInput() = 0;
   virtual void createAndRegisterApps(char** envp) = 0;
   virtual optional<entt::entity> getCurrentlyFocusedApp() = 0;
+  virtual optional<entt::entity> getPendingFocusedApp() = 0;
   virtual void focusApp(entt::entity) = 0;
   virtual void wire(shared_ptr<WindowManagerInterface>, Camera* camera, Renderer* renderer) = 0;
   virtual void handleSubstructure() = 0;
@@ -163,6 +164,7 @@ class WindowManager : public WindowManagerInterface
   std::atomic_bool screenshotRequested = false;
   unsigned int hotkeyModifierMask = Mod4Mask;
   std::optional<bool> cursorVisible;
+  std::optional<entt::entity> pendingFocusedApp;
 
 public:
   void unfocusApp() override;
@@ -175,6 +177,7 @@ public:
   bool isWaylandMode() const override { return waylandMode; }
   ~WindowManager();
   optional<entt::entity> getCurrentlyFocusedApp() override;
+  optional<entt::entity> getPendingFocusedApp() override { return pendingFocusedApp; }
   void focusApp(entt::entity) override;
   void wire(WindowManagerPtr sharedThis, Camera* camera, Renderer* renderer) override;
   void handleSubstructure() override;
