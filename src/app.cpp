@@ -740,7 +740,15 @@ X11App::isAccessory()
   if (error != GL_NO_ERROR) {
     throw "XGetWindowAttributes failed";
   }
-  if (attrs.override_redirect) {
+  if (!attrs.override_redirect) {
+    return false;
+  }
+  // Treat override-redirect windows as accessory only if they're small (e.g.,
+  // popups/menus). Large override-redirect windows like OBS should be treated
+  // as normal apps.
+  const int maxAccessoryW = SCREEN_WIDTH / 2;
+  const int maxAccessoryH = SCREEN_HEIGHT / 2;
+  if (attrs.width <= maxAccessoryW && attrs.height <= maxAccessoryH) {
     return true;
   }
   return false;

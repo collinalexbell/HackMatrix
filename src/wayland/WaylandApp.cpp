@@ -18,6 +18,7 @@ extern "C" {
 #include <glm/gtc/matrix_transform.hpp>
 #include "screen.h"
 #include "components/Bootable.h"
+#include <cstdlib>
 #ifndef EGL_EGLEXT_PROTOTYPES
 #define EGL_EGLEXT_PROTOTYPES
 #endif
@@ -437,8 +438,12 @@ WaylandApp::appTexture()
   std::vector<uint8_t> fallbackPixels;
   bool beganDataPtrAccess = false;
 
+  static const bool kLogSamples = []() {
+    const char* env = std::getenv("MATRIX_WAYLANDAPP_SAMPLE_LOGS");
+    return env && env[0] != '\0';
+  };
   auto logSamplesEnabled = []() {
-    return true;
+    return kLogSamples;
   };
 
   auto logFileForSamples = []() -> FILE* {
@@ -554,300 +559,396 @@ WaylandApp::appTexture()
       }
     }
   }
-    // Convert to RGBA8 if the format isn't directly supported in GLES2.
-    std::vector<uint8_t> converted;
-    const size_t dstStride = static_cast<size_t>(width) * 4;
-    GLenum uploadFormat = GL_RGBA;
-    uint32_t firstPixel = 0;
-    uint32_t rawFirstBytes = 0;
-    uint32_t centerPixel = 0;
-    uint32_t rawCenterBytes = 0;
-    uint32_t rowChecksum = 0;
-    // If the buffer appears to be empty, populate a test pattern to verify
-    // the rendering path. This will be used only for diagnostics.
-    bool injectTestPattern = false;
-    uint8_t minR = 255, minG = 255, minB = 255, minA = 255;
-    uint8_t maxR = 0, maxG = 0, maxB = 0, maxA = 0;
 
-    auto convert_row = [&](int y, uint8_t* dstRow) {
-      const uint8_t* srcRow = src + y * srcStride;
-      for (int x = 0; x < width; ++x) {
-        const uint8_t* p = srcRow + x * 4;
-        uint8_t r = 0, g = 0, b = 0, a = 0;
-        switch (format) {
-          case DRM_FORMAT_ARGB8888: // memory order (little-endian): B G R A
-            b = p[0];
-            g = p[1];
-            r = p[2];
-            a = p[3];
-            break;
-          case DRM_FORMAT_ABGR8888: // A B G R
-            r = p[0];
-            g = p[1];
-            b = p[2];
-            a = p[3];
-            break;
-          case DRM_FORMAT_BGRA8888: // memory order: A R G B
-            a = p[0];
-            r = p[1];
-            g = p[2];
-            b = p[3];
-            break;
-          case DRM_FORMAT_RGBA8888: // memory order: A B G R
-            a = p[0];
-            b = p[1];
-            g = p[2];
-            r = p[3];
-            break;
-          case DRM_FORMAT_XBGR8888: // memory order: R G B X
-            r = p[0];
-            g = p[1];
-            b = p[2];
-            a = 255;
-            break;
-          case DRM_FORMAT_BGRX8888: // memory order: X R G B
-            r = p[1];
-            g = p[2];
-            b = p[3];
-            a = 255;
-            break;
-          case DRM_FORMAT_RGBX8888: // memory order: X B G R
-            b = p[1];
-            g = p[2];
-            r = p[3];
-            a = 255;
-            break;
-          case DRM_FORMAT_XRGB8888: // Fourcc XRGB8888, bytes in memory B,G,R,X (little endian)
-            b = p[0];
-            g = p[1];
-            r = p[2];
-            a = 255;
-            break;
-          case DRM_FORMAT_XRGB2101010: { // 10:10:10:2 little endian, B,G,R,X
-            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
-            uint32_t br = (v >> 0) & 0x3FF;
-            uint32_t bg = (v >> 10) & 0x3FF;
-            uint32_t bb = (v >> 20) & 0x3FF;
-            r = (uint8_t)((br * 255) / 1023);
-            g = (uint8_t)((bg * 255) / 1023);
-            b = (uint8_t)((bb * 255) / 1023);
-            a = 255;
-            break;
-          }
-          case DRM_FORMAT_XBGR2101010: { // B,G,R,X 10-bit
-            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
-            uint32_t br = (v >> 0) & 0x3FF;
-            uint32_t bg = (v >> 10) & 0x3FF;
-            uint32_t bb = (v >> 20) & 0x3FF;
-            r = (uint8_t)((br * 255) / 1023);
-            g = (uint8_t)((bg * 255) / 1023);
-            b = (uint8_t)((bb * 255) / 1023);
-            a = 255;
-            break;
-          }
-          case DRM_FORMAT_ARGB2101010: { // B,G,R,A 10-bit with 2-bit alpha
-            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
-            uint32_t br = (v >> 0) & 0x3FF;
-            uint32_t bg = (v >> 10) & 0x3FF;
-            uint32_t bb = (v >> 20) & 0x3FF;
-            uint32_t ba = (v >> 30) & 0x3;
-            r = (uint8_t)((br * 255) / 1023);
-            g = (uint8_t)((bg * 255) / 1023);
-            b = (uint8_t)((bb * 255) / 1023);
-            a = (uint8_t)((ba * 255) / 3);
-            break;
-          }
-          case DRM_FORMAT_ABGR2101010: { // R,G,B,A 10-bit with 2-bit alpha
-            uint32_t v = *reinterpret_cast<const uint32_t*>(p);
-            uint32_t br = (v >> 0) & 0x3FF;
-            uint32_t bg = (v >> 10) & 0x3FF;
-            uint32_t bb = (v >> 20) & 0x3FF;
-            uint32_t ba = (v >> 30) & 0x3;
-            b = (uint8_t)((br * 255) / 1023);
-            g = (uint8_t)((bg * 255) / 1023);
-            r = (uint8_t)((bb * 255) / 1023);
-            a = (uint8_t)((ba * 255) / 3);
-            break;
-          }
-          default:
-            // Assume RGBA
-            r = p[0];
-            g = p[1];
-            b = p[2];
-            a = p[3];
-            break;
-        }
-        dstRow[x * 4 + 0] = r;
-        dstRow[x * 4 + 1] = g;
-        dstRow[x * 4 + 2] = b;
-        dstRow[x * 4 + 3] = a;
-        if (y == 0 && x == 0) {
-          firstPixel = (uint32_t(r) << 24) | (uint32_t(g) << 16) |
-                       (uint32_t(b) << 8) | uint32_t(a);
-        }
-        minR = std::min(minR, r);
-        minG = std::min(minG, g);
-        minB = std::min(minB, b);
-        minA = std::min(minA, a);
-        maxR = std::max(maxR, r);
-        maxG = std::max(maxG, g);
-        maxB = std::max(maxB, b);
-        maxA = std::max(maxA, a);
-      }
-    };
-
-    converted.resize(static_cast<size_t>(height) * dstStride);
-    for (int y = 0; y < height; ++y) {
-      const uint8_t* row = src + y * srcStride;
-      if (y == 0 && width > 0) {
-        // Log the raw first pixel bytes before conversion for debugging.
-        rawFirstBytes = (uint32_t(row[0]) << 24) | (uint32_t(row[1]) << 16) |
-                        (uint32_t(row[2]) << 8) | uint32_t(row[3]);
-        // Simple checksum of first row
-        for (int x = 0; x < width; ++x) {
-          rowChecksum += row[x * 4 + 0] + row[x * 4 + 1] +
-                         row[x * 4 + 2] + row[x * 4 + 3];
-        }
-      }
-      if (y == height / 2 && width > 0) {
-        const uint8_t* p = row + (width / 2) * 4;
-        rawCenterBytes = (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) |
-                         (uint32_t(p[2]) << 8) | uint32_t(p[3]);
-      }
-      uint8_t* dstRow = converted.data() + y * dstStride;
-      convert_row(y, dstRow);
-      if (injectTestPattern) {
-        for (int x = 0; x < width; ++x) {
-          dstRow[x * 4 + 0] = static_cast<uint8_t>((x * 255) / std::max(1, width - 1));
-          dstRow[x * 4 + 1] = static_cast<uint8_t>((y * 255) / std::max(1, height - 1));
-          dstRow[x * 4 + 2] = 128;
-          dstRow[x * 4 + 3] = 255;
-        }
-      }
-      if (y == height / 2 && width > 0) {
-        const uint8_t* dst = converted.data() + y * dstStride + (width / 2) * 4;
-        centerPixel = (uint32_t(dst[0]) << 24) | (uint32_t(dst[1]) << 16) |
-                      (uint32_t(dst[2]) << 8) | uint32_t(dst[3]);
-      }
+  // Fast path: directly upload all common 32-bit formats without swizzle when
+  // stride matches. This avoids per-pixel conversion for repaint-heavy apps.
+  auto try_direct_upload = [&]() -> bool {
+    if (width <= 0 || height <= 0) {
+      return false;
     }
-
-    bool forceOpaque = ((maxA == 0 || minA == 0) && (maxR | maxG | maxB));
-    if (forceOpaque) {
-      for (int y = 0; y < height; ++y) {
-        uint8_t* row = converted.data() + y * dstStride;
-        for (int x = 0; x < width; ++x) {
-          row[x * 4 + 3] = 255;
-        }
-      }
-      if (centerPixel != 0 && firstPixel == 0) {
-        firstPixel = centerPixel;
-      }
-      if (firstPixel != 0) {
-        firstPixel |= 0x000000FF;
-      }
-      if (centerPixel != 0) {
-        centerPixel |= 0x000000FF;
-      }
-      maxA = 255;
+    if (srcStride != static_cast<size_t>(width) * 4) {
+      return false;
     }
-
-    if (logSamplesEnabled() && !sampleLogged) {
-      FILE* logFile = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-      if (logFile) {
-        uint8_t firstR = static_cast<uint8_t>((firstPixel >> 24) & 0xFF);
-        uint8_t firstG = static_cast<uint8_t>((firstPixel >> 16) & 0xFF);
-        uint8_t firstB = static_cast<uint8_t>((firstPixel >> 8) & 0xFF);
-        uint8_t firstA = static_cast<uint8_t>(firstPixel & 0xFF);
-        bool ok = (firstR | firstG | firstB | firstA | centerPixel) != 0;
-        std::fprintf(logFile,
-                     "wayland-app: sample firstPixel=(%u,%u,%u,%u) center=%x size=%dx%d fmt=%u ok=%d\n",
-                     firstR,
-                     firstG,
-                     firstB,
-                     firstA,
-                     centerPixel,
-                     width,
-                     height,
-                     format,
-                     ok ? 1 : 0);
-        std::fflush(logFile);
-        std::fclose(logFile);
-        sampleLogged = true;
-      }
+    GLenum glFormat = 0;
+    switch (format) {
+      case DRM_FORMAT_ARGB8888: // memory: B G R A
+        glFormat = GL_BGRA;
+        break;
+      case DRM_FORMAT_ABGR8888: // memory: R G B A
+        glFormat = GL_RGBA;
+        break;
+      case DRM_FORMAT_XRGB8888: // memory: B G R X (opaque)
+        glFormat = GL_BGRA;
+        break;
+      case DRM_FORMAT_XBGR8888: // memory: R G B X (opaque)
+        glFormat = GL_RGBA;
+        break;
+      default:
+        return false;
     }
-
+    // Ensure BGRA is supported before issuing the upload; otherwise fall back
+    // to the conversion path to avoid undefined behaviour on drivers lacking
+    // the extension.
+    bool bgraSupported = false;
+#ifdef GLAD_GL_EXT_texture_format_BGRA8888
+    bgraSupported = bgraSupported || GLAD_GL_EXT_texture_format_BGRA8888;
+#endif
+#ifdef GLAD_GL_APPLE_texture_format_BGRA8888
+    bgraSupported = bgraSupported || GLAD_GL_APPLE_texture_format_BGRA8888;
+#endif
+#ifdef GLAD_GL_EXT_read_format_bgra
+    bgraSupported = bgraSupported || GLAD_GL_EXT_read_format_bgra;
+#endif
+#ifdef GLAD_GL_IMG_read_format
+    bgraSupported = bgraSupported || GLAD_GL_IMG_read_format;
+#endif
+#ifdef GLAD_GL_OES_required_internalformat
+    bgraSupported = bgraSupported || GLAD_GL_OES_required_internalformat;
+#endif
+    if (glFormat == GL_BGRA && !bgraSupported) {
+      return false;
+    }
     glActiveTexture(textureUnit);
     glBindTexture(GL_TEXTURE_2D, textureId);
-    GLboolean valid = glIsTexture(textureId);
-    if (!valid) {
-      wlr_log(WLR_ERROR, "wayland-app: texture %d is not valid", textureId);
-    }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
     glTexImage2D(GL_TEXTURE_2D,
                  0,
                  GL_RGBA,
                  width,
                  height,
                  0,
-                 GL_RGBA,
+                 glFormat,
                  GL_UNSIGNED_BYTE,
-                 converted.data());
+                 src);
     uploadedWidth = width;
     uploadedHeight = height;
     GLenum errAfter = glGetError();
-    if (rowChecksum == 0 && centerPixel == 0 && firstPixel == 0) {
-      injectTestPattern = true;
-    }
-    if (injectTestPattern) {
-      glTexSubImage2D(GL_TEXTURE_2D,
-                      0,
-                      0,
-                      0,
-                      width,
-                      height,
-                      uploadFormat,
-                      GL_UNSIGNED_BYTE,
-                      converted.data());
-      errAfter = glGetError();
-    }
     if constexpr (kWlrootsDebugLogs) {
       FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
       if (logFile2) {
         std::fprintf(logFile2,
-                     "WaylandApp upload: texId=%d unit=%d texSize=%dx%d uploadSize=%dx%d stride=%zu fmt=%u glErr=0x%x firstPixel=0x%08x rawFirst=0x%08x center=0x%08x rawCenter=0x%08x rowChecksum=%u min=(%u,%u,%u,%u) max=(%u,%u,%u,%u)\n",
+                     "WaylandApp direct upload: texId=%d unit=%d texSize=%dx%d stride=%zu fmt=%u glFmt=0x%x glErr=0x%x\n",
                      textureId,
                      textureUnit - GL_TEXTURE0,
                      width,
                      height,
-                     width,
-                     height,
-                     stride,
+                     srcStride,
                      format,
-                     errAfter,
-                     firstPixel,
-                     rawFirstBytes,
-                     centerPixel,
-                     rawCenterBytes,
-                     rowChecksum,
-                     minR,
-                     minG,
-                     minB,
-                     minA,
-                     maxR,
-                     maxG,
-                     maxB,
-                     maxA);
+                     glFormat,
+                     errAfter);
         std::fflush(logFile2);
         std::fclose(logFile2);
       }
     }
-    importedBuffer = buffer;
     needsImport = false;
     if (beganDataPtrAccess) {
       wlr_buffer_end_data_ptr_access(buffer);
     }
+    importedBuffer = buffer;
+    return errAfter == GL_NO_ERROR;
+  };
+  if (try_direct_upload()) {
+    return;
   }
+
+  // Convert to RGBA8 if the format isn't directly supported in GLES2.
+  std::vector<uint8_t> converted;
+  const size_t dstStride = static_cast<size_t>(width) * 4;
+  GLenum uploadFormat = GL_RGBA;
+  uint32_t firstPixel = 0;
+  uint32_t rawFirstBytes = 0;
+  uint32_t centerPixel = 0;
+  uint32_t rawCenterBytes = 0;
+  uint32_t rowChecksum = 0;
+  // If the buffer appears to be empty, populate a test pattern to verify
+  // the rendering path. This will be used only for diagnostics.
+  bool injectTestPattern = false;
+  uint8_t minR = 255, minG = 255, minB = 255, minA = 255;
+  uint8_t maxR = 0, maxG = 0, maxB = 0, maxA = 0;
+
+  auto convert_row = [&](int y, uint8_t* dstRow) {
+    const uint8_t* srcRow = src + y * srcStride;
+    for (int x = 0; x < width; ++x) {
+      const uint8_t* p = srcRow + x * 4;
+      uint8_t r = 0, g = 0, b = 0, a = 0;
+      switch (format) {
+        case DRM_FORMAT_ARGB8888: // memory order (little-endian): B G R A
+          b = p[0];
+          g = p[1];
+          r = p[2];
+          a = p[3];
+          break;
+        case DRM_FORMAT_ABGR8888: // A B G R
+          r = p[0];
+          g = p[1];
+          b = p[2];
+          a = p[3];
+          break;
+        case DRM_FORMAT_BGRA8888: // memory order: A R G B
+          a = p[0];
+          r = p[1];
+          g = p[2];
+          b = p[3];
+          break;
+        case DRM_FORMAT_RGBA8888: // memory order: A B G R
+          a = p[0];
+          b = p[1];
+          g = p[2];
+          r = p[3];
+          break;
+        case DRM_FORMAT_XBGR8888: // memory order: R G B X
+          r = p[0];
+          g = p[1];
+          b = p[2];
+          a = 255;
+          break;
+        case DRM_FORMAT_BGRX8888: // memory order: X R G B
+          r = p[1];
+          g = p[2];
+          b = p[3];
+          a = 255;
+          break;
+        case DRM_FORMAT_RGBX8888: // memory order: X B G R
+          b = p[1];
+          g = p[2];
+          r = p[3];
+          a = 255;
+          break;
+        case DRM_FORMAT_XRGB8888: // Fourcc XRGB8888, bytes in memory B,G,R,X (little endian)
+          b = p[0];
+          g = p[1];
+          r = p[2];
+          a = 255;
+          break;
+        case DRM_FORMAT_XRGB2101010: { // 10:10:10:2 little endian, B,G,R,X
+          uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+          uint32_t br = (v >> 0) & 0x3FF;
+          uint32_t bg = (v >> 10) & 0x3FF;
+          uint32_t bb = (v >> 20) & 0x3FF;
+          r = (uint8_t)((br * 255) / 1023);
+          g = (uint8_t)((bg * 255) / 1023);
+          b = (uint8_t)((bb * 255) / 1023);
+          a = 255;
+          break;
+        }
+        case DRM_FORMAT_XBGR2101010: { // B,G,R,X 10-bit
+          uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+          uint32_t br = (v >> 0) & 0x3FF;
+          uint32_t bg = (v >> 10) & 0x3FF;
+          uint32_t bb = (v >> 20) & 0x3FF;
+          r = (uint8_t)((br * 255) / 1023);
+          g = (uint8_t)((bg * 255) / 1023);
+          b = (uint8_t)((bb * 255) / 1023);
+          a = 255;
+          break;
+        }
+        case DRM_FORMAT_ARGB2101010: { // B,G,R,A 10-bit with 2-bit alpha
+          uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+          uint32_t br = (v >> 0) & 0x3FF;
+          uint32_t bg = (v >> 10) & 0x3FF;
+          uint32_t bb = (v >> 20) & 0x3FF;
+          uint32_t ba = (v >> 30) & 0x3;
+          r = (uint8_t)((br * 255) / 1023);
+          g = (uint8_t)((bg * 255) / 1023);
+          b = (uint8_t)((bb * 255) / 1023);
+          a = (uint8_t)((ba * 255) / 3);
+          break;
+        }
+        case DRM_FORMAT_ABGR2101010: { // R,G,B,A 10-bit with 2-bit alpha
+          uint32_t v = *reinterpret_cast<const uint32_t*>(p);
+          uint32_t br = (v >> 0) & 0x3FF;
+          uint32_t bg = (v >> 10) & 0x3FF;
+          uint32_t bb = (v >> 20) & 0x3FF;
+          uint32_t ba = (v >> 30) & 0x3;
+          b = (uint8_t)((br * 255) / 1023);
+          g = (uint8_t)((bg * 255) / 1023);
+          r = (uint8_t)((bb * 255) / 1023);
+          a = (uint8_t)((ba * 255) / 3);
+          break;
+        }
+        default:
+          // Assume RGBA
+          r = p[0];
+          g = p[1];
+          b = p[2];
+          a = p[3];
+          break;
+      }
+      dstRow[x * 4 + 0] = r;
+      dstRow[x * 4 + 1] = g;
+      dstRow[x * 4 + 2] = b;
+      dstRow[x * 4 + 3] = a;
+      if (y == 0 && x == 0) {
+        firstPixel = (uint32_t(r) << 24) | (uint32_t(g) << 16) |
+                     (uint32_t(b) << 8) | uint32_t(a);
+      }
+      minR = std::min(minR, r);
+      minG = std::min(minG, g);
+      minB = std::min(minB, b);
+      minA = std::min(minA, a);
+      maxR = std::max(maxR, r);
+      maxG = std::max(maxG, g);
+      maxB = std::max(maxB, b);
+      maxA = std::max(maxA, a);
+    }
+  };
+
+  converted.resize(static_cast<size_t>(height) * dstStride);
+  for (int y = 0; y < height; ++y) {
+    const uint8_t* row = src + y * srcStride;
+    if (y == 0 && width > 0) {
+      // Log the raw first pixel bytes before conversion for debugging.
+      rawFirstBytes = (uint32_t(row[0]) << 24) | (uint32_t(row[1]) << 16) |
+                      (uint32_t(row[2]) << 8) | uint32_t(row[3]);
+      // Simple checksum of first row
+      for (int x = 0; x < width; ++x) {
+        rowChecksum += row[x * 4 + 0] + row[x * 4 + 1] +
+                       row[x * 4 + 2] + row[x * 4 + 3];
+      }
+    }
+    if (y == height / 2 && width > 0) {
+      const uint8_t* p = row + (width / 2) * 4;
+      rawCenterBytes = (uint32_t(p[0]) << 24) | (uint32_t(p[1]) << 16) |
+                       (uint32_t(p[2]) << 8) | uint32_t(p[3]);
+    }
+    uint8_t* dstRow = converted.data() + y * dstStride;
+    convert_row(y, dstRow);
+    if (injectTestPattern) {
+      for (int x = 0; x < width; ++x) {
+        dstRow[x * 4 + 0] = static_cast<uint8_t>((x * 255) / std::max(1, width - 1));
+        dstRow[x * 4 + 1] = static_cast<uint8_t>((y * 255) / std::max(1, height - 1));
+        dstRow[x * 4 + 2] = 128;
+        dstRow[x * 4 + 3] = 255;
+      }
+    }
+    if (y == height / 2 && width > 0) {
+      const uint8_t* dst = converted.data() + y * dstStride + (width / 2) * 4;
+      centerPixel = (uint32_t(dst[0]) << 24) | (uint32_t(dst[1]) << 16) |
+                    (uint32_t(dst[2]) << 8) | uint32_t(dst[3]);
+    }
+  }
+
+  bool forceOpaque = ((maxA == 0 || minA == 0) && (maxR | maxG | maxB));
+  if (forceOpaque) {
+    for (int y = 0; y < height; ++y) {
+      uint8_t* row = converted.data() + y * dstStride;
+      for (int x = 0; x < width; ++x) {
+        row[x * 4 + 3] = 255;
+      }
+    }
+    if (centerPixel != 0 && firstPixel == 0) {
+      firstPixel = centerPixel;
+    }
+    if (firstPixel != 0) {
+      firstPixel |= 0x000000FF;
+    }
+    if (centerPixel != 0) {
+      centerPixel |= 0x000000FF;
+    }
+    maxA = 255;
+  }
+
+  if (logSamplesEnabled() && !sampleLogged) {
+    FILE* logFile = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
+    if (logFile) {
+      uint8_t firstR = static_cast<uint8_t>((firstPixel >> 24) & 0xFF);
+      uint8_t firstG = static_cast<uint8_t>((firstPixel >> 16) & 0xFF);
+      uint8_t firstB = static_cast<uint8_t>((firstPixel >> 8) & 0xFF);
+      uint8_t firstA = static_cast<uint8_t>(firstPixel & 0xFF);
+      bool ok = (firstR | firstG | firstB | firstA | centerPixel) != 0;
+      std::fprintf(logFile,
+                   "wayland-app: sample firstPixel=(%u,%u,%u,%u) center=%x size=%dx%d fmt=%u ok=%d\n",
+                   firstR,
+                   firstG,
+                   firstB,
+                   firstA,
+                   centerPixel,
+                   width,
+                   height,
+                   format,
+                   ok ? 1 : 0);
+      std::fflush(logFile);
+      std::fclose(logFile);
+      sampleLogged = true;
+    }
+  }
+
+  glActiveTexture(textureUnit);
+  glBindTexture(GL_TEXTURE_2D, textureId);
+  GLboolean valid = glIsTexture(textureId);
+  if (!valid) {
+    wlr_log(WLR_ERROR, "wayland-app: texture %d is not valid", textureId);
+  }
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glTexImage2D(GL_TEXTURE_2D,
+               0,
+               GL_RGBA,
+               width,
+               height,
+               0,
+               GL_RGBA,
+               GL_UNSIGNED_BYTE,
+               converted.data());
+  uploadedWidth = width;
+  uploadedHeight = height;
+  GLenum errAfter = glGetError();
+  if (rowChecksum == 0 && centerPixel == 0 && firstPixel == 0) {
+    injectTestPattern = true;
+  }
+  if (injectTestPattern) {
+    glTexSubImage2D(GL_TEXTURE_2D,
+                    0,
+                    0,
+                    0,
+                    width,
+                    height,
+                    uploadFormat,
+                    GL_UNSIGNED_BYTE,
+                    converted.data());
+    errAfter = glGetError();
+  }
+  if constexpr (kWlrootsDebugLogs) {
+    FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
+    if (logFile2) {
+      std::fprintf(logFile2,
+                   "WaylandApp upload: texId=%d unit=%d texSize=%dx%d uploadSize=%dx%d stride=%zu fmt=%u glErr=0x%x firstPixel=0x%08x rawFirst=0x%08x center=0x%08x rawCenter=0x%08x rowChecksum=%u min=(%u,%u,%u,%u) max=(%u,%u,%u,%u)\n",
+                   textureId,
+                   textureUnit - GL_TEXTURE0,
+                   width,
+                   height,
+                   width,
+                   height,
+                   stride,
+                   format,
+                   errAfter,
+                   firstPixel,
+                   rawFirstBytes,
+                   centerPixel,
+                   rawCenterBytes,
+                   rowChecksum,
+                   minR,
+                   minG,
+                   minB,
+                   minA,
+                   maxR,
+                   maxG,
+                   maxB,
+                   maxA);
+      std::fflush(logFile2);
+      std::fclose(logFile2);
+    }
+  }
+  importedBuffer = buffer;
+  needsImport = false;
+  if (beganDataPtrAccess) {
+    wlr_buffer_end_data_ptr_access(buffer);
+  }
+}
