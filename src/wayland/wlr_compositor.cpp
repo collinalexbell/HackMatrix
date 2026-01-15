@@ -1499,6 +1499,7 @@ handle_new_input(wl_listener* listener, void* data)
           wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), button);
         auto* event = static_cast<wlr_pointer_button_event*>(data);
         bool handled_by_game = false;
+        bool wayland_focus_requested = wayland_pointer_focus_requested(handle->server);
         wlr_surface* preferred_surface = nullptr;
         Controls* controls =
           handle->server && handle->server->engine
@@ -1525,7 +1526,9 @@ handle_new_input(wl_listener* listener, void* data)
               static_cast<uint32_t>(WLR_BUTTON_PRESSED) &&
             handle->server && handle->server->engine) {
           update_mouse_button(event->button, true);
-          if (controls) {
+          // If a Wayland client has (or is requesting) focus, bypass game controls so
+          // the click reaches the client immediately.
+          if (controls && !wayland_focus_requested) {
             handled_by_game = controls->handlePointerButton(event->button, true);
           }
           if (auto wm = handle->server->engine->getWindowManager()) {
