@@ -189,6 +189,7 @@ struct WlrPointerHandle {
   wl_listener motion;
   wl_listener motion_abs;
   wl_listener button;
+  wl_listener axis;
   wl_listener destroy;
 };
 
@@ -1510,6 +1511,32 @@ handle_new_input(wl_listener* listener, void* data)
         wlr_log(WLR_DEBUG, "pointer motion abs dx=%.3f dy=%.3f", handle->server->input.delta_x, handle->server->input.delta_y);
       };
       wl_signal_add(&pointer->events.motion_absolute, &handle->motion_abs);
+      handle->axis.notify = [](wl_listener* listener, void* data) {
+        auto* handle =
+          wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), axis);
+        auto* event = static_cast<wlr_pointer_axis_event*>(data);
+        wlr_surface* preferred_surface = nullptr;
+        if (handle->server && handle->server->seat &&
+            handle->server->seat->pointer_state.focused_surface) {
+          preferred_surface = handle->server->seat->pointer_state.focused_surface;
+        }
+        if (!preferred_surface) {
+          auto picked = pick_any_surface(handle->server);
+          preferred_surface = picked.first;
+        }
+        ensure_pointer_focus(handle->server, event->time_msec, preferred_surface);
+        if (handle->server && handle->server->seat) {
+          wlr_seat_pointer_notify_axis(handle->server->seat,
+                                       event->time_msec,
+                                       event->orientation,
+                                       event->delta,
+                                       event->delta_discrete,
+                                       event->source,
+                                       event->relative_direction);
+          wlr_seat_pointer_notify_frame(handle->server->seat);
+        }
+      };
+      wl_signal_add(&pointer->events.axis, &handle->axis);
       handle->button.notify = [](wl_listener* listener, void* data) {
         auto* handle =
           wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), button);
@@ -1634,6 +1661,7 @@ handle_new_input(wl_listener* listener, void* data)
         wl_list_remove(&handle->motion.link);
         wl_list_remove(&handle->motion_abs.link);
         wl_list_remove(&handle->button.link);
+        wl_list_remove(&handle->axis.link);
         wl_list_remove(&handle->destroy.link);
         delete handle;
       };
