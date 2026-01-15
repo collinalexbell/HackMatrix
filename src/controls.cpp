@@ -612,6 +612,9 @@ Controls::handleKeySym(xkb_keysym_t sym,
     }
     if (sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
       wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
+      // When jumping via hotkey, drop the current seat focus so pointer/keyboard
+      // focus can be rebound to the destination app after the move finishes.
+      resp.clearSeatFocus = true;
       resp.blockClientDelivery = true;
       resp.consumed = true;
       return resp;
