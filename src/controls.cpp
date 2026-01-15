@@ -531,6 +531,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
   if ((sym == XKB_KEY_v || sym == XKB_KEY_V) && wm && debounce(lastKeyPressTime) &&
       (!waylandFocusActive || modifierHeld)) {
     log_controls("controls: menu\n");
+    resp.clearInputForces = true;
     wm->menu();
     resp.blockClientDelivery = true;
     resp.consumed = true;
@@ -581,6 +582,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
   // Focus key (mirrors click focus) is handled on the main thread via the
   // queued action system to match engine timing.
   if ((sym == XKB_KEY_r || sym == XKB_KEY_R) && debounce(lastKeyPressTime)) {
+    resp.clearInputForces = true;
     enqueueAction([this]() {
       if (!wm) {
         return;
@@ -611,6 +613,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
       return resp;
     }
     if (sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
+      resp.clearInputForces = true;
       wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
       // When jumping via hotkey, drop the current seat focus so pointer/keyboard
       // focus can be rebound to the destination app after the move finishes.
@@ -771,6 +774,12 @@ Controls::applyMovementInput(bool forward, bool back, bool left, bool right)
   if (camera) {
     camera->handleTranslateForce(forward, back, left, right);
   }
+}
+
+void
+Controls::clearMovementInput()
+{
+  applyMovementInput(false, false, false, false);
 }
 
 void

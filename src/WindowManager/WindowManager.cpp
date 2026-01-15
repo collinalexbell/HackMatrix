@@ -389,6 +389,11 @@ void WindowManager::focusEntityAfterMove(entt::entity ent) {
             registry->all_of<X11App>(ent) ? 1 : 0);
   if (registry->all_of<WaylandApp::Component>(ent)) {
     currentlyFocusedApp = ent;
+    if (controls) {
+      // Drop any lingering movement so movement keys don't stay "held" when focus
+      // shifts to a Wayland client.
+      controls->clearMovementInput();
+    }
     if (auto* comp = registry->try_get<WaylandApp::Component>(ent)) {
       if (comp->app) {
         comp->app->takeInputFocus();
@@ -926,6 +931,10 @@ void WindowManager::focusApp(entt::entity appEntity) {
     // Wayland focus is handled via wlroots; record focus only.
     pendingFocusedApp = std::nullopt;
     currentlyFocusedApp = appEntity;
+    if (controls) {
+      // Clear any stuck movement when compositor focus moves to a client.
+      controls->clearMovementInput();
+    }
     if (registry && registry->valid(appEntity) &&
         registry->all_of<WaylandApp::Component>(appEntity)) {
       // Notify the Wayland client so keyboard/pointer focus matches click focus.

@@ -1241,6 +1241,8 @@ process_key_sym(WlrServer* server,
     case XKB_KEY_W:
       if (!waylandFocusActive) {
         server->input.forward = pressed;
+      } else if (!pressed) {
+        server->input.forward = false;
       } else {
         log_to_tmp("key replay: dropped movement key sym=%s(%u) because wayland focus\n",
                    keysym_name(sym).c_str(),
@@ -1251,18 +1253,24 @@ process_key_sym(WlrServer* server,
     case XKB_KEY_S:
       if (!waylandFocusActive) {
         server->input.back = pressed;
+      } else if (!pressed) {
+        server->input.back = false;
       }
       break;
     case XKB_KEY_a:
     case XKB_KEY_A:
       if (!waylandFocusActive) {
         server->input.left = pressed;
+      } else if (!pressed) {
+        server->input.left = false;
       }
       break;
     case XKB_KEY_d:
     case XKB_KEY_D:
       if (!waylandFocusActive) {
         server->input.right = pressed;
+      } else if (!pressed) {
+        server->input.right = false;
       }
       break;
     default:
@@ -1325,12 +1333,20 @@ process_key_sym(WlrServer* server,
                  sym);
     }
     if (target_surface) {
+      bool focusChanged =
+        server->seat->keyboard_state.focused_surface != target_surface;
       // Keep WM focus in sync with the seat when we can map the surface.
       if (server->engine) {
         if (auto wm = server->engine->getWindowManager()) {
           auto it = server->surface_map.find(target_surface);
           if (it != server->surface_map.end()) {
             // Do not force WM focus here; explicit hotkeys handle focus.
+            if (focusChanged) {
+              if (auto* controls = server->engine->getControls()) {
+                controls->clearMovementInput();
+              }
+              clear_input_forces(server);
+            }
           }
         }
       }

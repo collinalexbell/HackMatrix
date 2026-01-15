@@ -108,6 +108,7 @@ public:
                                bool shiftHeld,
                                bool waylandFocusActive);
   void applyMovementInput(bool forward, bool back, bool left, bool right);
+  void clearMovementInput();
   void applyLookDelta(double dx, double dy);
   bool handlePointerButton(uint32_t button, bool pressed);
   void disableKeys();
