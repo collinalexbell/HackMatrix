@@ -73,6 +73,7 @@ public:
   virtual bool hasPendingReplay() const = 0;
   virtual bool consumeScreenshotRequest() = 0;
   virtual void requestScreenshot() = 0;
+  virtual bool consumeMenuSpawnPending() = 0;
   virtual entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
                                           bool spawnAtCamera = true,
                                           bool accessory = false,
@@ -162,6 +163,7 @@ class WindowManager : public WindowManagerInterface
   bool replayActive = false;
   std::chrono::steady_clock::time_point replayStart;
   std::atomic_bool screenshotRequested = false;
+  std::atomic_bool menuSpawnPending = false;
   unsigned int hotkeyModifierMask = Mod4Mask;
   std::optional<bool> cursorVisible;
   std::optional<entt::entity> pendingFocusedApp;
@@ -193,6 +195,7 @@ public:
   bool hasPendingReplay() const override { return replayActive; }
   bool consumeScreenshotRequest() override;
   void requestScreenshot() override;
+  bool consumeMenuSpawnPending() override { return menuSpawnPending.exchange(false); }
   // Wayland-only: register a surface-backed app through the WM for placement
   // and rendering.
   entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,

@@ -133,6 +133,7 @@ public:
   glm::mat4 getHeightScalar() const override { return heightScalar; }
   int getTextureId() const override { return textureId; }
   int getTextureUnit() const override { return textureUnit; }
+  bool supportsDirectRender() const { return importedImage != EGL_NO_IMAGE_KHR; }
   wlr_surface* getSurface() const { return surface; }
   bool needsTextureImport() const { return needsImport; }
 

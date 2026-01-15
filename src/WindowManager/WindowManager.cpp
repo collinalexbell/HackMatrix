@@ -149,6 +149,7 @@ resolveHotkeyMaskFromConfig()
 }
 
 void WindowManager::menu() {
+  menuSpawnPending.store(true);
   auto program = menuProgram;
   // Use current environment so we capture updated WAYLAND_DISPLAY/XDG_RUNTIME_DIR.
   char** envForChild = environ;

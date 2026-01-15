@@ -212,6 +212,7 @@ struct PendingWlAction {
   wlr_surface* surface = nullptr;
   bool accessory = false;
   bool layer_shell = false;
+  bool menu_surface = false;
   wlr_surface* parent_surface = nullptr;
   int offset_x = 0;
   int offset_y = 0;
@@ -589,7 +590,7 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr
 }
 
 static bool
-is_rofi_surface(const std::shared_ptr<WaylandApp>& app)
+is_menu_surface(const std::shared_ptr<WaylandApp>& app)
 {
   if (!app) {
     return false;
@@ -599,7 +600,8 @@ is_rofi_surface(const std::shared_ptr<WaylandApp>& app)
   std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char c) {
     return static_cast<char>(std::tolower(c));
   });
-  return lowered.find("rofi") != std::string::npos;
+  return lowered.find("rofi") != std::string::npos || lowered.find("wofi") != std::string::npos ||
+         lowered.find("menu") != std::string::npos;
 }
 
 static bool
@@ -640,6 +642,7 @@ ensure_wayland_apps_registered(WlrServer* server)
                                    entry.first,
                                    comp->accessory,
                                    comp->layer_shell,
+                                   false,
                                    nullptr,
                                    comp->offset_x,
                                    comp->offset_y,
@@ -666,13 +669,20 @@ ensure_wayland_apps_registered(WlrServer* server)
   std::vector<PendingWlAction> retry;
   for (auto& action : actions) {
     if (action.type == PendingWlAction::Add) {
+      if (!action.menu_surface && server->engine) {
+        if (auto wm = server->engine->getWindowManager()) {
+          if (wm->consumeMenuSpawnPending()) {
+            action.menu_surface = true;
+          }
+        }
+      }
       log_to_tmp("pending_wl_actions: add surface=%p layer=%d accessory=%d parent=%p\n",
                  (void*)action.surface,
                  action.layer_shell ? 1 : 0,
                  action.accessory ? 1 : 0,
                  (void*)action.parent_surface);
-      // Force rofi into a screen-space layer shell so it renders as an overlay.
-      if (!action.layer_shell && is_rofi_surface(action.app)) {
+      // Force menu surfaces into a screen-space layer shell so they render as overlays.
+      if (!action.layer_shell && action.menu_surface) {
         action.layer_shell = true;
         action.accessory = true; // skip Positionable placement
         action.screen_x =
@@ -749,11 +759,37 @@ ensure_wayland_apps_registered(WlrServer* server)
       }
       if (entity != entt::null) {
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
-        log_to_tmp("pending_wl_actions: add mapped entity=%d surface=%p accessory=%d layer=%d\n",
+        const char* name = comp && comp->app ? comp->app->getWindowName().c_str() : "(null)";
+        log_to_tmp("pending_wl_actions: add mapped entity=%d surface=%p accessory=%d layer=%d menu=%d name=%s parentSurf=%p parentEnt=%d size=%dx%d\n",
                    (int)entt::to_integral(entity),
                    (void*)action.surface,
                    action.accessory ? 1 : 0,
-                   action.layer_shell ? 1 : 0);
+                   action.layer_shell ? 1 : 0,
+                   action.menu_surface ? 1 : 0,
+                   name,
+                   (void*)action.parent_surface,
+                   parentEnt == entt::null ? -1 : (int)entt::to_integral(parentEnt),
+                   comp ? comp->app->getWidth() : -1,
+                   comp ? comp->app->getHeight() : -1);
+        if ((action.accessory || action.layer_shell) && action.parent_surface == nullptr &&
+            !action.menu_surface) {
+          log_to_tmp("pending_wl_actions: accessory/layer without parent; skipping autofocus for entity=%d name=%s\n",
+                     (int)entt::to_integral(entity),
+                     name);
+        }
+        // Always give menu surfaces immediate focus/input so they can receive keystrokes.
+        if (is_menu_surface(action.app) && server->engine) {
+          if (auto wm = server->engine->getWindowManager()) {
+            log_to_tmp("focus: menu surface focusApp entity=%d name=%s\n",
+                       (int)entt::to_integral(entity),
+                       name);
+            wm->unfocusApp();
+            wm->focusApp(entity);
+            if (comp && comp->app) {
+              comp->app->takeInputFocus();
+            }
+          }
+        }
         if (renderer && comp && comp->app) {
           bool needsTexture =
             comp->app->getTextureId() <= 0 || comp->app->getTextureUnit() < 0;
@@ -770,8 +806,21 @@ ensure_wayland_apps_registered(WlrServer* server)
         // Layer-shell menus should take focus immediately so they receive keystrokes.
         if (action.layer_shell && server->engine) {
           if (auto wm = server->engine->getWindowManager()) {
-            wm->unfocusApp();
-            wm->focusApp(entity);
+            auto focused = wm->getCurrentlyFocusedApp();
+            bool allowFocus = (action.parent_surface != nullptr) || action.menu_surface;
+            log_to_tmp("focus: layer_shell request entity=%d name=%s focused=%d parent=%p allow=%d\n",
+                       (int)entt::to_integral(entity),
+                       name,
+                       focused.has_value() ? (int)entt::to_integral(focused.value()) : -1,
+                       (void*)action.parent_surface,
+                       allowFocus ? 1 : 0);
+            if (allowFocus) {
+              wm->unfocusApp();
+              wm->focusApp(entity);
+              if (comp && comp->app) {
+                comp->app->takeInputFocus();
+              }
+            }
           }
         }
         // Request a default window size that matches the X11 defaults.
@@ -1503,6 +1552,12 @@ handle_new_input(wl_listener* listener, void* data)
                       focusEnt = comp->parent;
                     }
                   }
+                  log_to_tmp("focus: pointer click surface=%p ent=%d focusEnt=%d accessory=%d parent=%d\n",
+                             (void*)pointer_surface,
+                             (int)entt::to_integral(ent),
+                             (int)entt::to_integral(focusEnt),
+                             (handle->server->registry && handle->server->registry->try_get<WaylandApp::Component>(ent) ? handle->server->registry->get<WaylandApp::Component>(ent).accessory : false),
+                             focusEnt == entt::null ? -1 : (int)entt::to_integral(focusEnt));
                   wm->focusApp(focusEnt);
                   if (auto* focusComp =
                         handle->server->registry->try_get<WaylandApp::Component>(focusEnt)) {
@@ -1710,6 +1765,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
                        surf,
                        handle->accessory,
                        false,
+                       false,
                        handle->parent_surface,
                        handle->offset_x,
                        handle->offset_y,
@@ -1867,6 +1923,7 @@ handle_new_layer_surface(wl_listener* listener, void* data)
                        surf,
                        true,
                        true,
+                       false,
                        nullptr,
                        0,
                        0,
@@ -1912,6 +1969,7 @@ handle_new_layer_surface(wl_listener* listener, void* data)
                          surf,
                          true,
                          true,
+                         false,
                          nullptr,
                          0,
                          0,
