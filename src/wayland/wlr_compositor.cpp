@@ -2614,6 +2614,19 @@ handle_new_output(wl_listener* listener, void* data)
 
 } // namespace
 
+void delay_if_launching_nested_from_hackmatrix(int argc, char** argv) {
+  int delay_secs = 0;
+  for (int i = 1; i < argc; ++i) {
+    if (std::strcmp(argv[i], "--in-wm") == 0) {
+      delay_secs = 5;
+    }
+  }
+  if (delay_secs > 0) {
+    log_to_tmp("startup: --in-wm detected, delaying %d seconds\n", delay_secs);
+    std::this_thread::sleep_for(std::chrono::seconds(delay_secs));
+  }
+}
+
 int
 main(int argc, char** argv, char** envp)
 {
@@ -2626,17 +2639,8 @@ main(int argc, char** argv, char** envp)
   log_to_tmp("startup: hotkey modifier=%s mask=0x%x\n",
              hotkey_modifier_label(server.hotkeyModifier),
              server.hotkeyModifierMask);
-  int delay_secs = 0;
-  for (int i = 1; i < argc; ++i) {
-    if (std::strcmp(argv[i], "--in-wm") == 0) {
-      delay_secs = 5;
-    }
-  }
-  if (delay_secs > 0) {
-    log_to_tmp("startup: --in-wm detected, delaying %d seconds\n", delay_secs);
-    std::this_thread::sleep_for(std::chrono::seconds(delay_secs));
-  }
 
+  delay_if_launching_nested_from_hackmatrix(argc, argv);
   wlr_log_init(WLR_DEBUG, nullptr);
   // Write PID for test harness so it can kill the compositor reliably.
   {
