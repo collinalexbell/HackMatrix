@@ -2627,31 +2627,35 @@ void delay_if_launching_nested_from_hackmatrix(int argc, char** argv) {
   }
 }
 
+void write_pid_for_kill() {
+  const char* pidPath = "/tmp/matrix-wlroots.pid";
+  FILE* f = std::fopen(pidPath, "w");
+  if (f) {
+    std::fprintf(f, "%d\n", (int)getpid());
+    std::fclose(f);
+    log_to_tmp("startup: wrote pid file %s\n", pidPath);
+  }
+}
+
 int
 main(int argc, char** argv, char** envp)
 {
   (void)argc;
   (void)argv;
+  delay_if_launching_nested_from_hackmatrix(argc, argv);
+
   WlrServer server = {};
   server.envp = envp;
   server.hotkeyModifier = parse_hotkey_modifier();
   server.hotkeyModifierMask = hotkey_modifier_mask(server.hotkeyModifier);
+
   log_to_tmp("startup: hotkey modifier=%s mask=0x%x\n",
              hotkey_modifier_label(server.hotkeyModifier),
              server.hotkeyModifierMask);
-
-  delay_if_launching_nested_from_hackmatrix(argc, argv);
   wlr_log_init(WLR_DEBUG, nullptr);
-  // Write PID for test harness so it can kill the compositor reliably.
-  {
-    const char* pidPath = "/tmp/matrix-wlroots.pid";
-    FILE* f = std::fopen(pidPath, "w");
-    if (f) {
-      std::fprintf(f, "%d\n", (int)getpid());
-      std::fclose(f);
-      log_to_tmp("startup: wrote pid file %s\n", pidPath);
-    }
-  }
+
+  write_pid_for_kill(); 
+
   log_to_tmp("startup: WLR_BACKENDS=%s DISPLAY=%s WAYLAND_DISPLAY=%s\n",
              std::getenv("WLR_BACKENDS") ? std::getenv("WLR_BACKENDS") : "(null)",
              std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)",

@@ -259,7 +259,7 @@ void WindowManager::createAndRegisterApps(char **envp) {
   auto alreadyBooted = systems::getAlreadyBooted(registry);
   for(auto entityAndPid : alreadyBooted) {
     auto bootable = registry->get<Bootable>(entityAndPid.first);
-    appsWithHotKeys.push_back(entityAndPid.first);
+    assignHotkeySlot(entityAndPid.first);
     auto app = X11App::byPID(entityAndPid.second, display, screen,
                              bootable.getWidth(), bootable.getHeight());
     addApp(app, entityAndPid.first);
@@ -447,7 +447,7 @@ void WindowManager::createApp(Window window, unsigned int width,
     entity = registry->create();
   }
   if(!app->isAccessory()) {
-    appsWithHotKeys.push_back(entity);
+    assignHotkeySlot(entity);
   }
   addApp(app, entity);
 }
@@ -474,6 +474,7 @@ void WindowManager::removeAppForWindow(Window window) {
     auto hotkey = find(appsWithHotKeys.begin(), appsWithHotKeys.end(), appEntity);
     if(hotkey != appsWithHotKeys.end()) {
       appsWithHotKeys.erase(hotkey);
+      compactHotkeyList();
     }
     appsToRemove.push_back(appEntity);
   }
@@ -485,6 +486,29 @@ void WindowManager::swapHotKeys(int a, int b) {
     auto aOpt = appsWithHotKeys[a];
     appsWithHotKeys[a] = appsWithHotKeys[b];
     appsWithHotKeys[b] = aOpt;
+    compactHotkeyList();
+  }
+}
+
+void WindowManager::assignHotkeySlot(entt::entity ent)
+{
+  // Reuse the first empty slot if one exists; otherwise append.
+  for (auto& opt : appsWithHotKeys) {
+    if (!opt.has_value()) {
+      opt = ent;
+      compactHotkeyList();
+      return;
+    }
+  }
+  appsWithHotKeys.push_back(ent);
+  compactHotkeyList();
+}
+
+void WindowManager::compactHotkeyList()
+{
+  // Trim trailing empty slots to keep indices dense.
+  while (!appsWithHotKeys.empty() && !appsWithHotKeys.back().has_value()) {
+    appsWithHotKeys.pop_back();
   }
 }
 
@@ -999,6 +1023,7 @@ void WindowManager::pruneInvalidFocus()
       opt = std::nullopt;
     }
   }
+  compactHotkeyList();
 }
 
 bool
@@ -1393,7 +1418,7 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
             pos.x,
             pos.y,
             pos.z);
-  appsWithHotKeys.push_back(entity);
+  assignHotkeySlot(entity);
   return entity;
 }
 

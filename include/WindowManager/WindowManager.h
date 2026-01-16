@@ -135,6 +135,8 @@ class WindowManager : public WindowManagerInterface
   std::shared_ptr<spdlog::logger> logger;
   void setupLogger();
   void onHotkeyPress(XKeyEvent event);
+  void assignHotkeySlot(entt::entity ent);
+  void compactHotkeyList();
   void createApp(Window window,
                  unsigned int width = Bootable::DEFAULT_WIDTH,
                  unsigned int height = Bootable::DEFAULT_HEIGHT);
