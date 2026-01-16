@@ -236,6 +236,8 @@ WaylandApp::takeInputFocus()
     }
   }
   if (seat && seat_surface) {
+    // Reset any previous pointer focus so the seat cleanly re-targets this app.
+    wlr_seat_pointer_notify_clear_focus(seat);
     wlr_keyboard* kbd = wlr_seat_get_keyboard(seat);
     if (kbd) {
       wlr_seat_set_keyboard(seat, kbd);
@@ -250,6 +252,7 @@ WaylandApp::takeInputFocus()
         std::chrono::steady_clock::now().time_since_epoch())
         .count());
     wlr_seat_pointer_notify_motion(seat, now_ms, 0, 0);
+    wlr_seat_pointer_notify_frame(seat);
   }
 }
 

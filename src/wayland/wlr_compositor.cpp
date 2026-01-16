@@ -511,6 +511,21 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* pre
   }
   // Prefer an existing focused surface if present.
   wlr_surface* surf = preferred ? preferred : server->seat->pointer_state.focused_surface;
+  // If WM has a different focused Wayland app, prefer that surface so hotkey
+  // focus also updates pointer focus.
+  if (server->engine && server->registry) {
+    if (auto wm = server->engine->getWindowManager()) {
+      if (auto focused = wm->getCurrentlyFocusedApp();
+          focused && server->registry->valid(*focused) &&
+          server->registry->all_of<WaylandApp::Component>(*focused)) {
+        auto& comp = server->registry->get<WaylandApp::Component>(*focused);
+        wlr_surface* wmSurf = comp.app ? comp.app->getSurface() : nullptr;
+        if (wmSurf && wmSurf != surf) {
+          surf = wmSurf;
+        }
+      }
+    }
+  }
   if (!surf) {
     if (server->engine && server->registry) {
       if (auto wm = server->engine->getWindowManager()) {
