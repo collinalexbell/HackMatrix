@@ -151,7 +151,7 @@ class WindowManager : public WindowManagerInterface
   void pruneInvalidFocus();
   void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
-  bool computeFocusedSpawn(glm::vec3& pos, glm::vec3& rot) const;
+  bool computeFocusedSpawn(entt::entity newApp, glm::vec3& pos, glm::vec3& rot) const;
   void positionRelativeToFocus(entt::entity appEntity);
   bool computeAppCameraTarget(entt::entity ent,
                               glm::vec3& targetPos,

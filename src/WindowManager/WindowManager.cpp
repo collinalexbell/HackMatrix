@@ -1027,17 +1027,33 @@ void WindowManager::pruneInvalidFocus()
 }
 
 bool
-WindowManager::computeFocusedSpawn(glm::vec3& pos, glm::vec3& rot) const
+WindowManager::computeFocusedSpawn(entt::entity newApp, glm::vec3& pos, glm::vec3& rot) const
 {
   if (!registry || !currentlyFocusedApp || !registry->valid(*currentlyFocusedApp)) {
+    return false;
+  }
+  if (!camera) {
     return false;
   }
   if (!registry->all_of<Positionable>(*currentlyFocusedApp)) {
     return false;
   }
   auto& focusPos = registry->get<Positionable>(*currentlyFocusedApp);
-  pos = focusPos.pos + glm::vec3(1.2f, 0.0f, 0.0f);
+  // Match the camera's focus distance for the new window size.
+  float focusedSpawnOffset = 1.2f;
+  if (space && registry->valid(newApp)) {
+    focusedSpawnOffset =
+      std::max(0.1f, space->getViewDistanceForWindowSize(newApp));
+  }
+  float yaw = camera->getYaw();
+  float pitch = camera->getPitch();
+  glm::quat yawRotation =
+    glm::angleAxis(glm::radians(90 + yaw), glm::vec3(0.0f, -1.0f, 0.0f));
+  glm::quat pitchRotation =
+    glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
+  glm::quat finalRotation = yawRotation * pitchRotation;
   rot = focusPos.rotate;
+  pos = focusPos.pos + glm::vec3(focusedSpawnOffset, 0.0f, 0.0f);
   return true;
 }
 
@@ -1049,7 +1065,7 @@ WindowManager::positionRelativeToFocus(entt::entity appEntity)
   }
   glm::vec3 pos;
   glm::vec3 rot;
-  if (!computeFocusedSpawn(pos, rot)) {
+  if (!computeFocusedSpawn(appEntity, pos, rot)) {
     return;
   }
   auto& positionable = registry->get<Positionable>(appEntity);
@@ -1394,8 +1410,12 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
   // Place in world space similar to spawnAtCamera path.
   glm::vec3 pos(0.0f, 3.5f, -2.0f);
   glm::vec3 rot(0.0f);
-  bool placedFromFocus = computeFocusedSpawn(pos, rot);
+  bool placedFromFocus = computeFocusedSpawn(entity, pos, rot);
   if (!placedFromFocus && spawnAtCamera && camera) {
+    float dist = 2.0f;
+    if (space && registry->valid(entity)) {
+      dist = std::max(0.1f, space->getViewDistanceForWindowSize(entity));
+    }
     float yaw = camera->getYaw();
     float pitch = camera->getPitch();
     glm::quat yawRotation =
@@ -1404,7 +1424,7 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
       glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
     glm::quat finalRotation = yawRotation * pitchRotation;
     rot = glm::degrees(glm::eulerAngles(finalRotation));
-    pos = camera->position + finalRotation * glm::vec3(0, 0, -2.0f);
+    pos = camera->position + finalRotation * glm::vec3(0, 0, -dist);
   }
   registry->emplace<Positionable>(entity, pos, glm::vec3(0.0f), rot, 1.0f);
   // Mark as damaged so renderer updates transforms.

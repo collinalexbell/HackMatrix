@@ -180,6 +180,18 @@ WaylandApp::handle_destroy()
     wlr_buffer_unlock(pending_buffer.value());
     pending_buffer.reset();
   }
+  // If the seat is still focused on this surface, clear it to avoid dangling
+  // pointer focus after the client is gone (can crash on next enter).
+  if (seat && seat_surface) {
+    if (seat->pointer_state.focused_surface == seat_surface) {
+      wlr_seat_pointer_notify_clear_focus(seat);
+    }
+    if (seat->keyboard_state.focused_surface == seat_surface) {
+      wlr_seat_keyboard_notify_clear_focus(seat);
+    }
+  }
+  seat_surface = nullptr;
+  seat = nullptr;
   ensureEglImageFns();
   if (importedImage != EGL_NO_IMAGE_KHR && gEglDestroyImageKHR) {
     gEglDestroyImageKHR(eglGetCurrentDisplay(), importedImage);
@@ -228,6 +240,9 @@ void
 WaylandApp::takeInputFocus()
 {
   focused = true;
+  if (!seat_surface) {
+    return;
+  }
   // Activate the toplevel only when the WM explicitly focuses us.
   if (xdg_toplevel) {
     wlr_xdg_toplevel_set_activated(xdg_toplevel, true);
