@@ -1558,6 +1558,10 @@ handle_new_input(wl_listener* listener, void* data)
         auto* event = static_cast<wlr_pointer_button_event*>(data);
         bool handled_by_game = false;
         bool wayland_focus_requested = wayland_pointer_focus_requested(handle->server);
+        wlr_surface* pointer_surface = nullptr;
+        if (handle->server && handle->server->seat) {
+          pointer_surface = handle->server->seat->pointer_state.focused_surface;
+        }
         wlr_surface* preferred_surface = nullptr;
         Controls* controls =
           handle->server && handle->server->engine
@@ -1593,78 +1597,63 @@ handle_new_input(wl_listener* listener, void* data)
             // Only focus a Wayland client when the player is looking at it up close;
             // otherwise treat the click as a game interaction.
             if (!handled_by_game) {
-              // Prefer focusing the surface under the pointer to keep WM focus in sync.
-              wlr_surface* pointer_surface = nullptr;
-              if (handle->server->seat && handle->server->seat->pointer_state.focused_surface) {
-                pointer_surface = handle->server->seat->pointer_state.focused_surface;
-              }
-              bool focusedViaPointer = false;
-              if (pointer_surface) {
-                auto it = handle->server->surface_map.find(pointer_surface);
-                if (it != handle->server->surface_map.end()) {
-                  entt::entity ent = it->second;
-                  // If we clicked a popup/accessory, focus its parent instead of
-                  // trying to activate the popup (which has no toplevel).
-                  entt::entity focusEnt = ent;
-                  if (auto* comp =
-                        handle->server->registry->try_get<WaylandApp::Component>(ent)) {
-                    if (comp->accessory && comp->parent != entt::null &&
+              // Focus only when the player is actually looking at an app within range.
+              entt::entity focusEnt = entt::null;
+              wlr_surface* focusSurf = nullptr;
+              if (auto space = wm->getSpace()) {
+                if (auto looked = space->getLookedAtApp()) {
+                  entt::entity ent = *looked;
+                  if (handle->server->registry && handle->server->registry->valid(ent) &&
+                      handle->server->registry->all_of<WaylandApp::Component>(ent)) {
+                    auto* comp = handle->server->registry->try_get<WaylandApp::Component>(ent);
+                    entt::entity targetEnt = ent;
+                    if (comp && comp->accessory && comp->parent != entt::null &&
                         handle->server->registry->valid(comp->parent)) {
-                      focusEnt = comp->parent;
+                      targetEnt = comp->parent;
+                      comp = handle->server->registry->try_get<WaylandApp::Component>(targetEnt);
                     }
-                  }
-                  log_to_tmp("focus: pointer click surface=%p ent=%d focusEnt=%d accessory=%d parent=%d\n",
-                             (void*)pointer_surface,
-                             (int)entt::to_integral(ent),
-                             (int)entt::to_integral(focusEnt),
-                             (handle->server->registry && handle->server->registry->try_get<WaylandApp::Component>(ent) ? handle->server->registry->get<WaylandApp::Component>(ent).accessory : false),
-                             focusEnt == entt::null ? -1 : (int)entt::to_integral(focusEnt));
-                  wm->focusApp(focusEnt);
-                  if (auto* focusComp =
-                        handle->server->registry->try_get<WaylandApp::Component>(focusEnt)) {
-                    if (focusComp->app) {
-                      focusComp->app->takeInputFocus();
+                    if (comp && comp->app) {
+                      focusEnt = targetEnt;
+                      focusSurf = comp->app->getSurface();
                     }
-                  }
-                  focusedViaPointer = true;
-                }
-              }
-              if (!focusedViaPointer) {
-                // Fallback: focus the first known Wayland surface.
-                auto picked = pick_any_surface(handle->server);
-                if (picked.first != nullptr && picked.second != entt::null) {
-                  wm->focusApp(picked.second);
-                  ensure_pointer_focus(handle->server, event->time_msec);
-                  if (!preferred_surface) {
-                    preferred_surface = picked.first;
                   }
                 }
               }
-              if (!focusedViaPointer) {
-                wm->focusLookedAtApp();
+              if (focusEnt != entt::null && focusSurf) {
+                log_to_tmp("focus: pointer click lookedAt focusEnt=%d\n",
+                           (int)entt::to_integral(focusEnt));
+                wm->focusApp(focusEnt);
+                ensure_pointer_focus(handle->server, event->time_msec, focusSurf);
+                if (auto* focusComp =
+                      handle->server->registry->try_get<WaylandApp::Component>(focusEnt)) {
+                  if (focusComp->app) {
+                    focusComp->app->takeInputFocus();
+                  }
+                }
+                preferred_surface = focusSurf;
               }
             }
           }
         }
         if (handle->server->seat && !handled_by_game) {
-          auto surfEnt = pick_any_surface(handle->server);
-          auto* surf = preferred_surface ? preferred_surface : surfEnt.first;
-          ensure_pointer_focus(handle->server, event->time_msec, surf);
+          // Only forward to Wayland clients if a surface currently has pointer focus.
+          wlr_surface* surf = preferred_surface ? preferred_surface : pointer_surface;
           if (surf) {
+            ensure_pointer_focus(handle->server, event->time_msec, surf);
             auto mapped = map_pointer_to_surface(handle->server, surf);
             wlr_seat_pointer_notify_motion(handle->server->seat,
                                            event->time_msec,
                                            mapped.first,
                                            mapped.second);
-          }
-          wlr_seat_pointer_notify_button(handle->server->seat,
-                                         event->time_msec,
-                                         event->button,
-                                         event->state);
-          wlr_seat_pointer_notify_frame(handle->server->seat);
-          if (static_cast<uint32_t>(event->state) ==
-              static_cast<uint32_t>(WLR_BUTTON_RELEASED)) {
-            update_mouse_button(event->button, false);
+            wlr_seat_pointer_notify_button(handle->server->seat,
+                                           event->time_msec,
+                                           event->button,
+                                           event->state);
+            wlr_seat_pointer_notify_frame(handle->server->seat);
+            if (static_cast<uint32_t>(event->state) ==
+                static_cast<uint32_t>(WLR_BUTTON_RELEASED)) {
+              update_mouse_button(event->button, false);
+            }
           }
         }
       };
