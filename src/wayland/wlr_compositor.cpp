@@ -67,6 +67,7 @@ keysym_name(xkb_keysym_t sym)
 #include "screen.h"
 #include "Config.h"
 #include "controls.h"
+#include "wayland/wlr_compositor.h"
 
 #ifdef WLROOTS_DEBUG_LOGS
 constexpr bool kWlrootsDebugLogs = true;
@@ -84,7 +85,7 @@ wlroots_debug_logs_enabled()
   return true;
 }
 
-static void
+void
 log_to_tmp(const char* fmt, ...)
 {
   if (!wlroots_debug_logs_enabled()) {
@@ -108,38 +109,6 @@ log_to_tmp(const char* fmt, ...)
 
 namespace {
 
-enum class HotkeyModifier { Super, Alt };
-
-static const char*
-hotkey_modifier_label(HotkeyModifier mod)
-{
-  return mod == HotkeyModifier::Alt ? "alt" : "super";
-}
-
-static HotkeyModifier
-parse_hotkey_modifier()
-{
-  std::string mod = "alt";
-  try {
-    mod = Config::singleton()->get<std::string>("key_mappings.super_modifier");
-  } catch (...) {
-    // Default to alt when the key is missing.
-  }
-  std::transform(mod.begin(), mod.end(), mod.begin(), [](unsigned char c) {
-    return static_cast<char>(std::tolower(c));
-  });
-  if (mod == "super" || mod == "logo" || mod == "mod4" || mod == "win") {
-    return HotkeyModifier::Super;
-  }
-  return HotkeyModifier::Alt;
-}
-
-static uint32_t
-hotkey_modifier_mask(HotkeyModifier mod)
-{
-  return mod == HotkeyModifier::Alt ? WLR_MODIFIER_ALT : WLR_MODIFIER_LOGO;
-}
-
 static bool
 is_hotkey_sym(HotkeyModifier mod, xkb_keysym_t sym)
 {
@@ -160,124 +129,6 @@ currentTimeSeconds()
   std::chrono::duration<double> elapsed = now - start;
   return elapsed.count();
 }
-
-struct WlrServer;
-
-struct WlrOutputHandle {
-  WlrServer* server = nullptr;
-  wlr_output* output = nullptr;
-  wlr_swapchain* swapchain = nullptr;
-  wl_listener frame;
-  wl_listener destroy;
-  int buffer_age = -1;
-  GLuint depth_rbo = 0;
-  int depth_width = 0;
-  int depth_height = 0;
-};
-
-struct WlrKeyboardHandle {
-  WlrServer* server = nullptr;
-  wlr_keyboard* keyboard = nullptr;
-  wl_listener key;
-  wl_listener modifiers;
-  wl_listener destroy;
-};
-
-struct WlrPointerHandle {
-  WlrServer* server = nullptr;
-  wlr_pointer* pointer = nullptr;
-  wl_listener motion;
-  wl_listener motion_abs;
-  wl_listener button;
-  wl_listener axis;
-  wl_listener destroy;
-};
-
-struct InputState {
-  bool forward = false;
-  bool back = false;
-  bool left = false;
-  bool right = false;
-  double delta_x = 0.0;
-  double delta_y = 0.0;
-  bool have_abs = false;
-  double last_abs_x = 0.0;
-  double last_abs_y = 0.0;
-  bool mouse_buttons[3] = { false, false, false };
-  std::unordered_set<uint32_t> pressed_keys;
-};
-
-struct PendingWlAction {
-  enum Type { Add, Remove } type;
-  std::shared_ptr<WaylandApp> app;
-  wlr_surface* surface = nullptr;
-  bool accessory = false;
-  bool layer_shell = false;
-  bool menu_surface = false;
-  wlr_surface* parent_surface = nullptr;
-  int offset_x = 0;
-  int offset_y = 0;
-  int screen_x = 0;
-  int screen_y = 0;
-  int screen_w = 0;
-  int screen_h = 0;
-};
-
-struct ReplayKeyRelease {
-  xkb_keysym_t sym = XKB_KEY_NoSymbol;
-  uint32_t release_time_msec = 0;
-  uint32_t keycode = 0;
-  bool update_mods = false;
-};
-
-struct WlrServer {
-  wl_display* display = nullptr;
-  wlr_backend* backend = nullptr;
-  wlr_renderer* renderer = nullptr;
-  wlr_allocator* allocator = nullptr;
-  wl_listener new_output;
-  wl_listener new_input;
-  wl_listener new_xdg_surface;
-  wl_listener new_layer_surface;
-  std::unique_ptr<Engine> engine;
-  std::shared_ptr<EntityRegistry> registry;
-  bool gladLoaded = false;
-  double lastFrameTime = 0.0;
-  char** envp = nullptr;
-  InputState input;
-  wlr_compositor* compositor = nullptr;
-  wlr_xdg_shell* xdg_shell = nullptr;
-  wlr_seat* seat = nullptr;
-  wlr_data_device_manager* data_device_manager = nullptr;
-  wlr_screencopy_manager_v1* screencopy_manager = nullptr;
-  wlr_output_layout* output_layout = nullptr;
-  wlr_xdg_output_manager_v1* xdg_output_manager = nullptr;
-  wlr_layer_shell_v1* layer_shell = nullptr;
-  wlr_output* primary_output = nullptr;
-  wlr_input_device* last_keyboard_device = nullptr;
-  wlr_input_device* last_pointer_device = nullptr;
-  wlr_keyboard* virtual_keyboard = nullptr;
-  wlr_xcursor_manager* cursor_mgr = nullptr;
-  wlr_cursor* cursor = nullptr;
-  bool cursor_visible = false;
-  HotkeyModifier hotkeyModifier = HotkeyModifier::Alt;
-  uint32_t hotkeyModifierMask = WLR_MODIFIER_ALT;
-  bool replayModifierActive = false;
-  int replayModifierHeld = 0;
-  int replayShiftHeld = 0;
-  bool pendingReplayShift = false;
-  bool pendingReplayModifier = false;
-  uint32_t pendingReplayModifierKeycode = 0;
-  xkb_keysym_t pendingReplayModifierSym = XKB_KEY_NoSymbol;
-  std::vector<ReplayKeyRelease> pendingReplayKeyups;
-  std::unordered_map<wlr_surface*, entt::entity> surface_map;
-  std::vector<wlr_xdg_surface*> pending_surfaces;
-  std::vector<PendingWlAction> pending_wl_actions;
-  bool isX11Backend = false;
-  double pointer_x = 0.0;
-  double pointer_y = 0.0;
-  wl_listener request_set_cursor;
-};
 
 static void
 clear_input_forces(WlrServer* server)
@@ -2631,6 +2482,51 @@ void delay_if_launching_nested_from_hackmatrix(int argc, char** argv) {
   }
 }
 
+void log_env() {
+  log_to_tmp(
+    "startup: WLR_BACKENDS=%s DISPLAY=%s WAYLAND_DISPLAY=%s\n",
+    std::getenv("WLR_BACKENDS") ? std::getenv("WLR_BACKENDS") : "(null)",
+    std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)",
+    std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)");
+  log_to_tmp(
+    "startup: SCREEN_WIDTH=%s SCREEN_HEIGHT=%s\n",
+    std::getenv("SCREEN_WIDTH") ? std::getenv("SCREEN_WIDTH") : "(null)",
+    std::getenv("SCREEN_HEIGHT") ? std::getenv("SCREEN_HEIGHT") : "(null)");
+  log_to_tmp("startup: XDG_RUNTIME_DIR=%s\n",
+             std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR")
+                                            : "(null)");
+}
+
+const char*
+hotkey_modifier_label(HotkeyModifier mod)
+{
+  return mod == HotkeyModifier::Alt ? "alt" : "super";
+}
+
+HotkeyModifier
+parse_hotkey_modifier()
+{
+  std::string mod = "alt";
+  try {
+    mod = Config::singleton()->get<std::string>("key_mappings.super_modifier");
+  } catch (...) {
+    // Default to alt when the key is missing.
+  }
+  std::transform(mod.begin(), mod.end(), mod.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  if (mod == "super" || mod == "logo" || mod == "mod4" || mod == "win") {
+    return HotkeyModifier::Super;
+  }
+  return HotkeyModifier::Alt;
+}
+
+uint32_t
+hotkey_modifier_mask(HotkeyModifier mod)
+{
+  return mod == HotkeyModifier::Alt ? WLR_MODIFIER_ALT : WLR_MODIFIER_LOGO;
+}
+
 void write_pid_for_kill() {
   const char* pidPath = "/tmp/matrix-wlroots.pid";
   FILE* f = std::fopen(pidPath, "w");
@@ -2641,37 +2537,15 @@ void write_pid_for_kill() {
   }
 }
 
-int
-main(int argc, char** argv, char** envp)
+void initialize_wlr_logging() { wlr_log_init(WLR_DEBUG, nullptr); }
+
+// --- Main bootstrap helpers -------------------------------------------------
+
+void
+apply_backend_env_defaults()
 {
-  (void)argc;
-  (void)argv;
-  delay_if_launching_nested_from_hackmatrix(argc, argv);
-
-  WlrServer server = {};
-  server.envp = envp;
-  server.hotkeyModifier = parse_hotkey_modifier();
-  server.hotkeyModifierMask = hotkey_modifier_mask(server.hotkeyModifier);
-
-  log_to_tmp("startup: hotkey modifier=%s mask=0x%x\n",
-             hotkey_modifier_label(server.hotkeyModifier),
-             server.hotkeyModifierMask);
-  wlr_log_init(WLR_DEBUG, nullptr);
-
-  write_pid_for_kill(); 
-
-  log_to_tmp("startup: WLR_BACKENDS=%s DISPLAY=%s WAYLAND_DISPLAY=%s\n",
-             std::getenv("WLR_BACKENDS") ? std::getenv("WLR_BACKENDS") : "(null)",
-             std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)",
-             std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)");
-  log_to_tmp("startup: SCREEN_WIDTH=%s SCREEN_HEIGHT=%s\n",
-             std::getenv("SCREEN_WIDTH") ? std::getenv("SCREEN_WIDTH") : "(null)",
-             std::getenv("SCREEN_HEIGHT") ? std::getenv("SCREEN_HEIGHT") : "(null)");
-  log_to_tmp("startup: XDG_RUNTIME_DIR=%s\n",
-             std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)");
-
-  // If WLR_BACKENDS not set, prefer wayland when under Wayland, otherwise try X11
-  // so running from an X session or tty can still work.
+  // If WLR_BACKENDS not set, prefer wayland when under Wayland, otherwise try
+  // X11 so running from an X session or tty can still work.
   if (!std::getenv("WLR_BACKENDS")) {
     if (std::getenv("WAYLAND_DISPLAY")) {
       setenv("WLR_BACKENDS", "wayland", 1);
@@ -2679,14 +2553,14 @@ main(int argc, char** argv, char** envp)
       setenv("WLR_BACKENDS", "x11", 1);
     }
   }
+
   // For the X11 backend, wlroots expects an explicit output size. Provide one
   // (default 1920x1080) unless the user already set WLR_X11_OUTPUT_*.
   const char* backends_env = std::getenv("WLR_BACKENDS");
   bool likely_x11 = (backends_env && std::string(backends_env).find("x11") != std::string::npos) ||
                     (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY"));
   if (likely_x11) {
-    if (!std::getenv("WLR_X11_OUTPUT_WIDTH") ||
-        !std::getenv("WLR_X11_OUTPUT_HEIGHT")) {
+    if (!std::getenv("WLR_X11_OUTPUT_WIDTH") || !std::getenv("WLR_X11_OUTPUT_HEIGHT")) {
       int width = 1920;
       int height = 1080;
       if (const char* w_env = std::getenv("SCREEN_WIDTH")) {
@@ -2703,11 +2577,15 @@ main(int argc, char** argv, char** envp)
       log_to_tmp("startup: set WLR_X11_OUTPUT_WIDTH=%d HEIGHT=%d\n", width, height);
     }
   }
+}
 
+bool
+create_display_and_backend(WlrServer& server)
+{
   server.display = wl_display_create();
   if (!server.display) {
     std::fprintf(stderr, "Failed to create Wayland display\n");
-    return EXIT_FAILURE;
+    return false;
   }
   g_server = &server;
 
@@ -2715,23 +2593,28 @@ main(int argc, char** argv, char** envp)
     wlr_backend_autocreate(wl_display_get_event_loop(server.display), nullptr);
   if (!server.backend) {
     std::fprintf(stderr, "Failed to create wlroots backend\n");
-    return EXIT_FAILURE;
+    return false;
   }
+  return true;
+}
 
+bool
+create_renderer_and_allocator(WlrServer& server)
+{
   server.renderer = wlr_renderer_autocreate(server.backend);
   if (!server.renderer) {
     std::fprintf(stderr, "Failed to create renderer\n");
-    return EXIT_FAILURE;
+    return false;
   }
   if (!wlr_renderer_init_wl_display(server.renderer, server.display)) {
     std::fprintf(stderr, "Failed to init renderer for wl_display\n");
-    return EXIT_FAILURE;
+    return false;
   }
 
   server.allocator = wlr_allocator_autocreate(server.backend, server.renderer);
   if (!server.allocator) {
     std::fprintf(stderr, "Failed to create allocator\n");
-    return EXIT_FAILURE;
+    return false;
   }
   // Detect X11 backend (common for nested testing).
   const char* backend_env = std::getenv("WLR_BACKENDS");
@@ -2749,28 +2632,33 @@ main(int argc, char** argv, char** envp)
   log_to_tmp("startup: backend kind=%s env=%s\n",
              backend_kind,
              backend_env ? backend_env : "(null)");
+  return true;
+}
 
+bool
+init_protocols_and_seat(WlrServer& server)
+{
   server.output_layout = wlr_output_layout_create(server.display);
 
   server.compositor = wlr_compositor_create(server.display, 5, server.renderer);
   if (!server.compositor) {
     std::fprintf(stderr, "Failed to create compositor\n");
-    return EXIT_FAILURE;
+    return false;
   }
   // Some clients (e.g., foot) require wl_subcompositor to be advertised.
   if (!wlr_subcompositor_create(server.display)) {
     std::fprintf(stderr, "Failed to create subcompositor\n");
-    return EXIT_FAILURE;
+    return false;
   }
   server.layer_shell = wlr_layer_shell_v1_create(server.display, 4);
   if (!server.layer_shell) {
     std::fprintf(stderr, "Failed to create layer-shell\n");
-    return EXIT_FAILURE;
+    return false;
   }
   server.xdg_shell = wlr_xdg_shell_create(server.display, 3);
   if (!server.xdg_shell) {
     std::fprintf(stderr, "Failed to create xdg-shell\n");
-    return EXIT_FAILURE;
+    return false;
   }
   server.seat = wlr_seat_create(server.display, "seat0");
   if (server.seat) {
@@ -2823,7 +2711,12 @@ main(int argc, char** argv, char** envp)
     server.xdg_output_manager =
       wlr_xdg_output_manager_v1_create(server.display, server.output_layout);
   }
+  return true;
+}
 
+void
+register_global_listeners(WlrServer& server)
+{
   server.new_layer_surface.notify = handle_new_layer_surface;
   wl_signal_add(&server.layer_shell->events.new_surface, &server.new_layer_surface);
   server.new_xdg_surface.notify = handle_new_xdg_surface;
@@ -2833,10 +2726,14 @@ main(int argc, char** argv, char** envp)
   wl_signal_add(&server.backend->events.new_output, &server.new_output);
   server.new_input.notify = handle_new_input;
   wl_signal_add(&server.backend->events.new_input, &server.new_input);
+}
 
+bool
+start_backend_and_socket(WlrServer& server)
+{
   if (!wlr_backend_start(server.backend)) {
     std::fprintf(stderr, "Failed to start wlroots backend\n");
-    return EXIT_FAILURE;
+    return false;
   }
   log_to_tmp("startup: pointer init pos (%.1f,%.1f)\n",
              server.pointer_x,
@@ -2845,7 +2742,7 @@ main(int argc, char** argv, char** envp)
   const char* socket = wl_display_add_socket_auto(server.display);
   if (!socket) {
     std::fprintf(stderr, "Failed to create Wayland socket\n");
-    return EXIT_FAILURE;
+    return false;
   }
   setenv("WAYLAND_DISPLAY", socket, true);
   log_to_tmp("startup: WAYLAND_DISPLAY chosen=%s\n", socket ? socket : "(null)");
@@ -2857,30 +2754,42 @@ main(int argc, char** argv, char** envp)
   wlr_log(WLR_DEBUG,
           "wlroots compositor ready; WAYLAND_DISPLAY=%s",
           socket ? socket : "(null)");
+  return true;
+}
 
+void
+install_sigint_handler()
+{
   std::signal(SIGINT, [](int) {
     if (g_server && g_server->display) {
       wl_display_terminate(g_server->display);
     }
   });
+}
 
-  wl_display_run(server.display);
-
+void
+teardown_server(WlrServer& server)
+{
+  auto remove_listener = [](wl_listener& listener) {
+    if (listener.link.prev || listener.link.next) {
+      wl_list_remove(&listener.link);
+    }
+  };
   if (server.engine) {
     server.engine.reset();
   }
   if (server.seat) {
-    wl_list_remove(&server.request_set_cursor.link);
+    remove_listener(server.request_set_cursor);
   }
   if (server.virtual_keyboard) {
     wlr_keyboard_finish(server.virtual_keyboard);
     delete server.virtual_keyboard;
     server.virtual_keyboard = nullptr;
   }
-  wl_list_remove(&server.new_input.link);
-  wl_list_remove(&server.new_output.link);
-  wl_list_remove(&server.new_layer_surface.link);
-  wl_list_remove(&server.new_xdg_surface.link);
+  remove_listener(server.new_input);
+  remove_listener(server.new_output);
+  remove_listener(server.new_layer_surface);
+  remove_listener(server.new_xdg_surface);
   if (server.allocator) {
     wlr_allocator_destroy(server.allocator);
   }
@@ -2893,6 +2802,4 @@ main(int argc, char** argv, char** envp)
   if (server.display) {
     wl_display_destroy(server.display);
   }
-
-  return EXIT_SUCCESS;
 }

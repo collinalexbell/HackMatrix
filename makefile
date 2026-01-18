@@ -79,10 +79,10 @@ ifeq ($(WLROOTS_AVAILABLE),1)
 wlroots-skeleton: build/wayland/wlroots_skeleton.o
 	g++ -std=c++20 $(FLAGS) -o wlroots-skeleton build/wayland/wlroots_skeleton.o $(WLROOTS_LIBS) -lpthread
 matrix: matrix-release matrix-debug
-matrix-release: build/wayland/wlr_compositor.o $(ALL_OBJECTS)
-	g++ -std=c++20 $(FLAGS) -g -o matrix build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
-matrix-debug: build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG)
-	g++ -std=c++20 $(DEBUG_FLAGS) -g -o matrix-debug build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
+matrix-release: build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS)
+	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
+matrix-debug: build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG)
+	g++ -std=c++20 $(DEBUG_FLAGS) -g -o matrix-debug build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
 matrix-wlroots: matrix
 else
 wlroots-skeleton:
@@ -97,10 +97,6 @@ endif
 
 tracy:
 	git submodule update --init
-
-matrix-x11: $(ALL_OBJECTS) build/main.o
-	g++ -std=c++20 $(FLAGS) -g -o matrix-x11 build/main.o $(ALL_OBJECTS) $(LIBS) -Wl,--as-needed $(INCLUDES)
-x11: matrix-x11
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -149,7 +145,7 @@ build/IndexPool.o: include/IndexPool.h src/IndexPool.cpp
 	g++  -std=c++20 $(FLAGS) -o build/IndexPool.o -c src/IndexPool.cpp $(INCLUDES)
 
 build/main.o: src/main.cpp include/engine.h include/screen.h
-	g++ -std=c++20  $(FLAGS) -o build/main.o -c src/main.cpp $(INCLUDES)
+	g++ -std=c++20  $(FLAGS) -o build/main.o -c src/main.cpp $(INCLUDES) $(WLROOTS_CFLAGS)
 
 build/shader.o: src/shader.cpp include/shader.h
 	g++ -std=c++20  $(FLAGS) -o build/shader.o -c src/shader.cpp $(INCLUDES)
