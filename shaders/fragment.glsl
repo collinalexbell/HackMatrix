@@ -6,6 +6,7 @@ in vec3 lineColor;
 in vec4 ModelColor;
 in vec3 Normal;
 in vec3 Barycentric;
+in vec3 VoxelColor;
 
 uniform sampler2DArray allBlocks;
 uniform sampler2D texture_diffuse1;
@@ -30,6 +31,7 @@ uniform bool isMesh;
 uniform bool isDynamicObject;
 uniform bool isLight;
 uniform bool appTransparent;
+uniform bool directRender;
 uniform bool isVoxel;
 uniform bool voxelsEnabled;
 uniform float time;
@@ -64,7 +66,7 @@ vec3 palette( float t ) {
 }
 
 //https://www.shadertoy.com/view/mtyGWy
-vec4 floor( vec2 fragCoord ) {
+vec4 floorEffect( vec2 fragCoord ) {
 	vec2 uv = (fragCoord * 2.0 - vec2(1,1)) / vec2(1,1);
 	vec2 uv0 = uv;
 	vec3 finalColor = vec3(0.0);
@@ -87,11 +89,21 @@ vec4 floor( vec2 fragCoord ) {
 }
 
 vec4 colorFromTexture(sampler2D tex, vec2 coord) {
-  if(appTransparent) {
-    return texture(tex, coord * vec2(1,-1));
-  } else {
-    return vec4(vec3(texture(tex, coord * vec2(1,-1))), 1);
+  vec2 sampleCoord = coord;
+  if(!directRender) {
+    // Flip Y for in-world quads; directRender already uses screen space.
+    sampleCoord = vec2(coord.x, 1.0 - coord.y);
   }
+  if(appTransparent) {
+    return texture(tex, sampleCoord);
+  } else {
+    return vec4(vec3(texture(tex, sampleCoord)), 1);
+  }
+}
+
+// Debug: visualize texture coordinates to verify UVs.
+vec4 debugTexcoordColor(vec2 coord) {
+  return vec4(coord.x, coord.y, 0.0, 1.0);
 }
 
 
@@ -125,14 +137,14 @@ vec4 Light(int i, samplerCube depthMap) {
   vec3 diffuse = diff * lightColor[i];
 
   float specularStrength = 0.5;
-  float shininess = 32;
+  float shininess = 32.0;
   vec3 viewDir = normalize(viewPos - FragPos);
   vec3 reflectDir = reflect(-lightDir, norm);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
   vec3 specular = specularStrength * spec * lightColor[i];
 
   // calculate shadow
-  float shadow = 0; 
+  float shadow = 0.0; 
 
   if(SHADOWS_ENABLED) {
     shadow = ShadowCalculation(depthMap, FragPos, norm, lightDir, i);                      
@@ -145,7 +157,10 @@ vec4 Light(int i, samplerCube depthMap) {
 void main()
 {
 	// need to pass this in as vertex data, but hold for now
-	if(isApp) {
+if(isApp) {
+    // Visualize TexCoord mapping instead of sampling the app texture.
+    //FragColor = debugTexcoordColor(TexCoord);
+    //return;
 		if(appNumber == 0) {
 			FragColor = colorFromTexture(app0, TexCoord);
     } else if (appNumber == 1) {
@@ -174,22 +189,14 @@ void main()
 		} 
 		*/
 		if(appSelected) {
-			FragColor = mix(FragColor, floor(TexCoord), 0.1);
+			FragColor = mix(FragColor, floorEffect(TexCoord), 0.1);
 		}
 	} else if (isVoxel && voxelsEnabled) {
-    float wave = sin(FragPos.y * 0.6 + time * 1.3);
-    vec3 tint = palette(wave * 0.25 + 0.5);
-    vec3 glow = vec3(0.2) + 0.8 * abs(vec3(
-      sin(FragPos.x * 0.3 + time * 0.8),
-      cos(FragPos.y * 0.3 - time * 0.6),
-      sin(FragPos.z * 0.3 + time * 0.4)
-    ));
-    vec3 baseColor = mix(glow, tint, 0.5);
     float edgeWidth = 0.03;
     float edge = 1.0 - smoothstep(edgeWidth, edgeWidth * 2.0,
                                   min(min(Barycentric.x, Barycentric.y), Barycentric.z));
-    vec3 edgeGlow = vec3(1.0, 0.9, 0.6) * (1.5 + 0.5 * sin(time * 3.0));
-    vec3 color = baseColor;
+    vec3 edgeGlow = vec3(1.0, 0.9, 0.6) * (1.2 + 0.3 * sin(time * 2.0));
+    vec3 color = VoxelColor;
     color = mix(color, edgeGlow, edge);
     FragColor = vec4(color, 1.0);
 	} else if (isModel) {
@@ -223,7 +230,9 @@ void main()
       }
 
 
-      FragColor = vec4(lightOutput,1) * texture(texture_diffuse1, TexCoord);
+      FragColor = vec4(lightOutput,1.0) * texture(texture_diffuse1, TexCoord);
     }
-	} 
+	} else if (isLine) {
+    FragColor = vec4(lineColor, 1.0);
+  }
 }

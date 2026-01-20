@@ -24,31 +24,47 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10protos/api.proto\"\x0b\n\tNoPayload\")\n\x06Vector\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"Z\n\nPlayerMove\x12\x19\n\x08position\x18\x01 \x01(\x0b\x32\x07.Vector\x12\x19\n\x08rotation\x18\x02 \x01(\x0b\x32\x07.Vector\x12\x16\n\x0eunitsPerSecond\x18\x03 \x01(\x02\"-\n\nVoxelCoord\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"G\n\tAddVoxels\x12\x1b\n\x06voxels\x18\x01 \x03(\x0b\x32\x0b.VoxelCoord\x12\x0f\n\x07replace\x18\x02 \x01(\x08\x12\x0c\n\x04size\x18\x03 \x01(\x02\"N\n\x04Move\x12\x0e\n\x06xDelta\x18\x01 \x01(\x02\x12\x0e\n\x06yDelta\x18\x02 \x01(\x02\x12\x0e\n\x06zDelta\x18\x03 \x01(\x02\x12\x16\n\x0eunitsPerSecond\x18\x04 \x01(\x02\"\x15\n\x07TurnKey\x12\n\n\x02on\x18\x02 \x01(\x08\"\xde\x01\n\nApiRequest\x12\x10\n\x08\x65ntityId\x18\x01 \x01(\x03\x12\x1a\n\x04type\x18\x02 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x03 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x04 \x01(\x0b\x32\x08.TurnKeyH\x00\x12!\n\nplayerMove\x18\x05 \x01(\x0b\x32\x0b.PlayerMoveH\x00\x12\x1f\n\tnoPayload\x18\x06 \x01(\x0b\x32\n.NoPayloadH\x00\x12\x1f\n\taddVoxels\x18\x07 \x01(\x0b\x32\n.AddVoxelsH\x00\x42\t\n\x07payload\"\'\n\x12\x41piRequestResponse\x12\x11\n\trequestId\x18\x01 \x01(\x03*Z\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x12\x0f\n\x0bPLAYER_MOVE\x10\x02\x12\x12\n\x0eUNFOCUS_WINDOW\x10\x03\x12\x0e\n\nADD_VOXELS\x10\x04\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10protos/api.proto\"\x0b\n\tNoPayload\")\n\x06Vector\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"!\n\x05Range\x12\x0b\n\x03min\x18\x01 \x01(\x02\x12\x0b\n\x03max\x18\x02 \x01(\x02\"Z\n\nPlayerMove\x12\x19\n\x08position\x18\x01 \x01(\x0b\x32\x07.Vector\x12\x19\n\x08rotation\x18\x02 \x01(\x0b\x32\x07.Vector\x12\x16\n\x0eunitsPerSecond\x18\x03 \x01(\x02\"-\n\nVoxelCoord\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\t\n\x01z\x18\x03 \x01(\x02\"_\n\tAddVoxels\x12\x1b\n\x06voxels\x18\x01 \x03(\x0b\x32\x0b.VoxelCoord\x12\x0f\n\x07replace\x18\x02 \x01(\x08\x12\x0c\n\x04size\x18\x03 \x01(\x02\x12\x16\n\x05\x63olor\x18\x04 \x01(\x0b\x32\x07.Vector\"F\n\x0b\x43learVoxels\x12\x11\n\x01x\x18\x01 \x01(\x0b\x32\x06.Range\x12\x11\n\x01y\x18\x02 \x01(\x0b\x32\x06.Range\x12\x11\n\x01z\x18\x03 \x01(\x0b\x32\x06.Range\"!\n\rConfirmAction\x12\x10\n\x08\x61\x63tionId\x18\x01 \x01(\x03\"/\n\x0eKeyReplayEntry\x12\x0b\n\x03sym\x18\x01 \x01(\t\x12\x10\n\x08\x64\x65lay_ms\x18\x02 \x01(\r\"-\n\tKeyReplay\x12 \n\x07\x65ntries\x18\x01 \x03(\x0b\x32\x0f.KeyReplayEntry\"G\n\x12PointerReplayEntry\x12\x0e\n\x06\x62utton\x18\x01 \x01(\r\x12\x0f\n\x07pressed\x18\x02 \x01(\x08\x12\x10\n\x08\x64\x65lay_ms\x18\x03 \x01(\r\"5\n\rPointerReplay\x12$\n\x07\x65ntries\x18\x01 \x03(\x0b\x32\x13.PointerReplayEntry\"u\n\x0c\x45ngineStatus\x12\x16\n\x0etotal_entities\x18\x01 \x01(\r\x12\x14\n\x0cwayland_apps\x18\x02 \x01(\r\x12\x15\n\rwayland_focus\x18\x03 \x01(\x08\x12 \n\x0f\x63\x61mera_position\x18\x04 \x01(\x0b\x32\x07.Vector\"N\n\x04Move\x12\x0e\n\x06xDelta\x18\x01 \x01(\x02\x12\x0e\n\x06yDelta\x18\x02 \x01(\x02\x12\x0e\n\x06zDelta\x18\x03 \x01(\x02\x12\x16\n\x0eunitsPerSecond\x18\x04 \x01(\x02\"\x15\n\x07TurnKey\x12\n\n\x02on\x18\x02 \x01(\x08\"\xf6\x02\n\nApiRequest\x12\x10\n\x08\x65ntityId\x18\x01 \x01(\x03\x12\x1a\n\x04type\x18\x02 \x01(\x0e\x32\x0c.MessageType\x12\x15\n\x04move\x18\x03 \x01(\x0b\x32\x05.MoveH\x00\x12\x1b\n\x07turnKey\x18\x04 \x01(\x0b\x32\x08.TurnKeyH\x00\x12!\n\nplayerMove\x18\x05 \x01(\x0b\x32\x0b.PlayerMoveH\x00\x12\x1f\n\tnoPayload\x18\x06 \x01(\x0b\x32\n.NoPayloadH\x00\x12\x1f\n\taddVoxels\x18\x07 \x01(\x0b\x32\n.AddVoxelsH\x00\x12#\n\x0b\x63learVoxels\x18\x08 \x01(\x0b\x32\x0c.ClearVoxelsH\x00\x12\'\n\rconfirmAction\x18\t \x01(\x0b\x32\x0e.ConfirmActionH\x00\x12\x1f\n\tkeyReplay\x18\n \x01(\x0b\x32\n.KeyReplayH\x00\x12\'\n\rpointerReplay\x18\x0b \x01(\x0b\x32\x0e.PointerReplayH\x00\x42\t\n\x07payload\"i\n\x12\x41piRequestResponse\x12\x11\n\trequestId\x18\x01 \x01(\x03\x12\x10\n\x08\x61\x63tionId\x18\x02 \x01(\x03\x12\x0f\n\x07success\x18\x03 \x01(\x08\x12\x1d\n\x06status\x18\x04 \x01(\x0b\x32\r.EngineStatus*\xba\x01\n\x0bMessageType\x12\x08\n\x04MOVE\x10\x00\x12\x0c\n\x08TURN_KEY\x10\x01\x12\x0f\n\x0bPLAYER_MOVE\x10\x02\x12\x12\n\x0eUNFOCUS_WINDOW\x10\x03\x12\x0e\n\nADD_VOXELS\x10\x04\x12\x10\n\x0c\x43LEAR_VOXELS\x10\x05\x12\x12\n\x0e\x43ONFIRM_ACTION\x10\x06\x12\x08\n\x04QUIT\x10\x07\x12\x0e\n\nKEY_REPLAY\x10\x08\x12\n\n\x06STATUS\x10\t\x12\x12\n\x0ePOINTER_REPLAY\x10\nb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'protos.api_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_MESSAGETYPE']._serialized_start=657
-  _globals['_MESSAGETYPE']._serialized_end=747
+  _globals['_MESSAGETYPE']._serialized_start=1385
+  _globals['_MESSAGETYPE']._serialized_end=1571
   _globals['_NOPAYLOAD']._serialized_start=20
   _globals['_NOPAYLOAD']._serialized_end=31
   _globals['_VECTOR']._serialized_start=33
   _globals['_VECTOR']._serialized_end=74
-  _globals['_PLAYERMOVE']._serialized_start=76
-  _globals['_PLAYERMOVE']._serialized_end=166
-  _globals['_VOXELCOORD']._serialized_start=168
-  _globals['_VOXELCOORD']._serialized_end=213
-  _globals['_ADDVOXELS']._serialized_start=215
-  _globals['_ADDVOXELS']._serialized_end=286
-  _globals['_MOVE']._serialized_start=288
-  _globals['_MOVE']._serialized_end=366
-  _globals['_TURNKEY']._serialized_start=368
-  _globals['_TURNKEY']._serialized_end=389
-  _globals['_APIREQUEST']._serialized_start=392
-  _globals['_APIREQUEST']._serialized_end=614
-  _globals['_APIREQUESTRESPONSE']._serialized_start=616
-  _globals['_APIREQUESTRESPONSE']._serialized_end=655
+  _globals['_RANGE']._serialized_start=76
+  _globals['_RANGE']._serialized_end=109
+  _globals['_PLAYERMOVE']._serialized_start=111
+  _globals['_PLAYERMOVE']._serialized_end=201
+  _globals['_VOXELCOORD']._serialized_start=203
+  _globals['_VOXELCOORD']._serialized_end=248
+  _globals['_ADDVOXELS']._serialized_start=250
+  _globals['_ADDVOXELS']._serialized_end=345
+  _globals['_CLEARVOXELS']._serialized_start=347
+  _globals['_CLEARVOXELS']._serialized_end=417
+  _globals['_CONFIRMACTION']._serialized_start=419
+  _globals['_CONFIRMACTION']._serialized_end=452
+  _globals['_KEYREPLAYENTRY']._serialized_start=454
+  _globals['_KEYREPLAYENTRY']._serialized_end=501
+  _globals['_KEYREPLAY']._serialized_start=503
+  _globals['_KEYREPLAY']._serialized_end=548
+  _globals['_POINTERREPLAYENTRY']._serialized_start=550
+  _globals['_POINTERREPLAYENTRY']._serialized_end=621
+  _globals['_POINTERREPLAY']._serialized_start=623
+  _globals['_POINTERREPLAY']._serialized_end=676
+  _globals['_ENGINESTATUS']._serialized_start=678
+  _globals['_ENGINESTATUS']._serialized_end=795
+  _globals['_MOVE']._serialized_start=797
+  _globals['_MOVE']._serialized_end=875
+  _globals['_TURNKEY']._serialized_start=877
+  _globals['_TURNKEY']._serialized_end=898
+  _globals['_APIREQUEST']._serialized_start=901
+  _globals['_APIREQUEST']._serialized_end=1275
+  _globals['_APIREQUESTRESPONSE']._serialized_start=1277
+  _globals['_APIREQUESTRESPONSE']._serialized_end=1382
 # @@protoc_insertion_point(module_scope)

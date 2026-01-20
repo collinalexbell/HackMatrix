@@ -1,10 +1,42 @@
 # Detect if the distro is one that uses external fmt
 EXTERNAL_FMT_CHECK := $(shell grep -q 'void' /etc/os-release && echo "true" || echo "false")
 
+# Keep make output terse; errors still print. Use `make V=1` to override.
+ifndef V
+MAKEFLAGS += -s
+endif
+
 # Set extra compiler flags for Arch Linux
 ifeq ($(EXTERNAL_FMT_CHECK),true)
     FLAGS+= -D SPDLOG_FMT_EXTERNAL
 endif
+
+# Prefer a local wlroots build tree if present.
+# You can override by exporting WLROOTS_PC_DIR=/path/to/wlroots/build
+WLROOTS_PC_DIR ?= ./wlroots/build/meson-uninstalled
+WLROOTS_PC_FILE := $(firstword $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.20-uninstalled.pc) $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.20.pc))
+WLROOTS_PC_NAME ?= $(if $(WLROOTS_PC_FILE),$(basename $(notdir $(WLROOTS_PC_FILE))),wlroots-0.20)
+ifneq (,$(WLROOTS_PC_FILE))
+    export PKG_CONFIG_PATH := $(abspath $(dir $(WLROOTS_PC_FILE))):$(PKG_CONFIG_PATH)
+endif
+
+WLROOTS_REPO := https://gitlab.freedesktop.org/wlroots/wlroots.git
+WLROOTS_BUILD_DIR := wlroots/build
+WLROOTS_SETUP_FLAGS := -Dbackends=x11,drm,libinput -Dxwayland=disabled -Dexamples=false --wrap-mode=forcefallback
+WLROOTS_TOLERANT_CFLAGS := -Wno-error=packed -Wno-error=format-overflow -Wno-error=calloc-transposed-args -Wno-error=maybe-uninitialized -U_FORTIFY_SOURCE
+WLROOTS_WERROR_OPTS := -Dwerror=false -Dlibdrm:werror=false -Dlibxkbcommon:werror=false -Dlibdisplay-info:werror=false -Dseatd:werror=false -Dwayland:werror=false -Dpixman:werror=false -Dv4l-utils:werror=false
+
+.PHONY: wlroots-local
+wlroots-local: $(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json
+	@echo "Building local wlroots with X11 backend..."
+	ninja -C $(WLROOTS_BUILD_DIR)
+
+$(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json:
+	@echo "Ensuring wlroots source..."
+	@if [ ! -d wlroots ]; then git clone $(WLROOTS_REPO) wlroots; fi
+	@echo "Configuring wlroots..."
+	meson setup $(WLROOTS_BUILD_DIR) $(WLROOTS_SETUP_FLAGS) -Doptimization=1 -Dc_args='$(WLROOTS_TOLERANT_CFLAGS)' $(WLROOTS_WERROR_OPTS) || meson setup $(WLROOTS_BUILD_DIR) $(WLROOTS_SETUP_FLAGS) --wipe -Doptimization=1 -Dc_args='$(WLROOTS_TOLERANT_CFLAGS)' $(WLROOTS_WERROR_OPTS)
+	meson configure $(WLROOTS_BUILD_DIR) -Dlibdisplay-info:c_args='$(WLROOTS_TOLERANT_CFLAGS)'
 
 PROTO_DIR = protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
@@ -15,9 +47,23 @@ INCLUDES        = -Iinclude -I/usr/local/include -Iinclude/imgui -Itracy/public
 LOADER_FLAGS = -march=native -funroll-loops
 SQLITE_SOURCES = $(wildcard src/sqlite/*.cpp)
 SQLITE_OBJECTS = $(patsubst src/sqlite/%.cpp, build/%.o, $(SQLITE_SOURCES))
-ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp
+ALL_OBJECTS = build/ControlMappings.o build/Config.o build/systems/Player.o build/MultiPlayer/Server.o build/MultiPlayer/Client.o build/MultiPlayer/Gui.o build/screen.o build/systems/Light.o build/components/Light.o  build/systems/Boot.o build/components/Bootable.o build/IndexPool.o build/WindowManager/Space.o build/systems/Move.o build/systems/ApplyTranslation.o build/systems/Derivative.o build/systems/Update.o build/systems/Intersections.o build/systems/Scripts.o build/components/Scriptable.o build/components/Parent.o build/components/RotateMovement.o build/components/Lock.o build/components/Key.o build/systems/KeyAndLock.o build/systems/Door.o build/systems/ApplyRotation.o build/persister.o build/engineGui.o build/entity.o build/renderer.o build/shader.o build/texture.o build/world.o build/camera.o build/api.o build/controls.o build/app.o build/WindowManager/WindowManager.o build/logger.o build/engine.o build/cube.o build/chunk.o build/mesher.o build/loader.o build/utility.o build/blocks.o build/dynamicObject.o build/assets.o build/model.o build/mesh.o build/Voxel/VoxelSpace.o build/imgui/imgui.o build/imgui/imgui_draw.o build/imgui/imgui_impl_opengl3.o build/imgui/imgui_widgets.o build/imgui/imgui_demo.o build/imgui/imgui_impl_glfw.o build/imgui/imgui_tables.o build/enkimi.o build/miniz.o build/time_utils.o src/api.pb.cc src/glad.c src/glad_glx.c $(SQLITE_OBJECTS) tracy/public/TracyClient.cpp build/wayland/WaylandApp.o
+ALL_OBJECTS_DEBUG = $(filter-out build/renderer.o build/WindowManager/WindowManager.o build/wayland/WaylandApp.o build/WindowManager/Space.o,$(ALL_OBJECTS)) build_debug/renderer.debug.o build_debug/WindowManager/WindowManager.debug.o build_debug/wayland/WaylandApp.debug.o build_debug/WindowManager/Space.debug.o
+DEBUG_FLAGS = $(FLAGS) -O0 -g3 -DWLROOTS_DEBUG_LOGS
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
+
+WLROOTS_AVAILABLE := $(shell pkg-config --exists $(WLROOTS_PC_NAME) wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
+ifeq ($(WLROOTS_AVAILABLE),1)
+    WLROOTS_CFLAGS := $(shell pkg-config --cflags $(WLROOTS_PC_NAME) wayland-server xkbcommon) -DWLR_USE_UNSTABLE -I$(abspath wlroots/build/protocol)
+    WLROOTS_LIBS := $(shell pkg-config --libs $(WLROOTS_PC_NAME) wayland-server xkbcommon) -lpixman-1
+    RPATH_WLROOTS := -Wl,-rpath,$(abspath wlroots/build) -Wl,-rpath,$(abspath wlroots/build/subprojects/wayland/src)
+else
+    WLROOTS_CFLAGS :=
+    WLROOTS_LIBS :=
+    RPATH_WLROOTS :=
+endif
+
 
 all: FLAGS+=-O3 -g
 all: tracy include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
@@ -29,11 +75,28 @@ add:
 profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
 
+ifeq ($(WLROOTS_AVAILABLE),1)
+wlroots-skeleton: build/wayland/wlroots_skeleton.o
+	g++ -std=c++20 $(FLAGS) -o wlroots-skeleton build/wayland/wlroots_skeleton.o $(WLROOTS_LIBS) -lpthread
+matrix: matrix-release matrix-debug
+matrix-release: build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS)
+	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
+matrix-debug: build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG)
+	g++ -std=c++20 $(DEBUG_FLAGS) -g -o matrix-debug build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
+matrix-wlroots: matrix
+else
+wlroots-skeleton:
+	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
+	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor skeleton." >&2
+	@exit 1
+matrix-wlroots:
+	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
+	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor target." >&2
+	@exit 1
+endif
+
 tracy:
 	git submodule update --init
-
-matrix: $(ALL_OBJECTS) build/main.o
-	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o $(ALL_OBJECTS) $(LIBS) -Wl,--as-needed $(INCLUDES)
 
 trampoline: src/trampoline.cpp build/x-raise
 	g++ -o trampoline src/trampoline.cpp
@@ -51,14 +114,38 @@ build/enkimi.o: src/enkimi.c
 build/miniz.o: src/miniz.c
 	g++ $(FLAGS) $(LOADER_FLAGS) -o build/miniz.o -c src/miniz.c $(INCLUDES) -lm
 
-build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h
+build/wayland/wlroots_skeleton.o: src/wayland/wlroots_skeleton.cpp
+	mkdir -p build/wayland
+	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlroots_skeleton.o -c src/wayland/wlroots_skeleton.cpp
+
+build/wayland/wlr_compositor.o: src/wayland/wlr_compositor.cpp
+	mkdir -p build/wayland
+	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlr_compositor.o -c src/wayland/wlr_compositor.cpp
+build_debug/wayland/wlr_compositor.debug.o: src/wayland/wlr_compositor.cpp
+	mkdir -p build_debug/wayland
+	g++ -std=c++20 $(DEBUG_FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build_debug/wayland/wlr_compositor.debug.o -c src/wayland/wlr_compositor.cpp
+
+build/wayland/WaylandApp.o: src/wayland/WaylandApp.cpp
+	mkdir -p build/wayland
+	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/WaylandApp.o -c src/wayland/WaylandApp.cpp
+build_debug/wayland/WaylandApp.debug.o: src/wayland/WaylandApp.cpp
+	mkdir -p build_debug/wayland
+	g++ -std=c++20 $(DEBUG_FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build_debug/wayland/WaylandApp.debug.o -c src/wayland/WaylandApp.cpp
+build_debug/WindowManager/Space.debug.o: src/WindowManager/Space.cpp
+	mkdir -p build_debug/WindowManager
+	g++ -std=c++20 $(DEBUG_FLAGS) $(INCLUDES) -o build_debug/WindowManager/Space.debug.o -c src/WindowManager/Space.cpp
+
+build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
+build_debug/renderer.debug.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
+	mkdir -p build_debug
+	g++  -std=c++20 $(DEBUG_FLAGS) -o build_debug/renderer.debug.o -c src/renderer.cpp $(INCLUDES)
 
 build/IndexPool.o: include/IndexPool.h src/IndexPool.cpp
 	g++  -std=c++20 $(FLAGS) -o build/IndexPool.o -c src/IndexPool.cpp $(INCLUDES)
 
 build/main.o: src/main.cpp include/engine.h include/screen.h
-	g++ -std=c++20  $(FLAGS) -o build/main.o -c src/main.cpp $(INCLUDES)
+	g++ -std=c++20  $(FLAGS) -o build/main.o -c src/main.cpp $(INCLUDES) $(WLROOTS_CFLAGS)
 
 build/shader.o: src/shader.cpp include/shader.h
 	g++ -std=c++20  $(FLAGS) -o build/shader.o -c src/shader.cpp $(INCLUDES)
@@ -66,16 +153,16 @@ build/shader.o: src/shader.cpp include/shader.h
 build/texture.o: src/texture.cpp include/texture.h
 	g++  -std=c++20 $(FLAGS) -o build/texture.o -c src/texture.cpp $(INCLUDES)
 
-build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h include/loader.h include/utility.h include/dynamicObject.h include/renderer.h include/worldInterface.h include/model.h include/systems/ApplyRotation.h
+build/world.o: src/world.cpp include/world.h include/app.h include/camera.h include/cube.h include/chunk.h include/loader.h include/utility.h include/dynamicObject.h include/renderer.h include/worldInterface.h include/model.h include/systems/ApplyRotation.h include/time_utils.h
 	g++ -std=c++20 -g $(FLAGS) -o build/world.o -c src/world.cpp $(INCLUDES)
 
-build/camera.o: src/camera.cpp include/camera.h
+build/camera.o: src/camera.cpp include/camera.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/camera.o -c src/camera.cpp $(INCLUDES)
 
-build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h
+build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/api.o -c src/api.cpp $(INCLUDES)
 
-build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h include/ControlMappings.h
+build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h include/ControlMappings.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/controls.o -c src/controls.cpp $(INCLUDES)
 
 build/ControlMappings.o: src/ControlMappings.cpp include/ControlMappings.h include/Config.h
@@ -91,6 +178,9 @@ build/screen.o: src/screen.cpp include/screen.h
 
 build/WindowManager/WindowManager.o: src/WindowManager/WindowManager.cpp include/WindowManager/WindowManager.h include/controls.h include/logger.h include/world.h include/WindowManager/Space.h include/systems/Boot.h include/components/Bootable.h include/screen.h include/Config.h
 	g++ -std=c++20 $(FLAGS) -o build/WindowManager/WindowManager.o -c src/WindowManager/WindowManager.cpp $(INCLUDES)
+build_debug/WindowManager/WindowManager.debug.o: src/WindowManager/WindowManager.cpp include/WindowManager/WindowManager.h include/controls.h include/logger.h include/world.h include/WindowManager/Space.h include/systems/Boot.h include/components/Bootable.h include/screen.h include/Config.h
+	mkdir -p build_debug/WindowManager
+	g++ -std=c++20 $(DEBUG_FLAGS) -o build_debug/WindowManager/WindowManager.debug.o -c src/WindowManager/WindowManager.cpp $(INCLUDES)
 
 build/WindowManager/Space.o: src/WindowManager/Space.cpp include/WindowManager/Space.h include/loader.h include/app.h include/camera.h include/renderer.h include/screen.h
 	g++ -std=c++20 $(FLAGS) -o build/WindowManager/Space.o -c src/WindowManager/Space.cpp $(INCLUDES)
@@ -107,7 +197,7 @@ build/cube.o: src/cube.cpp include/cube.h
 build/chunk.o: src/chunk.cpp include/chunk.h include/mesher.h
 	g++ -std=c++20 $(FLAGS) -o build/chunk.o -c src/chunk.cpp $(INCLUDES)
 
-build/mesher.o: src/mesher.cpp include/mesher.h
+build/mesher.o: src/mesher.cpp include/mesher.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/mesher.o -c src/mesher.cpp $(INCLUDES)
 
 build/loader.o: src/loader.cpp include/loader.h include/utility.h
@@ -144,10 +234,10 @@ build/engineGui.o: src/engineGui.cpp include/engineGui.h include/components/Rota
 build/persister.o: src/persister.cpp include/persister.h
 	g++ -std=c++20 $(FLAGS) -o build/persister.o -c src/persister.cpp $(INCLUDES)
 
-build/systems/ApplyRotation.o: src/systems/ApplyRotation.cpp include/systems/ApplyRotation.h include/components/RotateMovement.h include/model.h
+build/systems/ApplyRotation.o: src/systems/ApplyRotation.cpp include/systems/ApplyRotation.h include/components/RotateMovement.h include/model.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/ApplyRotation.o -c src/systems/ApplyRotation.cpp $(INCLUDES)
 
-build/systems/ApplyTranslation.o: src/systems/ApplyTranslation.cpp include/systems/ApplyTranslation.h include/components/TranslateMovement.h include/model.h
+build/systems/ApplyTranslation.o: src/systems/ApplyTranslation.cpp include/systems/ApplyTranslation.h include/components/TranslateMovement.h include/model.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/ApplyTranslation.o -c src/systems/ApplyTranslation.cpp $(INCLUDES)
 
 
@@ -189,6 +279,9 @@ build/components/Bootable.o: src/components/Bootable.cpp include/components/Boot
 build/components/Light.o: src/components/Light.cpp include/components/Light.h
 	g++ -std=c++20 $(FLAGS) -o build/components/Light.o -c src/components/Light.cpp $(INCLUDES)
 
+build/time_utils.o: src/time_utils.cpp include/time_utils.h
+	g++ -std=c++20 $(FLAGS) -o build/time_utils.o -c src/time_utils.cpp $(INCLUDES)
+
 build/systems/Scripts.o: src/systems/Scripts.cpp include/systems/Scripts.h include/components/Scriptable.h include/entity.h
 	g++ -std=c++20 $(FLAGS) -o build/systems/Scripts.o -c src/systems/Scripts.cpp $(INCLUDES)
 
@@ -208,7 +301,7 @@ build/systems/Player.o: src/systems/Player.cpp include/systems/Player.h include/
 build/MultiPlayer/Gui.o: src/MultiPlayer/Gui.cpp include/MultiPlayer/Gui.h include/engine.h
 	g++ -std=c++20 $(FLAGS) -o build/MultiPlayer/Gui.o -c src/MultiPlayer/Gui.cpp $(INCLUDES)
 
-build/MultiPlayer/Client.o: src/MultiPlayer/Client.cpp include/MultiPlayer/Client.h
+build/MultiPlayer/Client.o: src/MultiPlayer/Client.cpp include/MultiPlayer/Client.h include/time_utils.h
 	g++ -std=c++20 $(FLAGS) -o build/MultiPlayer/Client.o -c src/MultiPlayer/Client.cpp $(INCLUDES)
 
 build/MultiPlayer/Server.o: src/MultiPlayer/Server.cpp include/MultiPlayer/Server.h include/systems/Player.h include/entity.h
@@ -253,7 +346,7 @@ TEST_OBJECTS = build/testChunk.o
 
 test: FLAGS+=-O0
 test: $(TEST_OBJECTS) $(ALL_OBJECTS)
-	g++ -std=c++20 $(FLAGS) -o test $(TEST_OBJECTS) $(ALL_OBJECTS) -fuse-ld=gold -I /usr/src/gtest $(INCLUDES) -L /usr/local/lib $(LIBS) -lgtest -lgtest_main -pthread $(EXTRA_LDFLAGS)
+	g++ -std=c++20 $(FLAGS) -o test $(TEST_OBJECTS) $(ALL_OBJECTS) -I /usr/src/gtest $(INCLUDES) -L /usr/local/lib $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lgtest -lgtest_main -pthread $(EXTRA_LDFLAGS)
 
 build/testDynamicObject.o: build/dynamicObject.o tests/dynamicObject.cpp include/dynamicObject.h
 	g++ -std=c++20 $(FLAGS) -o build/testDynamicObject.o -c tests/dynamicObject.cpp $(INCLUDES)
@@ -263,6 +356,26 @@ build/testDynamicObject.o: build/dynamicObject.o tests/dynamicObject.cpp include
 
 build/testChunk.o: build/chunk.o tests/chunk.cpp include/chunk.h include/mesher.h include/cube.h
 	g++ -std=c++20 $(FLAGS) -o build/testChunk.o -c tests/chunk.cpp $(INCLUDES)
+
+# Wayland basic test (uses gtest)
+build/testWaylandBasic.o: tests/wayland_basic.cpp
+	mkdir -p build
+	g++ -std=c++20 $(FLAGS) -o build/testWaylandBasic.o -c tests/wayland_basic.cpp $(INCLUDES)
+
+test-wayland-basic: build/testWaylandBasic.o
+	g++ -std=c++20 $(FLAGS) -o build/test-wayland-basic build/testWaylandBasic.o $(INCLUDES) -lgtest -lpthread
+
+# Menu launcher spec (TDD harness)
+build/testWaylandMenuSpec.o: tests/wayland_menu_spec.cpp
+	mkdir -p build
+	g++ -std=c++20 $(FLAGS) -o build/testWaylandMenuSpec.o -c tests/wayland_menu_spec.cpp $(INCLUDES)
+
+build/testControlsSpec.o: tests/controls_spec.cpp
+	mkdir -p build
+	g++ -std=c++20 $(FLAGS) -o build/testControlsSpec.o -c tests/controls_spec.cpp $(INCLUDES)
+
+test-wayland-menu: build/testWaylandMenuSpec.o build/testControlsSpec.o
+	g++ -std=c++20 $(FLAGS) -o build/test-wayland-menu build/testWaylandMenuSpec.o build/testControlsSpec.o $(ALL_OBJECTS) $(INCLUDES) $(LIBS) $(WLROOTS_LIBS) $(RPATH_WLROOTS) -lEGL -lGLESv2 -lgtest -lgtest_main -lpthread
 
 
 

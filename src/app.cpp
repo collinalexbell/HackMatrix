@@ -431,7 +431,7 @@ X11App::byPID(int pid, Display* display, int screen, int width, int height)
 }
 
 void
-X11App::unfocus(Window matrix)
+X11App::unfocus(unsigned long matrix)
 {
   focused = false;
   XSelectInput(display, matrix, 0);
@@ -464,7 +464,7 @@ X11App::isFocused()
 }
 
 void
-X11App::focus(Window matrix)
+X11App::focus(unsigned long matrix)
 {
   focused = true;
   Window root = DefaultRootWindow(display);
@@ -716,7 +716,7 @@ X11App::positionNotify(int x, int y)
 }
 
 array<int, 2>
-X11App::getPosition()
+X11App::getPosition() const
 {
   return { x, y };
 }
@@ -740,7 +740,15 @@ X11App::isAccessory()
   if (error != GL_NO_ERROR) {
     throw "XGetWindowAttributes failed";
   }
-  if (attrs.override_redirect) {
+  if (!attrs.override_redirect) {
+    return false;
+  }
+  // Treat override-redirect windows as accessory only if they're small (e.g.,
+  // popups/menus). Large override-redirect windows like OBS should be treated
+  // as normal apps.
+  const int maxAccessoryW = SCREEN_WIDTH / 2;
+  const int maxAccessoryH = SCREEN_HEIGHT / 2;
+  if (attrs.width <= maxAccessoryW && attrs.height <= maxAccessoryH) {
     return true;
   }
   return false;

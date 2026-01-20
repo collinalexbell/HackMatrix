@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <future>
 #include <memory>
+#include "time_utils.h"
 #include "chunk.h"
 #include "glm/geometric.hpp"
 #include "mesher.h"
@@ -50,7 +51,7 @@ Mesher::simpleMesh(Chunk* chunk)
 PartitionedChunkMeshes
 Mesher::meshGreedy(Chunk* chunk)
 {
-  double currentTime = glfwGetTime();
+  double currentTime = nowSeconds();
   PartitionedChunkMeshes meshes;
   int i, j, k, l, w, h, u, v;
   int x[3];

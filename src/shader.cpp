@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <cstring>
+#include <optional>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -35,7 +36,8 @@ printCompileErrorsIfAny(unsigned int shaderId, std::string shaderName)
   glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
   if (!success) {
     glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::" << shaderName << "::COMPILATION_FAILED\n"
+    std::cout << "ERROR::SHADER::" << shaderName
+              << "::COMPILATION_FAILED (" << shaderId << ")\n"
               << infoLog << std::endl;
   };
 }
@@ -70,11 +72,11 @@ void
 printLinkingErrors(unsigned int shaderId)
 {
   int success;
-  char infoLog[512];
+  char infoLog[2048];
   glGetProgramiv(shaderId, GL_LINK_STATUS, &success);
   if (!success) {
-    glGetProgramInfoLog(shaderId, 512, NULL, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+    glGetProgramInfoLog(shaderId, 2048, NULL, infoLog);
+    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED (" << shaderId << ")\n"
               << infoLog << std::endl;
   }
 }
@@ -92,9 +94,61 @@ Shader::linkShaderProgram()
   printLinkingErrors(ID);
 }
 
+static bool
+shouldUseGLES()
+{
+  static std::optional<bool> cached;
+  if (!cached.has_value()) {
+    const char* glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    const char* glslVersion =
+      reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+    bool isES = (glVersion && strstr(glVersion, "OpenGL ES")) ||
+                (glslVersion && strstr(glslVersion, "ES"));
+    cached = isES;
+  }
+  return cached.value();
+}
+
+static std::string
+rewriteToGLES(const std::string& source, bool want320)
+{
+  std::string out = source;
+  auto pos = out.find("#version");
+  auto newVersion = want320 ? std::string("#version 320 es")
+                            : std::string("#version 300 es");
+  if (pos != std::string::npos) {
+    auto lineEnd = out.find('\n', pos);
+    if (lineEnd == std::string::npos) {
+      lineEnd = out.size();
+    }
+    out.replace(pos, lineEnd - pos, newVersion);
+  } else {
+    out = newVersion + "\n" + out;
+  }
+
+  auto nl = out.find('\n');
+  if (nl != std::string::npos) {
+    out.insert(nl + 1,
+               "precision highp float;\n"
+               "precision highp int;\n"
+               "precision highp sampler2DArray;\n"
+               "precision highp samplerCube;\n");
+  }
+  return out;
+}
+
 void
 Shader::createShaders()
 {
+  if (shouldUseGLES()) {
+    const bool needs320 = geometryCode.has_value();
+    vertexCode = rewriteToGLES(vertexCode, needs320);
+    fragmentCode = rewriteToGLES(fragmentCode, needs320);
+    if (geometryCode.has_value()) {
+      geometryCode = rewriteToGLES(geometryCode.value(), true);
+    }
+  }
+
   createAndCompileShader(GL_VERTEX_SHADER, vertexCode);
   createAndCompileShader(GL_FRAGMENT_SHADER, fragmentCode);
   if (geometryCode.has_value()) {

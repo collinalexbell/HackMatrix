@@ -8,12 +8,36 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <cstdarg>
+#include <fstream>
+#include <mutex>
+#include <xkbcommon/xkbcommon.h>
+#include <glm/gtc/quaternion.hpp>
+#include <linux/input-event-codes.h>
 
 #include "controls.h"
 #include "camera.h"
 #include "renderer.h"
+#include "time_utils.h"
 
 using namespace std;
+
+namespace {
+void
+log_controls(const char* fmt, ...)
+{
+  std::ofstream out("/tmp/matrix-wlroots-output.log", std::ios::app);
+  if (!out.is_open()) {
+    return;
+  }
+  va_list args;
+  va_start(args, fmt);
+  char buf[256];
+  vsnprintf(buf, sizeof(buf), fmt, args);
+  va_end(args);
+  out << buf;
+}
+} // namespace
 
 void
 Controls::mouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -36,6 +60,7 @@ Controls::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 void
 Controls::poll(GLFWwindow* window, Camera* camera, World* world)
 {
+  runQueuedActions();
   handleKeys(window, camera, world);
   handleClicks(window, world);
   doDeferedActions();
@@ -80,7 +105,7 @@ double DEBOUNCE_TIME = 0.1;
 bool
 debounce(double& lastTime)
 {
-  double curTime = glfwGetTime();
+  double curTime = nowSeconds();
   double interval = curTime - lastTime;
   lastTime = curTime;
   return interval > DEBOUNCE_TIME;
@@ -92,7 +117,9 @@ Controls::handleDMenu(GLFWwindow* window, World* world)
   // its V menu for now :(
   bool dMenuActive = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
   if (dMenuActive && debounce(lastKeyPressTime)) {
-    wm->menu();
+    if (wm) {
+      wm->menu();
+    }
   }
 }
 
@@ -182,6 +209,19 @@ Controls::handleScreenshot(GLFWwindow* window)
   int screenshotKey = controlMappings.getKey("screenshot");
   bool shouldCapture = glfwGetKey(window, screenshotKey) == GLFW_PRESS;
   if (shouldCapture && debounce(lastKeyPressTime)) {
+    triggerScreenshot();
+  }
+}
+
+void
+Controls::triggerScreenshot()
+{
+  // Wayland mode consumes screenshot requests in the compositor render loop so
+  // that the capture happens on the swapchain framebuffer. X11 uses the legacy
+  // renderer path.
+  if (wm && wm->isWaylandMode()) {
+    wm->requestScreenshot();
+  } else if (renderer) {
     renderer->screenshot();
   }
 }
@@ -192,10 +232,8 @@ Controls::handleClicks(GLFWwindow* window, World* world)
   int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
     if(grabbedCursor) {
-      std::optional<entt::entity> app = std::nullopt;
-      if (windowManagerSpace != nullptr) {
-        app = windowManagerSpace->getLookedAtApp();
-      }
+      auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                    : std::optional<entt::entity>();
       if (app.has_value()) {
         goToApp(app.value());
       } else {
@@ -308,6 +346,9 @@ Controls::handleChangePlayerSpeed(GLFWwindow* window)
 void
 Controls::goToApp(entt::entity app)
 {
+  if (!wm || !windowManagerSpace) {
+    return;
+  }
   wm->passthroughInput();
   float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
   glm::vec3 rotationDegrees = windowManagerSpace->getAppRotation(app);
@@ -323,7 +364,8 @@ Controls::goToApp(entt::entity app)
 void
 Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
 {
-  auto app = windowManagerSpace->getLookedAtApp();
+  auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                : std::optional<entt::entity>();
   if (app.has_value()) {
     int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
     if (rKeyPressed && debounce(lastKeyPressTime)) {
@@ -335,7 +377,8 @@ Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
 void
 Controls::handleSelectApp(GLFWwindow* window)
 {
-  auto app = windowManagerSpace->getLookedAtApp();
+  auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                : std::optional<entt::entity>();
   if (app) {
     int keyPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
     if (keyPressed && debounce(lastKeyPressTime)) {
@@ -377,23 +420,372 @@ Controls::handleToggleCursor(GLFWwindow* window)
     if (grabbedCursor) {
       grabbedCursor = false;
       glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-      wm->captureInput();
     } else {
       grabbedCursor = true;
       resetMouse = true;
       glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-      wm->passthroughInput();
     }
   }
 }
 
 void
-Controls::wireWindowManager(shared_ptr<WindowManager::Space> windowManagerSpace)
+Controls::wireWindowManager(std::shared_ptr<WindowManager::Space> space)
 {
-  this->windowManagerSpace = windowManagerSpace;
+  windowManagerSpace = space;
 }
 
 void
 Controls::handleMakeWindowBootable(GLFWwindow* window)
 {
+}
+
+bool
+Controls::handlePointerButton(uint32_t button, bool pressed)
+{
+  if (!pressed) {
+    return false;
+  }
+  if (!debounce(lastClickTime)) {
+    return false;
+  }
+  if (button == static_cast<uint32_t>(BTN_LEFT)) {
+    if (grabbedCursor) {
+      auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
+                                    : std::optional<entt::entity>();
+      if (app.has_value()) {
+        log_controls("controls: pointer goToApp ent=%d button=%u\n",
+                     (int)entt::to_integral(app.value()),
+                     button);
+        goToApp(app.value());
+        return true;
+      }
+      log_controls("controls: pointer place voxel button=%u\n", button);
+      world->action(PLACE_VOXEL);
+      return true;
+    }
+  }
+  if (button == static_cast<uint32_t>(BTN_RIGHT)) {
+    // Placeholder for remove voxel or alternate interaction.
+    return false;
+  }
+  return false;
+}
+
+ControlResponse
+Controls::handleKeySym(xkb_keysym_t sym,
+                       bool pressed,
+                       bool modifierHeld,
+                       bool shiftHeld,
+                       bool waylandFocusActive)
+{
+  ControlResponse resp;
+  lastWaylandFocusActive = waylandFocusActive;
+  if (!pressed) {
+    return resp;
+  }
+
+  if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
+    lastShiftPressTime = nowSeconds();
+    log_controls("controls: shift pressed\n");
+  }
+
+  if (shiftHeld) {
+    lastShiftPressTime = nowSeconds();
+  }
+
+  if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
+      sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
+    log_controls("controls: debug sym=%u pressed=%d modifier=%d shift=%d focus=%d\n",
+                 sym,
+                 pressed ? 1 : 0,
+                 modifierHeld ? 1 : 0,
+                 shiftHeld ? 1 : 0,
+                 waylandFocusActive ? 1 : 0);
+  }
+
+  auto matchesConfiguredKey = [&](const std::string& fn) -> bool {
+    auto keyName = controlMappings.getKeyName(fn);
+    if (!keyName.has_value()) {
+      return false;
+    }
+    xkb_keysym_t configured =
+      xkb_keysym_from_name(keyName->c_str(), XKB_KEYSYM_CASE_INSENSITIVE);
+    return configured != XKB_KEY_NoSymbol && sym == configured;
+  };
+
+  // If a Wayland client holds focus and no modifier is pressed, let the app see
+  // the key (except for modifier-based WM hotkeys handled later).
+  if (waylandFocusActive && !modifierHeld) {
+    return resp;
+  }
+
+  if (matchesConfiguredKey("quit")) {
+    resp.requestQuit = true;
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  // Only allow menu toggle when no Wayland client has focus, or when modifier
+  // is held (so unmodified 'v' passes through to focused apps).
+  if ((sym == XKB_KEY_v || sym == XKB_KEY_V) && wm && debounce(lastKeyPressTime) &&
+      (!waylandFocusActive || modifierHeld)) {
+    log_controls("controls: menu\n");
+    resp.clearInputForces = true;
+    wm->menu();
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  // When a Wayland client is focused, let unmodified keys pass through so they reach
+  // the client instead of being eaten by engine controls.
+  const bool allowControls = !waylandFocusActive || modifierHeld;
+  if (!allowControls) {
+    return resp;
+  }
+
+  const bool toggleCursorPressed = matchesConfiguredKey("toggle_cursor") || sym == XKB_KEY_f ||
+                                   sym == XKB_KEY_F;
+  if (toggleCursorPressed) {
+    debounce(lastKeyPressTime);
+    if (grabbedCursor) {
+      grabbedCursor = false;
+      resetMouse = true;
+      if (wm) {
+        wm->captureInput();
+        wm->setCursorVisible(true);
+      }
+      log_controls("controls: toggle_cursor=0\n");
+    } else {
+      grabbedCursor = true;
+      resetMouse = true;
+      if (wm) {
+        wm->passthroughInput();
+        wm->setCursorVisible(false);
+      }
+      log_controls("controls: toggle_cursor=1\n");
+    }
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  if (matchesConfiguredKey("screenshot") && debounce(lastKeyPressTime)) {
+    log_controls("controls: screenshot\n");
+    enqueueAction([this]() { triggerScreenshot(); });
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  // Focus key (mirrors click focus) is handled on the main thread via the
+  // queued action system to match engine timing.
+  if ((sym == XKB_KEY_r || sym == XKB_KEY_R) && debounce(lastKeyPressTime)) {
+    resp.clearInputForces = true;
+    enqueueAction([this]() {
+      if (!wm) {
+        return;
+      }
+      // Prefer the app currently looked at; fall back to focusLookedAtApp to
+      // keep parity with click-based focus.
+      if (windowManagerSpace) {
+        if (auto looked = windowManagerSpace->getLookedAtApp()) {
+          wm->focusApp(*looked);
+          wm->goToLookedAtApp();
+          return;
+        }
+      }
+      wm->focusLookedAtApp();
+    });
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  // Modifier-driven window manager hotkeys.
+  if (modifierHeld && wm) {
+    if (sym == XKB_KEY_E || sym == XKB_KEY_e) {
+      wm->unfocusApp();
+      resp.blockClientDelivery = true;
+      resp.clearSeatFocus = true;
+      resp.consumed = true;
+      return resp;
+    }
+    if (sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
+      resp.clearInputForces = true;
+      wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
+      // When jumping via hotkey, drop the current seat focus so pointer/keyboard
+      // focus can be rebound to the destination app after the move finishes.
+      resp.clearSeatFocus = true;
+      resp.blockClientDelivery = true;
+      resp.consumed = true;
+      return resp;
+    }
+    wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
+    return resp;
+  }
+
+  switch (sym) {
+    case XKB_KEY_Delete:
+      throw "errorEscape";
+    case XKB_KEY_b:
+    case XKB_KEY_B:
+      if (debounce(lastKeyPressTime)) {
+        texturePack->logCounts();
+        log_controls("controls: logCounts\n");
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_t:
+    case XKB_KEY_T:
+      if (debounce(lastKeyPressTime)) {
+        world->action(LOG_BLOCK_TYPE);
+        log_controls("controls: logBlockType\n");
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_comma:
+      if (debounce(lastKeyPressTime)) {
+        world->mesh();
+        log_controls("controls: mesh\n");
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_m:
+    case XKB_KEY_M:
+      if (debounce(lastKeyPressTime)) {
+        world->mesh(false);
+        log_controls("controls: mesh=false\n");
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_slash:
+    case XKB_KEY_question:
+      if (debounce(lastKeyPressTime)) {
+        renderer->toggleWireframe();
+        log_controls("controls: wireframe toggle\n");
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_e:
+    case XKB_KEY_E:
+      // Selection placeholder for parity; no-op beyond debounce.
+      (void)debounce(lastKeyPressTime);
+      resp.consumed = true;
+      break;
+    case XKB_KEY_period:
+    case XKB_KEY_greater:
+      if (debounce(lastKeyPressTime)) {
+        auto newPos = camera->position + camera->front * -3.0f;
+        log_controls("controls: code block move distance=3.0\n");
+        moveTo(newPos, std::nullopt, 0.5, [this]() -> void {
+          world->action(OPEN_SELECTION_CODE);
+        });
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_l:
+    case XKB_KEY_L:
+      if (debounce(lastKeyPressTime)) {
+        auto t = std::time(nullptr);
+        auto tm = *std::localtime(&t);
+        stringstream filenameSS;
+        filenameSS << "saves/" << std::put_time(&tm, "%Y-%m-%d:%H-%M-%S.save");
+        world->save(filenameSS.str());
+        log_controls("controls: save %s\n", filenameSS.str().c_str());
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_equal:
+    case XKB_KEY_plus:
+      if (debounce(lastKeyPressTime)) {
+        camera->changeSpeed(0.05f);
+        log_controls("controls: camera speed delta=+0.05\n");
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_minus:
+    case XKB_KEY_underscore:
+      if (debounce(lastKeyPressTime)) {
+        camera->changeSpeed(-0.05f);
+        log_controls("controls: camera speed delta=-0.05\n");
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_0:
+      if (shiftHeld || (nowSeconds() - lastShiftPressTime) < 0.25) {
+        if (debounce(lastKeyPressTime)) {
+          camera->resetSpeed();
+          log_controls("controls: camera speed reset\n");
+          resp.consumed = true;
+        }
+      } else {
+        windowFlop += windowFlop_dt;
+        log_controls("controls: windowFlop=%.4f\n", windowFlop);
+        resp.consumed = true;
+      }
+      break;
+    case XKB_KEY_9:
+      windowFlop -= windowFlop_dt;
+      if (windowFlop <= 0.01) {
+        windowFlop = 0.01;
+      }
+      log_controls("controls: windowFlop=%.4f\n", windowFlop);
+      resp.consumed = true;
+      break;
+    default:
+      break;
+  }
+
+  return resp;
+}
+
+void
+Controls::enqueueAction(std::function<void()> fn)
+{
+  std::lock_guard<std::mutex> lock(queuedActionsMutex);
+  queuedActions.push_back(std::move(fn));
+}
+
+void
+Controls::runQueuedActions()
+{
+  std::vector<std::function<void()>> actions;
+  {
+    std::lock_guard<std::mutex> lock(queuedActionsMutex);
+    actions.swap(queuedActions);
+  }
+  for (auto& fn : actions) {
+    if (fn) {
+      fn();
+    }
+  }
+  // Also process any deferred callbacks (e.g., moveTo completion) so they run
+  // even when no GLFW window is present (Wayland compositor path).
+  doDeferedActions();
+}
+
+void
+Controls::applyMovementInput(bool forward, bool back, bool left, bool right)
+{
+  if (camera) {
+    camera->handleTranslateForce(forward, back, left, right);
+  }
+}
+
+void
+Controls::clearMovementInput()
+{
+  applyMovementInput(false, false, false, false);
+}
+
+void
+Controls::applyLookDelta(double dx, double dy)
+{
+  if (renderer && renderer->getCamera()) {
+    renderer->getCamera()->handleRotateForce(nullptr, dx, dy);
+  }
 }

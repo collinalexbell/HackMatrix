@@ -27,6 +27,8 @@
 #include "systems/Scripts.h"
 #include "systems/Update.h"
 #include "tracy/Tracy.hpp"
+#include "screen.h"
+#include "time_utils.h"
 
 #include <glm/glm.hpp>
 
@@ -38,6 +40,7 @@ EngineGui::EngineGui(Engine* engine,
   , registry(registry)
   , loggerVector(loggerVector)
 {
+  const bool hasGlfwWindow = window != nullptr;
 
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
@@ -49,8 +52,18 @@ EngineGui::EngineGui(Engine* engine,
     ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
   // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init();
+  if (hasGlfwWindow) {
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+  } else {
+    static const char* kGlslVersion = "#version 100"; // Target GLES2 for wlroots path.
+    ImGui_ImplOpenGL3_Init(kGlslVersion);
+    // Headless Wayland compositor path: no GLFW window, so provide basic display size.
+    io.DisplaySize = ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT);
+    io.BackendPlatformName = "hackmatrix-wlroots";
+    // Minimal platform flags so ImGui knows we manage mouse cursors/timing.
+    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
+  }
+  useGlfwBackend = hasGlfwWindow;
 }
 
 void
@@ -58,8 +71,25 @@ EngineGui::render(double& fps, int frameIndex, vector<double>& frameTimes)
 {
   ZoneScoped;
   static MultiPlayer::Gui gui(engine);
+  GLint prevProgram = 0;
+  GLint prevArray = 0;
+  GLint prevTexture = 0;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &prevProgram);
+  glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &prevArray);
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &prevTexture);
+  if (!imguiGlInitialized) {
+    imguiGlInitialized = true;
+  }
   ImGui_ImplOpenGL3_NewFrame();
-  ImGui_ImplGlfw_NewFrame();
+  if (useGlfwBackend) {
+    ImGui_ImplGlfw_NewFrame();
+  } else {
+    // Minimal timing when no platform backend is available.
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.DeltaTime <= 0.0f) {
+      io.DeltaTime = 1.0f / 60.0f;
+    }
+  }
   ImGui::NewFrame();
   // ImGui::ShowDemoWindow();
   // ImGui::SetNextWindowSize(ImVec2(120, 5));
@@ -103,7 +133,12 @@ EngineGui::render(double& fps, int frameIndex, vector<double>& frameTimes)
     ImGui::EndTabBar(); // Close the tab bar
   }
   ImGui::End();
+  engine->setImguiWantsMouse(ImGui::GetIO().WantCaptureMouse);
   ImGui::Render();
+  // Restore GL bindings to minimize GL_INVALID_* spam on GLES2 drivers.
+  glUseProgram(prevProgram);
+  glBindBuffer(GL_ARRAY_BUFFER, prevArray);
+  glBindTexture(GL_TEXTURE_2D, prevTexture);
 }
 
 void

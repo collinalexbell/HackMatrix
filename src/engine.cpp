@@ -27,11 +27,28 @@
 
 #include <memory>
 #include <spdlog/common.h>
+#include <cstdlib>
+#include <chrono>
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
+#include <fstream>
 
+#include "imgui/imgui.h"
 #include "imgui/imgui_impl_opengl3.h"
+
+namespace {
+
+double
+currentTimeSeconds()
+{
+  static const auto start = std::chrono::steady_clock::now();
+  const auto now = std::chrono::steady_clock::now();
+  std::chrono::duration<double> elapsed = now - start;
+  return elapsed.count();
+}
+
+} // namespace
 
 void
 mouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -105,8 +122,11 @@ shared_ptr<LoggerVector> Engine::setupLogger() {
   return loggerVector;
 }
 
-Engine::Engine(GLFWwindow* window, char** envp)
+Engine::Engine(GLFWwindow* window, char** envp, EngineOptions options)
   : window(window)
+  , envp(envp)
+  , options(options)
+  , frameTimes(20, 0.0)
 {
   setupRegistry();
 
@@ -117,51 +137,94 @@ Engine::Engine(GLFWwindow* window, char** envp)
   auto loggerVector = setupLogger();
   initializeMemberObjs();
 
-  glfwFocusWindow(window);
+  if (window != nullptr) {
+    glfwFocusWindow(window);
+  }
 
   TracyGpuContext;
 
   wire();
-  wm->createAndRegisterApps(envp);
+  if (wm) {
+    wm->createAndRegisterApps(envp);
+  }
 
-  registerCursorCallback();
+  if (options.enableControls && window != nullptr) {
+    registerCursorCallback();
+  }
   // Has to be be created after the cursorCallback because gui wraps the
-  // callback
-  engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
+  // callback. In wlroots mode window is null; EngineGui handles a headless path.
+  if (options.enableGui) {
+    engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
+  }
 }
 
 Engine::~Engine()
 {
   // may want to remove this because it might be slow on shutdown
   // when trying to get fast dev time
-  delete controls;
+  if (controls) {
+    delete controls;
+  }
   delete renderer;
   delete world;
   delete camera;
-  delete api;
+  //delete api;
   registry->saveAll();
+}
+
+void
+Engine::action(Action action)
+{
+  if (world) {
+    world->action(action);
+  }
 }
 
 void
 Engine::initializeMemberObjs()
 {
+  const char* apiAddressEnv = std::getenv("VOXEL_API_BIND");
+  std::string apiAddress =
+    apiAddressEnv != nullptr ? apiAddressEnv : "tcp://*:4455";
+  if (const char* logPath = std::getenv("MATRIX_WLROOTS_OUTPUT")) {
+    std::ofstream out(logPath, std::ios::app);
+    out << "engine: VOXEL_API_BIND=" << apiAddress << "\n";
+  }
+
   auto texturePack = blocks::initializeBasicPack();
-  wm = make_shared<WindowManager::WindowManager>(
-    registry, glfwGetX11Window(window), loggerSink);
+  // Default to X11 WM only when we have a GLFW X11 window; wlroots path uses a
+  // Wayland-aware WM. For wlroots, matrix window is null so we skip X11 setup.
+  if (window != nullptr) {
+    wm = make_shared<WindowManager::WindowManager>(
+      registry, glfwGetX11Window(window), loggerSink, envp);
+  } else {
+    // Wayland-only path (wlroots) doesn't have a GLFW window; build a WM in
+    // headless mode so we can still place/render apps.
+    wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true, envp);
+  }
   camera = new Camera();
   world = new World(
     registry, camera, texturePack, true, loggerSink);
-  renderer = new Renderer(registry, camera, world, texturePack);
-  controls = new Controls(wm, world, camera, renderer, texturePack);
-  api = new Api("tcp://*:4455", registry, controls, renderer, wm);
-  wm->registerControls(controls);
+  renderer = new Renderer(registry, camera, world, texturePack, options.invertYAxis);
+  camera->setInvertY(options.invertYAxis);
+  if (options.enableControls) {
+    controls = new Controls(wm, world, camera, renderer, texturePack);
+  } else {
+    controls = nullptr;
+  }
+  api = new Api(apiAddress, registry, controls, renderer, world, wm);
+  if (wm) {
+    wm->registerControls(controls);
+  }
 }
 
 void
 Engine::wire()
 {
   world->attachRenderer(renderer);
-  wm->wire(wm, camera, renderer);
+  if (wm) {
+    wm->wire(wm, camera, renderer);
+  }
 }
 
 void Engine::multiplayerClientIteration(double frameStart) {
@@ -180,10 +243,6 @@ void Engine::multiplayerClientIteration(double frameStart) {
 void
 Engine::loop()
 {
-  vector<double> frameTimes(20, 0);
-  double frameStart;
-  int frameIndex = 0;
-  double fps;
   // Skip shadow-map lighting pass while experimenting with voxel outlines to
   // avoid crashes in the lighting pipeline.
   // systems::updateLighting(registry, renderer);
@@ -191,35 +250,106 @@ Engine::loop()
     while (!glfwWindowShouldClose(window)) {
       TracyGpuZone("loop");
       glfwPollEvents();
-      frameStart = glfwGetTime();
-
-      if (api != nullptr) {
-        api->mutateEntities();
-      }
-      renderer->render();
-      engineGui->render(fps, frameIndex, frameTimes);
-
-      // this has the potential to make OpenGL calls (for lighting; 1 render
-      // call per light)
-      world->tick();
-
-      wm->tick();
-
-      disableKeysIfImguiActive();
-      controls->poll(window, camera, world);
-      multiplayerClientIteration(frameStart);
-
-      ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+      double frameStart = currentTimeSeconds();
+      frame(frameStart);
       glfwSwapBuffers(window);
-      TracyGpuCollect;
-      FrameMark;
-
-      frameTimes[frameIndex] = glfwGetTime() - frameStart;
-      frameIndex = (frameIndex + 1) % 10;
     }
   } catch (const std::exception& e) {
     logger->error(e.what());
     throw;
+  }
+}
+
+void
+Engine::frame(double frameStart)
+{
+  if (api != nullptr) {
+    api->mutateEntities();
+  }
+
+
+
+  renderer->render();
+
+  if (engineGui) {
+    engineGui->render(fps, frameIndex, frameTimes);
+    // Flip ImGui draw data vertically when running headless (wlroots) so it matches compositor output.
+    /*
+    ImDrawData* draw_data = ImGui::GetDrawData();
+    if (window == nullptr && draw_data) {
+	    const float fb_height = draw_data->DisplaySize.y * draw_data->FramebufferScale.y;
+	    for (int n = 0; n < draw_data->CmdListsCount; n++) {
+		    ImDrawList* cmd_list = draw_data->CmdLists[n];
+		    for (int v = 0; v < cmd_list->VtxBuffer.Size; v++) {
+			    cmd_list->VtxBuffer[v].pos.y = fb_height - cmd_list->VtxBuffer[v].pos.y;
+		    }
+		    for (int c = 0; c < cmd_list->CmdBuffer.Size; c++) {
+			    ImDrawCmd& cmd = cmd_list->CmdBuffer[c];
+			    const float old_y0 = cmd.ClipRect.y;
+			    const float old_y1 = cmd.ClipRect.w;
+			    cmd.ClipRect.y = fb_height - old_y1;
+			    cmd.ClipRect.w = fb_height - old_y0;
+		    }
+	    }
+    }
+    */
+    //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+  }
+
+
+  // this has the potential to make OpenGL calls (for lighting; 1 render
+  // call per light)
+  world->tick();
+
+  //api->mutateEntities();
+  if (wm) {
+    wm->tick();
+  }
+
+  if (engineGui) {
+    disableKeysIfImguiActive();
+  }
+  if (controls) {
+    controls->runQueuedActions();
+    if (window != nullptr) {
+      controls->poll(window, camera, world);
+    }
+  }
+  multiplayerClientIteration(frameStart);
+
+  // Save state ImGui might clobber on GLES2 (primitive restart/poly mode).
+  GLint prevProgram = 0;
+  GLint prevArray = 0;
+  GLint prevTexture = 0;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &prevProgram);
+  glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &prevArray);
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &prevTexture);
+
+
+
+
+  if (engineGui) {
+  }
+
+  // Restore to avoid GL_INVALID_ENUM/OPERATION spam on GLES2 drivers.
+  //glUseProgram(prevProgram);
+  //glBindBuffer(GL_ARRAY_BUFFER, prevArray);
+  //glBindTexture(GL_TEXTURE_2D, prevTexture);
+
+  TracyGpuCollect;
+  FrameMark;
+
+  frameTimes[frameIndex] = currentTimeSeconds() - frameStart;
+  frameIndex = (frameIndex + 1) % frameTimes.size();
+  if (frameIndex == 0 && frameTimes.size() > 0) {
+    fps = 0.0;
+    for (double ft : frameTimes) {
+      fps += ft;
+    }
+    fps /= static_cast<double>(frameTimes.size());
+    if (fps > 0.0) {
+      fps = 1.0 / fps;
+    }
   }
 }
 
@@ -230,6 +360,20 @@ Engine::disableKeysIfImguiActive() {
   } else {
     controls->enableKeys();
   }
+}
+
+void
+Engine::updateImGuiPointer(float xPixels, float yPixels, const bool buttons[3])
+{
+  if (!engineGui || window != nullptr) {
+    return;
+  }
+  ImGuiIO& io = ImGui::GetIO();
+  io.MousePos = ImVec2(xPixels, yPixels);
+  io.MouseDown[0] = buttons[0];
+  io.MouseDown[1] = buttons[1];
+  io.MouseDown[2] = buttons[2];
+  setImguiWantsMouse(io.WantCaptureMouse);
 }
 
 void

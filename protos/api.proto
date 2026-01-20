@@ -6,6 +6,12 @@ enum MessageType {
   PLAYER_MOVE = 2;
   UNFOCUS_WINDOW = 3;
   ADD_VOXELS = 4;
+  CLEAR_VOXELS = 5;
+  CONFIRM_ACTION = 6;
+  QUIT = 7;
+  KEY_REPLAY = 8;
+  STATUS = 9;
+  POINTER_REPLAY = 10;
 }
 
 message NoPayload {}
@@ -14,6 +20,11 @@ message Vector {
   float x = 1;
   float y = 2;
   float z = 3;
+}
+
+message Range {
+  float min = 1;
+  float max = 2;
 }
 
 message PlayerMove {
@@ -32,8 +43,44 @@ message AddVoxels {
   repeated VoxelCoord voxels = 1;
   bool replace = 2;
   float size = 3;
+  Vector color = 4;
 }
 
+message ClearVoxels {
+  Range x = 1;
+  Range y = 2;
+  Range z = 3;
+}
+
+message ConfirmAction {
+  int64 actionId = 1;
+}
+
+message KeyReplayEntry {
+  string sym = 1;       // XKB keysym name (e.g., "v", "Super_L")
+  uint32 delay_ms = 2;  // Wait time after this key press before next entry
+}
+
+message KeyReplay {
+  repeated KeyReplayEntry entries = 1;
+}
+
+message PointerReplayEntry {
+  uint32 button = 1;    // linux/input-event-codes BTN_* value
+  bool pressed = 2;     // true for press, false for release
+  uint32 delay_ms = 3;  // Wait time after this pointer event before next entry
+}
+
+message PointerReplay {
+  repeated PointerReplayEntry entries = 1;
+}
+
+message EngineStatus {
+  uint32 total_entities = 1;
+  uint32 wayland_apps = 2;
+  bool wayland_focus = 3;
+  Vector camera_position = 4;
+}
 
 message Move {
   float xDelta = 1;
@@ -55,9 +102,16 @@ message ApiRequest {
     PlayerMove playerMove = 5;
     NoPayload noPayload = 6;
     AddVoxels addVoxels = 7;
+    ClearVoxels clearVoxels = 8;
+    ConfirmAction confirmAction = 9;
+    KeyReplay keyReplay = 10;
+    PointerReplay pointerReplay = 11;
   }
 }
 
 message ApiRequestResponse {
   int64 requestId = 1;
+  int64 actionId = 2;
+  bool success = 3;
+  EngineStatus status = 4;
 }

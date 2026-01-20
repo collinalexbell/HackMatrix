@@ -135,9 +135,10 @@ ControlMappings::ControlMappings() {
   //std::cout << "key_mappings" << mappingKeys[0] << std::endl;
   for(auto it = mappingKeys.begin(); it != mappingKeys.end(); it++) {
     auto fullPath = "key_mappings." + *it;
-    auto key = config->get<std::string>(fullPath);
-    if(keyMap.contains(key)) {
-      functionMap[*it] = keyMap[key];
+    auto keyName = config->get<std::string>(fullPath);
+    functionNameMap[*it] = keyName;
+    if(keyMap.contains(keyName)) {
+      functionMap[*it] = keyMap[keyName];
     }
   }
 }
@@ -147,4 +148,14 @@ int ControlMappings::getKey(std::string fnName) {
     return functionMap[fnName];
   }
   return -1;
+}
+
+std::optional<std::string>
+ControlMappings::getKeyName(const std::string& fnName) const
+{
+  auto it = functionNameMap.find(fnName);
+  if (it != functionNameMap.end()) {
+    return it->second;
+  }
+  return std::nullopt;
 }

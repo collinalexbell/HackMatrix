@@ -24,6 +24,7 @@
 #include <csignal>
 #include "systems/ApplyRotation.h"
 #include "tracy/Tracy.hpp"
+#include "time_utils.h"
 
 using namespace std;
 
@@ -106,7 +107,7 @@ World::~World() {}
 void
 World::mesh(bool realTime)
 {
-  double currentTime = glfwGetTime();
+  double currentTime = nowSeconds();
   vector<shared_ptr<ChunkMesh>> m;
   int sizeX = chunks[0][0]->getSize()[0];
   int sizeZ = chunks[0][0]->getSize()[2];
@@ -663,6 +664,10 @@ World::removeLine(Line l)
     glm::vec3 b1 = l.points[1];
     if (glm::distance(a0, a1) < EPSILON && glm::distance(b0, b1) < EPSILON) {
       lines.erase(it);
+      if (renderer != NULL) {
+        renderer->setLines(lines);
+      }
+      break;
     }
   }
 }

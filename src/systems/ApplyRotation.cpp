@@ -6,15 +6,16 @@
 #include "components/Parent.h"
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
+#include "time_utils.h"
 
 double MIN_ROTATION = 0.0001;
 void
 systems::applyRotation(std::shared_ptr<EntityRegistry> registry)
 {
   // initialize to current time on first call
-  static double lastRotated = glfwGetTime();
+  static double lastRotated = nowSeconds();
 
-  double curTime = glfwGetTime();
+  double curTime = nowSeconds();
 
   auto toRotate = registry->view<Positionable, RotateMovement>();
   for (auto [entity, positionable, rotateMovement] : toRotate.each()) {

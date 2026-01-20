@@ -1,5 +1,6 @@
 #include "Voxel/VoxelSpace.h"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <tuple>
@@ -10,12 +11,15 @@
 
 Voxel::Voxel() = default;
 
-Voxel::Voxel(glm::vec3 position, float size)
+Voxel::Voxel(glm::vec3 position, float size, glm::vec3 color)
   : position(position)
   , size(size)
+  , color(color)
 {}
 
-std::pair<std::vector<glm::vec3>, std::vector<glm::vec3>>
+std::tuple<std::vector<glm::vec3>,
+           std::vector<glm::vec3>,
+           std::vector<glm::vec3>>
 Voxel::buildVertices() const
 {
   const float half = size * 0.5f;
@@ -47,33 +51,38 @@ Voxel::buildVertices() const
 
   std::vector<glm::vec3> vertices;
   std::vector<glm::vec3> barycentrics;
+  std::vector<glm::vec3> colors;
   vertices.reserve(36);
   barycentrics.reserve(36);
+  colors.reserve(36);
   for (size_t faceIndex = 0; faceIndex < faces.size(); ++faceIndex) {
     const auto& face = faces[faceIndex];
     for (size_t v = 0; v < face.size(); ++v) {
       int index = face[v];
       vertices.push_back(position + corners[index]);
       barycentrics.push_back(triBarycentrics[v]);
+      colors.push_back(color);
     }
   }
 
-  return { vertices, barycentrics };
+  return { vertices, barycentrics, colors };
 }
 
 RenderedVoxelSpace::RenderedVoxelSpace() = default;
 
 RenderedVoxelSpace::RenderedVoxelSpace(
   const std::vector<glm::vec3>& positions,
-  const std::vector<glm::vec3>& barycentrics)
+  const std::vector<glm::vec3>& barycentrics,
+  const std::vector<glm::vec3>& colors)
 {
-  upload(positions, barycentrics);
+  upload(positions, barycentrics, colors);
 }
 
 RenderedVoxelSpace::RenderedVoxelSpace(RenderedVoxelSpace&& other) noexcept
   : vao(std::exchange(other.vao, 0))
   , vboPositions(std::exchange(other.vboPositions, 0))
   , vboBarycentrics(std::exchange(other.vboBarycentrics, 0))
+  , vboColors(std::exchange(other.vboColors, 0))
   , vertexCount(other.vertexCount)
 {
   other.vertexCount = 0;
@@ -87,6 +96,7 @@ RenderedVoxelSpace::operator=(RenderedVoxelSpace&& other) noexcept
     vao = std::exchange(other.vao, 0);
     vboPositions = std::exchange(other.vboPositions, 0);
     vboBarycentrics = std::exchange(other.vboBarycentrics, 0);
+    vboColors = std::exchange(other.vboColors, 0);
     vertexCount = other.vertexCount;
     other.vertexCount = 0;
   }
@@ -100,17 +110,20 @@ RenderedVoxelSpace::~RenderedVoxelSpace()
 
 void
 RenderedVoxelSpace::upload(const std::vector<glm::vec3>& positions,
-                           const std::vector<glm::vec3>& barycentrics)
+                           const std::vector<glm::vec3>& barycentrics,
+                           const std::vector<glm::vec3>& colors)
 {
   destroy();
   vertexCount = static_cast<int>(positions.size());
-  if (vertexCount == 0 || barycentrics.size() != positions.size()) {
+  if (vertexCount == 0 || barycentrics.size() != positions.size() ||
+      colors.size() != positions.size()) {
     return;
   }
 
   glGenVertexArrays(1, &vao);
   glGenBuffers(1, &vboPositions);
   glGenBuffers(1, &vboBarycentrics);
+  glGenBuffers(1, &vboColors);
 
   glBindVertexArray(vao);
   glBindBuffer(GL_ARRAY_BUFFER, vboPositions);
@@ -134,6 +147,14 @@ RenderedVoxelSpace::upload(const std::vector<glm::vec3>& positions,
                GL_STATIC_DRAW);
   glEnableVertexAttribArray(7);
   glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, vboColors);
+  glBufferData(GL_ARRAY_BUFFER,
+               colors.size() * sizeof(glm::vec3),
+               colors.data(),
+               GL_STATIC_DRAW);
+  glEnableVertexAttribArray(8);
+  glVertexAttribPointer(8, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 
   glBindVertexArray(0);
 }
@@ -160,6 +181,10 @@ RenderedVoxelSpace::destroy()
     glDeleteBuffers(1, &vboBarycentrics);
     vboBarycentrics = 0;
   }
+  if (vboColors != 0) {
+    glDeleteBuffers(1, &vboColors);
+    vboColors = 0;
+  }
   if (vao != 0) {
     glDeleteVertexArrays(1, &vao);
     vao = 0;
@@ -168,9 +193,9 @@ RenderedVoxelSpace::destroy()
 }
 
 void
-VoxelSpace::add(glm::vec3 position, float size)
+VoxelSpace::add(glm::vec3 position, float size, glm::vec3 color)
 {
-  voxels.emplace_back(position, size);
+  voxels.emplace_back(position, size, color);
 }
 
 bool
@@ -191,16 +216,47 @@ VoxelSpace::render() const
 {
   std::vector<glm::vec3> vertices;
   std::vector<glm::vec3> barycentrics;
+  std::vector<glm::vec3> colors;
   vertices.reserve(voxels.size() * 36);
   barycentrics.reserve(voxels.size() * 36);
+  colors.reserve(voxels.size() * 36);
   for (const auto& voxel : voxels) {
     auto mesh = voxel.buildVertices();
-    auto& v = mesh.first;
-    auto& b = mesh.second;
+    auto& v = std::get<0>(mesh);
+    auto& b = std::get<1>(mesh);
+    auto& c = std::get<2>(mesh);
     vertices.insert(vertices.end(), v.begin(), v.end());
     barycentrics.insert(barycentrics.end(), b.begin(), b.end());
+    colors.insert(colors.end(), c.begin(), c.end());
   }
-  return RenderedVoxelSpace(vertices, barycentrics);
+  return RenderedVoxelSpace(vertices, barycentrics, colors);
+}
+
+size_t
+VoxelSpace::remove(glm::vec3 min, glm::vec3 max)
+{
+  glm::vec3 lower(std::min(min.x, max.x),
+                  std::min(min.y, max.y),
+                  std::min(min.z, max.z));
+  glm::vec3 upper(std::max(min.x, max.x),
+                  std::max(min.y, max.y),
+                  std::max(min.z, max.z));
+  const float EPS = 0.0001f;
+
+  auto before = voxels.size();
+  voxels.erase(std::remove_if(voxels.begin(),
+                              voxels.end(),
+                              [&](const Voxel& voxel) {
+                                auto pos = voxel.getPosition();
+                                return pos.x >= lower.x - EPS &&
+                                       pos.x <= upper.x + EPS &&
+                                       pos.y >= lower.y - EPS &&
+                                       pos.y <= upper.y + EPS &&
+                                       pos.z >= lower.z - EPS &&
+                                       pos.z <= upper.z + EPS;
+                              }),
+               voxels.end());
+  return before - voxels.size();
 }
 
 void

@@ -1,71 +1,49 @@
+#include <cstdlib>
 #include "engine.h"
+#include "wayland/wlr_compositor.h"
 
-#include <iostream>
-#include <signal.h>
+int main(int argc, char** argv, char** envp) {
+  (void)argc;
+  (void)argv;
+  delay_if_launching_nested_from_hackmatrix(argc, argv);
 
-#include <GLFW/glfw3.h>
-#include <glad/glad.h>
-#include <X11/Xlib.h>
+  WlrServer server = {};
+  server.envp = envp;
+  server.hotkeyModifier = parse_hotkey_modifier();
+  server.hotkeyModifierMask = hotkey_modifier_mask(server.hotkeyModifier);
 
-#include "screen.h"
+  log_to_tmp("startup: hotkey modifier=%s mask=0x%x\n",
+             hotkey_modifier_label(server.hotkeyModifier),
+             server.hotkeyModifierMask);
+  initialize_wlr_logging();
+  log_env();
 
-void
-framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-  glViewport(0, 0, width, height);
-}
+  write_pid_for_kill();
+  apply_backend_env_defaults();
 
-GLFWwindow* MainWindow()
-{
-  glfwSetErrorCallback(NULL);
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  GLFWwindow* window =
-    glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "matrix", NULL, NULL);
-  if (window == NULL) {
-    std::cout << "Failed to create GLFW window" << std::endl;
-    glfwTerminate();
-    return NULL;
+  if (!create_display_and_backend(server)) {
+    return EXIT_FAILURE;
   }
-  glfwMakeContextCurrent(window);
+  if (!create_renderer_and_allocator(server)) {
+    teardown_server(server);
+    return EXIT_FAILURE;
+  }
+  if (!init_protocols_and_seat(server)) {
+    teardown_server(server);
+    return EXIT_FAILURE;
+  }
+  register_global_listeners(server);
 
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "Failed to initialize GLAD" << std::endl;
-    return NULL;
+  if (!start_backend_and_socket(server)) {
+    teardown_server(server);
+    return EXIT_FAILURE;
   }
 
-  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  return window;
-}
+  install_sigint_handler();
 
-void
-cleanup(Engine* engine)
-{
-  glfwTerminate();
-  if(engine != NULL) {
-    delete engine;
-  }
-}
+  wl_display_run(server.display);
 
-int
-main(int argc, char** argv, char** envp)
-{
-  try {
-    GLFWwindow* window = MainWindow();
-    if (window == NULL)
-      return -1;
+  teardown_server(server);
 
-    Engine* engine = new Engine(window, envp);
-    engine->loop();
-    cleanup(engine);
-
-  } catch (const std::exception& e) {
-    // signal error to the trampoline
-    // return -1;
-    cleanup(NULL);
-    throw e;
-  }
+  return EXIT_SUCCESS;
 }

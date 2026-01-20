@@ -70,6 +70,7 @@ class Camera
   float lastY;
   float yaw;
   float pitch;
+  bool invertY = false;
   queue<Movement> movements;
   void interpolateMovement(Movement& movement);
   glm::mat4 viewMatrix;
@@ -87,6 +88,7 @@ public:
   void handleTranslateForce(bool up, bool down, bool left, bool right);
   void handleRotateForce(GLFWwindow* window, double xoffset, double yoffset);
   ~Camera();
+  void setInvertY(bool invert);
   void tick();
   bool isMoving();
   std::shared_ptr<bool> moveTo(glm::vec3 position,

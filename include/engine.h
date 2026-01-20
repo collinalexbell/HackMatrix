@@ -13,9 +13,16 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include <spdlog/common.h>
+#include <vector>
 
 void
 mouseCallback(GLFWwindow* window, double xpos, double ypos);
+
+struct EngineOptions {
+  bool enableGui = true;
+  bool enableControls = true;
+  bool invertYAxis = false; // flip rendering for wlroots FBO orientation
+};
 
 class Engine
 {
@@ -24,8 +31,13 @@ class Engine
   Renderer* renderer;
   Controls* controls;
   Camera* camera;
-  shared_ptr<WindowManager::WindowManager> wm;
+  WindowManager::WindowManagerPtr wm;
   GLFWwindow* window;
+  char** envp = nullptr;
+  EngineOptions options;
+  std::vector<double> frameTimes;
+  int frameIndex = 0;
+  double fps = 0.0;
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
   std::shared_ptr<EngineGui> engineGui;
@@ -34,6 +46,7 @@ class Engine
   spdlog::sink_ptr loggerSink;
   std::shared_ptr<LoggerVector> setupLogger();
   void disableKeysIfImguiActive();
+  bool imguiMouseCapture = false;
 
   friend void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void setupRegistry();
@@ -41,12 +54,22 @@ class Engine
   void multiplayerClientIteration(double frameStart);
 
 public:
-  Engine(GLFWwindow* window, char** envp);
+  Engine(GLFWwindow* window, char** envp, EngineOptions options = {});
   ~Engine();
   shared_ptr<EntityRegistry> getRegistry();
+  Camera* getCamera() { return camera; }
+  Renderer* getRenderer() { return renderer; }
+  Api* getApi() { return api; }
+  std::shared_ptr<WindowManager::WindowManagerInterface> getWindowManager() { return wm; }
+  Controls* getControls() { return controls; }
+  void action(Action action);
   void wire();
   void loop();
+  void frame(double frameStart);
   void registerCursorCallback();
   void registerServer(shared_ptr<MultiPlayer::Server>);
   void registerClient(shared_ptr<MultiPlayer::Client>);
+  void updateImGuiPointer(float xPixels, float yPixels, const bool buttons[3]);
+  void setImguiWantsMouse(bool wants) { imguiMouseCapture = wants; }
+  bool imguiWantsMouse() const { return imguiMouseCapture; }
 };

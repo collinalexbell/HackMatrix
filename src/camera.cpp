@@ -8,8 +8,16 @@
 #include <GLFW/glfw3.h>
 #include <memory>
 #include "Config.h"
+#include <chrono>
+#include "time_utils.h"
 
 float Camera::DEFAULT_CAMERA_SPEED = 0.03f;
+
+static double
+currentTimeSecondsFallback()
+{
+  return nowSeconds();
+}
 
 Camera::Camera()
 {
@@ -36,6 +44,14 @@ Camera::Camera()
 Camera::~Camera() {}
 
 void
+Camera::setInvertY(bool invert)
+{
+  invertY = invert;
+  _projectionMatrixUpdated = true;
+  viewUpdated = true;
+}
+
+void
 Camera::handleTranslateForce(bool up, bool down, bool left, bool right)
 {
   if (up)
@@ -47,6 +63,21 @@ Camera::handleTranslateForce(bool up, bool down, bool left, bool right)
   if (right)
     position += glm::normalize(glm::cross(front, this->up)) * cameraSpeed;
   viewUpdated = true;
+  if (up || down || left || right) {
+    FILE* f = std::fopen("/tmp/camera-move.log", "a");
+    if (f) {
+      std::fprintf(f,
+                   "camera moved pos=(%.3f,%.3f,%.3f) dir=(%.3f,%.3f,%.3f)\n",
+                   position.x,
+                   position.y,
+                   position.z,
+                   front.x,
+                   front.y,
+                   front.z);
+      std::fflush(f);
+      std::fclose(f);
+    }
+  }
 }
 
 void
@@ -86,7 +117,7 @@ Camera::tick()
 void
 Camera::interpolateMovement(Movement& movement)
 {
-  double time = glfwGetTime();
+  double time = currentTimeSecondsFallback();
   float completionRatio =
     (time - movement.startTime) / (movement.endTime - movement.startTime);
   if (completionRatio >= 1.0) {
@@ -122,7 +153,12 @@ Camera::viewMatrixUpdated()
 glm::mat4&
 Camera::getProjectionMatrix(bool isRenderLoop)
 {
-  if (isRenderLoop) {
+  if (_projectionMatrixUpdated || isRenderLoop) {
+    projectionMatrix =
+      glm::perspective(yFov, SCREEN_WIDTH / SCREEN_HEIGHT, zNear, zFar);
+    if (invertY) {
+      projectionMatrix[1][1] *= -1.0f;
+    }
     _projectionMatrixUpdated = false;
   }
   return projectionMatrix;
@@ -142,7 +178,7 @@ Camera::moveTo(glm::vec3 targetPosition,
   pitch = glm::degrees(asin(targetFront.y));
   yaw = glm::degrees(atan2(targetFront.z, targetFront.x));
   std::shared_ptr<bool> isDone(new bool(false));
-  double curTime = glfwGetTime();
+  double curTime = currentTimeSecondsFallback();
   double finishTime = curTime + moveSeconds;
 
   Movement movement{ position, targetPosition, front, targetFront,
