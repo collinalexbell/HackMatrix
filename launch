@@ -67,7 +67,7 @@ if [ -n "$BACKEND" ]; then
   fi
 fi
 
-BIN="${MATRIX_WLROOTS_BIN:-./matrix-debug}"
+BIN="${MATRIX_WLROOTS_BIN:-./matrix}"
 export ENABLE_RENDER_TMP_LOGS=1
 export WLR_APP_SAMPLE_LOG=1
 export VOXEL_API_BIND="${VOXEL_API_BIND:-tcp://*:3345}"

@@ -6,4 +6,4 @@ key_mappings:
   screenshot: "p"
   toggle_cursor: "f"
   quit: "escape"
-  super_modifier: "alt"
+  super_modifier: "super"
