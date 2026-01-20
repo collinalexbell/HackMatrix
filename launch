@@ -9,8 +9,19 @@ export LD_LIBRARY_PATH="$BASE_DIR/wlroots/build:$BASE_DIR/wlroots/build/subproje
 export XCURSOR_THEME="${XCURSOR_THEME:-Adwaita}"
 export XCURSOR_SIZE="${XCURSOR_SIZE:-24}"
 export XCURSOR_PATH="${XCURSOR_PATH:-/usr/share/icons}"
+# Prefer discrete GPU for all launched apps (Wayland clients inherit this).
+export DRI_PRIME="${DRI_PRIME:-1}"
+# Force NVIDIA offload/proprietary stack; clients inherit these.
+export __NV_PRIME_RENDER_OFFLOAD="${__NV_PRIME_RENDER_OFFLOAD:-1}"
+export __GLX_VENDOR_LIBRARY_NAME="${__GLX_VENDOR_LIBRARY_NAME:-nvidia}"
+export __VK_LAYER_NV_optimus="${__VK_LAYER_NV_optimus:-NVIDIA_only}"
+export GBM_BACKEND="${GBM_BACKEND:-nvidia-drm}"
+# Hint to kernel/driver; requires nvidia-drm modeset enabled at boot.
+export __NV_DRM_Modeset="${__NV_DRM_Modeset:-1}"
 # Force software cursors; some GPUs/DRM combos show corrupted hardware cursors.
 export WLR_NO_HARDWARE_CURSORS=1
+# Enable Wayland app sampling logs so buffer import/fallback is visible.
+export MATRIX_WAYLANDAPP_SAMPLE_LOGS="${MATRIX_WAYLANDAPP_SAMPLE_LOGS:-1}"
 # Optional flags (handled by the compositor binary):
 #   --in-wm     -> delay start when running inside another WM.
 #   --headless  -> force wlroots headless backend (for TTY/headless use).
