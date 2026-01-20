@@ -1,0 +1,8 @@
+include: https://git.sr.ht/~emersion/dalligi/blob/master/templates/multi.yml
+alpine:
+  extends: .dalligi
+  pages: true
+archlinux:
+  extends: .dalligi
+freebsd:
+  extends: .dalligi

@@ -1,0 +1,3 @@
+[wrap-git]
+url = https://gitlab.freedesktop.org/pixman/pixman.git
+revision = HEAD

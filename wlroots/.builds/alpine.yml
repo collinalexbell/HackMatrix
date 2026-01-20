@@ -1,0 +1,57 @@
+image: alpine/edge
+packages:
+  - eudev-dev
+  - glslang
+  - lcms2-dev
+  - libdisplay-info-dev
+  - libinput-dev
+  - libliftoff-dev
+  - libxkbcommon-dev
+  - mesa-dev
+  - meson
+  - pixman-dev
+  - vulkan-headers
+  - vulkan-loader-dev
+  - wayland-dev
+  - wayland-protocols
+  - xcb-util-image-dev
+  - xcb-util-renderutil-dev
+  - xcb-util-wm-dev
+  - xwayland-dev
+  - libseat-dev
+  - hwdata-dev
+  # for docs
+  - go
+  - zip
+sources:
+  - https://gitlab.freedesktop.org/wlroots/wlroots.git
+artifacts:
+  - public.zip
+tasks:
+  - setup: |
+      cd wlroots
+      meson setup build --fatal-meson-warnings --default-library=both -Dauto_features=enabled -Dxcb-errors=disabled --buildtype=debugoptimized
+  - build: |
+      cd wlroots
+      ninja -C build
+      sudo ninja -C build install
+  - build-features-disabled: |
+      cd wlroots
+      meson setup build --reconfigure -Dauto_features=disabled
+      ninja -C build
+  - tinywl: |
+      cd wlroots/tinywl
+      make
+  - docs: |
+      go install 'codeberg.org/emersion/gyosu@latest'
+      include_dir="$(echo /usr/local/include/wlroots-*)"
+      ~/go/bin/gyosu \
+        -DWLR_USE_UNSTABLE \
+        $(pkg-config --cflags-only-I $(basename "$include_dir")) \
+        -Iwlroots/build/protocol/ \
+        -fexported-symbols='wlr_*' -fexported-symbols='WLR_*' \
+        -ffile-prefix-map="$include_dir/"= \
+        -fsite-name=wlroots \
+        -o public \
+        "$include_dir/wlr/"
+      zip -r ~/public.zip public/

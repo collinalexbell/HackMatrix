@@ -1,0 +1,76 @@
+#ifndef WLR_CONFIG_H
+#define WLR_CONFIG_H
+
+/**
+ * Whether the DRM backend is compile-time enabled. Equivalent to the
+ * pkg-config "have_drm_backend" variable.
+ *
+ * Required for <wlr/backend/drm.h>.
+ */
+#mesondefine WLR_HAS_DRM_BACKEND
+/**
+ * Whether the libinput backend is compile-time enabled. Equivalent to the
+ * pkg-config "have_libinput_backend" vartiable.
+ *
+ * Required for <wlr/backend/libinput.h>.
+ */
+#mesondefine WLR_HAS_LIBINPUT_BACKEND
+/**
+ * Whether the X11 backend is compile-time enabled. Equivalent to the
+ * pkg-config "have_x11_backend" variable.
+ *
+ * Required for <wlr/backend/x11.h>.
+ */
+#mesondefine WLR_HAS_X11_BACKEND
+
+/**
+ * Whether the GLES2 renderer is compile-time enabled. Equivalent to the
+ * pkg-config "have_gles2_renderer" variable.
+ *
+ * Required for <wlr/render/gles2.h>.
+ */
+#mesondefine WLR_HAS_GLES2_RENDERER
+/**
+ * Whether the Vulkan renderer is compile-time enabled. Equivalent to the
+ * pkg-config "have_vulkan_renderer" variable.
+ *
+ * Required for <wlr/render/vulkan.h>.
+ */
+#mesondefine WLR_HAS_VULKAN_RENDERER
+
+/**
+ * Whether the GBM allocator is compile-time enabled. Equivalent to the
+ * pkg-config "have_gbm_allocator" variable.
+ */
+#mesondefine WLR_HAS_GBM_ALLOCATOR
+/**
+ * Whether the udmabuf allocator is compile-time enabled. Equivalent to the
+ * pkg-config "have_udmabuf_allocator" variable.
+ */
+#mesondefine WLR_HAS_UDMABUF_ALLOCATOR
+
+/**
+ * Whether Xwayland support is compile-time enabled. Equivalent to the
+ * pkg-config "have_xwayland" variable.
+ *
+ * Required for <wlr/xwayland/…>.
+ */
+#mesondefine WLR_HAS_XWAYLAND
+
+/**
+ * Whether session support is compile-time enabled. Equivalent to the
+ * pkg-config "have_session" variable.
+ *
+ * Required for <wlr/backend/session.h>.
+ */
+#mesondefine WLR_HAS_SESSION
+
+/**
+ * Whether traditional color management support is compile-time enabled.
+ * Equivalent to the pkg-config "have_color_management" variable.
+ *
+ * Required for ICC profile support in <wlr/render/color.h>.
+ */
+#mesondefine WLR_HAS_COLOR_MANAGEMENT
+
+#endif

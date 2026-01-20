@@ -1,0 +1,3 @@
+[wrap-git]
+url = https://gitlab.freedesktop.org/mesa/drm.git
+revision = HEAD

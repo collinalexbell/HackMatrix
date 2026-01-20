@@ -1,0 +1,50 @@
+image: archlinux
+packages:
+  - clang
+  - lcms2
+  - libinput
+  - libdisplay-info
+  - libliftoff
+  - libxkbcommon
+  - mesa
+  - meson
+  - pixman
+  - wayland
+  - wayland-protocols
+  - xcb-util-errors
+  - xcb-util-image
+  - xcb-util-renderutil
+  - xcb-util-wm
+  - xorg-xwayland
+  - seatd
+  - vulkan-icd-loader
+  - vulkan-headers
+  - glslang
+  - hwdata
+sources:
+  - https://gitlab.freedesktop.org/wlroots/wlroots.git
+tasks:
+  - setup: |
+      cd wlroots
+      CC=gcc meson setup build-gcc --fatal-meson-warnings --default-library=both -Dauto_features=enabled --prefix /usr -Db_sanitize=address,undefined
+      CC=clang meson setup build-clang --fatal-meson-warnings -Dauto_features=enabled -Dc_std=c11
+  - gcc: |
+      cd wlroots/build-gcc
+      ninja
+      sudo ninja install
+      cd ../tinywl
+      make
+  - clang: |
+      cd wlroots/build-clang
+      ninja
+  - smoke-test: |
+      cd wlroots/build-gcc/tinywl
+      sudo modprobe vkms
+      udevadm settle
+      card="/dev/dri/$(ls /sys/devices/faux/vkms/drm/ | grep ^card)"
+      export WLR_BACKENDS=drm
+      export WLR_RENDERER=pixman
+      export WLR_DRM_DEVICES="$card"
+      export UBSAN_OPTIONS=halt_on_error=1
+      sudo chmod ugo+rw "$card"
+      sudo -E seatd-launch -- ./tinywl -s 'kill $PPID' || [ $? = 143 ]
