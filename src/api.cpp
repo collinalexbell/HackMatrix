@@ -6,6 +6,7 @@
 #include <glm/gtx/hash.hpp>
 #include "logger.h"
 #include "renderer.h"
+#include "model.h"
 #include "systems/KeyAndLock.h"
 #include "systems/Move.h"
 
@@ -46,6 +47,13 @@ log_to_tmp_api(const std::string& msg)
   std::fwrite(msg.c_str(), 1, msg.size(), f);
   std::fclose(f);
 }
+
+glm::vec3
+toVec3(const Vector& v)
+{
+  return glm::vec3(v.x(), v.y(), v.z());
+}
+
 } // namespace
 
 int BatchedRequest::nextId = 0;
@@ -391,6 +399,123 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
             log_to_tmp_api(std::string(buf));
           }
         }
+      }
+      break;
+    }
+    case ADD_COMPONENT: {
+      const auto& add = batchedRequest.request.addcomponent();
+      const auto& component = add.component();
+      entt::entity target =
+        static_cast<entt::entity>(batchedRequest.request.entityid());
+      if (!registry) {
+        break;
+      }
+      switch (component.type()) {
+        case COMPONENT_TYPE_POSITIONABLE: {
+          if (!component.has_positionable()) {
+            break;
+          }
+          const auto& data = component.positionable();
+          glm::vec3 pos = toVec3(data.position());
+          glm::vec3 origin =
+            data.has_origin() ? toVec3(data.origin()) : glm::vec3(0.0f);
+          glm::vec3 rotation = toVec3(data.rotation());
+          float scale = data.scale();
+          if (registry->any_of<Positionable>(target)) {
+            auto& positionable = registry->get<Positionable>(target);
+            positionable.pos = pos;
+            positionable.origin = origin;
+            positionable.rotate = rotation;
+            positionable.scale = scale;
+            positionable.damage();
+          } else {
+            registry->emplace<Positionable>(
+              target, pos, origin, rotation, scale);
+          }
+          break;
+        }
+        case COMPONENT_TYPE_MODEL: {
+          if (!component.has_model()) {
+            break;
+          }
+          const auto& data = component.model();
+          if (data.model_path().empty()) {
+            break;
+          }
+          if (registry->any_of<Model>(target)) {
+            registry->removePersistent<Model>(target);
+          }
+          registry->emplace<Model>(target, data.model_path());
+          break;
+        }
+        default:
+          break;
+      }
+      break;
+    }
+    case DELETE_COMPONENT: {
+      const auto& del = batchedRequest.request.deletecomponent();
+      entt::entity target =
+        static_cast<entt::entity>(batchedRequest.request.entityid());
+      if (!registry) {
+        break;
+      }
+      switch (del.component_type()) {
+        case COMPONENT_TYPE_POSITIONABLE:
+          if (registry->any_of<Positionable>(target)) {
+            registry->removePersistent<Positionable>(target);
+          }
+          break;
+        case COMPONENT_TYPE_MODEL:
+          if (registry->any_of<Model>(target)) {
+            registry->removePersistent<Model>(target);
+          }
+          break;
+        default:
+          break;
+      }
+      break;
+    }
+    case EDIT_COMPONENT: {
+      const auto& edit = batchedRequest.request.editcomponent();
+      const auto& component = edit.component();
+      entt::entity target =
+        static_cast<entt::entity>(batchedRequest.request.entityid());
+      if (!registry) {
+        break;
+      }
+      switch (component.type()) {
+        case COMPONENT_TYPE_POSITIONABLE: {
+          if (!component.has_positionable() ||
+              !registry->any_of<Positionable>(target)) {
+            break;
+          }
+          const auto& data = component.positionable();
+          auto& positionable = registry->get<Positionable>(target);
+          positionable.pos = toVec3(data.position());
+          positionable.origin =
+            data.has_origin() ? toVec3(data.origin()) : glm::vec3(0.0f);
+          positionable.rotate = toVec3(data.rotation());
+          positionable.scale = data.scale();
+          positionable.damage();
+          break;
+        }
+        case COMPONENT_TYPE_MODEL: {
+          if (!component.has_model() || !registry->any_of<Model>(target)) {
+            break;
+          }
+          const auto& data = component.model();
+          if (data.model_path().empty()) {
+            break;
+          }
+          if (registry->any_of<Model>(target)) {
+            registry->removePersistent<Model>(target);
+          }
+          registry->emplace<Model>(target, data.model_path());
+          break;
+        }
+        default:
+          break;
       }
       break;
     }

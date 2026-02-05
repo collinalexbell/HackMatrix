@@ -12,6 +12,9 @@ enum MessageType {
   KEY_REPLAY = 8;
   STATUS = 9;
   POINTER_REPLAY = 10;
+  ADD_COMPONENT = 11;
+  DELETE_COMPONENT = 12;
+  EDIT_COMPONENT = 13;
 }
 
 message NoPayload {}
@@ -106,6 +109,9 @@ message ApiRequest {
     ConfirmAction confirmAction = 9;
     KeyReplay keyReplay = 10;
     PointerReplay pointerReplay = 11;
+    AddComponent addComponent = 12;
+    DeleteComponent deleteComponent = 13;
+    EditComponent editComponent = 14;
   }
 }
 
@@ -115,3 +121,47 @@ message ApiRequestResponse {
   bool success = 3;
   EngineStatus status = 4;
 }
+
+enum ComponentType {
+  COMPONENT_TYPE_UNSPECIFIED = 0;
+  COMPONENT_TYPE_POSITIONABLE = 1;
+  COMPONENT_TYPE_MODEL = 2;
+  // Add new component types here as needed
+}
+
+message PositionableComponent {
+  int64 entityId = 1;                  // Primary key, corresponds to the entity
+  Vector position = 2;                 // World-space position
+  Vector rotation = 3;                 // Euler angles or quaternion (replicated as a Vector)
+  float scale = 4;                     // Uniform scale factor
+  Vector origin = 5;                   // Origin/pivot for transforms
+}
+
+message ModelComponent {
+  int64 entityId = 1;                  // Primary key, corresponds to the entity
+  string model_path = 2;               // Filepath or asset reference for 3D model
+}
+
+message Component {
+  ComponentType type = 1;              // Specifies the type of the component.
+  oneof component_type {
+    PositionableComponent positionable = 2;
+    ModelComponent model = 3;
+  }
+}
+
+message AddComponent {
+  Component component = 1;             // Component to add (see oneof)
+}
+
+message DeleteComponent {
+  ComponentType component_type = 1;    // Enum value for the type of the component being removed
+}
+
+message EditComponent {
+  Component component = 1;             // Updated component data (see oneof)
+}
+
+
+
+
