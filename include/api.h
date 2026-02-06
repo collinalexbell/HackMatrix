@@ -71,6 +71,13 @@ struct PendingStatusRequest
   bool ready = false;
 };
 
+struct PendingApiResponse
+{
+  int64_t requestId = 0;
+  ApiRequestResponse response;
+  bool ready = false;
+};
+
 class Api
 {
 
@@ -105,6 +112,9 @@ class Api
   EngineStatus cachedStatus; // updated on render thread, read by API thread
   std::deque<std::shared_ptr<PendingStatusRequest>> pendingStatus;
   std::condition_variable statusCv;
+  std::mutex responseMutex;
+  std::condition_variable responseCv;
+  std::unordered_map<int64_t, std::shared_ptr<PendingApiResponse>> pendingResponses;
   int64_t registerClearArea(const glm::vec3& min,
                             const glm::vec3& max,
                             std::optional<int64_t> requestedId);
@@ -113,6 +123,8 @@ class Api
                                         const glm::vec3& max) const;
   std::vector<glm::vec3> buildClearAreaVoxels(const glm::vec3& min,
                                               const glm::vec3& max) const;
+  void fulfillPendingResponse(int64_t requestId,
+                              const ApiRequestResponse& response);
 
 protected:
   void grabBatched();

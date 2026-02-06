@@ -54,6 +54,16 @@ toVec3(const Vector& v)
   return glm::vec3(v.x(), v.y(), v.z());
 }
 
+Vector
+toProtoVec3(const glm::vec3& v)
+{
+  Vector out;
+  out.set_x(v.x);
+  out.set_y(v.y);
+  out.set_z(v.z);
+  return out;
+}
+
 } // namespace
 
 int BatchedRequest::nextId = 0;
@@ -224,6 +234,36 @@ Api::ProtobufCommandServer::poll()
         memcpy(reply.data(), serializedResponse.c_str(), serializedResponse.size());
         socket.send(reply, zmq::send_flags::none);
         return;
+      } else if (apiRequest.type() == LIST_ENTITIES ||
+                 apiRequest.type() == GET_COMPONENT) {
+        auto pending = std::make_shared<PendingApiResponse>();
+        pending->requestId = request.id;
+        {
+          std::lock_guard<std::mutex> lk(api->responseMutex);
+          api->pendingResponses[request.id] = pending;
+        }
+        batchedRequests->push(request);
+        api->releaseBatched();
+        ApiRequestResponse response;
+        {
+          std::unique_lock<std::mutex> lk(api->responseMutex);
+          api->responseCv.wait_for(lk, std::chrono::milliseconds(2000), [&pending]() {
+            return pending->ready;
+          });
+          response = pending->response;
+          api->pendingResponses.erase(request.id);
+        }
+        if (!pending->ready) {
+          response.Clear();
+          response.set_requestid(request.id);
+          response.set_success(false);
+        }
+        std::string serializedResponse;
+        response.SerializeToString(&serializedResponse);
+        zmq::message_t reply(serializedResponse.size());
+        memcpy(reply.data(), serializedResponse.c_str(), serializedResponse.size());
+        socket.send(reply, zmq::send_flags::none);
+        return;
       } else {
         batchedRequests->push(request);
       }
@@ -259,6 +299,20 @@ Api::poll()
       commandServer->poll();
     }
   }
+}
+
+void
+Api::fulfillPendingResponse(int64_t requestId,
+                            const ApiRequestResponse& response)
+{
+  std::lock_guard<std::mutex> lk(responseMutex);
+  auto it = pendingResponses.find(requestId);
+  if (it == pendingResponses.end()) {
+    return;
+  }
+  it->second->response = response;
+  it->second->ready = true;
+  responseCv.notify_all();
 }
 
 void
@@ -402,12 +456,104 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       }
       break;
     }
+    case CREATE_ENTITY: {
+      if (registry) {
+        registry->createPersistent();
+      }
+      break;
+    }
+    case DELETE_ENTITY: {
+      if (registry) {
+        entt::entity target =
+          static_cast<entt::entity>(batchedRequest.request.entityid());
+        if (registry->valid(target)) {
+          registry->depersist(target);
+        }
+      }
+      break;
+    }
+    case LIST_ENTITIES: {
+      ApiRequestResponse response;
+      response.set_requestid(batchedRequest.id);
+      bool success = false;
+      if (registry) {
+        success = true;
+        ComponentType filter = COMPONENT_TYPE_UNSPECIFIED;
+        if (batchedRequest.request.has_listentities()) {
+          filter = batchedRequest.request.listentities().filter_type();
+        }
+        auto view = registry->view<Persistable>();
+        for (auto [entity, persistable] : view.each()) {
+          if (filter == COMPONENT_TYPE_POSITIONABLE &&
+              !registry->any_of<Positionable>(entity)) {
+            continue;
+          }
+          if (filter == COMPONENT_TYPE_MODEL &&
+              !registry->any_of<Model>(entity)) {
+            continue;
+          }
+          const auto entityId = static_cast<int64_t>(entity);
+          response.add_entity_ids(entityId);
+          auto* info = response.add_entity_components();
+          info->set_entity_id(entityId);
+          if (registry->any_of<Positionable>(entity)) {
+            info->add_component_types(COMPONENT_TYPE_POSITIONABLE);
+          }
+          if (registry->any_of<Model>(entity)) {
+            info->add_component_types(COMPONENT_TYPE_MODEL);
+          }
+        }
+      }
+      response.set_success(success);
+      fulfillPendingResponse(batchedRequest.id, response);
+      break;
+    }
+    case GET_COMPONENT: {
+      ApiRequestResponse response;
+      response.set_requestid(batchedRequest.id);
+      bool success = false;
+      if (registry && batchedRequest.request.has_getcomponent()) {
+        entt::entity target =
+          static_cast<entt::entity>(batchedRequest.request.entityid());
+        if (registry->valid(target)) {
+          ComponentType type =
+            batchedRequest.request.getcomponent().component_type();
+          auto* component = response.mutable_component();
+          if (type == COMPONENT_TYPE_POSITIONABLE &&
+              registry->any_of<Positionable>(target)) {
+            const auto& positionable = registry->get<Positionable>(target);
+            component->set_type(COMPONENT_TYPE_POSITIONABLE);
+            auto* data = component->mutable_positionable();
+            data->set_entityid(batchedRequest.request.entityid());
+            *data->mutable_position() = toProtoVec3(positionable.pos);
+            *data->mutable_rotation() = toProtoVec3(positionable.rotate);
+            data->set_scale(positionable.scale);
+            *data->mutable_origin() = toProtoVec3(positionable.origin);
+            success = true;
+          } else if (type == COMPONENT_TYPE_MODEL &&
+                     registry->any_of<Model>(target)) {
+            const auto& model = registry->get<Model>(target);
+            component->set_type(COMPONENT_TYPE_MODEL);
+            auto* data = component->mutable_model();
+            data->set_entityid(batchedRequest.request.entityid());
+            data->set_model_path(model.path);
+            success = true;
+          }
+        }
+      }
+      response.set_success(success);
+      fulfillPendingResponse(batchedRequest.id, response);
+      break;
+    }
     case ADD_COMPONENT: {
       const auto& add = batchedRequest.request.addcomponent();
       const auto& component = add.component();
+      if (!registry) {
+        break;
+      }
       entt::entity target =
         static_cast<entt::entity>(batchedRequest.request.entityid());
-      if (!registry) {
+      if (!registry->valid(target)) {
         break;
       }
       switch (component.type()) {
@@ -455,9 +601,12 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
     }
     case DELETE_COMPONENT: {
       const auto& del = batchedRequest.request.deletecomponent();
+      if (!registry) {
+        break;
+      }
       entt::entity target =
         static_cast<entt::entity>(batchedRequest.request.entityid());
-      if (!registry) {
+      if (!registry->valid(target)) {
         break;
       }
       switch (del.component_type()) {
@@ -479,9 +628,12 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
     case EDIT_COMPONENT: {
       const auto& edit = batchedRequest.request.editcomponent();
       const auto& component = edit.component();
+      if (!registry) {
+        break;
+      }
       entt::entity target =
         static_cast<entt::entity>(batchedRequest.request.entityid());
-      if (!registry) {
+      if (!registry->valid(target)) {
         break;
       }
       switch (component.type()) {

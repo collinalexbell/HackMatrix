@@ -51,6 +51,9 @@ struct TableStruct_protos_2fapi_2eproto {
 };
 extern const ::google::protobuf::internal::DescriptorTable
     descriptor_table_protos_2fapi_2eproto;
+class AddComponent;
+struct AddComponentDefaultTypeInternal;
+extern AddComponentDefaultTypeInternal _AddComponent_default_instance_;
 class AddVoxels;
 struct AddVoxelsDefaultTypeInternal;
 extern AddVoxelsDefaultTypeInternal _AddVoxels_default_instance_;
@@ -63,18 +66,45 @@ extern ApiRequestResponseDefaultTypeInternal _ApiRequestResponse_default_instanc
 class ClearVoxels;
 struct ClearVoxelsDefaultTypeInternal;
 extern ClearVoxelsDefaultTypeInternal _ClearVoxels_default_instance_;
+class Component;
+struct ComponentDefaultTypeInternal;
+extern ComponentDefaultTypeInternal _Component_default_instance_;
 class ConfirmAction;
 struct ConfirmActionDefaultTypeInternal;
 extern ConfirmActionDefaultTypeInternal _ConfirmAction_default_instance_;
+class CreateEntity;
+struct CreateEntityDefaultTypeInternal;
+extern CreateEntityDefaultTypeInternal _CreateEntity_default_instance_;
+class DeleteComponent;
+struct DeleteComponentDefaultTypeInternal;
+extern DeleteComponentDefaultTypeInternal _DeleteComponent_default_instance_;
+class DeleteEntity;
+struct DeleteEntityDefaultTypeInternal;
+extern DeleteEntityDefaultTypeInternal _DeleteEntity_default_instance_;
+class EditComponent;
+struct EditComponentDefaultTypeInternal;
+extern EditComponentDefaultTypeInternal _EditComponent_default_instance_;
 class EngineStatus;
 struct EngineStatusDefaultTypeInternal;
 extern EngineStatusDefaultTypeInternal _EngineStatus_default_instance_;
+class EntityComponentInfo;
+struct EntityComponentInfoDefaultTypeInternal;
+extern EntityComponentInfoDefaultTypeInternal _EntityComponentInfo_default_instance_;
+class GetComponent;
+struct GetComponentDefaultTypeInternal;
+extern GetComponentDefaultTypeInternal _GetComponent_default_instance_;
 class KeyReplay;
 struct KeyReplayDefaultTypeInternal;
 extern KeyReplayDefaultTypeInternal _KeyReplay_default_instance_;
 class KeyReplayEntry;
 struct KeyReplayEntryDefaultTypeInternal;
 extern KeyReplayEntryDefaultTypeInternal _KeyReplayEntry_default_instance_;
+class ListEntities;
+struct ListEntitiesDefaultTypeInternal;
+extern ListEntitiesDefaultTypeInternal _ListEntities_default_instance_;
+class ModelComponent;
+struct ModelComponentDefaultTypeInternal;
+extern ModelComponentDefaultTypeInternal _ModelComponent_default_instance_;
 class Move;
 struct MoveDefaultTypeInternal;
 extern MoveDefaultTypeInternal _Move_default_instance_;
@@ -90,6 +120,9 @@ extern PointerReplayDefaultTypeInternal _PointerReplay_default_instance_;
 class PointerReplayEntry;
 struct PointerReplayEntryDefaultTypeInternal;
 extern PointerReplayEntryDefaultTypeInternal _PointerReplayEntry_default_instance_;
+class PositionableComponent;
+struct PositionableComponentDefaultTypeInternal;
+extern PositionableComponentDefaultTypeInternal _PositionableComponent_default_instance_;
 class Range;
 struct RangeDefaultTypeInternal;
 extern RangeDefaultTypeInternal _Range_default_instance_;
@@ -119,6 +152,13 @@ enum MessageType : int {
   KEY_REPLAY = 8,
   STATUS = 9,
   POINTER_REPLAY = 10,
+  ADD_COMPONENT = 11,
+  DELETE_COMPONENT = 12,
+  EDIT_COMPONENT = 13,
+  CREATE_ENTITY = 14,
+  DELETE_ENTITY = 15,
+  LIST_ENTITIES = 16,
+  GET_COMPONENT = 17,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ =
       std::numeric_limits<::int32_t>::min(),
   MessageType_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -128,8 +168,8 @@ enum MessageType : int {
 bool MessageType_IsValid(int value);
 extern const uint32_t MessageType_internal_data_[];
 constexpr MessageType MessageType_MIN = static_cast<MessageType>(0);
-constexpr MessageType MessageType_MAX = static_cast<MessageType>(10);
-constexpr int MessageType_ARRAYSIZE = 10 + 1;
+constexpr MessageType MessageType_MAX = static_cast<MessageType>(17);
+constexpr int MessageType_ARRAYSIZE = 17 + 1;
 const ::google::protobuf::EnumDescriptor*
 MessageType_descriptor();
 template <typename T>
@@ -142,12 +182,46 @@ const std::string& MessageType_Name(T value) {
 template <>
 inline const std::string& MessageType_Name(MessageType value) {
   return ::google::protobuf::internal::NameOfDenseEnum<MessageType_descriptor,
-                                                 0, 10>(
+                                                 0, 17>(
       static_cast<int>(value));
 }
 inline bool MessageType_Parse(absl::string_view name, MessageType* value) {
   return ::google::protobuf::internal::ParseNamedEnum<MessageType>(
       MessageType_descriptor(), name, value);
+}
+enum ComponentType : int {
+  COMPONENT_TYPE_UNSPECIFIED = 0,
+  COMPONENT_TYPE_POSITIONABLE = 1,
+  COMPONENT_TYPE_MODEL = 2,
+  ComponentType_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::min(),
+  ComponentType_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::max(),
+};
+
+bool ComponentType_IsValid(int value);
+extern const uint32_t ComponentType_internal_data_[];
+constexpr ComponentType ComponentType_MIN = static_cast<ComponentType>(0);
+constexpr ComponentType ComponentType_MAX = static_cast<ComponentType>(2);
+constexpr int ComponentType_ARRAYSIZE = 2 + 1;
+const ::google::protobuf::EnumDescriptor*
+ComponentType_descriptor();
+template <typename T>
+const std::string& ComponentType_Name(T value) {
+  static_assert(std::is_same<T, ComponentType>::value ||
+                    std::is_integral<T>::value,
+                "Incorrect type passed to ComponentType_Name().");
+  return ComponentType_Name(static_cast<ComponentType>(value));
+}
+template <>
+inline const std::string& ComponentType_Name(ComponentType value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<ComponentType_descriptor,
+                                                 0, 2>(
+      static_cast<int>(value));
+}
+inline bool ComponentType_Parse(absl::string_view name, ComponentType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ComponentType>(
+      ComponentType_descriptor(), name, value);
 }
 
 // ===================================================================
@@ -634,7 +708,7 @@ class TurnKey final : public ::google::protobuf::Message
     return reinterpret_cast<const TurnKey*>(
         &_TurnKey_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 14;
+  static constexpr int kIndexInFileMessages = 18;
   friend void swap(TurnKey& a, TurnKey& b) { a.Swap(&b); }
   inline void Swap(TurnKey* other) {
     if (other == this) return;
@@ -1377,7 +1451,7 @@ class Move final : public ::google::protobuf::Message
     return reinterpret_cast<const Move*>(
         &_Move_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 13;
+  static constexpr int kIndexInFileMessages = 17;
   friend void swap(Move& a, Move& b) { a.Swap(&b); }
   inline void Swap(Move* other) {
     if (other == this) return;
@@ -1538,6 +1612,400 @@ class Move final : public ::google::protobuf::Message
     float ydelta_;
     float zdelta_;
     float unitspersecond_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class ModelComponent final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:ModelComponent) */ {
+ public:
+  inline ModelComponent() : ModelComponent(nullptr) {}
+  ~ModelComponent() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR ModelComponent(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline ModelComponent(const ModelComponent& from) : ModelComponent(nullptr, from) {}
+  inline ModelComponent(ModelComponent&& from) noexcept
+      : ModelComponent(nullptr, std::move(from)) {}
+  inline ModelComponent& operator=(const ModelComponent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ModelComponent& operator=(ModelComponent&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ModelComponent& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const ModelComponent* internal_default_instance() {
+    return reinterpret_cast<const ModelComponent*>(
+        &_ModelComponent_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 23;
+  friend void swap(ModelComponent& a, ModelComponent& b) { a.Swap(&b); }
+  inline void Swap(ModelComponent* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ModelComponent* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ModelComponent* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<ModelComponent>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const ModelComponent& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const ModelComponent& from) { ModelComponent::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(ModelComponent* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "ModelComponent"; }
+
+ protected:
+  explicit ModelComponent(::google::protobuf::Arena* arena);
+  ModelComponent(::google::protobuf::Arena* arena, const ModelComponent& from);
+  ModelComponent(::google::protobuf::Arena* arena, ModelComponent&& from) noexcept
+      : ModelComponent(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kModelPathFieldNumber = 2,
+    kEntityIdFieldNumber = 1,
+  };
+  // string model_path = 2;
+  void clear_model_path() ;
+  const std::string& model_path() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_model_path(Arg_&& arg, Args_... args);
+  std::string* mutable_model_path();
+  PROTOBUF_NODISCARD std::string* release_model_path();
+  void set_allocated_model_path(std::string* value);
+
+  private:
+  const std::string& _internal_model_path() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_model_path(
+      const std::string& value);
+  std::string* _internal_mutable_model_path();
+
+  public:
+  // int64 entityId = 1;
+  void clear_entityid() ;
+  ::int64_t entityid() const;
+  void set_entityid(::int64_t value);
+
+  private:
+  ::int64_t _internal_entityid() const;
+  void _internal_set_entityid(::int64_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:ModelComponent)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      1, 2, 0,
+      33, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_ModelComponent_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const ModelComponent& from_msg);
+    ::google::protobuf::internal::ArenaStringPtr model_path_;
+    ::int64_t entityid_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class ListEntities final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:ListEntities) */ {
+ public:
+  inline ListEntities() : ListEntities(nullptr) {}
+  ~ListEntities() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR ListEntities(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline ListEntities(const ListEntities& from) : ListEntities(nullptr, from) {}
+  inline ListEntities(ListEntities&& from) noexcept
+      : ListEntities(nullptr, std::move(from)) {}
+  inline ListEntities& operator=(const ListEntities& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ListEntities& operator=(ListEntities&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ListEntities& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const ListEntities* internal_default_instance() {
+    return reinterpret_cast<const ListEntities*>(
+        &_ListEntities_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 14;
+  friend void swap(ListEntities& a, ListEntities& b) { a.Swap(&b); }
+  inline void Swap(ListEntities* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ListEntities* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ListEntities* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<ListEntities>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const ListEntities& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const ListEntities& from) { ListEntities::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(ListEntities* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "ListEntities"; }
+
+ protected:
+  explicit ListEntities(::google::protobuf::Arena* arena);
+  ListEntities(::google::protobuf::Arena* arena, const ListEntities& from);
+  ListEntities(::google::protobuf::Arena* arena, ListEntities&& from) noexcept
+      : ListEntities(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kFilterTypeFieldNumber = 1,
+  };
+  // .ComponentType filter_type = 1;
+  void clear_filter_type() ;
+  ::ComponentType filter_type() const;
+  void set_filter_type(::ComponentType value);
+
+  private:
+  ::ComponentType _internal_filter_type() const;
+  void _internal_set_filter_type(::ComponentType value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:ListEntities)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 0,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_ListEntities_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const ListEntities& from_msg);
+    int filter_type_;
     mutable ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -1752,6 +2220,878 @@ class KeyReplayEntry final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class GetComponent final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:GetComponent) */ {
+ public:
+  inline GetComponent() : GetComponent(nullptr) {}
+  ~GetComponent() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR GetComponent(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline GetComponent(const GetComponent& from) : GetComponent(nullptr, from) {}
+  inline GetComponent(GetComponent&& from) noexcept
+      : GetComponent(nullptr, std::move(from)) {}
+  inline GetComponent& operator=(const GetComponent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline GetComponent& operator=(GetComponent&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const GetComponent& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const GetComponent* internal_default_instance() {
+    return reinterpret_cast<const GetComponent*>(
+        &_GetComponent_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 15;
+  friend void swap(GetComponent& a, GetComponent& b) { a.Swap(&b); }
+  inline void Swap(GetComponent* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(GetComponent* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  GetComponent* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<GetComponent>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const GetComponent& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const GetComponent& from) { GetComponent::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(GetComponent* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "GetComponent"; }
+
+ protected:
+  explicit GetComponent(::google::protobuf::Arena* arena);
+  GetComponent(::google::protobuf::Arena* arena, const GetComponent& from);
+  GetComponent(::google::protobuf::Arena* arena, GetComponent&& from) noexcept
+      : GetComponent(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kComponentTypeFieldNumber = 1,
+  };
+  // .ComponentType component_type = 1;
+  void clear_component_type() ;
+  ::ComponentType component_type() const;
+  void set_component_type(::ComponentType value);
+
+  private:
+  ::ComponentType _internal_component_type() const;
+  void _internal_set_component_type(::ComponentType value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:GetComponent)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 0,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_GetComponent_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const GetComponent& from_msg);
+    int component_type_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class EntityComponentInfo final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:EntityComponentInfo) */ {
+ public:
+  inline EntityComponentInfo() : EntityComponentInfo(nullptr) {}
+  ~EntityComponentInfo() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR EntityComponentInfo(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline EntityComponentInfo(const EntityComponentInfo& from) : EntityComponentInfo(nullptr, from) {}
+  inline EntityComponentInfo(EntityComponentInfo&& from) noexcept
+      : EntityComponentInfo(nullptr, std::move(from)) {}
+  inline EntityComponentInfo& operator=(const EntityComponentInfo& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline EntityComponentInfo& operator=(EntityComponentInfo&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const EntityComponentInfo& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const EntityComponentInfo* internal_default_instance() {
+    return reinterpret_cast<const EntityComponentInfo*>(
+        &_EntityComponentInfo_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 21;
+  friend void swap(EntityComponentInfo& a, EntityComponentInfo& b) { a.Swap(&b); }
+  inline void Swap(EntityComponentInfo* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(EntityComponentInfo* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  EntityComponentInfo* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<EntityComponentInfo>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const EntityComponentInfo& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const EntityComponentInfo& from) { EntityComponentInfo::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(EntityComponentInfo* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "EntityComponentInfo"; }
+
+ protected:
+  explicit EntityComponentInfo(::google::protobuf::Arena* arena);
+  EntityComponentInfo(::google::protobuf::Arena* arena, const EntityComponentInfo& from);
+  EntityComponentInfo(::google::protobuf::Arena* arena, EntityComponentInfo&& from) noexcept
+      : EntityComponentInfo(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kComponentTypesFieldNumber = 2,
+    kEntityIdFieldNumber = 1,
+  };
+  // repeated .ComponentType component_types = 2;
+  int component_types_size() const;
+  private:
+  int _internal_component_types_size() const;
+
+  public:
+  void clear_component_types() ;
+  public:
+  ::ComponentType component_types(int index) const;
+  void set_component_types(int index, ::ComponentType value);
+  void add_component_types(::ComponentType value);
+  const ::google::protobuf::RepeatedField<int>& component_types() const;
+  ::google::protobuf::RepeatedField<int>* mutable_component_types();
+
+  private:
+  const ::google::protobuf::RepeatedField<int>& _internal_component_types() const;
+  ::google::protobuf::RepeatedField<int>* _internal_mutable_component_types();
+
+  public:
+  // int64 entity_id = 1;
+  void clear_entity_id() ;
+  ::int64_t entity_id() const;
+  void set_entity_id(::int64_t value);
+
+  private:
+  ::int64_t _internal_entity_id() const;
+  void _internal_set_entity_id(::int64_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:EntityComponentInfo)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      1, 2, 0,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_EntityComponentInfo_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const EntityComponentInfo& from_msg);
+    ::google::protobuf::RepeatedField<int> component_types_;
+    mutable ::google::protobuf::internal::CachedSize _component_types_cached_byte_size_;
+    ::int64_t entity_id_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class DeleteEntity final : public ::google::protobuf::internal::ZeroFieldsBase
+/* @@protoc_insertion_point(class_definition:DeleteEntity) */ {
+ public:
+  inline DeleteEntity() : DeleteEntity(nullptr) {}
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR DeleteEntity(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline DeleteEntity(const DeleteEntity& from) : DeleteEntity(nullptr, from) {}
+  inline DeleteEntity(DeleteEntity&& from) noexcept
+      : DeleteEntity(nullptr, std::move(from)) {}
+  inline DeleteEntity& operator=(const DeleteEntity& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DeleteEntity& operator=(DeleteEntity&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const DeleteEntity& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const DeleteEntity* internal_default_instance() {
+    return reinterpret_cast<const DeleteEntity*>(
+        &_DeleteEntity_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 13;
+  friend void swap(DeleteEntity& a, DeleteEntity& b) { a.Swap(&b); }
+  inline void Swap(DeleteEntity* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DeleteEntity* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  DeleteEntity* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::internal::ZeroFieldsBase::DefaultConstruct<DeleteEntity>(arena);
+  }
+  using ::google::protobuf::internal::ZeroFieldsBase::CopyFrom;
+  inline void CopyFrom(const DeleteEntity& from) {
+    ::google::protobuf::internal::ZeroFieldsBase::CopyImpl(*this, from);
+  }
+  using ::google::protobuf::internal::ZeroFieldsBase::MergeFrom;
+  void MergeFrom(const DeleteEntity& from) {
+    ::google::protobuf::internal::ZeroFieldsBase::MergeImpl(*this, from);
+  }
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "DeleteEntity"; }
+
+ protected:
+  explicit DeleteEntity(::google::protobuf::Arena* arena);
+  DeleteEntity(::google::protobuf::Arena* arena, const DeleteEntity& from);
+  DeleteEntity(::google::protobuf::Arena* arena, DeleteEntity&& from) noexcept
+      : DeleteEntity(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ZeroFieldsBase::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::internal::ZeroFieldsBase::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  // @@protoc_insertion_point(class_scope:DeleteEntity)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 0, 0,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_DeleteEntity_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const DeleteEntity& from_msg);
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class DeleteComponent final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:DeleteComponent) */ {
+ public:
+  inline DeleteComponent() : DeleteComponent(nullptr) {}
+  ~DeleteComponent() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR DeleteComponent(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline DeleteComponent(const DeleteComponent& from) : DeleteComponent(nullptr, from) {}
+  inline DeleteComponent(DeleteComponent&& from) noexcept
+      : DeleteComponent(nullptr, std::move(from)) {}
+  inline DeleteComponent& operator=(const DeleteComponent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DeleteComponent& operator=(DeleteComponent&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const DeleteComponent& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const DeleteComponent* internal_default_instance() {
+    return reinterpret_cast<const DeleteComponent*>(
+        &_DeleteComponent_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 26;
+  friend void swap(DeleteComponent& a, DeleteComponent& b) { a.Swap(&b); }
+  inline void Swap(DeleteComponent* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DeleteComponent* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  DeleteComponent* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<DeleteComponent>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const DeleteComponent& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const DeleteComponent& from) { DeleteComponent::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(DeleteComponent* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "DeleteComponent"; }
+
+ protected:
+  explicit DeleteComponent(::google::protobuf::Arena* arena);
+  DeleteComponent(::google::protobuf::Arena* arena, const DeleteComponent& from);
+  DeleteComponent(::google::protobuf::Arena* arena, DeleteComponent&& from) noexcept
+      : DeleteComponent(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kComponentTypeFieldNumber = 1,
+  };
+  // .ComponentType component_type = 1;
+  void clear_component_type() ;
+  ::ComponentType component_type() const;
+  void set_component_type(::ComponentType value);
+
+  private:
+  ::ComponentType _internal_component_type() const;
+  void _internal_set_component_type(::ComponentType value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:DeleteComponent)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 0,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_DeleteComponent_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const DeleteComponent& from_msg);
+    int component_type_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class CreateEntity final : public ::google::protobuf::internal::ZeroFieldsBase
+/* @@protoc_insertion_point(class_definition:CreateEntity) */ {
+ public:
+  inline CreateEntity() : CreateEntity(nullptr) {}
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR CreateEntity(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline CreateEntity(const CreateEntity& from) : CreateEntity(nullptr, from) {}
+  inline CreateEntity(CreateEntity&& from) noexcept
+      : CreateEntity(nullptr, std::move(from)) {}
+  inline CreateEntity& operator=(const CreateEntity& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline CreateEntity& operator=(CreateEntity&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const CreateEntity& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const CreateEntity* internal_default_instance() {
+    return reinterpret_cast<const CreateEntity*>(
+        &_CreateEntity_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 12;
+  friend void swap(CreateEntity& a, CreateEntity& b) { a.Swap(&b); }
+  inline void Swap(CreateEntity* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(CreateEntity* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  CreateEntity* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::internal::ZeroFieldsBase::DefaultConstruct<CreateEntity>(arena);
+  }
+  using ::google::protobuf::internal::ZeroFieldsBase::CopyFrom;
+  inline void CopyFrom(const CreateEntity& from) {
+    ::google::protobuf::internal::ZeroFieldsBase::CopyImpl(*this, from);
+  }
+  using ::google::protobuf::internal::ZeroFieldsBase::MergeFrom;
+  void MergeFrom(const CreateEntity& from) {
+    ::google::protobuf::internal::ZeroFieldsBase::MergeImpl(*this, from);
+  }
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "CreateEntity"; }
+
+ protected:
+  explicit CreateEntity(::google::protobuf::Arena* arena);
+  CreateEntity(::google::protobuf::Arena* arena, const CreateEntity& from);
+  CreateEntity(::google::protobuf::Arena* arena, CreateEntity&& from) noexcept
+      : CreateEntity(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ZeroFieldsBase::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::internal::ZeroFieldsBase::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  // @@protoc_insertion_point(class_scope:CreateEntity)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 0, 0,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_CreateEntity_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const CreateEntity& from_msg);
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
 class ConfirmAction final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:ConfirmAction) */ {
  public:
@@ -1933,6 +3273,258 @@ class ConfirmAction final : public ::google::protobuf::Message
                           const ConfirmAction& from_msg);
     ::int64_t actionid_;
     mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class PositionableComponent final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:PositionableComponent) */ {
+ public:
+  inline PositionableComponent() : PositionableComponent(nullptr) {}
+  ~PositionableComponent() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR PositionableComponent(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline PositionableComponent(const PositionableComponent& from) : PositionableComponent(nullptr, from) {}
+  inline PositionableComponent(PositionableComponent&& from) noexcept
+      : PositionableComponent(nullptr, std::move(from)) {}
+  inline PositionableComponent& operator=(const PositionableComponent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PositionableComponent& operator=(PositionableComponent&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PositionableComponent& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const PositionableComponent* internal_default_instance() {
+    return reinterpret_cast<const PositionableComponent*>(
+        &_PositionableComponent_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 22;
+  friend void swap(PositionableComponent& a, PositionableComponent& b) { a.Swap(&b); }
+  inline void Swap(PositionableComponent* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PositionableComponent* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PositionableComponent* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<PositionableComponent>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const PositionableComponent& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const PositionableComponent& from) { PositionableComponent::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(PositionableComponent* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "PositionableComponent"; }
+
+ protected:
+  explicit PositionableComponent(::google::protobuf::Arena* arena);
+  PositionableComponent(::google::protobuf::Arena* arena, const PositionableComponent& from);
+  PositionableComponent(::google::protobuf::Arena* arena, PositionableComponent&& from) noexcept
+      : PositionableComponent(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kPositionFieldNumber = 2,
+    kRotationFieldNumber = 3,
+    kOriginFieldNumber = 5,
+    kEntityIdFieldNumber = 1,
+    kScaleFieldNumber = 4,
+  };
+  // .Vector position = 2;
+  bool has_position() const;
+  void clear_position() ;
+  const ::Vector& position() const;
+  PROTOBUF_NODISCARD ::Vector* release_position();
+  ::Vector* mutable_position();
+  void set_allocated_position(::Vector* value);
+  void unsafe_arena_set_allocated_position(::Vector* value);
+  ::Vector* unsafe_arena_release_position();
+
+  private:
+  const ::Vector& _internal_position() const;
+  ::Vector* _internal_mutable_position();
+
+  public:
+  // .Vector rotation = 3;
+  bool has_rotation() const;
+  void clear_rotation() ;
+  const ::Vector& rotation() const;
+  PROTOBUF_NODISCARD ::Vector* release_rotation();
+  ::Vector* mutable_rotation();
+  void set_allocated_rotation(::Vector* value);
+  void unsafe_arena_set_allocated_rotation(::Vector* value);
+  ::Vector* unsafe_arena_release_rotation();
+
+  private:
+  const ::Vector& _internal_rotation() const;
+  ::Vector* _internal_mutable_rotation();
+
+  public:
+  // .Vector origin = 5;
+  bool has_origin() const;
+  void clear_origin() ;
+  const ::Vector& origin() const;
+  PROTOBUF_NODISCARD ::Vector* release_origin();
+  ::Vector* mutable_origin();
+  void set_allocated_origin(::Vector* value);
+  void unsafe_arena_set_allocated_origin(::Vector* value);
+  ::Vector* unsafe_arena_release_origin();
+
+  private:
+  const ::Vector& _internal_origin() const;
+  ::Vector* _internal_mutable_origin();
+
+  public:
+  // int64 entityId = 1;
+  void clear_entityid() ;
+  ::int64_t entityid() const;
+  void set_entityid(::int64_t value);
+
+  private:
+  ::int64_t _internal_entityid() const;
+  void _internal_set_entityid(::int64_t value);
+
+  public:
+  // float scale = 4;
+  void clear_scale() ;
+  float scale() const;
+  void set_scale(float value);
+
+  private:
+  float _internal_scale() const;
+  void _internal_set_scale(float value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:PositionableComponent)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      3, 5, 3,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_PositionableComponent_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const PositionableComponent& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    ::Vector* position_;
+    ::Vector* rotation_;
+    ::Vector* origin_;
+    ::int64_t entityid_;
+    float scale_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -2608,7 +4200,7 @@ class EngineStatus final : public ::google::protobuf::Message
     return reinterpret_cast<const EngineStatus*>(
         &_EngineStatus_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 12;
+  static constexpr int kIndexInFileMessages = 16;
   friend void swap(EngineStatus& a, EngineStatus& b) { a.Swap(&b); }
   inline void Swap(EngineStatus* other) {
     if (other == this) return;
@@ -3248,6 +4840,446 @@ class AddVoxels final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class Component final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:Component) */ {
+ public:
+  inline Component() : Component(nullptr) {}
+  ~Component() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR Component(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline Component(const Component& from) : Component(nullptr, from) {}
+  inline Component(Component&& from) noexcept
+      : Component(nullptr, std::move(from)) {}
+  inline Component& operator=(const Component& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Component& operator=(Component&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Component& default_instance() {
+    return *internal_default_instance();
+  }
+  enum ComponentTypeCase {
+    kPositionable = 2,
+    kModel = 3,
+    COMPONENT_TYPE_NOT_SET = 0,
+  };
+  static inline const Component* internal_default_instance() {
+    return reinterpret_cast<const Component*>(
+        &_Component_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 24;
+  friend void swap(Component& a, Component& b) { a.Swap(&b); }
+  inline void Swap(Component* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Component* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Component* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<Component>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const Component& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const Component& from) { Component::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(Component* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "Component"; }
+
+ protected:
+  explicit Component(::google::protobuf::Arena* arena);
+  Component(::google::protobuf::Arena* arena, const Component& from);
+  Component(::google::protobuf::Arena* arena, Component&& from) noexcept
+      : Component(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kTypeFieldNumber = 1,
+    kPositionableFieldNumber = 2,
+    kModelFieldNumber = 3,
+  };
+  // .ComponentType type = 1;
+  void clear_type() ;
+  ::ComponentType type() const;
+  void set_type(::ComponentType value);
+
+  private:
+  ::ComponentType _internal_type() const;
+  void _internal_set_type(::ComponentType value);
+
+  public:
+  // .PositionableComponent positionable = 2;
+  bool has_positionable() const;
+  private:
+  bool _internal_has_positionable() const;
+
+  public:
+  void clear_positionable() ;
+  const ::PositionableComponent& positionable() const;
+  PROTOBUF_NODISCARD ::PositionableComponent* release_positionable();
+  ::PositionableComponent* mutable_positionable();
+  void set_allocated_positionable(::PositionableComponent* value);
+  void unsafe_arena_set_allocated_positionable(::PositionableComponent* value);
+  ::PositionableComponent* unsafe_arena_release_positionable();
+
+  private:
+  const ::PositionableComponent& _internal_positionable() const;
+  ::PositionableComponent* _internal_mutable_positionable();
+
+  public:
+  // .ModelComponent model = 3;
+  bool has_model() const;
+  private:
+  bool _internal_has_model() const;
+
+  public:
+  void clear_model() ;
+  const ::ModelComponent& model() const;
+  PROTOBUF_NODISCARD ::ModelComponent* release_model();
+  ::ModelComponent* mutable_model();
+  void set_allocated_model(::ModelComponent* value);
+  void unsafe_arena_set_allocated_model(::ModelComponent* value);
+  ::ModelComponent* unsafe_arena_release_model();
+
+  private:
+  const ::ModelComponent& _internal_model() const;
+  ::ModelComponent* _internal_mutable_model();
+
+  public:
+  void clear_component_type();
+  ComponentTypeCase component_type_case() const;
+  // @@protoc_insertion_point(class_scope:Component)
+ private:
+  class _Internal;
+  void set_has_positionable();
+  void set_has_model();
+  inline bool has_component_type() const;
+  inline void clear_has_component_type();
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 3, 2,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_Component_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const Component& from_msg);
+    int type_;
+    union ComponentTypeUnion {
+      constexpr ComponentTypeUnion() : _constinit_{} {}
+      ::google::protobuf::internal::ConstantInitialized _constinit_;
+      ::PositionableComponent* positionable_;
+      ::ModelComponent* model_;
+    } component_type_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    ::uint32_t _oneof_case_[1];
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class EditComponent final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:EditComponent) */ {
+ public:
+  inline EditComponent() : EditComponent(nullptr) {}
+  ~EditComponent() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR EditComponent(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline EditComponent(const EditComponent& from) : EditComponent(nullptr, from) {}
+  inline EditComponent(EditComponent&& from) noexcept
+      : EditComponent(nullptr, std::move(from)) {}
+  inline EditComponent& operator=(const EditComponent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline EditComponent& operator=(EditComponent&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const EditComponent& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const EditComponent* internal_default_instance() {
+    return reinterpret_cast<const EditComponent*>(
+        &_EditComponent_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 27;
+  friend void swap(EditComponent& a, EditComponent& b) { a.Swap(&b); }
+  inline void Swap(EditComponent* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(EditComponent* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  EditComponent* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<EditComponent>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const EditComponent& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const EditComponent& from) { EditComponent::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(EditComponent* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "EditComponent"; }
+
+ protected:
+  explicit EditComponent(::google::protobuf::Arena* arena);
+  EditComponent(::google::protobuf::Arena* arena, const EditComponent& from);
+  EditComponent(::google::protobuf::Arena* arena, EditComponent&& from) noexcept
+      : EditComponent(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kComponentFieldNumber = 1,
+  };
+  // .Component component = 1;
+  bool has_component() const;
+  void clear_component() ;
+  const ::Component& component() const;
+  PROTOBUF_NODISCARD ::Component* release_component();
+  ::Component* mutable_component();
+  void set_allocated_component(::Component* value);
+  void unsafe_arena_set_allocated_component(::Component* value);
+  ::Component* unsafe_arena_release_component();
+
+  private:
+  const ::Component& _internal_component() const;
+  ::Component* _internal_mutable_component();
+
+  public:
+  // @@protoc_insertion_point(class_scope:EditComponent)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 1,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_EditComponent_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const EditComponent& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    ::Component* component_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
 class ApiRequestResponse final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:ApiRequestResponse) */ {
  public:
@@ -3303,7 +5335,7 @@ class ApiRequestResponse final : public ::google::protobuf::Message
     return reinterpret_cast<const ApiRequestResponse*>(
         &_ApiRequestResponse_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 16;
+  static constexpr int kIndexInFileMessages = 20;
   friend void swap(ApiRequestResponse& a, ApiRequestResponse& b) { a.Swap(&b); }
   inline void Swap(ApiRequestResponse* other) {
     if (other == this) return;
@@ -3389,11 +5421,49 @@ class ApiRequestResponse final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
+    kEntityIdsFieldNumber = 5,
+    kEntityComponentsFieldNumber = 7,
     kStatusFieldNumber = 4,
+    kComponentFieldNumber = 6,
     kRequestIdFieldNumber = 1,
     kActionIdFieldNumber = 2,
     kSuccessFieldNumber = 3,
   };
+  // repeated int64 entity_ids = 5;
+  int entity_ids_size() const;
+  private:
+  int _internal_entity_ids_size() const;
+
+  public:
+  void clear_entity_ids() ;
+  ::int64_t entity_ids(int index) const;
+  void set_entity_ids(int index, ::int64_t value);
+  void add_entity_ids(::int64_t value);
+  const ::google::protobuf::RepeatedField<::int64_t>& entity_ids() const;
+  ::google::protobuf::RepeatedField<::int64_t>* mutable_entity_ids();
+
+  private:
+  const ::google::protobuf::RepeatedField<::int64_t>& _internal_entity_ids() const;
+  ::google::protobuf::RepeatedField<::int64_t>* _internal_mutable_entity_ids();
+
+  public:
+  // repeated .EntityComponentInfo entity_components = 7;
+  int entity_components_size() const;
+  private:
+  int _internal_entity_components_size() const;
+
+  public:
+  void clear_entity_components() ;
+  ::EntityComponentInfo* mutable_entity_components(int index);
+  ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>* mutable_entity_components();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>& _internal_entity_components() const;
+  ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>* _internal_mutable_entity_components();
+  public:
+  const ::EntityComponentInfo& entity_components(int index) const;
+  ::EntityComponentInfo* add_entity_components();
+  const ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>& entity_components() const;
   // .EngineStatus status = 4;
   bool has_status() const;
   void clear_status() ;
@@ -3407,6 +5477,21 @@ class ApiRequestResponse final : public ::google::protobuf::Message
   private:
   const ::EngineStatus& _internal_status() const;
   ::EngineStatus* _internal_mutable_status();
+
+  public:
+  // .Component component = 6;
+  bool has_component() const;
+  void clear_component() ;
+  const ::Component& component() const;
+  PROTOBUF_NODISCARD ::Component* release_component();
+  ::Component* mutable_component();
+  void set_allocated_component(::Component* value);
+  void unsafe_arena_set_allocated_component(::Component* value);
+  ::Component* unsafe_arena_release_component();
+
+  private:
+  const ::Component& _internal_component() const;
+  ::Component* _internal_mutable_component();
 
   public:
   // int64 requestId = 1;
@@ -3444,7 +5529,7 @@ class ApiRequestResponse final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      2, 4, 1,
+      3, 7, 3,
       0, 2>
       _table_;
 
@@ -3467,10 +5552,208 @@ class ApiRequestResponse final : public ::google::protobuf::Message
                           const ApiRequestResponse& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedField<::int64_t> entity_ids_;
+    mutable ::google::protobuf::internal::CachedSize _entity_ids_cached_byte_size_;
+    ::google::protobuf::RepeatedPtrField< ::EntityComponentInfo > entity_components_;
     ::EngineStatus* status_;
+    ::Component* component_;
     ::int64_t requestid_;
     ::int64_t actionid_;
     bool success_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
+class AddComponent final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:AddComponent) */ {
+ public:
+  inline AddComponent() : AddComponent(nullptr) {}
+  ~AddComponent() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR AddComponent(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline AddComponent(const AddComponent& from) : AddComponent(nullptr, from) {}
+  inline AddComponent(AddComponent&& from) noexcept
+      : AddComponent(nullptr, std::move(from)) {}
+  inline AddComponent& operator=(const AddComponent& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline AddComponent& operator=(AddComponent&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const AddComponent& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const AddComponent* internal_default_instance() {
+    return reinterpret_cast<const AddComponent*>(
+        &_AddComponent_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 25;
+  friend void swap(AddComponent& a, AddComponent& b) { a.Swap(&b); }
+  inline void Swap(AddComponent* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(AddComponent* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  AddComponent* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<AddComponent>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const AddComponent& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const AddComponent& from) { AddComponent::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(AddComponent* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "AddComponent"; }
+
+ protected:
+  explicit AddComponent(::google::protobuf::Arena* arena);
+  AddComponent(::google::protobuf::Arena* arena, const AddComponent& from);
+  AddComponent(::google::protobuf::Arena* arena, AddComponent&& from) noexcept
+      : AddComponent(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kComponentFieldNumber = 1,
+  };
+  // .Component component = 1;
+  bool has_component() const;
+  void clear_component() ;
+  const ::Component& component() const;
+  PROTOBUF_NODISCARD ::Component* release_component();
+  ::Component* mutable_component();
+  void set_allocated_component(::Component* value);
+  void unsafe_arena_set_allocated_component(::Component* value);
+  ::Component* unsafe_arena_release_component();
+
+  private:
+  const ::Component& _internal_component() const;
+  ::Component* _internal_mutable_component();
+
+  public:
+  // @@protoc_insertion_point(class_scope:AddComponent)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 1,
+      0, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_AddComponent_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const AddComponent& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    ::Component* component_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -3539,13 +5822,20 @@ class ApiRequest final : public ::google::protobuf::Message
     kConfirmAction = 9,
     kKeyReplay = 10,
     kPointerReplay = 11,
+    kAddComponent = 12,
+    kDeleteComponent = 13,
+    kEditComponent = 14,
+    kCreateEntity = 15,
+    kDeleteEntity = 16,
+    kListEntities = 17,
+    kGetComponent = 18,
     PAYLOAD_NOT_SET = 0,
   };
   static inline const ApiRequest* internal_default_instance() {
     return reinterpret_cast<const ApiRequest*>(
         &_ApiRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 15;
+  static constexpr int kIndexInFileMessages = 19;
   friend void swap(ApiRequest& a, ApiRequest& b) { a.Swap(&b); }
   inline void Swap(ApiRequest* other) {
     if (other == this) return;
@@ -3642,6 +5932,13 @@ class ApiRequest final : public ::google::protobuf::Message
     kConfirmActionFieldNumber = 9,
     kKeyReplayFieldNumber = 10,
     kPointerReplayFieldNumber = 11,
+    kAddComponentFieldNumber = 12,
+    kDeleteComponentFieldNumber = 13,
+    kEditComponentFieldNumber = 14,
+    kCreateEntityFieldNumber = 15,
+    kDeleteEntityFieldNumber = 16,
+    kListEntitiesFieldNumber = 17,
+    kGetComponentFieldNumber = 18,
   };
   // int64 entityId = 1;
   void clear_entityid() ;
@@ -3834,6 +6131,139 @@ class ApiRequest final : public ::google::protobuf::Message
   ::PointerReplay* _internal_mutable_pointerreplay();
 
   public:
+  // .AddComponent addComponent = 12;
+  bool has_addcomponent() const;
+  private:
+  bool _internal_has_addcomponent() const;
+
+  public:
+  void clear_addcomponent() ;
+  const ::AddComponent& addcomponent() const;
+  PROTOBUF_NODISCARD ::AddComponent* release_addcomponent();
+  ::AddComponent* mutable_addcomponent();
+  void set_allocated_addcomponent(::AddComponent* value);
+  void unsafe_arena_set_allocated_addcomponent(::AddComponent* value);
+  ::AddComponent* unsafe_arena_release_addcomponent();
+
+  private:
+  const ::AddComponent& _internal_addcomponent() const;
+  ::AddComponent* _internal_mutable_addcomponent();
+
+  public:
+  // .DeleteComponent deleteComponent = 13;
+  bool has_deletecomponent() const;
+  private:
+  bool _internal_has_deletecomponent() const;
+
+  public:
+  void clear_deletecomponent() ;
+  const ::DeleteComponent& deletecomponent() const;
+  PROTOBUF_NODISCARD ::DeleteComponent* release_deletecomponent();
+  ::DeleteComponent* mutable_deletecomponent();
+  void set_allocated_deletecomponent(::DeleteComponent* value);
+  void unsafe_arena_set_allocated_deletecomponent(::DeleteComponent* value);
+  ::DeleteComponent* unsafe_arena_release_deletecomponent();
+
+  private:
+  const ::DeleteComponent& _internal_deletecomponent() const;
+  ::DeleteComponent* _internal_mutable_deletecomponent();
+
+  public:
+  // .EditComponent editComponent = 14;
+  bool has_editcomponent() const;
+  private:
+  bool _internal_has_editcomponent() const;
+
+  public:
+  void clear_editcomponent() ;
+  const ::EditComponent& editcomponent() const;
+  PROTOBUF_NODISCARD ::EditComponent* release_editcomponent();
+  ::EditComponent* mutable_editcomponent();
+  void set_allocated_editcomponent(::EditComponent* value);
+  void unsafe_arena_set_allocated_editcomponent(::EditComponent* value);
+  ::EditComponent* unsafe_arena_release_editcomponent();
+
+  private:
+  const ::EditComponent& _internal_editcomponent() const;
+  ::EditComponent* _internal_mutable_editcomponent();
+
+  public:
+  // .CreateEntity createEntity = 15;
+  bool has_createentity() const;
+  private:
+  bool _internal_has_createentity() const;
+
+  public:
+  void clear_createentity() ;
+  const ::CreateEntity& createentity() const;
+  PROTOBUF_NODISCARD ::CreateEntity* release_createentity();
+  ::CreateEntity* mutable_createentity();
+  void set_allocated_createentity(::CreateEntity* value);
+  void unsafe_arena_set_allocated_createentity(::CreateEntity* value);
+  ::CreateEntity* unsafe_arena_release_createentity();
+
+  private:
+  const ::CreateEntity& _internal_createentity() const;
+  ::CreateEntity* _internal_mutable_createentity();
+
+  public:
+  // .DeleteEntity deleteEntity = 16;
+  bool has_deleteentity() const;
+  private:
+  bool _internal_has_deleteentity() const;
+
+  public:
+  void clear_deleteentity() ;
+  const ::DeleteEntity& deleteentity() const;
+  PROTOBUF_NODISCARD ::DeleteEntity* release_deleteentity();
+  ::DeleteEntity* mutable_deleteentity();
+  void set_allocated_deleteentity(::DeleteEntity* value);
+  void unsafe_arena_set_allocated_deleteentity(::DeleteEntity* value);
+  ::DeleteEntity* unsafe_arena_release_deleteentity();
+
+  private:
+  const ::DeleteEntity& _internal_deleteentity() const;
+  ::DeleteEntity* _internal_mutable_deleteentity();
+
+  public:
+  // .ListEntities listEntities = 17;
+  bool has_listentities() const;
+  private:
+  bool _internal_has_listentities() const;
+
+  public:
+  void clear_listentities() ;
+  const ::ListEntities& listentities() const;
+  PROTOBUF_NODISCARD ::ListEntities* release_listentities();
+  ::ListEntities* mutable_listentities();
+  void set_allocated_listentities(::ListEntities* value);
+  void unsafe_arena_set_allocated_listentities(::ListEntities* value);
+  ::ListEntities* unsafe_arena_release_listentities();
+
+  private:
+  const ::ListEntities& _internal_listentities() const;
+  ::ListEntities* _internal_mutable_listentities();
+
+  public:
+  // .GetComponent getComponent = 18;
+  bool has_getcomponent() const;
+  private:
+  bool _internal_has_getcomponent() const;
+
+  public:
+  void clear_getcomponent() ;
+  const ::GetComponent& getcomponent() const;
+  PROTOBUF_NODISCARD ::GetComponent* release_getcomponent();
+  ::GetComponent* mutable_getcomponent();
+  void set_allocated_getcomponent(::GetComponent* value);
+  void unsafe_arena_set_allocated_getcomponent(::GetComponent* value);
+  ::GetComponent* unsafe_arena_release_getcomponent();
+
+  private:
+  const ::GetComponent& _internal_getcomponent() const;
+  ::GetComponent* _internal_mutable_getcomponent();
+
+  public:
   void clear_payload();
   PayloadCase payload_case() const;
   // @@protoc_insertion_point(class_scope:ApiRequest)
@@ -3848,11 +6278,18 @@ class ApiRequest final : public ::google::protobuf::Message
   void set_has_confirmaction();
   void set_has_keyreplay();
   void set_has_pointerreplay();
+  void set_has_addcomponent();
+  void set_has_deletecomponent();
+  void set_has_editcomponent();
+  void set_has_createentity();
+  void set_has_deleteentity();
+  void set_has_listentities();
+  void set_has_getcomponent();
   inline bool has_payload() const;
   inline void clear_has_payload();
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 11, 9,
+      1, 18, 16,
       0, 2>
       _table_;
 
@@ -3887,6 +6324,13 @@ class ApiRequest final : public ::google::protobuf::Message
       ::ConfirmAction* confirmaction_;
       ::KeyReplay* keyreplay_;
       ::PointerReplay* pointerreplay_;
+      ::AddComponent* addcomponent_;
+      ::DeleteComponent* deletecomponent_;
+      ::EditComponent* editcomponent_;
+      ::CreateEntity* createentity_;
+      ::DeleteEntity* deleteentity_;
+      ::ListEntities* listentities_;
+      ::GetComponent* getcomponent_;
     } payload_;
     mutable ::google::protobuf::internal::CachedSize _cached_size_;
     ::uint32_t _oneof_case_[1];
@@ -5083,6 +7527,66 @@ PointerReplay::_internal_mutable_entries() {
 
 // -------------------------------------------------------------------
 
+// CreateEntity
+
+// -------------------------------------------------------------------
+
+// DeleteEntity
+
+// -------------------------------------------------------------------
+
+// ListEntities
+
+// .ComponentType filter_type = 1;
+inline void ListEntities::clear_filter_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.filter_type_ = 0;
+}
+inline ::ComponentType ListEntities::filter_type() const {
+  // @@protoc_insertion_point(field_get:ListEntities.filter_type)
+  return _internal_filter_type();
+}
+inline void ListEntities::set_filter_type(::ComponentType value) {
+  _internal_set_filter_type(value);
+  // @@protoc_insertion_point(field_set:ListEntities.filter_type)
+}
+inline ::ComponentType ListEntities::_internal_filter_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::ComponentType>(_impl_.filter_type_);
+}
+inline void ListEntities::_internal_set_filter_type(::ComponentType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.filter_type_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// GetComponent
+
+// .ComponentType component_type = 1;
+inline void GetComponent::clear_component_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.component_type_ = 0;
+}
+inline ::ComponentType GetComponent::component_type() const {
+  // @@protoc_insertion_point(field_get:GetComponent.component_type)
+  return _internal_component_type();
+}
+inline void GetComponent::set_component_type(::ComponentType value) {
+  _internal_set_component_type(value);
+  // @@protoc_insertion_point(field_set:GetComponent.component_type)
+}
+inline ::ComponentType GetComponent::_internal_component_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::ComponentType>(_impl_.component_type_);
+}
+inline void GetComponent::_internal_set_component_type(::ComponentType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.component_type_ = value;
+}
+
+// -------------------------------------------------------------------
+
 // EngineStatus
 
 // uint32 total_entities = 1;
@@ -6124,6 +8628,559 @@ inline ::PointerReplay* ApiRequest::mutable_pointerreplay() ABSL_ATTRIBUTE_LIFET
   return _msg;
 }
 
+// .AddComponent addComponent = 12;
+inline bool ApiRequest::has_addcomponent() const {
+  return payload_case() == kAddComponent;
+}
+inline bool ApiRequest::_internal_has_addcomponent() const {
+  return payload_case() == kAddComponent;
+}
+inline void ApiRequest::set_has_addcomponent() {
+  _impl_._oneof_case_[0] = kAddComponent;
+}
+inline void ApiRequest::clear_addcomponent() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kAddComponent) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.addcomponent_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.addcomponent_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::AddComponent* ApiRequest::release_addcomponent() {
+  // @@protoc_insertion_point(field_release:ApiRequest.addComponent)
+  if (payload_case() == kAddComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.addcomponent_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.addcomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::AddComponent& ApiRequest::_internal_addcomponent() const {
+  return payload_case() == kAddComponent ? *_impl_.payload_.addcomponent_ : reinterpret_cast<::AddComponent&>(::_AddComponent_default_instance_);
+}
+inline const ::AddComponent& ApiRequest::addcomponent() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.addComponent)
+  return _internal_addcomponent();
+}
+inline ::AddComponent* ApiRequest::unsafe_arena_release_addcomponent() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.addComponent)
+  if (payload_case() == kAddComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.addcomponent_;
+    _impl_.payload_.addcomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_addcomponent(::AddComponent* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_addcomponent();
+    _impl_.payload_.addcomponent_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.addComponent)
+}
+inline ::AddComponent* ApiRequest::_internal_mutable_addcomponent() {
+  if (payload_case() != kAddComponent) {
+    clear_payload();
+    set_has_addcomponent();
+    _impl_.payload_.addcomponent_ =
+        ::google::protobuf::Message::DefaultConstruct<::AddComponent>(GetArena());
+  }
+  return _impl_.payload_.addcomponent_;
+}
+inline ::AddComponent* ApiRequest::mutable_addcomponent() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::AddComponent* _msg = _internal_mutable_addcomponent();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.addComponent)
+  return _msg;
+}
+
+// .DeleteComponent deleteComponent = 13;
+inline bool ApiRequest::has_deletecomponent() const {
+  return payload_case() == kDeleteComponent;
+}
+inline bool ApiRequest::_internal_has_deletecomponent() const {
+  return payload_case() == kDeleteComponent;
+}
+inline void ApiRequest::set_has_deletecomponent() {
+  _impl_._oneof_case_[0] = kDeleteComponent;
+}
+inline void ApiRequest::clear_deletecomponent() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kDeleteComponent) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.deletecomponent_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.deletecomponent_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::DeleteComponent* ApiRequest::release_deletecomponent() {
+  // @@protoc_insertion_point(field_release:ApiRequest.deleteComponent)
+  if (payload_case() == kDeleteComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.deletecomponent_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.deletecomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::DeleteComponent& ApiRequest::_internal_deletecomponent() const {
+  return payload_case() == kDeleteComponent ? *_impl_.payload_.deletecomponent_ : reinterpret_cast<::DeleteComponent&>(::_DeleteComponent_default_instance_);
+}
+inline const ::DeleteComponent& ApiRequest::deletecomponent() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.deleteComponent)
+  return _internal_deletecomponent();
+}
+inline ::DeleteComponent* ApiRequest::unsafe_arena_release_deletecomponent() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.deleteComponent)
+  if (payload_case() == kDeleteComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.deletecomponent_;
+    _impl_.payload_.deletecomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_deletecomponent(::DeleteComponent* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_deletecomponent();
+    _impl_.payload_.deletecomponent_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.deleteComponent)
+}
+inline ::DeleteComponent* ApiRequest::_internal_mutable_deletecomponent() {
+  if (payload_case() != kDeleteComponent) {
+    clear_payload();
+    set_has_deletecomponent();
+    _impl_.payload_.deletecomponent_ =
+        ::google::protobuf::Message::DefaultConstruct<::DeleteComponent>(GetArena());
+  }
+  return _impl_.payload_.deletecomponent_;
+}
+inline ::DeleteComponent* ApiRequest::mutable_deletecomponent() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::DeleteComponent* _msg = _internal_mutable_deletecomponent();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.deleteComponent)
+  return _msg;
+}
+
+// .EditComponent editComponent = 14;
+inline bool ApiRequest::has_editcomponent() const {
+  return payload_case() == kEditComponent;
+}
+inline bool ApiRequest::_internal_has_editcomponent() const {
+  return payload_case() == kEditComponent;
+}
+inline void ApiRequest::set_has_editcomponent() {
+  _impl_._oneof_case_[0] = kEditComponent;
+}
+inline void ApiRequest::clear_editcomponent() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kEditComponent) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.editcomponent_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.editcomponent_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::EditComponent* ApiRequest::release_editcomponent() {
+  // @@protoc_insertion_point(field_release:ApiRequest.editComponent)
+  if (payload_case() == kEditComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.editcomponent_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.editcomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::EditComponent& ApiRequest::_internal_editcomponent() const {
+  return payload_case() == kEditComponent ? *_impl_.payload_.editcomponent_ : reinterpret_cast<::EditComponent&>(::_EditComponent_default_instance_);
+}
+inline const ::EditComponent& ApiRequest::editcomponent() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.editComponent)
+  return _internal_editcomponent();
+}
+inline ::EditComponent* ApiRequest::unsafe_arena_release_editcomponent() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.editComponent)
+  if (payload_case() == kEditComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.editcomponent_;
+    _impl_.payload_.editcomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_editcomponent(::EditComponent* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_editcomponent();
+    _impl_.payload_.editcomponent_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.editComponent)
+}
+inline ::EditComponent* ApiRequest::_internal_mutable_editcomponent() {
+  if (payload_case() != kEditComponent) {
+    clear_payload();
+    set_has_editcomponent();
+    _impl_.payload_.editcomponent_ =
+        ::google::protobuf::Message::DefaultConstruct<::EditComponent>(GetArena());
+  }
+  return _impl_.payload_.editcomponent_;
+}
+inline ::EditComponent* ApiRequest::mutable_editcomponent() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::EditComponent* _msg = _internal_mutable_editcomponent();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.editComponent)
+  return _msg;
+}
+
+// .CreateEntity createEntity = 15;
+inline bool ApiRequest::has_createentity() const {
+  return payload_case() == kCreateEntity;
+}
+inline bool ApiRequest::_internal_has_createentity() const {
+  return payload_case() == kCreateEntity;
+}
+inline void ApiRequest::set_has_createentity() {
+  _impl_._oneof_case_[0] = kCreateEntity;
+}
+inline void ApiRequest::clear_createentity() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kCreateEntity) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.createentity_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.createentity_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::CreateEntity* ApiRequest::release_createentity() {
+  // @@protoc_insertion_point(field_release:ApiRequest.createEntity)
+  if (payload_case() == kCreateEntity) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.createentity_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.createentity_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::CreateEntity& ApiRequest::_internal_createentity() const {
+  return payload_case() == kCreateEntity ? *_impl_.payload_.createentity_ : reinterpret_cast<::CreateEntity&>(::_CreateEntity_default_instance_);
+}
+inline const ::CreateEntity& ApiRequest::createentity() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.createEntity)
+  return _internal_createentity();
+}
+inline ::CreateEntity* ApiRequest::unsafe_arena_release_createentity() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.createEntity)
+  if (payload_case() == kCreateEntity) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.createentity_;
+    _impl_.payload_.createentity_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_createentity(::CreateEntity* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_createentity();
+    _impl_.payload_.createentity_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.createEntity)
+}
+inline ::CreateEntity* ApiRequest::_internal_mutable_createentity() {
+  if (payload_case() != kCreateEntity) {
+    clear_payload();
+    set_has_createentity();
+    _impl_.payload_.createentity_ =
+        ::google::protobuf::Message::DefaultConstruct<::CreateEntity>(GetArena());
+  }
+  return _impl_.payload_.createentity_;
+}
+inline ::CreateEntity* ApiRequest::mutable_createentity() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::CreateEntity* _msg = _internal_mutable_createentity();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.createEntity)
+  return _msg;
+}
+
+// .DeleteEntity deleteEntity = 16;
+inline bool ApiRequest::has_deleteentity() const {
+  return payload_case() == kDeleteEntity;
+}
+inline bool ApiRequest::_internal_has_deleteentity() const {
+  return payload_case() == kDeleteEntity;
+}
+inline void ApiRequest::set_has_deleteentity() {
+  _impl_._oneof_case_[0] = kDeleteEntity;
+}
+inline void ApiRequest::clear_deleteentity() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kDeleteEntity) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.deleteentity_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.deleteentity_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::DeleteEntity* ApiRequest::release_deleteentity() {
+  // @@protoc_insertion_point(field_release:ApiRequest.deleteEntity)
+  if (payload_case() == kDeleteEntity) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.deleteentity_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.deleteentity_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::DeleteEntity& ApiRequest::_internal_deleteentity() const {
+  return payload_case() == kDeleteEntity ? *_impl_.payload_.deleteentity_ : reinterpret_cast<::DeleteEntity&>(::_DeleteEntity_default_instance_);
+}
+inline const ::DeleteEntity& ApiRequest::deleteentity() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.deleteEntity)
+  return _internal_deleteentity();
+}
+inline ::DeleteEntity* ApiRequest::unsafe_arena_release_deleteentity() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.deleteEntity)
+  if (payload_case() == kDeleteEntity) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.deleteentity_;
+    _impl_.payload_.deleteentity_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_deleteentity(::DeleteEntity* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_deleteentity();
+    _impl_.payload_.deleteentity_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.deleteEntity)
+}
+inline ::DeleteEntity* ApiRequest::_internal_mutable_deleteentity() {
+  if (payload_case() != kDeleteEntity) {
+    clear_payload();
+    set_has_deleteentity();
+    _impl_.payload_.deleteentity_ =
+        ::google::protobuf::Message::DefaultConstruct<::DeleteEntity>(GetArena());
+  }
+  return _impl_.payload_.deleteentity_;
+}
+inline ::DeleteEntity* ApiRequest::mutable_deleteentity() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::DeleteEntity* _msg = _internal_mutable_deleteentity();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.deleteEntity)
+  return _msg;
+}
+
+// .ListEntities listEntities = 17;
+inline bool ApiRequest::has_listentities() const {
+  return payload_case() == kListEntities;
+}
+inline bool ApiRequest::_internal_has_listentities() const {
+  return payload_case() == kListEntities;
+}
+inline void ApiRequest::set_has_listentities() {
+  _impl_._oneof_case_[0] = kListEntities;
+}
+inline void ApiRequest::clear_listentities() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kListEntities) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.listentities_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.listentities_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::ListEntities* ApiRequest::release_listentities() {
+  // @@protoc_insertion_point(field_release:ApiRequest.listEntities)
+  if (payload_case() == kListEntities) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.listentities_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.listentities_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::ListEntities& ApiRequest::_internal_listentities() const {
+  return payload_case() == kListEntities ? *_impl_.payload_.listentities_ : reinterpret_cast<::ListEntities&>(::_ListEntities_default_instance_);
+}
+inline const ::ListEntities& ApiRequest::listentities() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.listEntities)
+  return _internal_listentities();
+}
+inline ::ListEntities* ApiRequest::unsafe_arena_release_listentities() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.listEntities)
+  if (payload_case() == kListEntities) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.listentities_;
+    _impl_.payload_.listentities_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_listentities(::ListEntities* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_listentities();
+    _impl_.payload_.listentities_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.listEntities)
+}
+inline ::ListEntities* ApiRequest::_internal_mutable_listentities() {
+  if (payload_case() != kListEntities) {
+    clear_payload();
+    set_has_listentities();
+    _impl_.payload_.listentities_ =
+        ::google::protobuf::Message::DefaultConstruct<::ListEntities>(GetArena());
+  }
+  return _impl_.payload_.listentities_;
+}
+inline ::ListEntities* ApiRequest::mutable_listentities() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::ListEntities* _msg = _internal_mutable_listentities();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.listEntities)
+  return _msg;
+}
+
+// .GetComponent getComponent = 18;
+inline bool ApiRequest::has_getcomponent() const {
+  return payload_case() == kGetComponent;
+}
+inline bool ApiRequest::_internal_has_getcomponent() const {
+  return payload_case() == kGetComponent;
+}
+inline void ApiRequest::set_has_getcomponent() {
+  _impl_._oneof_case_[0] = kGetComponent;
+}
+inline void ApiRequest::clear_getcomponent() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kGetComponent) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.getcomponent_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.getcomponent_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::GetComponent* ApiRequest::release_getcomponent() {
+  // @@protoc_insertion_point(field_release:ApiRequest.getComponent)
+  if (payload_case() == kGetComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.getcomponent_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.getcomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::GetComponent& ApiRequest::_internal_getcomponent() const {
+  return payload_case() == kGetComponent ? *_impl_.payload_.getcomponent_ : reinterpret_cast<::GetComponent&>(::_GetComponent_default_instance_);
+}
+inline const ::GetComponent& ApiRequest::getcomponent() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.getComponent)
+  return _internal_getcomponent();
+}
+inline ::GetComponent* ApiRequest::unsafe_arena_release_getcomponent() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.getComponent)
+  if (payload_case() == kGetComponent) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.getcomponent_;
+    _impl_.payload_.getcomponent_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_getcomponent(::GetComponent* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_getcomponent();
+    _impl_.payload_.getcomponent_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.getComponent)
+}
+inline ::GetComponent* ApiRequest::_internal_mutable_getcomponent() {
+  if (payload_case() != kGetComponent) {
+    clear_payload();
+    set_has_getcomponent();
+    _impl_.payload_.getcomponent_ =
+        ::google::protobuf::Message::DefaultConstruct<::GetComponent>(GetArena());
+  }
+  return _impl_.payload_.getcomponent_;
+}
+inline ::GetComponent* ApiRequest::mutable_getcomponent() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::GetComponent* _msg = _internal_mutable_getcomponent();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.getComponent)
+  return _msg;
+}
+
 inline bool ApiRequest::has_payload() const {
   return payload_case() != PAYLOAD_NOT_SET;
 }
@@ -6299,6 +9356,1098 @@ inline void ApiRequestResponse::set_allocated_status(::EngineStatus* value) {
   // @@protoc_insertion_point(field_set_allocated:ApiRequestResponse.status)
 }
 
+// repeated int64 entity_ids = 5;
+inline int ApiRequestResponse::_internal_entity_ids_size() const {
+  return _internal_entity_ids().size();
+}
+inline int ApiRequestResponse::entity_ids_size() const {
+  return _internal_entity_ids_size();
+}
+inline void ApiRequestResponse::clear_entity_ids() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entity_ids_.Clear();
+}
+inline ::int64_t ApiRequestResponse::entity_ids(int index) const {
+  // @@protoc_insertion_point(field_get:ApiRequestResponse.entity_ids)
+  return _internal_entity_ids().Get(index);
+}
+inline void ApiRequestResponse::set_entity_ids(int index, ::int64_t value) {
+  _internal_mutable_entity_ids()->Set(index, value);
+  // @@protoc_insertion_point(field_set:ApiRequestResponse.entity_ids)
+}
+inline void ApiRequestResponse::add_entity_ids(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _internal_mutable_entity_ids()->Add(value);
+  // @@protoc_insertion_point(field_add:ApiRequestResponse.entity_ids)
+}
+inline const ::google::protobuf::RepeatedField<::int64_t>& ApiRequestResponse::entity_ids() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:ApiRequestResponse.entity_ids)
+  return _internal_entity_ids();
+}
+inline ::google::protobuf::RepeatedField<::int64_t>* ApiRequestResponse::mutable_entity_ids()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:ApiRequestResponse.entity_ids)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_entity_ids();
+}
+inline const ::google::protobuf::RepeatedField<::int64_t>&
+ApiRequestResponse::_internal_entity_ids() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.entity_ids_;
+}
+inline ::google::protobuf::RepeatedField<::int64_t>* ApiRequestResponse::_internal_mutable_entity_ids() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.entity_ids_;
+}
+
+// .Component component = 6;
+inline bool ApiRequestResponse::has_component() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.component_ != nullptr);
+  return value;
+}
+inline void ApiRequestResponse::clear_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.component_ != nullptr) _impl_.component_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const ::Component& ApiRequestResponse::_internal_component() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::Component* p = _impl_.component_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Component&>(::_Component_default_instance_);
+}
+inline const ::Component& ApiRequestResponse::component() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequestResponse.component)
+  return _internal_component();
+}
+inline void ApiRequestResponse::unsafe_arena_set_allocated_component(::Component* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.component_);
+  }
+  _impl_.component_ = reinterpret_cast<::Component*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequestResponse.component)
+}
+inline ::Component* ApiRequestResponse::release_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  ::Component* released = _impl_.component_;
+  _impl_.component_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+  released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  if (GetArena() == nullptr) {
+    delete old;
+  }
+#else   // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArena() != nullptr) {
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return released;
+}
+inline ::Component* ApiRequestResponse::unsafe_arena_release_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:ApiRequestResponse.component)
+
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  ::Component* temp = _impl_.component_;
+  _impl_.component_ = nullptr;
+  return temp;
+}
+inline ::Component* ApiRequestResponse::_internal_mutable_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.component_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::Component>(GetArena());
+    _impl_.component_ = reinterpret_cast<::Component*>(p);
+  }
+  return _impl_.component_;
+}
+inline ::Component* ApiRequestResponse::mutable_component() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  ::Component* _msg = _internal_mutable_component();
+  // @@protoc_insertion_point(field_mutable:ApiRequestResponse.component)
+  return _msg;
+}
+inline void ApiRequestResponse::set_allocated_component(::Component* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.component_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+
+  _impl_.component_ = reinterpret_cast<::Component*>(value);
+  // @@protoc_insertion_point(field_set_allocated:ApiRequestResponse.component)
+}
+
+// repeated .EntityComponentInfo entity_components = 7;
+inline int ApiRequestResponse::_internal_entity_components_size() const {
+  return _internal_entity_components().size();
+}
+inline int ApiRequestResponse::entity_components_size() const {
+  return _internal_entity_components_size();
+}
+inline void ApiRequestResponse::clear_entity_components() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entity_components_.Clear();
+}
+inline ::EntityComponentInfo* ApiRequestResponse::mutable_entity_components(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:ApiRequestResponse.entity_components)
+  return _internal_mutable_entity_components()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>* ApiRequestResponse::mutable_entity_components()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:ApiRequestResponse.entity_components)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_entity_components();
+}
+inline const ::EntityComponentInfo& ApiRequestResponse::entity_components(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequestResponse.entity_components)
+  return _internal_entity_components().Get(index);
+}
+inline ::EntityComponentInfo* ApiRequestResponse::add_entity_components() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::EntityComponentInfo* _add = _internal_mutable_entity_components()->Add();
+  // @@protoc_insertion_point(field_add:ApiRequestResponse.entity_components)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>& ApiRequestResponse::entity_components() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:ApiRequestResponse.entity_components)
+  return _internal_entity_components();
+}
+inline const ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>&
+ApiRequestResponse::_internal_entity_components() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.entity_components_;
+}
+inline ::google::protobuf::RepeatedPtrField<::EntityComponentInfo>*
+ApiRequestResponse::_internal_mutable_entity_components() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.entity_components_;
+}
+
+// -------------------------------------------------------------------
+
+// EntityComponentInfo
+
+// int64 entity_id = 1;
+inline void EntityComponentInfo::clear_entity_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entity_id_ = ::int64_t{0};
+}
+inline ::int64_t EntityComponentInfo::entity_id() const {
+  // @@protoc_insertion_point(field_get:EntityComponentInfo.entity_id)
+  return _internal_entity_id();
+}
+inline void EntityComponentInfo::set_entity_id(::int64_t value) {
+  _internal_set_entity_id(value);
+  // @@protoc_insertion_point(field_set:EntityComponentInfo.entity_id)
+}
+inline ::int64_t EntityComponentInfo::_internal_entity_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.entity_id_;
+}
+inline void EntityComponentInfo::_internal_set_entity_id(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entity_id_ = value;
+}
+
+// repeated .ComponentType component_types = 2;
+inline int EntityComponentInfo::_internal_component_types_size() const {
+  return _internal_component_types().size();
+}
+inline int EntityComponentInfo::component_types_size() const {
+  return _internal_component_types_size();
+}
+inline void EntityComponentInfo::clear_component_types() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.component_types_.Clear();
+}
+inline ::ComponentType EntityComponentInfo::component_types(int index) const {
+  // @@protoc_insertion_point(field_get:EntityComponentInfo.component_types)
+  return static_cast<::ComponentType>(_internal_component_types().Get(index));
+}
+inline void EntityComponentInfo::set_component_types(int index, ::ComponentType value) {
+  _internal_mutable_component_types()->Set(index, value);
+  // @@protoc_insertion_point(field_set:EntityComponentInfo.component_types)
+}
+inline void EntityComponentInfo::add_component_types(::ComponentType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _internal_mutable_component_types()->Add(value);
+  // @@protoc_insertion_point(field_add:EntityComponentInfo.component_types)
+}
+inline const ::google::protobuf::RepeatedField<int>& EntityComponentInfo::component_types() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:EntityComponentInfo.component_types)
+  return _internal_component_types();
+}
+inline ::google::protobuf::RepeatedField<int>* EntityComponentInfo::mutable_component_types()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:EntityComponentInfo.component_types)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_component_types();
+}
+inline const ::google::protobuf::RepeatedField<int>& EntityComponentInfo::_internal_component_types()
+    const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.component_types_;
+}
+inline ::google::protobuf::RepeatedField<int>* EntityComponentInfo::_internal_mutable_component_types() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.component_types_;
+}
+
+// -------------------------------------------------------------------
+
+// PositionableComponent
+
+// int64 entityId = 1;
+inline void PositionableComponent::clear_entityid() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entityid_ = ::int64_t{0};
+}
+inline ::int64_t PositionableComponent::entityid() const {
+  // @@protoc_insertion_point(field_get:PositionableComponent.entityId)
+  return _internal_entityid();
+}
+inline void PositionableComponent::set_entityid(::int64_t value) {
+  _internal_set_entityid(value);
+  // @@protoc_insertion_point(field_set:PositionableComponent.entityId)
+}
+inline ::int64_t PositionableComponent::_internal_entityid() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.entityid_;
+}
+inline void PositionableComponent::_internal_set_entityid(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entityid_ = value;
+}
+
+// .Vector position = 2;
+inline bool PositionableComponent::has_position() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.position_ != nullptr);
+  return value;
+}
+inline void PositionableComponent::clear_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.position_ != nullptr) _impl_.position_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const ::Vector& PositionableComponent::_internal_position() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::Vector* p = _impl_.position_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Vector&>(::_Vector_default_instance_);
+}
+inline const ::Vector& PositionableComponent::position() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:PositionableComponent.position)
+  return _internal_position();
+}
+inline void PositionableComponent::unsafe_arena_set_allocated_position(::Vector* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.position_);
+  }
+  _impl_.position_ = reinterpret_cast<::Vector*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:PositionableComponent.position)
+}
+inline ::Vector* PositionableComponent::release_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Vector* released = _impl_.position_;
+  _impl_.position_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+  released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  if (GetArena() == nullptr) {
+    delete old;
+  }
+#else   // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArena() != nullptr) {
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return released;
+}
+inline ::Vector* PositionableComponent::unsafe_arena_release_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:PositionableComponent.position)
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Vector* temp = _impl_.position_;
+  _impl_.position_ = nullptr;
+  return temp;
+}
+inline ::Vector* PositionableComponent::_internal_mutable_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.position_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::Vector>(GetArena());
+    _impl_.position_ = reinterpret_cast<::Vector*>(p);
+  }
+  return _impl_.position_;
+}
+inline ::Vector* PositionableComponent::mutable_position() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  ::Vector* _msg = _internal_mutable_position();
+  // @@protoc_insertion_point(field_mutable:PositionableComponent.position)
+  return _msg;
+}
+inline void PositionableComponent::set_allocated_position(::Vector* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.position_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+
+  _impl_.position_ = reinterpret_cast<::Vector*>(value);
+  // @@protoc_insertion_point(field_set_allocated:PositionableComponent.position)
+}
+
+// .Vector rotation = 3;
+inline bool PositionableComponent::has_rotation() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.rotation_ != nullptr);
+  return value;
+}
+inline void PositionableComponent::clear_rotation() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.rotation_ != nullptr) _impl_.rotation_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const ::Vector& PositionableComponent::_internal_rotation() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::Vector* p = _impl_.rotation_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Vector&>(::_Vector_default_instance_);
+}
+inline const ::Vector& PositionableComponent::rotation() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:PositionableComponent.rotation)
+  return _internal_rotation();
+}
+inline void PositionableComponent::unsafe_arena_set_allocated_rotation(::Vector* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.rotation_);
+  }
+  _impl_.rotation_ = reinterpret_cast<::Vector*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:PositionableComponent.rotation)
+}
+inline ::Vector* PositionableComponent::release_rotation() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  ::Vector* released = _impl_.rotation_;
+  _impl_.rotation_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+  released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  if (GetArena() == nullptr) {
+    delete old;
+  }
+#else   // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArena() != nullptr) {
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return released;
+}
+inline ::Vector* PositionableComponent::unsafe_arena_release_rotation() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:PositionableComponent.rotation)
+
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  ::Vector* temp = _impl_.rotation_;
+  _impl_.rotation_ = nullptr;
+  return temp;
+}
+inline ::Vector* PositionableComponent::_internal_mutable_rotation() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.rotation_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::Vector>(GetArena());
+    _impl_.rotation_ = reinterpret_cast<::Vector*>(p);
+  }
+  return _impl_.rotation_;
+}
+inline ::Vector* PositionableComponent::mutable_rotation() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  ::Vector* _msg = _internal_mutable_rotation();
+  // @@protoc_insertion_point(field_mutable:PositionableComponent.rotation)
+  return _msg;
+}
+inline void PositionableComponent::set_allocated_rotation(::Vector* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.rotation_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+
+  _impl_.rotation_ = reinterpret_cast<::Vector*>(value);
+  // @@protoc_insertion_point(field_set_allocated:PositionableComponent.rotation)
+}
+
+// float scale = 4;
+inline void PositionableComponent::clear_scale() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.scale_ = 0;
+}
+inline float PositionableComponent::scale() const {
+  // @@protoc_insertion_point(field_get:PositionableComponent.scale)
+  return _internal_scale();
+}
+inline void PositionableComponent::set_scale(float value) {
+  _internal_set_scale(value);
+  // @@protoc_insertion_point(field_set:PositionableComponent.scale)
+}
+inline float PositionableComponent::_internal_scale() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.scale_;
+}
+inline void PositionableComponent::_internal_set_scale(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.scale_ = value;
+}
+
+// .Vector origin = 5;
+inline bool PositionableComponent::has_origin() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.origin_ != nullptr);
+  return value;
+}
+inline void PositionableComponent::clear_origin() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.origin_ != nullptr) _impl_.origin_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline const ::Vector& PositionableComponent::_internal_origin() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::Vector* p = _impl_.origin_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Vector&>(::_Vector_default_instance_);
+}
+inline const ::Vector& PositionableComponent::origin() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:PositionableComponent.origin)
+  return _internal_origin();
+}
+inline void PositionableComponent::unsafe_arena_set_allocated_origin(::Vector* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.origin_);
+  }
+  _impl_.origin_ = reinterpret_cast<::Vector*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000004u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000004u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:PositionableComponent.origin)
+}
+inline ::Vector* PositionableComponent::release_origin() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000004u;
+  ::Vector* released = _impl_.origin_;
+  _impl_.origin_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+  released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  if (GetArena() == nullptr) {
+    delete old;
+  }
+#else   // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArena() != nullptr) {
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return released;
+}
+inline ::Vector* PositionableComponent::unsafe_arena_release_origin() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:PositionableComponent.origin)
+
+  _impl_._has_bits_[0] &= ~0x00000004u;
+  ::Vector* temp = _impl_.origin_;
+  _impl_.origin_ = nullptr;
+  return temp;
+}
+inline ::Vector* PositionableComponent::_internal_mutable_origin() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.origin_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::Vector>(GetArena());
+    _impl_.origin_ = reinterpret_cast<::Vector*>(p);
+  }
+  return _impl_.origin_;
+}
+inline ::Vector* PositionableComponent::mutable_origin() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  ::Vector* _msg = _internal_mutable_origin();
+  // @@protoc_insertion_point(field_mutable:PositionableComponent.origin)
+  return _msg;
+}
+inline void PositionableComponent::set_allocated_origin(::Vector* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.origin_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000004u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000004u;
+  }
+
+  _impl_.origin_ = reinterpret_cast<::Vector*>(value);
+  // @@protoc_insertion_point(field_set_allocated:PositionableComponent.origin)
+}
+
+// -------------------------------------------------------------------
+
+// ModelComponent
+
+// int64 entityId = 1;
+inline void ModelComponent::clear_entityid() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entityid_ = ::int64_t{0};
+}
+inline ::int64_t ModelComponent::entityid() const {
+  // @@protoc_insertion_point(field_get:ModelComponent.entityId)
+  return _internal_entityid();
+}
+inline void ModelComponent::set_entityid(::int64_t value) {
+  _internal_set_entityid(value);
+  // @@protoc_insertion_point(field_set:ModelComponent.entityId)
+}
+inline ::int64_t ModelComponent::_internal_entityid() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.entityid_;
+}
+inline void ModelComponent::_internal_set_entityid(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entityid_ = value;
+}
+
+// string model_path = 2;
+inline void ModelComponent::clear_model_path() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.model_path_.ClearToEmpty();
+}
+inline const std::string& ModelComponent::model_path() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ModelComponent.model_path)
+  return _internal_model_path();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void ModelComponent::set_model_path(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.model_path_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:ModelComponent.model_path)
+}
+inline std::string* ModelComponent::mutable_model_path() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_model_path();
+  // @@protoc_insertion_point(field_mutable:ModelComponent.model_path)
+  return _s;
+}
+inline const std::string& ModelComponent::_internal_model_path() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.model_path_.Get();
+}
+inline void ModelComponent::_internal_set_model_path(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.model_path_.Set(value, GetArena());
+}
+inline std::string* ModelComponent::_internal_mutable_model_path() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.model_path_.Mutable( GetArena());
+}
+inline std::string* ModelComponent::release_model_path() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:ModelComponent.model_path)
+  return _impl_.model_path_.Release();
+}
+inline void ModelComponent::set_allocated_model_path(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.model_path_.SetAllocated(value, GetArena());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+        if (_impl_.model_path_.IsDefault()) {
+          _impl_.model_path_.Set("", GetArena());
+        }
+  #endif  // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:ModelComponent.model_path)
+}
+
+// -------------------------------------------------------------------
+
+// Component
+
+// .ComponentType type = 1;
+inline void Component::clear_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.type_ = 0;
+}
+inline ::ComponentType Component::type() const {
+  // @@protoc_insertion_point(field_get:Component.type)
+  return _internal_type();
+}
+inline void Component::set_type(::ComponentType value) {
+  _internal_set_type(value);
+  // @@protoc_insertion_point(field_set:Component.type)
+}
+inline ::ComponentType Component::_internal_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::ComponentType>(_impl_.type_);
+}
+inline void Component::_internal_set_type(::ComponentType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.type_ = value;
+}
+
+// .PositionableComponent positionable = 2;
+inline bool Component::has_positionable() const {
+  return component_type_case() == kPositionable;
+}
+inline bool Component::_internal_has_positionable() const {
+  return component_type_case() == kPositionable;
+}
+inline void Component::set_has_positionable() {
+  _impl_._oneof_case_[0] = kPositionable;
+}
+inline void Component::clear_positionable() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (component_type_case() == kPositionable) {
+    if (GetArena() == nullptr) {
+      delete _impl_.component_type_.positionable_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.component_type_.positionable_);
+    }
+    clear_has_component_type();
+  }
+}
+inline ::PositionableComponent* Component::release_positionable() {
+  // @@protoc_insertion_point(field_release:Component.positionable)
+  if (component_type_case() == kPositionable) {
+    clear_has_component_type();
+    auto* temp = _impl_.component_type_.positionable_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.component_type_.positionable_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::PositionableComponent& Component::_internal_positionable() const {
+  return component_type_case() == kPositionable ? *_impl_.component_type_.positionable_ : reinterpret_cast<::PositionableComponent&>(::_PositionableComponent_default_instance_);
+}
+inline const ::PositionableComponent& Component::positionable() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:Component.positionable)
+  return _internal_positionable();
+}
+inline ::PositionableComponent* Component::unsafe_arena_release_positionable() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:Component.positionable)
+  if (component_type_case() == kPositionable) {
+    clear_has_component_type();
+    auto* temp = _impl_.component_type_.positionable_;
+    _impl_.component_type_.positionable_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Component::unsafe_arena_set_allocated_positionable(::PositionableComponent* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_component_type();
+  if (value) {
+    set_has_positionable();
+    _impl_.component_type_.positionable_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Component.positionable)
+}
+inline ::PositionableComponent* Component::_internal_mutable_positionable() {
+  if (component_type_case() != kPositionable) {
+    clear_component_type();
+    set_has_positionable();
+    _impl_.component_type_.positionable_ =
+        ::google::protobuf::Message::DefaultConstruct<::PositionableComponent>(GetArena());
+  }
+  return _impl_.component_type_.positionable_;
+}
+inline ::PositionableComponent* Component::mutable_positionable() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::PositionableComponent* _msg = _internal_mutable_positionable();
+  // @@protoc_insertion_point(field_mutable:Component.positionable)
+  return _msg;
+}
+
+// .ModelComponent model = 3;
+inline bool Component::has_model() const {
+  return component_type_case() == kModel;
+}
+inline bool Component::_internal_has_model() const {
+  return component_type_case() == kModel;
+}
+inline void Component::set_has_model() {
+  _impl_._oneof_case_[0] = kModel;
+}
+inline void Component::clear_model() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (component_type_case() == kModel) {
+    if (GetArena() == nullptr) {
+      delete _impl_.component_type_.model_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.component_type_.model_);
+    }
+    clear_has_component_type();
+  }
+}
+inline ::ModelComponent* Component::release_model() {
+  // @@protoc_insertion_point(field_release:Component.model)
+  if (component_type_case() == kModel) {
+    clear_has_component_type();
+    auto* temp = _impl_.component_type_.model_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.component_type_.model_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::ModelComponent& Component::_internal_model() const {
+  return component_type_case() == kModel ? *_impl_.component_type_.model_ : reinterpret_cast<::ModelComponent&>(::_ModelComponent_default_instance_);
+}
+inline const ::ModelComponent& Component::model() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:Component.model)
+  return _internal_model();
+}
+inline ::ModelComponent* Component::unsafe_arena_release_model() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:Component.model)
+  if (component_type_case() == kModel) {
+    clear_has_component_type();
+    auto* temp = _impl_.component_type_.model_;
+    _impl_.component_type_.model_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Component::unsafe_arena_set_allocated_model(::ModelComponent* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_component_type();
+  if (value) {
+    set_has_model();
+    _impl_.component_type_.model_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:Component.model)
+}
+inline ::ModelComponent* Component::_internal_mutable_model() {
+  if (component_type_case() != kModel) {
+    clear_component_type();
+    set_has_model();
+    _impl_.component_type_.model_ =
+        ::google::protobuf::Message::DefaultConstruct<::ModelComponent>(GetArena());
+  }
+  return _impl_.component_type_.model_;
+}
+inline ::ModelComponent* Component::mutable_model() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::ModelComponent* _msg = _internal_mutable_model();
+  // @@protoc_insertion_point(field_mutable:Component.model)
+  return _msg;
+}
+
+inline bool Component::has_component_type() const {
+  return component_type_case() != COMPONENT_TYPE_NOT_SET;
+}
+inline void Component::clear_has_component_type() {
+  _impl_._oneof_case_[0] = COMPONENT_TYPE_NOT_SET;
+}
+inline Component::ComponentTypeCase Component::component_type_case() const {
+  return Component::ComponentTypeCase(_impl_._oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// AddComponent
+
+// .Component component = 1;
+inline bool AddComponent::has_component() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.component_ != nullptr);
+  return value;
+}
+inline void AddComponent::clear_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.component_ != nullptr) _impl_.component_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const ::Component& AddComponent::_internal_component() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::Component* p = _impl_.component_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Component&>(::_Component_default_instance_);
+}
+inline const ::Component& AddComponent::component() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:AddComponent.component)
+  return _internal_component();
+}
+inline void AddComponent::unsafe_arena_set_allocated_component(::Component* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.component_);
+  }
+  _impl_.component_ = reinterpret_cast<::Component*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:AddComponent.component)
+}
+inline ::Component* AddComponent::release_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Component* released = _impl_.component_;
+  _impl_.component_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+  released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  if (GetArena() == nullptr) {
+    delete old;
+  }
+#else   // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArena() != nullptr) {
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return released;
+}
+inline ::Component* AddComponent::unsafe_arena_release_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:AddComponent.component)
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Component* temp = _impl_.component_;
+  _impl_.component_ = nullptr;
+  return temp;
+}
+inline ::Component* AddComponent::_internal_mutable_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.component_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::Component>(GetArena());
+    _impl_.component_ = reinterpret_cast<::Component*>(p);
+  }
+  return _impl_.component_;
+}
+inline ::Component* AddComponent::mutable_component() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  ::Component* _msg = _internal_mutable_component();
+  // @@protoc_insertion_point(field_mutable:AddComponent.component)
+  return _msg;
+}
+inline void AddComponent::set_allocated_component(::Component* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.component_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+
+  _impl_.component_ = reinterpret_cast<::Component*>(value);
+  // @@protoc_insertion_point(field_set_allocated:AddComponent.component)
+}
+
+// -------------------------------------------------------------------
+
+// DeleteComponent
+
+// .ComponentType component_type = 1;
+inline void DeleteComponent::clear_component_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.component_type_ = 0;
+}
+inline ::ComponentType DeleteComponent::component_type() const {
+  // @@protoc_insertion_point(field_get:DeleteComponent.component_type)
+  return _internal_component_type();
+}
+inline void DeleteComponent::set_component_type(::ComponentType value) {
+  _internal_set_component_type(value);
+  // @@protoc_insertion_point(field_set:DeleteComponent.component_type)
+}
+inline ::ComponentType DeleteComponent::_internal_component_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::ComponentType>(_impl_.component_type_);
+}
+inline void DeleteComponent::_internal_set_component_type(::ComponentType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.component_type_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// EditComponent
+
+// .Component component = 1;
+inline bool EditComponent::has_component() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.component_ != nullptr);
+  return value;
+}
+inline void EditComponent::clear_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.component_ != nullptr) _impl_.component_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const ::Component& EditComponent::_internal_component() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::Component* p = _impl_.component_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Component&>(::_Component_default_instance_);
+}
+inline const ::Component& EditComponent::component() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:EditComponent.component)
+  return _internal_component();
+}
+inline void EditComponent::unsafe_arena_set_allocated_component(::Component* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.component_);
+  }
+  _impl_.component_ = reinterpret_cast<::Component*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:EditComponent.component)
+}
+inline ::Component* EditComponent::release_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Component* released = _impl_.component_;
+  _impl_.component_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+  released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  if (GetArena() == nullptr) {
+    delete old;
+  }
+#else   // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArena() != nullptr) {
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return released;
+}
+inline ::Component* EditComponent::unsafe_arena_release_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:EditComponent.component)
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Component* temp = _impl_.component_;
+  _impl_.component_ = nullptr;
+  return temp;
+}
+inline ::Component* EditComponent::_internal_mutable_component() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.component_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::Component>(GetArena());
+    _impl_.component_ = reinterpret_cast<::Component*>(p);
+  }
+  return _impl_.component_;
+}
+inline ::Component* EditComponent::mutable_component() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  ::Component* _msg = _internal_mutable_component();
+  // @@protoc_insertion_point(field_mutable:EditComponent.component)
+  return _msg;
+}
+inline void EditComponent::set_allocated_component(::Component* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.component_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+
+  _impl_.component_ = reinterpret_cast<::Component*>(value);
+  // @@protoc_insertion_point(field_set_allocated:EditComponent.component)
+}
+
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif  // __GNUC__
@@ -6314,6 +10463,12 @@ struct is_proto_enum<::MessageType> : std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor<::MessageType>() {
   return ::MessageType_descriptor();
+}
+template <>
+struct is_proto_enum<::ComponentType> : std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor<::ComponentType>() {
+  return ::ComponentType_descriptor();
 }
 
 }  // namespace protobuf

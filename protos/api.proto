@@ -15,6 +15,10 @@ enum MessageType {
   ADD_COMPONENT = 11;
   DELETE_COMPONENT = 12;
   EDIT_COMPONENT = 13;
+  CREATE_ENTITY = 14;
+  DELETE_ENTITY = 15;
+  LIST_ENTITIES = 16;
+  GET_COMPONENT = 17;
 }
 
 message NoPayload {}
@@ -78,6 +82,18 @@ message PointerReplay {
   repeated PointerReplayEntry entries = 1;
 }
 
+message CreateEntity {}
+
+message DeleteEntity {}
+
+message ListEntities {
+  ComponentType filter_type = 1;      // Optional: filter by component type
+}
+
+message GetComponent {
+  ComponentType component_type = 1;   // Component to fetch for entityId
+}
+
 message EngineStatus {
   uint32 total_entities = 1;
   uint32 wayland_apps = 2;
@@ -112,6 +128,10 @@ message ApiRequest {
     AddComponent addComponent = 12;
     DeleteComponent deleteComponent = 13;
     EditComponent editComponent = 14;
+    CreateEntity createEntity = 15;
+    DeleteEntity deleteEntity = 16;
+    ListEntities listEntities = 17;
+    GetComponent getComponent = 18;
   }
 }
 
@@ -120,6 +140,14 @@ message ApiRequestResponse {
   int64 actionId = 2;
   bool success = 3;
   EngineStatus status = 4;
+  repeated int64 entity_ids = 5;      // For LIST_ENTITIES
+  Component component = 6;            // For GET_COMPONENT
+  repeated EntityComponentInfo entity_components = 7; // For LIST_ENTITIES
+}
+
+message EntityComponentInfo {
+  int64 entity_id = 1;
+  repeated ComponentType component_types = 2;
 }
 
 enum ComponentType {
