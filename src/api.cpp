@@ -9,6 +9,7 @@
 #include "model.h"
 #include "systems/KeyAndLock.h"
 #include "systems/Move.h"
+#include "urdf_loader.h"
 
 #include <GLFW/glfw3.h>
 #include <algorithm>
@@ -502,6 +503,33 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
           if (registry->any_of<Model>(entity)) {
             info->add_component_types(COMPONENT_TYPE_MODEL);
           }
+        }
+      }
+      response.set_success(success);
+      fulfillPendingResponse(batchedRequest.id, response);
+      break;
+    }
+    case LOAD_URDF: {
+      ApiRequestResponse response;
+      response.set_requestid(batchedRequest.id);
+      bool success = false;
+      if (registry && batchedRequest.request.has_loadurdf()) {
+        const auto& load = batchedRequest.request.loadurdf();
+        glm::vec3 basePos =
+          load.has_initial_position() ? toVec3(load.initial_position())
+                                      : glm::vec3(0.0f);
+        URDFLoadResult result;
+        std::string error;
+        success =
+          loadURDFFromFile(registry, load.urdf_path(), basePos, result, error);
+        if (success) {
+          for (auto entity : result.entities) {
+            if (registry->all_of<Persistable>(entity)) {
+              response.add_entity_ids(registry->get<Persistable>(entity).entityId);
+            }
+          }
+        } else {
+          log_to_tmp_api("api load urdf error: " + error + "\n");
         }
       }
       response.set_success(success);

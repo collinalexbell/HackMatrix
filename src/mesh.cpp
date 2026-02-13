@@ -3,6 +3,29 @@
 
 using namespace std;
 
+static unsigned int
+getFallbackWhiteTexture()
+{
+  static unsigned int fallbackTexture = 0;
+  if (fallbackTexture != 0) {
+    return fallbackTexture;
+  }
+
+  glGenTextures(1, &fallbackTexture);
+  glBindTexture(GL_TEXTURE_2D, fallbackTexture);
+
+  const unsigned char whitePixel[4] = { 255, 255, 255, 255 };
+  glTexImage2D(
+    GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  return fallbackTexture;
+}
+
 Mesh::Mesh(vector<Vertex> vertices,
            vector<unsigned int> indices,
            vector<MeshTexture> textures)
@@ -62,19 +85,27 @@ Mesh::Draw(Shader& shader)
 
   unsigned int diffuseNr = 1;
   unsigned int specularNr = 1;
+  bool hasDiffuse = false;
   for (unsigned int i = 0; i < textures.size(); i++) {
     glActiveTexture(GL_TEXTURE1 +
                     i); // activate proper texture unit before binding
     // retrieve texture number (the N in diffuse_textureN)
     string number;
     string name = textures[i].type;
-    if (name == "texture_diffuse")
+    if (name == "texture_diffuse") {
       number = std::to_string(diffuseNr++);
-    else if (name == "texture_specular")
+      hasDiffuse = true;
+    } else if (name == "texture_specular")
       number = std::to_string(specularNr++);
 
     shader.setInt((name + number).c_str(), i + 1);
     glBindTexture(GL_TEXTURE_2D, textures[i].id);
+  }
+
+  if (!hasDiffuse) {
+    glActiveTexture(GL_TEXTURE1);
+    shader.setInt("texture_diffuse1", 1);
+    glBindTexture(GL_TEXTURE_2D, getFallbackWhiteTexture());
   }
   glActiveTexture(GL_TEXTURE0);
 

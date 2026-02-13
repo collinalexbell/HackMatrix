@@ -54,6 +54,7 @@ private:
   vector<Mesh> meshes;
   vector<MeshTexture> textures_loaded;
   string directory;
+  bool loggedLoadSummary = false;
 
   vector<Vertex> getAllVertices();
   void loadModel(string path);

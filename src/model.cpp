@@ -4,7 +4,10 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <iostream>
+#include <cstdio>
 #include <sstream>
+#include <algorithm>
+#include <cctype>
 #include "components/BoundingSphere.h"
 #include "glm/trigonometric.hpp"
 #include "persister.h"
@@ -15,6 +18,32 @@
 #include <glm/gtc/quaternion.hpp>
 
 using namespace std;
+
+static void
+logModelLoad(const std::string& message)
+{
+  FILE* logFile = std::fopen("/tmp/matrix-model.log", "a");
+  if (!logFile) {
+    return;
+  }
+  std::fprintf(logFile, "%s\n", message.c_str());
+  std::fflush(logFile);
+  std::fclose(logFile);
+}
+
+static std::string
+lowercaseExtension(const std::string& path)
+{
+  auto dotPos = path.find_last_of('.');
+  if (dotPos == std::string::npos || dotPos + 1 >= path.size()) {
+    return "";
+  }
+  std::string ext = path.substr(dotPos + 1);
+  std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return ext;
+}
 
 void
 Model::Draw(Shader& shader)
@@ -27,13 +56,45 @@ void
 Model::loadModel(string path)
 {
   Assimp::Importer import;
-  const aiScene* scene =
-    import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+  {
+    std::ostringstream attempt;
+    attempt << "Model load attempt: path=" << path;
+    logModelLoad(attempt.str());
+  }
+  {
+    std::string ext = lowercaseExtension(path);
+    if (!ext.empty() && !import.IsExtensionSupported(ext.c_str())) {
+      std::ostringstream warn;
+      warn << "Model load warning: Assimp build does not support *." << ext;
+      logModelLoad(warn.str());
+    }
+  }
+  const unsigned int flags = aiProcess_Triangulate | aiProcess_FlipUVs |
+                             aiProcess_JoinIdenticalVertices |
+                             aiProcess_GenSmoothNormals | aiProcess_PreTransformVertices;
+  const aiScene* scene = import.ReadFile(path, flags);
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       !scene->mRootNode) {
-    cout << "ERROR::ASSIMP::" << import.GetErrorString() << endl;
+    std::string extensions;
+    import.GetExtensionList(extensions);
+    if (!extensions.empty()) {
+      std::ostringstream supported;
+      supported << "Assimp supported extensions: " << extensions;
+      logModelLoad(supported.str());
+    }
+    std::ostringstream error;
+    error << "ERROR::ASSIMP::" << import.GetErrorString();
+    logModelLoad(error.str());
+    cout << error.str() << endl;
     return;
+  }
+  if (!loggedLoadSummary) {
+    std::ostringstream summary;
+    summary << "Model load: path=" << path << " meshes=" << scene->mNumMeshes
+            << " materials=" << scene->mNumMaterials;
+    logModelLoad(summary.str());
+    loggedLoadSummary = true;
   }
   directory = path.substr(0, path.find_last_of('/'));
 
@@ -61,6 +122,17 @@ Model::processMesh(aiMesh* mesh, const aiScene* scene)
   vector<unsigned int> indices;
   vector<MeshTexture> textures;
 
+  if (meshes.empty()) {
+    std::ostringstream summary;
+    summary << "Model mesh[0]: name=" << mesh->mName.C_Str()
+            << " vertices=" << mesh->mNumVertices
+            << " faces=" << mesh->mNumFaces
+            << " hasNormals=" << mesh->HasNormals()
+            << " hasUV0=" << mesh->HasTextureCoords(0)
+            << " materialIndex=" << mesh->mMaterialIndex;
+    logModelLoad(summary.str());
+  }
+
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
     Vertex vertex;
     // process vertex positions, normals and texture coordinates
@@ -70,12 +142,16 @@ Model::processMesh(aiMesh* mesh, const aiScene* scene)
     vector.z = mesh->mVertices[i].z;
     vertex.Position = vector;
 
-    vector.x = mesh->mNormals[i].x;
-    vector.y = mesh->mNormals[i].y;
-    vector.z = mesh->mNormals[i].z;
-    vertex.Normal = vector;
+    if (mesh->HasNormals()) {
+      vector.x = mesh->mNormals[i].x;
+      vector.y = mesh->mNormals[i].y;
+      vector.z = mesh->mNormals[i].z;
+      vertex.Normal = vector;
+    } else {
+      vertex.Normal = glm::vec3(0.0f, 1.0f, 0.0f);
+    }
 
-    if (mesh->mTextureCoords[0]) {
+    if (mesh->HasTextureCoords(0)) {
       glm::vec2 vec;
       vec.x = mesh->mTextureCoords[0][i].x;
       vec.y = mesh->mTextureCoords[0][i].y;
@@ -250,7 +326,10 @@ Positionable::update()
   glm::quat finalRotation = glm::quat(glm::radians(rotate));
 
   modelMatrix = modelMatrix * glm::mat4_cast(finalRotation);
-  modelMatrix = glm::translate(modelMatrix, origin * glm::vec3(-1));
+  // Origin is applied as a positive offset (like rviz visual origin)
+  // For URDF, this represents the visual origin offset within the link frame
+  // In rviz, visual origin is applied as: T(position) * R(rotation)
+  modelMatrix = glm::translate(modelMatrix, origin);
   modelMatrix = glm::scale(modelMatrix, glm::vec3(scale, scale, scale));
   glm::mat4 inverseModelMatrix = glm::inverse(modelMatrix);
   glm::mat4 transposedInverse = glm::transpose(inverseModelMatrix);

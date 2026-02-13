@@ -17,6 +17,7 @@
 #include <sstream>
 #include <vector>
 #include "systems/ApplyTranslation.h"
+#include "systems/URDFTransform.h"
 #include "systems/Intersections.h"
 #include "systems/Scripts.h"
 #include "systems/Update.h"
@@ -1111,6 +1112,7 @@ World::tick()
   ZoneScoped;
   systems::applyRotation(registry);
   systems::applyTranslations(registry);
+  systems::applyURDFTransforms(registry);
   systems::updateAll(registry, renderer);
   if (dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);

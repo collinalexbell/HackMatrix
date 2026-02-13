@@ -102,6 +102,9 @@ extern KeyReplayEntryDefaultTypeInternal _KeyReplayEntry_default_instance_;
 class ListEntities;
 struct ListEntitiesDefaultTypeInternal;
 extern ListEntitiesDefaultTypeInternal _ListEntities_default_instance_;
+class LoadURDF;
+struct LoadURDFDefaultTypeInternal;
+extern LoadURDFDefaultTypeInternal _LoadURDF_default_instance_;
 class ModelComponent;
 struct ModelComponentDefaultTypeInternal;
 extern ModelComponentDefaultTypeInternal _ModelComponent_default_instance_;
@@ -159,6 +162,7 @@ enum MessageType : int {
   DELETE_ENTITY = 15,
   LIST_ENTITIES = 16,
   GET_COMPONENT = 17,
+  LOAD_URDF = 18,
   MessageType_INT_MIN_SENTINEL_DO_NOT_USE_ =
       std::numeric_limits<::int32_t>::min(),
   MessageType_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -168,8 +172,8 @@ enum MessageType : int {
 bool MessageType_IsValid(int value);
 extern const uint32_t MessageType_internal_data_[];
 constexpr MessageType MessageType_MIN = static_cast<MessageType>(0);
-constexpr MessageType MessageType_MAX = static_cast<MessageType>(17);
-constexpr int MessageType_ARRAYSIZE = 17 + 1;
+constexpr MessageType MessageType_MAX = static_cast<MessageType>(18);
+constexpr int MessageType_ARRAYSIZE = 18 + 1;
 const ::google::protobuf::EnumDescriptor*
 MessageType_descriptor();
 template <typename T>
@@ -182,7 +186,7 @@ const std::string& MessageType_Name(T value) {
 template <>
 inline const std::string& MessageType_Name(MessageType value) {
   return ::google::protobuf::internal::NameOfDenseEnum<MessageType_descriptor,
-                                                 0, 17>(
+                                                 0, 18>(
       static_cast<int>(value));
 }
 inline bool MessageType_Parse(absl::string_view name, MessageType* value) {
@@ -708,7 +712,7 @@ class TurnKey final : public ::google::protobuf::Message
     return reinterpret_cast<const TurnKey*>(
         &_TurnKey_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 18;
+  static constexpr int kIndexInFileMessages = 19;
   friend void swap(TurnKey& a, TurnKey& b) { a.Swap(&b); }
   inline void Swap(TurnKey* other) {
     if (other == this) return;
@@ -1451,7 +1455,7 @@ class Move final : public ::google::protobuf::Message
     return reinterpret_cast<const Move*>(
         &_Move_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 17;
+  static constexpr int kIndexInFileMessages = 18;
   friend void swap(Move& a, Move& b) { a.Swap(&b); }
   inline void Swap(Move* other) {
     if (other == this) return;
@@ -1675,7 +1679,7 @@ class ModelComponent final : public ::google::protobuf::Message
     return reinterpret_cast<const ModelComponent*>(
         &_ModelComponent_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 23;
+  static constexpr int kIndexInFileMessages = 24;
   friend void swap(ModelComponent& a, ModelComponent& b) { a.Swap(&b); }
   inline void Swap(ModelComponent* other) {
     if (other == this) return;
@@ -2463,7 +2467,7 @@ class EntityComponentInfo final : public ::google::protobuf::Message
     return reinterpret_cast<const EntityComponentInfo*>(
         &_EntityComponentInfo_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 21;
+  static constexpr int kIndexInFileMessages = 22;
   friend void swap(EntityComponentInfo& a, EntityComponentInfo& b) { a.Swap(&b); }
   inline void Swap(EntityComponentInfo* other) {
     if (other == this) return;
@@ -2816,7 +2820,7 @@ class DeleteComponent final : public ::google::protobuf::Message
     return reinterpret_cast<const DeleteComponent*>(
         &_DeleteComponent_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 26;
+  static constexpr int kIndexInFileMessages = 27;
   friend void swap(DeleteComponent& a, DeleteComponent& b) { a.Swap(&b); }
   inline void Swap(DeleteComponent* other) {
     if (other == this) return;
@@ -3335,7 +3339,7 @@ class PositionableComponent final : public ::google::protobuf::Message
     return reinterpret_cast<const PositionableComponent*>(
         &_PositionableComponent_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 22;
+  static constexpr int kIndexInFileMessages = 23;
   friend void swap(PositionableComponent& a, PositionableComponent& b) { a.Swap(&b); }
   inline void Swap(PositionableComponent* other) {
     if (other == this) return;
@@ -3950,6 +3954,218 @@ class PlayerMove final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class LoadURDF final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:LoadURDF) */ {
+ public:
+  inline LoadURDF() : LoadURDF(nullptr) {}
+  ~LoadURDF() PROTOBUF_FINAL;
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR LoadURDF(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline LoadURDF(const LoadURDF& from) : LoadURDF(nullptr, from) {}
+  inline LoadURDF(LoadURDF&& from) noexcept
+      : LoadURDF(nullptr, std::move(from)) {}
+  inline LoadURDF& operator=(const LoadURDF& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline LoadURDF& operator=(LoadURDF&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetArena() == from.GetArena()
+#ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetArena() != nullptr
+#endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const LoadURDF& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const LoadURDF* internal_default_instance() {
+    return reinterpret_cast<const LoadURDF*>(
+        &_LoadURDF_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 16;
+  friend void swap(LoadURDF& a, LoadURDF& b) { a.Swap(&b); }
+  inline void Swap(LoadURDF* other) {
+    if (other == this) return;
+#ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() != nullptr && GetArena() == other->GetArena()) {
+#else   // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetArena() == other->GetArena()) {
+#endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(LoadURDF* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  LoadURDF* New(::google::protobuf::Arena* arena = nullptr) const PROTOBUF_FINAL {
+    return ::google::protobuf::Message::DefaultConstruct<LoadURDF>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const LoadURDF& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const LoadURDF& from) { LoadURDF::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  void SharedDtor();
+  void InternalSwap(LoadURDF* other);
+ private:
+  friend class ::google::protobuf::internal::AnyMetadata;
+  static ::absl::string_view FullMessageName() { return "LoadURDF"; }
+
+ protected:
+  explicit LoadURDF(::google::protobuf::Arena* arena);
+  LoadURDF(::google::protobuf::Arena* arena, const LoadURDF& from);
+  LoadURDF(::google::protobuf::Arena* arena, LoadURDF&& from) noexcept
+      : LoadURDF(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::Message::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static const ::google::protobuf::Message::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kUrdfPathFieldNumber = 1,
+    kInitialPositionFieldNumber = 2,
+  };
+  // string urdf_path = 1;
+  void clear_urdf_path() ;
+  const std::string& urdf_path() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_urdf_path(Arg_&& arg, Args_... args);
+  std::string* mutable_urdf_path();
+  PROTOBUF_NODISCARD std::string* release_urdf_path();
+  void set_allocated_urdf_path(std::string* value);
+
+  private:
+  const std::string& _internal_urdf_path() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_urdf_path(
+      const std::string& value);
+  std::string* _internal_mutable_urdf_path();
+
+  public:
+  // .Vector initial_position = 2;
+  bool has_initial_position() const;
+  void clear_initial_position() ;
+  const ::Vector& initial_position() const;
+  PROTOBUF_NODISCARD ::Vector* release_initial_position();
+  ::Vector* mutable_initial_position();
+  void set_allocated_initial_position(::Vector* value);
+  void unsafe_arena_set_allocated_initial_position(::Vector* value);
+  ::Vector* unsafe_arena_release_initial_position();
+
+  private:
+  const ::Vector& _internal_initial_position() const;
+  ::Vector* _internal_mutable_initial_position();
+
+  public:
+  // @@protoc_insertion_point(class_scope:LoadURDF)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      1, 2, 1,
+      26, 2>
+      _table_;
+
+  static constexpr const void* _raw_default_instance_ =
+      &_LoadURDF_default_instance_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const LoadURDF& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    mutable ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr urdf_path_;
+    ::Vector* initial_position_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_protos_2fapi_2eproto;
+};
+// -------------------------------------------------------------------
+
 class KeyReplay final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:KeyReplay) */ {
  public:
@@ -4200,7 +4416,7 @@ class EngineStatus final : public ::google::protobuf::Message
     return reinterpret_cast<const EngineStatus*>(
         &_EngineStatus_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 16;
+  static constexpr int kIndexInFileMessages = 17;
   friend void swap(EngineStatus& a, EngineStatus& b) { a.Swap(&b); }
   inline void Swap(EngineStatus* other) {
     if (other == this) return;
@@ -4900,7 +5116,7 @@ class Component final : public ::google::protobuf::Message
     return reinterpret_cast<const Component*>(
         &_Component_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 24;
+  static constexpr int kIndexInFileMessages = 25;
   friend void swap(Component& a, Component& b) { a.Swap(&b); }
   inline void Swap(Component* other) {
     if (other == this) return;
@@ -5141,7 +5357,7 @@ class EditComponent final : public ::google::protobuf::Message
     return reinterpret_cast<const EditComponent*>(
         &_EditComponent_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 27;
+  static constexpr int kIndexInFileMessages = 28;
   friend void swap(EditComponent& a, EditComponent& b) { a.Swap(&b); }
   inline void Swap(EditComponent* other) {
     if (other == this) return;
@@ -5335,7 +5551,7 @@ class ApiRequestResponse final : public ::google::protobuf::Message
     return reinterpret_cast<const ApiRequestResponse*>(
         &_ApiRequestResponse_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 20;
+  static constexpr int kIndexInFileMessages = 21;
   friend void swap(ApiRequestResponse& a, ApiRequestResponse& b) { a.Swap(&b); }
   inline void Swap(ApiRequestResponse* other) {
     if (other == this) return;
@@ -5622,7 +5838,7 @@ class AddComponent final : public ::google::protobuf::Message
     return reinterpret_cast<const AddComponent*>(
         &_AddComponent_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 25;
+  static constexpr int kIndexInFileMessages = 26;
   friend void swap(AddComponent& a, AddComponent& b) { a.Swap(&b); }
   inline void Swap(AddComponent* other) {
     if (other == this) return;
@@ -5829,13 +6045,14 @@ class ApiRequest final : public ::google::protobuf::Message
     kDeleteEntity = 16,
     kListEntities = 17,
     kGetComponent = 18,
+    kLoadUrdf = 19,
     PAYLOAD_NOT_SET = 0,
   };
   static inline const ApiRequest* internal_default_instance() {
     return reinterpret_cast<const ApiRequest*>(
         &_ApiRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 19;
+  static constexpr int kIndexInFileMessages = 20;
   friend void swap(ApiRequest& a, ApiRequest& b) { a.Swap(&b); }
   inline void Swap(ApiRequest* other) {
     if (other == this) return;
@@ -5939,6 +6156,7 @@ class ApiRequest final : public ::google::protobuf::Message
     kDeleteEntityFieldNumber = 16,
     kListEntitiesFieldNumber = 17,
     kGetComponentFieldNumber = 18,
+    kLoadUrdfFieldNumber = 19,
   };
   // int64 entityId = 1;
   void clear_entityid() ;
@@ -6264,6 +6482,25 @@ class ApiRequest final : public ::google::protobuf::Message
   ::GetComponent* _internal_mutable_getcomponent();
 
   public:
+  // .LoadURDF loadUrdf = 19;
+  bool has_loadurdf() const;
+  private:
+  bool _internal_has_loadurdf() const;
+
+  public:
+  void clear_loadurdf() ;
+  const ::LoadURDF& loadurdf() const;
+  PROTOBUF_NODISCARD ::LoadURDF* release_loadurdf();
+  ::LoadURDF* mutable_loadurdf();
+  void set_allocated_loadurdf(::LoadURDF* value);
+  void unsafe_arena_set_allocated_loadurdf(::LoadURDF* value);
+  ::LoadURDF* unsafe_arena_release_loadurdf();
+
+  private:
+  const ::LoadURDF& _internal_loadurdf() const;
+  ::LoadURDF* _internal_mutable_loadurdf();
+
+  public:
   void clear_payload();
   PayloadCase payload_case() const;
   // @@protoc_insertion_point(class_scope:ApiRequest)
@@ -6285,11 +6522,12 @@ class ApiRequest final : public ::google::protobuf::Message
   void set_has_deleteentity();
   void set_has_listentities();
   void set_has_getcomponent();
+  void set_has_loadurdf();
   inline bool has_payload() const;
   inline void clear_has_payload();
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 18, 16,
+      1, 19, 17,
       0, 2>
       _table_;
 
@@ -6331,6 +6569,7 @@ class ApiRequest final : public ::google::protobuf::Message
       ::DeleteEntity* deleteentity_;
       ::ListEntities* listentities_;
       ::GetComponent* getcomponent_;
+      ::LoadURDF* loadurdf_;
     } payload_;
     mutable ::google::protobuf::internal::CachedSize _cached_size_;
     ::uint32_t _oneof_case_[1];
@@ -7583,6 +7822,156 @@ inline ::ComponentType GetComponent::_internal_component_type() const {
 inline void GetComponent::_internal_set_component_type(::ComponentType value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.component_type_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// LoadURDF
+
+// string urdf_path = 1;
+inline void LoadURDF::clear_urdf_path() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.urdf_path_.ClearToEmpty();
+}
+inline const std::string& LoadURDF::urdf_path() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:LoadURDF.urdf_path)
+  return _internal_urdf_path();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void LoadURDF::set_urdf_path(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.urdf_path_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:LoadURDF.urdf_path)
+}
+inline std::string* LoadURDF::mutable_urdf_path() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_urdf_path();
+  // @@protoc_insertion_point(field_mutable:LoadURDF.urdf_path)
+  return _s;
+}
+inline const std::string& LoadURDF::_internal_urdf_path() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.urdf_path_.Get();
+}
+inline void LoadURDF::_internal_set_urdf_path(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.urdf_path_.Set(value, GetArena());
+}
+inline std::string* LoadURDF::_internal_mutable_urdf_path() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.urdf_path_.Mutable( GetArena());
+}
+inline std::string* LoadURDF::release_urdf_path() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:LoadURDF.urdf_path)
+  return _impl_.urdf_path_.Release();
+}
+inline void LoadURDF::set_allocated_urdf_path(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.urdf_path_.SetAllocated(value, GetArena());
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+        if (_impl_.urdf_path_.IsDefault()) {
+          _impl_.urdf_path_.Set("", GetArena());
+        }
+  #endif  // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:LoadURDF.urdf_path)
+}
+
+// .Vector initial_position = 2;
+inline bool LoadURDF::has_initial_position() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.initial_position_ != nullptr);
+  return value;
+}
+inline void LoadURDF::clear_initial_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.initial_position_ != nullptr) _impl_.initial_position_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const ::Vector& LoadURDF::_internal_initial_position() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::Vector* p = _impl_.initial_position_;
+  return p != nullptr ? *p : reinterpret_cast<const ::Vector&>(::_Vector_default_instance_);
+}
+inline const ::Vector& LoadURDF::initial_position() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:LoadURDF.initial_position)
+  return _internal_initial_position();
+}
+inline void LoadURDF::unsafe_arena_set_allocated_initial_position(::Vector* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.initial_position_);
+  }
+  _impl_.initial_position_ = reinterpret_cast<::Vector*>(value);
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:LoadURDF.initial_position)
+}
+inline ::Vector* LoadURDF::release_initial_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Vector* released = _impl_.initial_position_;
+  _impl_.initial_position_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+  released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  if (GetArena() == nullptr) {
+    delete old;
+  }
+#else   // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArena() != nullptr) {
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return released;
+}
+inline ::Vector* LoadURDF::unsafe_arena_release_initial_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:LoadURDF.initial_position)
+
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::Vector* temp = _impl_.initial_position_;
+  _impl_.initial_position_ = nullptr;
+  return temp;
+}
+inline ::Vector* LoadURDF::_internal_mutable_initial_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.initial_position_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::Vector>(GetArena());
+    _impl_.initial_position_ = reinterpret_cast<::Vector*>(p);
+  }
+  return _impl_.initial_position_;
+}
+inline ::Vector* LoadURDF::mutable_initial_position() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  ::Vector* _msg = _internal_mutable_initial_position();
+  // @@protoc_insertion_point(field_mutable:LoadURDF.initial_position)
+  return _msg;
+}
+inline void LoadURDF::set_allocated_initial_position(::Vector* value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete (_impl_.initial_position_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = (value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+
+  _impl_.initial_position_ = reinterpret_cast<::Vector*>(value);
+  // @@protoc_insertion_point(field_set_allocated:LoadURDF.initial_position)
 }
 
 // -------------------------------------------------------------------
@@ -9178,6 +9567,85 @@ inline ::GetComponent* ApiRequest::_internal_mutable_getcomponent() {
 inline ::GetComponent* ApiRequest::mutable_getcomponent() ABSL_ATTRIBUTE_LIFETIME_BOUND {
   ::GetComponent* _msg = _internal_mutable_getcomponent();
   // @@protoc_insertion_point(field_mutable:ApiRequest.getComponent)
+  return _msg;
+}
+
+// .LoadURDF loadUrdf = 19;
+inline bool ApiRequest::has_loadurdf() const {
+  return payload_case() == kLoadUrdf;
+}
+inline bool ApiRequest::_internal_has_loadurdf() const {
+  return payload_case() == kLoadUrdf;
+}
+inline void ApiRequest::set_has_loadurdf() {
+  _impl_._oneof_case_[0] = kLoadUrdf;
+}
+inline void ApiRequest::clear_loadurdf() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (payload_case() == kLoadUrdf) {
+    if (GetArena() == nullptr) {
+      delete _impl_.payload_.loadurdf_;
+    } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
+      ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.loadurdf_);
+    }
+    clear_has_payload();
+  }
+}
+inline ::LoadURDF* ApiRequest::release_loadurdf() {
+  // @@protoc_insertion_point(field_release:ApiRequest.loadUrdf)
+  if (payload_case() == kLoadUrdf) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.loadurdf_;
+    if (GetArena() != nullptr) {
+      temp = ::google::protobuf::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.payload_.loadurdf_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::LoadURDF& ApiRequest::_internal_loadurdf() const {
+  return payload_case() == kLoadUrdf ? *_impl_.payload_.loadurdf_ : reinterpret_cast<::LoadURDF&>(::_LoadURDF_default_instance_);
+}
+inline const ::LoadURDF& ApiRequest::loadurdf() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:ApiRequest.loadUrdf)
+  return _internal_loadurdf();
+}
+inline ::LoadURDF* ApiRequest::unsafe_arena_release_loadurdf() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:ApiRequest.loadUrdf)
+  if (payload_case() == kLoadUrdf) {
+    clear_has_payload();
+    auto* temp = _impl_.payload_.loadurdf_;
+    _impl_.payload_.loadurdf_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ApiRequest::unsafe_arena_set_allocated_loadurdf(::LoadURDF* value) {
+  // We rely on the oneof clear method to free the earlier contents
+  // of this oneof. We can directly use the pointer we're given to
+  // set the new value.
+  clear_payload();
+  if (value) {
+    set_has_loadurdf();
+    _impl_.payload_.loadurdf_ = value;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:ApiRequest.loadUrdf)
+}
+inline ::LoadURDF* ApiRequest::_internal_mutable_loadurdf() {
+  if (payload_case() != kLoadUrdf) {
+    clear_payload();
+    set_has_loadurdf();
+    _impl_.payload_.loadurdf_ =
+        ::google::protobuf::Message::DefaultConstruct<::LoadURDF>(GetArena());
+  }
+  return _impl_.payload_.loadurdf_;
+}
+inline ::LoadURDF* ApiRequest::mutable_loadurdf() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::LoadURDF* _msg = _internal_mutable_loadurdf();
+  // @@protoc_insertion_point(field_mutable:ApiRequest.loadUrdf)
   return _msg;
 }
 
