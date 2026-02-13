@@ -502,34 +502,6 @@ struct PlayerMoveDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlayerMoveDefaultTypeInternal _PlayerMove_default_instance_;
 
-inline constexpr LoadURDF::Impl_::Impl_(
-    ::_pbi::ConstantInitialized) noexcept
-      : _cached_size_{0},
-        urdf_path_(
-            &::google::protobuf::internal::fixed_address_empty_string,
-            ::_pbi::ConstantInitialized()),
-        initial_position_{nullptr} {}
-
-template <typename>
-PROTOBUF_CONSTEXPR LoadURDF::LoadURDF(::_pbi::ConstantInitialized)
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-    : ::google::protobuf::Message(_class_data_.base()),
-#else   // PROTOBUF_CUSTOM_VTABLE
-    : ::google::protobuf::Message(),
-#endif  // PROTOBUF_CUSTOM_VTABLE
-      _impl_(::_pbi::ConstantInitialized()) {
-}
-struct LoadURDFDefaultTypeInternal {
-  PROTOBUF_CONSTEXPR LoadURDFDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
-  ~LoadURDFDefaultTypeInternal() {}
-  union {
-    LoadURDF _instance;
-  };
-};
-
-PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
-    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 LoadURDFDefaultTypeInternal _LoadURDF_default_instance_;
-
 inline constexpr KeyReplay::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : entries_{},
@@ -946,18 +918,6 @@ const ::uint32_t
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::GetComponent, _impl_.component_type_),
-        PROTOBUF_FIELD_OFFSET(::LoadURDF, _impl_._has_bits_),
-        PROTOBUF_FIELD_OFFSET(::LoadURDF, _internal_metadata_),
-        ~0u,  // no _extensions_
-        ~0u,  // no _oneof_case_
-        ~0u,  // no _weak_field_map_
-        ~0u,  // no _inlined_string_donated_
-        ~0u,  // no _split_
-        ~0u,  // no sizeof(Split)
-        PROTOBUF_FIELD_OFFSET(::LoadURDF, _impl_.urdf_path_),
-        PROTOBUF_FIELD_OFFSET(::LoadURDF, _impl_.initial_position_),
-        ~0u,
-        0,
         PROTOBUF_FIELD_OFFSET(::EngineStatus, _impl_._has_bits_),
         PROTOBUF_FIELD_OFFSET(::EngineStatus, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -1005,7 +965,6 @@ const ::uint32_t
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::ApiRequest, _impl_.entityid_),
         PROTOBUF_FIELD_OFFSET(::ApiRequest, _impl_.type_),
-        ::_pbi::kInvalidFieldOffsetTag,
         ::_pbi::kInvalidFieldOffsetTag,
         ::_pbi::kInvalidFieldOffsetTag,
         ::_pbi::kInvalidFieldOffsetTag,
@@ -1144,19 +1103,18 @@ static const ::_pbi::MigrationSchema
         {140, -1, -1, sizeof(::DeleteEntity)},
         {148, -1, -1, sizeof(::ListEntities)},
         {157, -1, -1, sizeof(::GetComponent)},
-        {166, 176, -1, sizeof(::LoadURDF)},
-        {178, 190, -1, sizeof(::EngineStatus)},
-        {194, -1, -1, sizeof(::Move)},
-        {206, -1, -1, sizeof(::TurnKey)},
-        {215, -1, -1, sizeof(::ApiRequest)},
-        {243, 258, -1, sizeof(::ApiRequestResponse)},
-        {265, -1, -1, sizeof(::EntityComponentInfo)},
-        {275, 288, -1, sizeof(::PositionableComponent)},
-        {293, -1, -1, sizeof(::ModelComponent)},
-        {303, -1, -1, sizeof(::Component)},
-        {315, 324, -1, sizeof(::AddComponent)},
-        {325, -1, -1, sizeof(::DeleteComponent)},
-        {334, 343, -1, sizeof(::EditComponent)},
+        {166, 178, -1, sizeof(::EngineStatus)},
+        {182, -1, -1, sizeof(::Move)},
+        {194, -1, -1, sizeof(::TurnKey)},
+        {203, -1, -1, sizeof(::ApiRequest)},
+        {230, 245, -1, sizeof(::ApiRequestResponse)},
+        {252, -1, -1, sizeof(::EntityComponentInfo)},
+        {262, 275, -1, sizeof(::PositionableComponent)},
+        {280, -1, -1, sizeof(::ModelComponent)},
+        {290, -1, -1, sizeof(::Component)},
+        {302, 311, -1, sizeof(::AddComponent)},
+        {312, -1, -1, sizeof(::DeleteComponent)},
+        {321, 330, -1, sizeof(::EditComponent)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::_NoPayload_default_instance_._instance,
@@ -1175,7 +1133,6 @@ static const ::_pb::Message* const file_default_instances[] = {
     &::_DeleteEntity_default_instance_._instance,
     &::_ListEntities_default_instance_._instance,
     &::_GetComponent_default_instance_._instance,
-    &::_LoadURDF_default_instance_._instance,
     &::_EngineStatus_default_instance_._instance,
     &::_Move_default_instance_._instance,
     &::_TurnKey_default_instance_._instance,
@@ -1211,74 +1168,72 @@ const char descriptor_table_protodef_protos_2fapi_2eproto[] ABSL_ATTRIBUTE_SECTI
     "CreateEntity\"\016\n\014DeleteEntity\"3\n\014ListEnti"
     "ties\022#\n\013filter_type\030\001 \001(\0162\016.ComponentTyp"
     "e\"6\n\014GetComponent\022&\n\016component_type\030\001 \001("
-    "\0162\016.ComponentType\"@\n\010LoadURDF\022\021\n\turdf_pa"
-    "th\030\001 \001(\t\022!\n\020initial_position\030\002 \001(\0132\007.Vec"
-    "tor\"u\n\014EngineStatus\022\026\n\016total_entities\030\001 "
-    "\001(\r\022\024\n\014wayland_apps\030\002 \001(\r\022\025\n\rwayland_foc"
-    "us\030\003 \001(\010\022 \n\017camera_position\030\004 \001(\0132\007.Vect"
-    "or\"N\n\004Move\022\016\n\006xDelta\030\001 \001(\002\022\016\n\006yDelta\030\002 \001"
-    "(\002\022\016\n\006zDelta\030\003 \001(\002\022\026\n\016unitsPerSecond\030\004 \001"
-    "(\002\"\025\n\007TurnKey\022\n\n\002on\030\002 \001(\010\"\256\005\n\nApiRequest"
-    "\022\020\n\010entityId\030\001 \001(\003\022\032\n\004type\030\002 \001(\0162\014.Messa"
-    "geType\022\025\n\004move\030\003 \001(\0132\005.MoveH\000\022\033\n\007turnKey"
-    "\030\004 \001(\0132\010.TurnKeyH\000\022!\n\nplayerMove\030\005 \001(\0132\013"
-    ".PlayerMoveH\000\022\037\n\tnoPayload\030\006 \001(\0132\n.NoPay"
-    "loadH\000\022\037\n\taddVoxels\030\007 \001(\0132\n.AddVoxelsH\000\022"
-    "#\n\013clearVoxels\030\010 \001(\0132\014.ClearVoxelsH\000\022\'\n\r"
-    "confirmAction\030\t \001(\0132\016.ConfirmActionH\000\022\037\n"
-    "\tkeyReplay\030\n \001(\0132\n.KeyReplayH\000\022\'\n\rpointe"
-    "rReplay\030\013 \001(\0132\016.PointerReplayH\000\022%\n\014addCo"
-    "mponent\030\014 \001(\0132\r.AddComponentH\000\022+\n\017delete"
-    "Component\030\r \001(\0132\020.DeleteComponentH\000\022\'\n\re"
-    "ditComponent\030\016 \001(\0132\016.EditComponentH\000\022%\n\014"
-    "createEntity\030\017 \001(\0132\r.CreateEntityH\000\022%\n\014d"
-    "eleteEntity\030\020 \001(\0132\r.DeleteEntityH\000\022%\n\014li"
-    "stEntities\030\021 \001(\0132\r.ListEntitiesH\000\022%\n\014get"
-    "Component\030\022 \001(\0132\r.GetComponentH\000\022\035\n\010load"
-    "Urdf\030\023 \001(\0132\t.LoadURDFH\000B\t\n\007payload\"\315\001\n\022A"
-    "piRequestResponse\022\021\n\trequestId\030\001 \001(\003\022\020\n\010"
-    "actionId\030\002 \001(\003\022\017\n\007success\030\003 \001(\010\022\035\n\006statu"
-    "s\030\004 \001(\0132\r.EngineStatus\022\022\n\nentity_ids\030\005 \003"
-    "(\003\022\035\n\tcomponent\030\006 \001(\0132\n.Component\022/\n\021ent"
-    "ity_components\030\007 \003(\0132\024.EntityComponentIn"
-    "fo\"Q\n\023EntityComponentInfo\022\021\n\tentity_id\030\001"
-    " \001(\003\022\'\n\017component_types\030\002 \003(\0162\016.Componen"
-    "tType\"\207\001\n\025PositionableComponent\022\020\n\010entit"
-    "yId\030\001 \001(\003\022\031\n\010position\030\002 \001(\0132\007.Vector\022\031\n\010"
-    "rotation\030\003 \001(\0132\007.Vector\022\r\n\005scale\030\004 \001(\002\022\027"
-    "\n\006origin\030\005 \001(\0132\007.Vector\"6\n\016ModelComponen"
-    "t\022\020\n\010entityId\030\001 \001(\003\022\022\n\nmodel_path\030\002 \001(\t\""
-    "\215\001\n\tComponent\022\034\n\004type\030\001 \001(\0162\016.ComponentT"
-    "ype\022.\n\014positionable\030\002 \001(\0132\026.Positionable"
-    "ComponentH\000\022 \n\005model\030\003 \001(\0132\017.ModelCompon"
-    "entH\000B\020\n\016component_type\"-\n\014AddComponent\022"
-    "\035\n\tcomponent\030\001 \001(\0132\n.Component\"9\n\017Delete"
-    "Component\022&\n\016component_type\030\001 \001(\0162\016.Comp"
-    "onentType\".\n\rEditComponent\022\035\n\tcomponent\030"
-    "\001 \001(\0132\n.Component*\322\002\n\013MessageType\022\010\n\004MOV"
-    "E\020\000\022\014\n\010TURN_KEY\020\001\022\017\n\013PLAYER_MOVE\020\002\022\022\n\016UN"
-    "FOCUS_WINDOW\020\003\022\016\n\nADD_VOXELS\020\004\022\020\n\014CLEAR_"
-    "VOXELS\020\005\022\022\n\016CONFIRM_ACTION\020\006\022\010\n\004QUIT\020\007\022\016"
-    "\n\nKEY_REPLAY\020\010\022\n\n\006STATUS\020\t\022\022\n\016POINTER_RE"
-    "PLAY\020\n\022\021\n\rADD_COMPONENT\020\013\022\024\n\020DELETE_COMP"
-    "ONENT\020\014\022\022\n\016EDIT_COMPONENT\020\r\022\021\n\rCREATE_EN"
-    "TITY\020\016\022\021\n\rDELETE_ENTITY\020\017\022\021\n\rLIST_ENTITI"
-    "ES\020\020\022\021\n\rGET_COMPONENT\020\021\022\r\n\tLOAD_URDF\020\022*j"
-    "\n\rComponentType\022\036\n\032COMPONENT_TYPE_UNSPEC"
-    "IFIED\020\000\022\037\n\033COMPONENT_TYPE_POSITIONABLE\020\001"
-    "\022\030\n\024COMPONENT_TYPE_MODEL\020\002b\006proto3"
+    "\0162\016.ComponentType\"u\n\014EngineStatus\022\026\n\016tot"
+    "al_entities\030\001 \001(\r\022\024\n\014wayland_apps\030\002 \001(\r\022"
+    "\025\n\rwayland_focus\030\003 \001(\010\022 \n\017camera_positio"
+    "n\030\004 \001(\0132\007.Vector\"N\n\004Move\022\016\n\006xDelta\030\001 \001(\002"
+    "\022\016\n\006yDelta\030\002 \001(\002\022\016\n\006zDelta\030\003 \001(\002\022\026\n\016unit"
+    "sPerSecond\030\004 \001(\002\"\025\n\007TurnKey\022\n\n\002on\030\002 \001(\010\""
+    "\217\005\n\nApiRequest\022\020\n\010entityId\030\001 \001(\003\022\032\n\004type"
+    "\030\002 \001(\0162\014.MessageType\022\025\n\004move\030\003 \001(\0132\005.Mov"
+    "eH\000\022\033\n\007turnKey\030\004 \001(\0132\010.TurnKeyH\000\022!\n\nplay"
+    "erMove\030\005 \001(\0132\013.PlayerMoveH\000\022\037\n\tnoPayload"
+    "\030\006 \001(\0132\n.NoPayloadH\000\022\037\n\taddVoxels\030\007 \001(\0132"
+    "\n.AddVoxelsH\000\022#\n\013clearVoxels\030\010 \001(\0132\014.Cle"
+    "arVoxelsH\000\022\'\n\rconfirmAction\030\t \001(\0132\016.Conf"
+    "irmActionH\000\022\037\n\tkeyReplay\030\n \001(\0132\n.KeyRepl"
+    "ayH\000\022\'\n\rpointerReplay\030\013 \001(\0132\016.PointerRep"
+    "layH\000\022%\n\014addComponent\030\014 \001(\0132\r.AddCompone"
+    "ntH\000\022+\n\017deleteComponent\030\r \001(\0132\020.DeleteCo"
+    "mponentH\000\022\'\n\reditComponent\030\016 \001(\0132\016.EditC"
+    "omponentH\000\022%\n\014createEntity\030\017 \001(\0132\r.Creat"
+    "eEntityH\000\022%\n\014deleteEntity\030\020 \001(\0132\r.Delete"
+    "EntityH\000\022%\n\014listEntities\030\021 \001(\0132\r.ListEnt"
+    "itiesH\000\022%\n\014getComponent\030\022 \001(\0132\r.GetCompo"
+    "nentH\000B\t\n\007payload\"\315\001\n\022ApiRequestResponse"
+    "\022\021\n\trequestId\030\001 \001(\003\022\020\n\010actionId\030\002 \001(\003\022\017\n"
+    "\007success\030\003 \001(\010\022\035\n\006status\030\004 \001(\0132\r.EngineS"
+    "tatus\022\022\n\nentity_ids\030\005 \003(\003\022\035\n\tcomponent\030\006"
+    " \001(\0132\n.Component\022/\n\021entity_components\030\007 "
+    "\003(\0132\024.EntityComponentInfo\"Q\n\023EntityCompo"
+    "nentInfo\022\021\n\tentity_id\030\001 \001(\003\022\'\n\017component"
+    "_types\030\002 \003(\0162\016.ComponentType\"\207\001\n\025Positio"
+    "nableComponent\022\020\n\010entityId\030\001 \001(\003\022\031\n\010posi"
+    "tion\030\002 \001(\0132\007.Vector\022\031\n\010rotation\030\003 \001(\0132\007."
+    "Vector\022\r\n\005scale\030\004 \001(\002\022\027\n\006origin\030\005 \001(\0132\007."
+    "Vector\"6\n\016ModelComponent\022\020\n\010entityId\030\001 \001"
+    "(\003\022\022\n\nmodel_path\030\002 \001(\t\"\215\001\n\tComponent\022\034\n\004"
+    "type\030\001 \001(\0162\016.ComponentType\022.\n\014positionab"
+    "le\030\002 \001(\0132\026.PositionableComponentH\000\022 \n\005mo"
+    "del\030\003 \001(\0132\017.ModelComponentH\000B\020\n\016componen"
+    "t_type\"-\n\014AddComponent\022\035\n\tcomponent\030\001 \001("
+    "\0132\n.Component\"9\n\017DeleteComponent\022&\n\016comp"
+    "onent_type\030\001 \001(\0162\016.ComponentType\".\n\rEdit"
+    "Component\022\035\n\tcomponent\030\001 \001(\0132\n.Component"
+    "*\303\002\n\013MessageType\022\010\n\004MOVE\020\000\022\014\n\010TURN_KEY\020\001"
+    "\022\017\n\013PLAYER_MOVE\020\002\022\022\n\016UNFOCUS_WINDOW\020\003\022\016\n"
+    "\nADD_VOXELS\020\004\022\020\n\014CLEAR_VOXELS\020\005\022\022\n\016CONFI"
+    "RM_ACTION\020\006\022\010\n\004QUIT\020\007\022\016\n\nKEY_REPLAY\020\010\022\n\n"
+    "\006STATUS\020\t\022\022\n\016POINTER_REPLAY\020\n\022\021\n\rADD_COM"
+    "PONENT\020\013\022\024\n\020DELETE_COMPONENT\020\014\022\022\n\016EDIT_C"
+    "OMPONENT\020\r\022\021\n\rCREATE_ENTITY\020\016\022\021\n\rDELETE_"
+    "ENTITY\020\017\022\021\n\rLIST_ENTITIES\020\020\022\021\n\rGET_COMPO"
+    "NENT\020\021*j\n\rComponentType\022\036\n\032COMPONENT_TYP"
+    "E_UNSPECIFIED\020\000\022\037\n\033COMPONENT_TYPE_POSITI"
+    "ONABLE\020\001\022\030\n\024COMPONENT_TYPE_MODEL\020\002b\006prot"
+    "o3"
 };
 static ::absl::once_flag descriptor_table_protos_2fapi_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_protos_2fapi_2eproto = {
     false,
     false,
-    3034,
+    2922,
     descriptor_table_protodef_protos_2fapi_2eproto,
     "protos/api.proto",
     &descriptor_table_protos_2fapi_2eproto_once,
     nullptr,
     0,
-    29,
+    28,
     schemas,
     file_default_instances,
     TableStruct_protos_2fapi_2eproto::offsets,
@@ -1290,9 +1245,9 @@ const ::google::protobuf::EnumDescriptor* MessageType_descriptor() {
   return file_level_enum_descriptors_protos_2fapi_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t MessageType_internal_data_[] = {
-    1245184u, 0u, };
+    1179648u, 0u, };
 bool MessageType_IsValid(int value) {
-  return 0 <= value && value <= 18;
+  return 0 <= value && value <= 17;
 }
 const ::google::protobuf::EnumDescriptor* ComponentType_descriptor() {
   ::google::protobuf::internal::AssignDescriptors(&descriptor_table_protos_2fapi_2eproto);
@@ -4859,284 +4814,6 @@ void GetComponent::InternalSwap(GetComponent* PROTOBUF_RESTRICT other) {
 }
 // ===================================================================
 
-class LoadURDF::_Internal {
- public:
-  using HasBits =
-      decltype(std::declval<LoadURDF>()._impl_._has_bits_);
-  static constexpr ::int32_t kHasBitsOffset =
-      8 * PROTOBUF_FIELD_OFFSET(LoadURDF, _impl_._has_bits_);
-};
-
-LoadURDF::LoadURDF(::google::protobuf::Arena* arena)
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-    : ::google::protobuf::Message(arena, _class_data_.base()) {
-#else   // PROTOBUF_CUSTOM_VTABLE
-    : ::google::protobuf::Message(arena) {
-#endif  // PROTOBUF_CUSTOM_VTABLE
-  SharedCtor(arena);
-  // @@protoc_insertion_point(arena_constructor:LoadURDF)
-}
-inline PROTOBUF_NDEBUG_INLINE LoadURDF::Impl_::Impl_(
-    ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
-    const Impl_& from, const ::LoadURDF& from_msg)
-      : _has_bits_{from._has_bits_},
-        _cached_size_{0},
-        urdf_path_(arena, from.urdf_path_) {}
-
-LoadURDF::LoadURDF(
-    ::google::protobuf::Arena* arena,
-    const LoadURDF& from)
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-    : ::google::protobuf::Message(arena, _class_data_.base()) {
-#else   // PROTOBUF_CUSTOM_VTABLE
-    : ::google::protobuf::Message(arena) {
-#endif  // PROTOBUF_CUSTOM_VTABLE
-  LoadURDF* const _this = this;
-  (void)_this;
-  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
-      from._internal_metadata_);
-  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
-  ::uint32_t cached_has_bits = _impl_._has_bits_[0];
-  _impl_.initial_position_ = (cached_has_bits & 0x00000001u) ? ::google::protobuf::Message::CopyConstruct<::Vector>(
-                              arena, *from._impl_.initial_position_)
-                        : nullptr;
-
-  // @@protoc_insertion_point(copy_constructor:LoadURDF)
-}
-inline PROTOBUF_NDEBUG_INLINE LoadURDF::Impl_::Impl_(
-    ::google::protobuf::internal::InternalVisibility visibility,
-    ::google::protobuf::Arena* arena)
-      : _cached_size_{0},
-        urdf_path_(arena) {}
-
-inline void LoadURDF::SharedCtor(::_pb::Arena* arena) {
-  new (&_impl_) Impl_(internal_visibility(), arena);
-  _impl_.initial_position_ = {};
-}
-LoadURDF::~LoadURDF() {
-  // @@protoc_insertion_point(destructor:LoadURDF)
-  _internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
-  SharedDtor();
-}
-inline void LoadURDF::SharedDtor() {
-  ABSL_DCHECK(GetArena() == nullptr);
-  _impl_.urdf_path_.Destroy();
-  delete _impl_.initial_position_;
-  _impl_.~Impl_();
-}
-
-PROTOBUF_CONSTINIT
-PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::google::protobuf::MessageLite::ClassDataFull
-    LoadURDF::_class_data_ = {
-        ::google::protobuf::Message::ClassData{
-            &_LoadURDF_default_instance_._instance,
-            &_table_.header,
-            nullptr,  // OnDemandRegisterArenaDtor
-            nullptr,  // IsInitialized
-            &LoadURDF::MergeImpl,
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-            ::google::protobuf::Message::GetDeleteImpl<LoadURDF>(),
-            ::google::protobuf::Message::GetNewImpl<LoadURDF>(),
-            ::google::protobuf::Message::GetClearImpl<LoadURDF>(), &LoadURDF::ByteSizeLong,
-                &LoadURDF::_InternalSerialize,
-#endif  // PROTOBUF_CUSTOM_VTABLE
-            PROTOBUF_FIELD_OFFSET(LoadURDF, _impl_._cached_size_),
-            false,
-        },
-        &LoadURDF::kDescriptorMethods,
-        &descriptor_table_protos_2fapi_2eproto,
-        nullptr,  // tracker
-};
-const ::google::protobuf::MessageLite::ClassData* LoadURDF::GetClassData() const {
-  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
-  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
-  return _class_data_.base();
-}
-PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<1, 2, 1, 26, 2> LoadURDF::_table_ = {
-  {
-    PROTOBUF_FIELD_OFFSET(LoadURDF, _impl_._has_bits_),
-    0, // no _extensions_
-    2, 8,  // max_field_number, fast_idx_mask
-    offsetof(decltype(_table_), field_lookup_table),
-    4294967292,  // skipmap
-    offsetof(decltype(_table_), field_entries),
-    2,  // num_field_entries
-    1,  // num_aux_entries
-    offsetof(decltype(_table_), aux_entries),
-    _class_data_.base(),
-    nullptr,  // post_loop_handler
-    ::_pbi::TcParser::GenericFallback,  // fallback
-    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
-    ::_pbi::TcParser::GetTable<::LoadURDF>(),  // to_prefetch
-    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
-  }, {{
-    // .Vector initial_position = 2;
-    {::_pbi::TcParser::FastMtS1,
-     {18, 0, 0, PROTOBUF_FIELD_OFFSET(LoadURDF, _impl_.initial_position_)}},
-    // string urdf_path = 1;
-    {::_pbi::TcParser::FastUS1,
-     {10, 63, 0, PROTOBUF_FIELD_OFFSET(LoadURDF, _impl_.urdf_path_)}},
-  }}, {{
-    65535, 65535
-  }}, {{
-    // string urdf_path = 1;
-    {PROTOBUF_FIELD_OFFSET(LoadURDF, _impl_.urdf_path_), -1, 0,
-    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
-    // .Vector initial_position = 2;
-    {PROTOBUF_FIELD_OFFSET(LoadURDF, _impl_.initial_position_), _Internal::kHasBitsOffset + 0, 0,
-    (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
-  }}, {{
-    {::_pbi::TcParser::GetTable<::Vector>()},
-  }}, {{
-    "\10\11\0\0\0\0\0\0"
-    "LoadURDF"
-    "urdf_path"
-  }},
-};
-
-PROTOBUF_NOINLINE void LoadURDF::Clear() {
-// @@protoc_insertion_point(message_clear_start:LoadURDF)
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  ::uint32_t cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  _impl_.urdf_path_.ClearToEmpty();
-  cached_has_bits = _impl_._has_bits_[0];
-  if (cached_has_bits & 0x00000001u) {
-    ABSL_DCHECK(_impl_.initial_position_ != nullptr);
-    _impl_.initial_position_->Clear();
-  }
-  _impl_._has_bits_.Clear();
-  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
-}
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-        ::uint8_t* LoadURDF::_InternalSerialize(
-            const MessageLite& base, ::uint8_t* target,
-            ::google::protobuf::io::EpsCopyOutputStream* stream) {
-          const LoadURDF& this_ = static_cast<const LoadURDF&>(base);
-#else   // PROTOBUF_CUSTOM_VTABLE
-        ::uint8_t* LoadURDF::_InternalSerialize(
-            ::uint8_t* target,
-            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
-          const LoadURDF& this_ = *this;
-#endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(serialize_to_array_start:LoadURDF)
-          ::uint32_t cached_has_bits = 0;
-          (void)cached_has_bits;
-
-          // string urdf_path = 1;
-          if (!this_._internal_urdf_path().empty()) {
-            const std::string& _s = this_._internal_urdf_path();
-            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "LoadURDF.urdf_path");
-            target = stream->WriteStringMaybeAliased(1, _s, target);
-          }
-
-          cached_has_bits = this_._impl_._has_bits_[0];
-          // .Vector initial_position = 2;
-          if (cached_has_bits & 0x00000001u) {
-            target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
-                2, *this_._impl_.initial_position_, this_._impl_.initial_position_->GetCachedSize(), target,
-                stream);
-          }
-
-          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
-            target =
-                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
-                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
-          }
-          // @@protoc_insertion_point(serialize_to_array_end:LoadURDF)
-          return target;
-        }
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-        ::size_t LoadURDF::ByteSizeLong(const MessageLite& base) {
-          const LoadURDF& this_ = static_cast<const LoadURDF&>(base);
-#else   // PROTOBUF_CUSTOM_VTABLE
-        ::size_t LoadURDF::ByteSizeLong() const {
-          const LoadURDF& this_ = *this;
-#endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(message_byte_size_start:LoadURDF)
-          ::size_t total_size = 0;
-
-          ::uint32_t cached_has_bits = 0;
-          // Prevent compiler warnings about cached_has_bits being unused
-          (void)cached_has_bits;
-
-          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
-           {
-            // string urdf_path = 1;
-            if (!this_._internal_urdf_path().empty()) {
-              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
-                                              this_._internal_urdf_path());
-            }
-          }
-           {
-            // .Vector initial_position = 2;
-            cached_has_bits =
-                this_._impl_._has_bits_[0];
-            if (cached_has_bits & 0x00000001u) {
-              total_size += 1 +
-                            ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.initial_position_);
-            }
-          }
-          return this_.MaybeComputeUnknownFieldsSize(total_size,
-                                                     &this_._impl_._cached_size_);
-        }
-
-void LoadURDF::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
-  auto* const _this = static_cast<LoadURDF*>(&to_msg);
-  auto& from = static_cast<const LoadURDF&>(from_msg);
-  ::google::protobuf::Arena* arena = _this->GetArena();
-  // @@protoc_insertion_point(class_specific_merge_from_start:LoadURDF)
-  ABSL_DCHECK_NE(&from, _this);
-  ::uint32_t cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  if (!from._internal_urdf_path().empty()) {
-    _this->_internal_set_urdf_path(from._internal_urdf_path());
-  }
-  cached_has_bits = from._impl_._has_bits_[0];
-  if (cached_has_bits & 0x00000001u) {
-    ABSL_DCHECK(from._impl_.initial_position_ != nullptr);
-    if (_this->_impl_.initial_position_ == nullptr) {
-      _this->_impl_.initial_position_ =
-          ::google::protobuf::Message::CopyConstruct<::Vector>(arena, *from._impl_.initial_position_);
-    } else {
-      _this->_impl_.initial_position_->MergeFrom(*from._impl_.initial_position_);
-    }
-  }
-  _this->_impl_._has_bits_[0] |= cached_has_bits;
-  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
-}
-
-void LoadURDF::CopyFrom(const LoadURDF& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:LoadURDF)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-
-void LoadURDF::InternalSwap(LoadURDF* PROTOBUF_RESTRICT other) {
-  using std::swap;
-  auto* arena = GetArena();
-  ABSL_DCHECK_EQ(arena, other->GetArena());
-  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
-  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.urdf_path_, &other->_impl_.urdf_path_, arena);
-  swap(_impl_.initial_position_, other->_impl_.initial_position_);
-}
-
-::google::protobuf::Metadata LoadURDF::GetMetadata() const {
-  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
-}
-// ===================================================================
-
 class EngineStatus::_Internal {
  public:
   using HasBits =
@@ -6148,19 +5825,6 @@ void ApiRequest::set_allocated_getcomponent(::GetComponent* getcomponent) {
   }
   // @@protoc_insertion_point(field_set_allocated:ApiRequest.getComponent)
 }
-void ApiRequest::set_allocated_loadurdf(::LoadURDF* loadurdf) {
-  ::google::protobuf::Arena* message_arena = GetArena();
-  clear_payload();
-  if (loadurdf) {
-    ::google::protobuf::Arena* submessage_arena = loadurdf->GetArena();
-    if (message_arena != submessage_arena) {
-      loadurdf = ::google::protobuf::internal::GetOwnedMessage(message_arena, loadurdf, submessage_arena);
-    }
-    set_has_loadurdf();
-    _impl_.payload_.loadurdf_ = loadurdf;
-  }
-  // @@protoc_insertion_point(field_set_allocated:ApiRequest.loadUrdf)
-}
 ApiRequest::ApiRequest(::google::protobuf::Arena* arena)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::Message(arena, _class_data_.base()) {
@@ -6247,9 +5911,6 @@ ApiRequest::ApiRequest(
         break;
       case kGetComponent:
         _impl_.payload_.getcomponent_ = ::google::protobuf::Message::CopyConstruct<::GetComponent>(arena, *from._impl_.payload_.getcomponent_);
-        break;
-      case kLoadUrdf:
-        _impl_.payload_.loadurdf_ = ::google::protobuf::Message::CopyConstruct<::LoadURDF>(arena, *from._impl_.payload_.loadurdf_);
         break;
   }
 
@@ -6416,14 +6077,6 @@ void ApiRequest::clear_payload() {
       }
       break;
     }
-    case kLoadUrdf: {
-      if (GetArena() == nullptr) {
-        delete _impl_.payload_.loadurdf_;
-      } else if (::google::protobuf::internal::DebugHardenClearOneofMessageOnArena()) {
-        ::google::protobuf::internal::MaybePoisonAfterClear(_impl_.payload_.loadurdf_);
-      }
-      break;
-    }
     case PAYLOAD_NOT_SET: {
       break;
     }
@@ -6461,16 +6114,16 @@ const ::google::protobuf::MessageLite::ClassData* ApiRequest::GetClassData() con
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<1, 19, 17, 0, 2> ApiRequest::_table_ = {
+const ::_pbi::TcParseTable<1, 18, 16, 0, 2> ApiRequest::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    19, 8,  // max_field_number, fast_idx_mask
+    18, 8,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294443008,  // skipmap
+    4294705152,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    19,  // num_field_entries
-    17,  // num_aux_entries
+    18,  // num_field_entries
+    16,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     _class_data_.base(),
     nullptr,  // post_loop_handler
@@ -6542,9 +6195,6 @@ const ::_pbi::TcParseTable<1, 19, 17, 0, 2> ApiRequest::_table_ = {
     // .GetComponent getComponent = 18;
     {PROTOBUF_FIELD_OFFSET(ApiRequest, _impl_.payload_.getcomponent_), _Internal::kOneofCaseOffset + 0, 15,
     (0 | ::_fl::kFcOneof | ::_fl::kMessage | ::_fl::kTvTable)},
-    // .LoadURDF loadUrdf = 19;
-    {PROTOBUF_FIELD_OFFSET(ApiRequest, _impl_.payload_.loadurdf_), _Internal::kOneofCaseOffset + 0, 16,
-    (0 | ::_fl::kFcOneof | ::_fl::kMessage | ::_fl::kTvTable)},
   }}, {{
     {::_pbi::TcParser::GetTable<::Move>()},
     {::_pbi::TcParser::GetTable<::TurnKey>()},
@@ -6562,7 +6212,6 @@ const ::_pbi::TcParseTable<1, 19, 17, 0, 2> ApiRequest::_table_ = {
     {::_pbi::TcParser::GetTable<::DeleteEntity>()},
     {::_pbi::TcParser::GetTable<::ListEntities>()},
     {::_pbi::TcParser::GetTable<::GetComponent>()},
-    {::_pbi::TcParser::GetTable<::LoadURDF>()},
   }}, {{
   }},
 };
@@ -6707,12 +6356,6 @@ PROTOBUF_NOINLINE void ApiRequest::Clear() {
                   stream);
               break;
             }
-            case kLoadUrdf: {
-              target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
-                  19, *this_._impl_.payload_.loadurdf_, this_._impl_.payload_.loadurdf_->GetCachedSize(), target,
-                  stream);
-              break;
-            }
             default:
               break;
           }
@@ -6847,12 +6490,6 @@ PROTOBUF_NOINLINE void ApiRequest::Clear() {
             case kGetComponent: {
               total_size += 2 +
                             ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.payload_.getcomponent_);
-              break;
-            }
-            // .LoadURDF loadUrdf = 19;
-            case kLoadUrdf: {
-              total_size += 2 +
-                            ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.payload_.loadurdf_);
               break;
             }
             case PAYLOAD_NOT_SET: {
@@ -7030,15 +6667,6 @@ void ApiRequest::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::goog
               ::google::protobuf::Message::CopyConstruct<::GetComponent>(arena, *from._impl_.payload_.getcomponent_);
         } else {
           _this->_impl_.payload_.getcomponent_->MergeFrom(from._internal_getcomponent());
-        }
-        break;
-      }
-      case kLoadUrdf: {
-        if (oneof_needs_init) {
-          _this->_impl_.payload_.loadurdf_ =
-              ::google::protobuf::Message::CopyConstruct<::LoadURDF>(arena, *from._impl_.payload_.loadurdf_);
-        } else {
-          _this->_impl_.payload_.loadurdf_->MergeFrom(from._internal_loadurdf());
         }
         break;
       }

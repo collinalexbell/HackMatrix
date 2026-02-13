@@ -9,8 +9,6 @@
 #include "components/Bootable.h"
 #include "components/Key.h"
 #include "components/Lock.h"
-#include "components/URDFAsset.h"
-#include "components/URDFLink.h"
 #include "components/Parent.h"
 #include "components/Scriptable.h"
 #include "components/Light.h"
@@ -110,14 +108,6 @@ Engine::setupRegistry()
   shared_ptr<SQLPersister> bootablePersister =
     make_shared<BootablePersister>(registry);
   registry->addPersister(bootablePersister);
-
-  shared_ptr<SQLPersister> urdfLinkPersister =
-    make_shared<URDFLinkPersister>(registry);
-  registry->addPersister(urdfLinkPersister);
-
-  shared_ptr<SQLPersister> urdfAssetPersister =
-    make_shared<URDFAssetPersister>(registry);
-  registry->addPersister(urdfAssetPersister);
 
   registry->createTablesIfNeeded();
   registry->loadAll();
