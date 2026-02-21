@@ -78,33 +78,11 @@ constexpr bool kWlrootsDebugLogs = false;
 static bool
 wlroots_debug_logs_enabled()
 {
-  // Always emit logs for test diagnostics; disable only if explicitly set to 0.
+  // Enable only if set to 1
   if (const char* env = std::getenv("WLROOTS_DEBUG_LOGS")) {
-    return std::strcmp(env, "0") != 0;
+    return std::strcmp(env, "1") == 0;
   }
-  return true;
-}
-
-void
-log_to_tmp(const char* fmt, ...)
-{
-  if (!wlroots_debug_logs_enabled()) {
-    return;
-  }
-  const char* path = std::getenv("MATRIX_WLROOTS_OUTPUT");
-  if (!path) {
-    path = "/tmp/matrix-wlroots-output.log";
-  }
-  FILE* f = std::fopen(path, "a");
-  if (!f) {
-    return;
-  }
-  va_list args;
-  va_start(args, fmt);
-  std::vfprintf(f, fmt, args);
-  std::fflush(f);
-  va_end(args);
-  std::fclose(f);
+  return false;
 }
 
 namespace {
@@ -164,9 +142,7 @@ static const wlr_keyboard_impl kVirtualKeyboardImpl = {
 static wlr_keyboard*
 ensure_virtual_keyboard(WlrServer* server)
 {
-  log_to_tmp("key replay: ensure_virtual_keyboard\n");
   if (!server || !server->seat) {
-    log_to_tmp("key replay: virtual keyboard unavailable (missing server/seat)\n");
     return nullptr;
   }
   if (server->virtual_keyboard) {
@@ -181,19 +157,14 @@ ensure_virtual_keyboard(WlrServer* server)
     if (keymap) {
       wlr_keyboard_set_keymap(kbd, keymap);
       xkb_keymap_unref(keymap);
-    } else {
-      log_to_tmp("key replay: virtual keyboard keymap creation failed\n");
     }
     xkb_context_unref(ctx);
-  } else {
-    log_to_tmp("key replay: virtual keyboard xkb context creation failed\n");
   }
   wlr_keyboard_set_repeat_info(kbd, 25, 600);
   wlr_seat_set_keyboard(server->seat, kbd);
   wlr_seat_keyboard_notify_modifiers(server->seat, &kbd->modifiers);
   server->virtual_keyboard = kbd;
   server->last_keyboard_device = &kbd->base;
-  log_to_tmp("key replay: installed virtual keyboard for tests\n");
   return kbd;
 }
 
@@ -215,19 +186,12 @@ log_pointer_state(WlrServer* server, const char* tag)
   if (server->seat && server->seat->pointer_state.focused_surface) {
     surf = server->seat->pointer_state.focused_surface;
   }
-  log_to_tmp("pointer[%s]: pos=(%.1f,%.1f) focus=%p visible=%d\n",
-             tag ? tag : "",
-             px,
-             py,
-             (void*)surf,
-             server->cursor_visible ? 1 : 0);
 }
 
 static void
 set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
 {
   if (!server || !server->cursor || !server->cursor_mgr) {
-    log_to_tmp("cursor: default skipped (missing server/cursor/cursor_mgr)\n");
     return;
   }
   float scale = 1.0f;
@@ -242,7 +206,6 @@ set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
   // Load the theme for the target scale and set a sane default pointer image.
   int loaded = wlr_xcursor_manager_load(server->cursor_mgr, scale);
   if (loaded < 0) {
-    log_to_tmp("cursor: load failed scale=%.2f -> trying Adwaita\n", scale);
     wlr_xcursor_manager_destroy(server->cursor_mgr);
     server->cursor_mgr = wlr_xcursor_manager_create("Adwaita", 24);
     if (server->cursor_mgr) {
@@ -251,10 +214,8 @@ set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
   }
   if (loaded < 0 ||
       !wlr_xcursor_manager_get_xcursor(server->cursor_mgr, "left_ptr", scale)) {
-    log_to_tmp("cursor: failed theme scale=%.2f -> using software overlay\n", scale);
     return;
   }
-  log_to_tmp("cursor: using theme scale=%.2f\n", scale);
   wlr_cursor_set_xcursor(server->cursor, server->cursor_mgr, "left_ptr");
   server->pointer_x = server->cursor->x;
   server->pointer_y = server->cursor->y;
@@ -438,9 +399,6 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr
       }
     }
   }
-  log_to_tmp("cursor: set_cursor_visible visible=%d current=%d\n",
-             visible ? 1 : 0,
-             server->cursor_visible ? 1 : 0);
   if (visible == server->cursor_visible) {
     return;
   }
@@ -543,11 +501,6 @@ ensure_wayland_apps_registered(WlrServer* server)
           }
         }
       }
-      log_to_tmp("pending_wl_actions: add surface=%p layer=%d accessory=%d parent=%p\n",
-                 (void*)action.surface,
-                 action.layer_shell ? 1 : 0,
-                 action.accessory ? 1 : 0,
-                 (void*)action.parent_surface);
       // Force menu surfaces into a screen-space layer shell so they render as overlays.
       if (!action.layer_shell && action.menu_surface) {
         action.layer_shell = true;
@@ -627,29 +580,12 @@ ensure_wayland_apps_registered(WlrServer* server)
       if (entity != entt::null) {
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
         const char* name = comp && comp->app ? comp->app->getWindowName().c_str() : "(null)";
-        log_to_tmp("pending_wl_actions: add mapped entity=%d surface=%p accessory=%d layer=%d menu=%d name=%s parentSurf=%p parentEnt=%d size=%dx%d\n",
-                   (int)entt::to_integral(entity),
-                   (void*)action.surface,
-                   action.accessory ? 1 : 0,
-                   action.layer_shell ? 1 : 0,
-                   action.menu_surface ? 1 : 0,
-                   name,
-                   (void*)action.parent_surface,
-                   parentEnt == entt::null ? -1 : (int)entt::to_integral(parentEnt),
-                   comp ? comp->app->getWidth() : -1,
-                   comp ? comp->app->getHeight() : -1);
         if ((action.accessory || action.layer_shell) && action.parent_surface == nullptr &&
             !action.menu_surface) {
-          log_to_tmp("pending_wl_actions: accessory/layer without parent; skipping autofocus for entity=%d name=%s\n",
-                     (int)entt::to_integral(entity),
-                     name);
         }
         // Always give menu surfaces immediate focus/input so they can receive keystrokes.
         if (is_menu_surface(action.app) && server->engine) {
           if (auto wm = server->engine->getWindowManager()) {
-            log_to_tmp("focus: menu surface focusApp entity=%d name=%s\n",
-                       (int)entt::to_integral(entity),
-                       name);
             wm->unfocusApp();
             wm->focusApp(entity);
             if (comp && comp->app) {
@@ -667,20 +603,12 @@ ensure_wayland_apps_registered(WlrServer* server)
         server->surface_map[action.surface] = entity;
         if (server->registry) {
           auto view = server->registry->view<WaylandApp::Component>();
-          log_to_tmp("pending_wl_actions: registry size now %zu\n",
-                     static_cast<size_t>(view.size()));
         }
         // Layer-shell menus should take focus immediately so they receive keystrokes.
         if (action.layer_shell && server->engine) {
           if (auto wm = server->engine->getWindowManager()) {
             auto focused = wm->getCurrentlyFocusedApp();
             bool allowFocus = (action.parent_surface != nullptr) || action.menu_surface;
-            log_to_tmp("focus: layer_shell request entity=%d name=%s focused=%d parent=%p allow=%d\n",
-                       (int)entt::to_integral(entity),
-                       name,
-                       focused.has_value() ? (int)entt::to_integral(focused.value()) : -1,
-                       (void*)action.parent_surface,
-                       allowFocus ? 1 : 0);
             if (allowFocus) {
               wm->unfocusApp();
               wm->focusApp(entity);
@@ -704,19 +632,12 @@ ensure_wayland_apps_registered(WlrServer* server)
                        (void*)action.app.get());
           std::fflush(f);
         }
-      log_to_tmp("wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
-                 (void*)action.surface,
-                 (int)entt::to_integral(entity),
-                 action.app->getTextureId(),
-                 action.app->getTextureUnit() - GL_TEXTURE0,
-                 (void*)action.app.get());
         if (server->engine) {
           if (auto api = server->engine->getApi()) {
             api->forceUpdateCachedStatus();
           }
         }
       } else {
-        log_to_tmp("pending_wl_actions: add failed surface=%p\n", (void*)action.surface);
         if (f) {
           std::fprintf(f,
                        "wayland app add (deferred) failed: surface=%p\n",
@@ -756,7 +677,6 @@ ensure_wayland_apps_registered(WlrServer* server)
                      (void*)action.surface);
         std::fflush(f);
       }
-      log_to_tmp("wayland app remove (deferred): surface=%p\n", (void*)action.surface);
     } else {
       if (f) {
         std::fprintf(f,
@@ -961,11 +881,6 @@ process_key_sym(WlrServer* server,
 
   if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
       sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
-    log_to_tmp("controls debug: entry sym=%u pressed=%d time=%u keycode=%u\n",
-               sym,
-               pressed ? 1 : 0,
-               time_msec,
-               keycode);
   }
 
   if (isHotkeySym(server, sym)) {
@@ -975,11 +890,6 @@ process_key_sym(WlrServer* server,
       --server->replayModifierHeld;
     }
     server->replayModifierActive = server->replayModifierHeld > 0;
-    log_to_tmp("hotkey combo: modifier state pressed=%d replayMod=%d time=%u keycode=%u\n",
-               pressed ? 1 : 0,
-               server->replayModifierActive ? 1 : 0,
-               time_msec,
-               keycode);
   }
   if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
     if (pressed) {
@@ -1048,37 +958,13 @@ process_key_sym(WlrServer* server,
                      server->replayShiftHeld > 0;
     if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
         sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
-      log_to_tmp("controls debug: controls_ptr=%p sym=%u mods=0x%x replayShift=%d pendingShift=%d\n",
-                 (void*)controls,
-                 sym,
-                 mods,
-                 server->replayShiftHeld,
-                 server->pendingReplayShift ? 1 : 0);
     }
     if (controls) {
-      if (sym == XKB_KEY_f || sym == XKB_KEY_F) {
-        log_to_tmp("controls debug toggle sym=%s(%u) ptr=%p focus=%d modifier=%d\n",
-                   keysym_name(sym).c_str(),
-                   sym,
-                   (void*)controls,
-                   waylandFocusActive ? 1 : 0,
-                   modifierHeld ? 1 : 0);
-      }
-      if (pressed && modifierHeld && sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
-        log_to_tmp("hotkey: idx=%d\n", static_cast<int>(sym - XKB_KEY_1));
-      }
       auto resp =
         controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld, waylandFocusActive);
       bool handled = resp.consumed || resp.blockClientDelivery || resp.requestQuit ||
                      resp.clearInputForces || resp.clearSeatFocus;
-      if (handled) {
-        log_to_tmp("controls handled sym=%s(%u) consumed=%d block=%d clearFocus=%d\n",
-                   keysym_name(sym).c_str(),
-                   sym,
-                   resp.consumed ? 1 : 0,
-                   resp.blockClientDelivery ? 1 : 0,
-                   resp.clearSeatFocus ? 1 : 0);
-      }
+      
       if (resp.clearInputForces) {
         clear_input_forces(server);
       }
@@ -1086,10 +972,6 @@ process_key_sym(WlrServer* server,
         wlr_seat_keyboard_notify_clear_focus(server->seat);
         wlr_seat_pointer_notify_clear_focus(server->seat);
         server->replayModifierActive = false;
-        log_to_tmp("key replay: controls cleared seat focus sym=%s(%u) mods=0x%x\n",
-                   keysym_name(sym).c_str(),
-                   sym,
-                   mods);
       }
       if (resp.requestQuit) {
         wl_display_terminate(server->display);
@@ -1110,10 +992,6 @@ process_key_sym(WlrServer* server,
         server->input.forward = pressed;
       } else if (!pressed) {
         server->input.forward = false;
-      } else {
-        log_to_tmp("key replay: dropped movement key sym=%s(%u) because wayland focus\n",
-                   keysym_name(sym).c_str(),
-                   sym);
       }
       break;
     case XKB_KEY_s:
@@ -1170,11 +1048,6 @@ process_key_sym(WlrServer* server,
       }
     }
     if (duplicate) {
-      log_to_tmp("key replay: dropping duplicate sym=%s(%u) keycode=%u state=%d\n",
-                 keysym_name(sym).c_str(),
-                 sym,
-                 keycode,
-                 pressed ? 1 : 0);
       return;
     }
     // Deliver to the seat-focused surface if it maps to a Wayland app; otherwise fall
@@ -1193,11 +1066,6 @@ process_key_sym(WlrServer* server,
           }
         }
       }
-    }
-    if (!target_surface) {
-      log_to_tmp("key replay: no target surface for sym=%s(%u)\n",
-                 keysym_name(sym).c_str(),
-                 sym);
     }
     if (target_surface) {
       bool focusChanged =
@@ -1226,10 +1094,6 @@ process_key_sym(WlrServer* server,
                                        &keyboard->modifiers);
         wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
       }
-      log_to_tmp("key replay: delivering sym=%s(%u) to surface=%p\n",
-                 keysym_name(sym).c_str(),
-                 sym,
-                 (void*)target_surface);
     }
     enum wl_keyboard_key_state state =
       pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
@@ -1471,8 +1335,6 @@ handle_new_input(wl_listener* listener, void* data)
                 }
               }
               if (focusEnt != entt::null && focusSurf) {
-                log_to_tmp("focus: pointer click lookedAt focusEnt=%d\n",
-                           (int)entt::to_integral(focusEnt));
                 wm->focusApp(focusEnt);
                 ensure_pointer_focus(handle->server, event->time_msec, focusSurf);
                 if (auto* focusComp =
@@ -1674,11 +1536,6 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
                        0,
                        0 });
     handle->registered = true;
-    log_to_tmp("wayland deferred add queued: surface=%p size=%dx%d app=%p\n",
-               (void*)surf,
-               w,
-               h,
-               (void*)handle->app.get());
   };
   wl_signal_add(&xdg_surface->surface->events.commit, &handle->commit);
   handle->unmap.notify = [](wl_listener* listener, void* /*data*/) {
@@ -1687,9 +1544,6 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
       handle->server->pending_wl_actions.push_back(
         PendingWlAction{ PendingWlAction::Remove, handle->app, handle->surface });
       handle->registered = false;
-      log_to_tmp("wayland deferred remove queued (unmap): surface=%p app=%p\n",
-                 (void*)handle->surface,
-                 (void*)handle->app.get());
       ensure_wayland_apps_registered(handle->server);
     }
     safe_remove_listener(&handle->unmap);
@@ -1704,9 +1558,6 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
       handle->server->pending_wl_actions.push_back(
         PendingWlAction{ PendingWlAction::Remove, handle->app, surf });
       handle->registered = false;
-      log_to_tmp("wayland deferred remove queued (destroy): surface=%p app=%p\n",
-                 (void*)surf,
-                 (void*)handle->app.get());
       ensure_wayland_apps_registered(handle->server);
     }
     safe_remove_listener(&handle->unmap);
@@ -1836,13 +1687,6 @@ handle_new_layer_surface(wl_listener* listener, void* data)
                        handle->server->primary_output ? handle->server->primary_output->height
                                                       : static_cast<int>(SCREEN_HEIGHT) });
     handle->registered = true;
-    log_to_tmp("layer-shell deferred add queued: surface=%p size=%dx%d pos=%d,%d app=%p\n",
-               (void*)surf,
-               w,
-               h,
-               pos.first,
-               pos.second,
-               (void*)app.get());
   };
   wl_signal_add(&layer->surface->events.commit, &handle->commit);
 
@@ -1945,9 +1789,6 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
       return;
     }
     wlr_log(WLR_DEBUG, "xdg_surface %p mapped", (void*)handle->xdg);
-    log_to_tmp("xdg_surface mapped surface=%p role=%d\n",
-               (void*)handle->xdg->surface,
-               handle->xdg->role);
     if (!handle->created) {
       handle->created = true;
       create_wayland_app(handle->server, handle->xdg);
@@ -1958,10 +1799,6 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
   handle->destroy.notify = [](wl_listener* listener, void* data) {
     auto* handle = wl_container_of(listener, static_cast<XdgSurfaceHandle*>(nullptr), destroy);
     auto* xdg = static_cast<wlr_xdg_surface*>(data);
-    log_to_tmp("xdg_surface destroy: root=%p surface=%p role=%d\n",
-               (void*)xdg,
-               xdg ? (void*)xdg->surface : nullptr,
-               xdg ? (int)xdg->role : -1);
     handle->xdg = nullptr;
     wl_list_remove(&handle->map.link);
     wl_list_remove(&handle->commit.link);
@@ -2093,13 +1930,6 @@ handle_output_frame(wl_listener* listener, void* data)
   int width = handle->swapchain ? handle->swapchain->width : 1;
   int height = handle->swapchain ? handle->swapchain->height : 1;
   // Reduce log spam in hot path; enable by setting WLROOTS_FRAME_LOG=1.
-  if (std::getenv("WLROOTS_FRAME_LOG")) {
-    log_to_tmp("frame: swapchain %dx%d output %s\n",
-               width,
-               height,
-               handle->output ? handle->output->name : "(null)");
-  }
-
   ensure_glad(server);
 
   GLuint fbo = wlr_gles2_renderer_get_buffer_fbo(server->renderer, buffer);
@@ -2110,14 +1940,15 @@ handle_output_frame(wl_listener* listener, void* data)
     options.enableControls = true; // wlroots path feeds input through Controls
     options.enableGui = true; // draw HackMatrix ImGui overlay inside compositor
     options.invertYAxis = true;
-  server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
-  // Surface API quit handling through wl_display so tests can terminate cleanly.
-  if (server->engine) {
-    auto api = server->engine->getApi();
-    if (api) {
-      api->setDisplay(server->display);
+    server->engine = std::make_unique<Engine>(nullptr, server->envp, options);
+    // Surface API quit handling through wl_display so tests can terminate
+    // cleanly.
+    if (server->engine) {
+      auto api = server->engine->getApi();
+      if (api) {
+        api->setDisplay(server->display);
+      }
     }
-  }
   }
   if (server->engine && !server->registry) {
     server->registry = server->engine->getRegistry();
@@ -2143,13 +1974,7 @@ handle_output_frame(wl_listener* listener, void* data)
       }
       static bool logged_missing_keyboard = false;
       if (!kbd && !logged_missing_keyboard) {
-        log_to_tmp("key replay: no keyboard device available for injection\n");
         logged_missing_keyboard = true;
-      }
-      if (!ready.empty()) {
-        log_to_tmp("key replay: ready=%zu elapsed_ms=%llu\n",
-                   ready.size(),
-                   (unsigned long long)now_ms);
       }
       auto shift_lookup = keycode_for_keysym(kbd, XKB_KEY_Shift_L);
       xkb_keysym_t modifier_sym_left =
@@ -2162,18 +1987,10 @@ handle_output_frame(wl_listener* listener, void* data)
         auto sym = ready[i].sym;
       auto lookup = keycode_for_keysym(kbd, sym);
       if (!lookup.has_value() || lookup->keycode == 0) {
-        log_to_tmp("key replay: no keycode for sym=%u\n", sym);
         continue;
       }
-        uint32_t hw_keycode = lookup->keycode >= 8 ? lookup->keycode - 8 : lookup->keycode;
-        uint32_t time_msec = base_msec + step;
-        log_to_tmp("key replay: sym=%u (%s) keycode=%u hw=%u time=%u ready_ms=%llu\n",
-                   sym,
-                   keysym_name(sym).c_str(),
-                   lookup->keycode,
-                   hw_keycode,
-                   time_msec,
-                   (unsigned long long)ready[i].ready_ms);
+      uint32_t hw_keycode = lookup->keycode >= 8 ? lookup->keycode - 8 : lookup->keycode;
+      uint32_t time_msec = base_msec + step;
       bool is_modifier_sym = is_hotkey_sym(server->hotkeyModifier, sym);
       bool is_shift_sym = sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R;
       bool is_last = (i + 1) == ready.size();
@@ -2311,9 +2128,6 @@ handle_output_frame(wl_listener* listener, void* data)
   }
 
   glViewport(0, 0, width, height);
-  if (std::getenv("WLROOTS_FRAME_LOG")) {
-    log_to_tmp("frame: glViewport %dx%d\n", width, height);
-  }
   double frameStart = currentTimeSeconds();
   server->engine->frame(frameStart);
   // Run screenshot capture after the frame has been drawn so the image matches
@@ -2407,23 +2221,12 @@ handle_new_output(wl_listener* listener, void* data)
     }
     wlr_output_state_set_custom_mode(
       &state, desired_width, desired_height, refresh);
-    log_to_tmp("new_output: override mode %dx%d@%d on %s\n",
-               desired_width,
-               desired_height,
-               refresh,
-               output->name ? output->name : "(null)");
   } else if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
     wlr_output_state_set_mode(&state, mode);
-    log_to_tmp("new_output: preferred mode %dx%d@%d on %s\n",
-               mode->width,
-               mode->height,
-               mode->refresh,
-               output->name ? output->name : "(null)");
   }
   if (!wlr_output_commit_state(output, &state)) {
     wlr_log(WLR_ERROR, "Failed to commit output %s", output->name);
     wlr_output_state_finish(&state);
-    log_to_tmp("new_output: commit failed %s\n", output->name ? output->name : "(null)");
     return;
   }
   wlr_output_state_finish(&state);
@@ -2432,12 +2235,6 @@ handle_new_output(wl_listener* listener, void* data)
   // projection and texture sizing match the real buffer size.
   SCREEN_WIDTH = static_cast<float>(output->width);
   SCREEN_HEIGHT = static_cast<float>(output->height);
-  log_to_tmp("new_output: committed size %dx%d (SCREEN %fx%f) name=%s\n",
-             output->width,
-             output->height,
-             SCREEN_WIDTH,
-             SCREEN_HEIGHT,
-             output->name ? output->name : "(null)");
 
   auto* handle = new WlrOutputHandle();
   handle->server = server;
@@ -2469,33 +2266,6 @@ handle_new_output(wl_listener* listener, void* data)
 
 } // namespace
 
-void delay_if_launching_nested_from_hackmatrix(int argc, char** argv) {
-  int delay_secs = 0;
-  for (int i = 1; i < argc; ++i) {
-    if (std::strcmp(argv[i], "--in-wm") == 0) {
-      delay_secs = 5;
-    }
-  }
-  if (delay_secs > 0) {
-    log_to_tmp("startup: --in-wm detected, delaying %d seconds\n", delay_secs);
-    std::this_thread::sleep_for(std::chrono::seconds(delay_secs));
-  }
-}
-
-void log_env() {
-  log_to_tmp(
-    "startup: WLR_BACKENDS=%s DISPLAY=%s WAYLAND_DISPLAY=%s\n",
-    std::getenv("WLR_BACKENDS") ? std::getenv("WLR_BACKENDS") : "(null)",
-    std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)",
-    std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)");
-  log_to_tmp(
-    "startup: SCREEN_WIDTH=%s SCREEN_HEIGHT=%s\n",
-    std::getenv("SCREEN_WIDTH") ? std::getenv("SCREEN_WIDTH") : "(null)",
-    std::getenv("SCREEN_HEIGHT") ? std::getenv("SCREEN_HEIGHT") : "(null)");
-  log_to_tmp("startup: XDG_RUNTIME_DIR=%s\n",
-             std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR")
-                                            : "(null)");
-}
 
 const char*
 hotkey_modifier_label(HotkeyModifier mod)
@@ -2533,7 +2303,6 @@ void write_pid_for_kill() {
   if (f) {
     std::fprintf(f, "%d\n", (int)getpid());
     std::fclose(f);
-    log_to_tmp("startup: wrote pid file %s\n", pidPath);
   }
 }
 
@@ -2574,7 +2343,6 @@ apply_backend_env_defaults()
       setenv("WLR_X11_OUTPUT_WIDTH", buf, 1);
       std::snprintf(buf, sizeof(buf), "%d", height);
       setenv("WLR_X11_OUTPUT_HEIGHT", buf, 1);
-      log_to_tmp("startup: set WLR_X11_OUTPUT_WIDTH=%d HEIGHT=%d\n", width, height);
     }
   }
 }
@@ -2629,9 +2397,6 @@ create_renderer_and_allocator(WlrServer& server)
   } else if (std::getenv("WAYLAND_DISPLAY")) {
     backend_kind = "wayland";
   }
-  log_to_tmp("startup: backend kind=%s env=%s\n",
-             backend_kind,
-             backend_env ? backend_env : "(null)");
   return true;
 }
 
@@ -2688,12 +2453,7 @@ init_protocols_and_seat(WlrServer& server)
         wlr_cursor_set_surface(
           server->cursor, event->surface, event->hotspot_x, event->hotspot_y);
         server->cursor_visible = true;
-        log_to_tmp("set_cursor: surface=%p hotspot=%d,%d\n",
-                   (void*)event->surface,
-                   event->hotspot_x,
-                   event->hotspot_y);
       } else {
-        log_to_tmp("set_cursor: null surface -> default\n");
         set_cursor_visible(server, wayland_pointer_focus_requested(server));
       }
       server->pointer_x = server->cursor->x;
@@ -2735,17 +2495,12 @@ start_backend_and_socket(WlrServer& server)
     std::fprintf(stderr, "Failed to start wlroots backend\n");
     return false;
   }
-  log_to_tmp("startup: pointer init pos (%.1f,%.1f)\n",
-             server.pointer_x,
-             server.pointer_y);
-
   const char* socket = wl_display_add_socket_auto(server.display);
   if (!socket) {
     std::fprintf(stderr, "Failed to create Wayland socket\n");
     return false;
   }
   setenv("WAYLAND_DISPLAY", socket, true);
-  log_to_tmp("startup: WAYLAND_DISPLAY chosen=%s\n", socket ? socket : "(null)");
 
   wlr_log(WLR_DEBUG,
           "wlroots compositor ready; WAYLAND_DISPLAY=%s",

@@ -76,19 +76,12 @@ profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
 
 ifeq ($(WLROOTS_AVAILABLE),1)
-wlroots-skeleton: build/wayland/wlroots_skeleton.o
-	g++ -std=c++20 $(FLAGS) -o wlroots-skeleton build/wayland/wlroots_skeleton.o $(WLROOTS_LIBS) -lpthread
-matrix: matrix-release matrix-debug
-matrix-release: build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS)
+matrix: build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS)
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
 matrix-debug: build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG)
 	g++ -std=c++20 $(DEBUG_FLAGS) -g -o matrix-debug build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
 matrix-wlroots: matrix
 else
-wlroots-skeleton:
-	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
-	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor skeleton." >&2
-	@exit 1
 matrix-wlroots:
 	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
 	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor target." >&2
@@ -113,10 +106,6 @@ build/enkimi.o: src/enkimi.c
 
 build/miniz.o: src/miniz.c
 	g++ $(FLAGS) $(LOADER_FLAGS) -o build/miniz.o -c src/miniz.c $(INCLUDES) -lm
-
-build/wayland/wlroots_skeleton.o: src/wayland/wlroots_skeleton.cpp
-	mkdir -p build/wayland
-	g++ -std=c++20 $(FLAGS) $(INCLUDES) $(WLROOTS_CFLAGS) -o build/wayland/wlroots_skeleton.o -c src/wayland/wlroots_skeleton.cpp
 
 build/wayland/wlr_compositor.o: src/wayland/wlr_compositor.cpp
 	mkdir -p build/wayland
