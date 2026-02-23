@@ -1,5 +1,7 @@
 # HackMatrix
 
+*WARNING* this project is a bit of a mess right now. I merged a vibe coded migration to Wayland that I will need to heavily refactor. Checkout revision  39d3d3 if you want the X11 version. If you want to try the wayland version, `./launch` after building. 
+
 <img src="images/header_img.png" width="800">
 
 A 3D Linux desktop environment (which can also be a game engine)
