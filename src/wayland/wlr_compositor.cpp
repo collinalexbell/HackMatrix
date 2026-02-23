@@ -222,8 +222,15 @@ set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
   log_pointer_state(server, "default_cursor");
 }
 
+bool isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
+	return server->registry->valid(entity) &&
+		server->registry->all_of<WaylandApp::Component>(entity);
+}
+
 // Map the global pointer into surface-local coords assuming the surface is
 // centered in the output (matches render overlay) and clamp to surface size.
+//
+// TODO: Remove the clamp which is causing inputs that aren't on the window to be passed into the window.
 static std::pair<double, double>
 map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
 {
@@ -236,9 +243,7 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
   // top-left using the same math as renderWaylandPopup().
   if (server && surf && server->registry) {
     auto it = server->surface_map.find(surf);
-    if (it != server->surface_map.end() &&
-        server->registry->valid(it->second) &&
-        server->registry->all_of<WaylandApp::Component>(it->second)) {
+    if (it != server->surface_map.end() && isValidWaylandAppComponent(server, it->second)) {
       auto& comp = server->registry->get<WaylandApp::Component>(it->second);
       if (comp.accessory && !comp.layer_shell && comp.parent != entt::null &&
           server->registry->valid(comp.parent) &&
