@@ -108,6 +108,7 @@ struct ReplayKeyRelease {
 };
 
 struct WlrServer {
+  ~WlrServer();
   bool create_display();
   bool create_backend();
   bool create_renderer();

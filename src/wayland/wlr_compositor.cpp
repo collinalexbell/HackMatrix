@@ -169,26 +169,6 @@ ensure_virtual_keyboard(WlrServer* server)
 }
 
 static void
-log_pointer_state(WlrServer* server, const char* tag)
-{
-  if (!server) {
-    return;
-  }
-  double px = server->pointer_x;
-  double py = server->pointer_y;
-  if (server->cursor) {
-    px = server->cursor->x;
-    py = server->cursor->y;
-    server->pointer_x = px;
-    server->pointer_y = py;
-  }
-  wlr_surface* surf = nullptr;
-  if (server->seat && server->seat->pointer_state.focused_surface) {
-    surf = server->seat->pointer_state.focused_surface;
-  }
-}
-
-static void
 set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
 {
   if (!server || !server->cursor || !server->cursor_mgr) {
@@ -219,7 +199,6 @@ set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
   wlr_cursor_set_xcursor(server->cursor, server->cursor_mgr, "left_ptr");
   server->pointer_x = server->cursor->x;
   server->pointer_y = server->cursor->y;
-  log_pointer_state(server, "default_cursor");
 }
 
 bool isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
@@ -1190,7 +1169,6 @@ handle_new_input(wl_listener* listener, void* data)
           auto* surf = surfEnt.first;
           ensure_pointer_focus(handle->server, event->time_msec, surf);
         }
-        log_pointer_state(handle->server, "motion_rel");
         wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
                 event->delta_x,
                 event->delta_y);
@@ -1229,7 +1207,6 @@ handle_new_input(wl_listener* listener, void* data)
           auto* surf = surfEnt.first;
           ensure_pointer_focus(handle->server, event->time_msec, surf);
         }
-        log_pointer_state(handle->server, "motion_abs");
         FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
         if (f) {
           std::fprintf(f, "pointer motion abs dx=%.3f dy=%.3f\n",
@@ -2163,7 +2140,6 @@ handle_output_frame(wl_listener* listener, void* data)
       renderer->renderSoftwareCursor(server->pointer_x, server->pointer_y, sizePx);
     }
   }
-  log_pointer_state(server, "frame");
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -2467,7 +2443,6 @@ init_protocols_and_seat(WlrServer& server)
       }
       server->pointer_x = server->cursor->x;
       server->pointer_y = server->cursor->y;
-      log_pointer_state(server, "set_cursor");
     };
     wl_signal_add(&server.seat->events.request_set_cursor, &server.request_set_cursor);
     // Set an initial default cursor.
@@ -2521,39 +2496,38 @@ start_backend_and_socket(WlrServer& server)
   return true;
 }
 
-void
-teardown_server(WlrServer& server)
+WlrServer::~WlrServer()
 {
   auto remove_listener = [](wl_listener& listener) {
     if (listener.link.prev || listener.link.next) {
       wl_list_remove(&listener.link);
     }
   };
-  if (server.engine) {
-    server.engine.reset();
+  if (engine) {
+    engine.reset();
   }
-  if (server.seat) {
-    remove_listener(server.request_set_cursor);
+  if (seat) {
+    remove_listener(request_set_cursor);
   }
-  if (server.virtual_keyboard) {
-    wlr_keyboard_finish(server.virtual_keyboard);
-    delete server.virtual_keyboard;
-    server.virtual_keyboard = nullptr;
+  if (virtual_keyboard) {
+    wlr_keyboard_finish(virtual_keyboard);
+    delete virtual_keyboard;
+    virtual_keyboard = nullptr;
   }
-  remove_listener(server.new_input);
-  remove_listener(server.new_output);
-  remove_listener(server.new_layer_surface);
-  remove_listener(server.new_xdg_surface);
-  if (server.allocator) {
-    wlr_allocator_destroy(server.allocator);
+  remove_listener(new_input);
+  remove_listener(new_output);
+  remove_listener(new_layer_surface);
+  remove_listener(new_xdg_surface);
+  if (allocator) {
+    wlr_allocator_destroy(allocator);
   }
-  if (server.renderer) {
-    wlr_renderer_destroy(server.renderer);
+  if (renderer) {
+    wlr_renderer_destroy(renderer);
   }
-  if (server.backend) {
-    wlr_backend_destroy(server.backend);
+  if (backend) {
+    wlr_backend_destroy(backend);
   }
-  if (server.display) {
-    wl_display_destroy(server.display);
+  if (display) {
+    wl_display_destroy(display);
   }
 }
