@@ -238,6 +238,7 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
   double sy = server ? server->pointer_y : 0.0;
   double surf_w = surf ? surf->current.width : 0;
   double surf_h = surf ? surf->current.height : 0;
+
   bool handledPopupCoords = false;
   // For popup/accessory surfaces, place the pointer relative to the parent's
   // top-left using the same math as renderWaylandPopup().
@@ -245,17 +246,13 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
     auto it = server->surface_map.find(surf);
     if (it != server->surface_map.end() && isValidWaylandAppComponent(server, it->second)) {
       auto& comp = server->registry->get<WaylandApp::Component>(it->second);
-      if (comp.accessory && !comp.layer_shell && comp.parent != entt::null &&
-          server->registry->valid(comp.parent) &&
-          server->registry->all_of<WaylandApp::Component>(comp.parent)) {
+      if (comp.accessory) {
         auto& parentComp = server->registry->get<WaylandApp::Component>(comp.parent);
         if (parentComp.app) {
           int parentW = parentComp.app->getWidth();
           int parentH = parentComp.app->getHeight();
-          double out_w =
-            server->primary_output ? server->primary_output->width : SCREEN_WIDTH;
-          double out_h =
-            server->primary_output ? server->primary_output->height : SCREEN_HEIGHT;
+          double out_w = server->primary_output->width;
+          double out_h = server->primary_output->height;
           double parentLeft = std::max(0.0, (out_w - parentW) * 0.5);
           double parentTop = std::max(0.0, (out_h - parentH) * 0.5);
           double popupLeft = parentLeft + comp.offset_x;
@@ -752,8 +749,6 @@ struct XdgSurfaceHandle {
   wl_listener map;
   wl_listener destroy;
 };
-
-WlrServer* g_server = nullptr;
 
 static bool
 wayland_app_has_pointer_focus(WlrServer* server)
@@ -2353,18 +2348,21 @@ apply_backend_env_defaults()
 }
 
 bool
-create_display_and_backend(WlrServer& server)
+WlrServer::create_display()
 {
-  server.display = wl_display_create();
-  if (!server.display) {
+  display = wl_display_create();
+  if (!display) {
     std::fprintf(stderr, "Failed to create Wayland display\n");
     return false;
   }
-  g_server = &server;
+  return true;
+}
 
-  server.backend =
-    wlr_backend_autocreate(wl_display_get_event_loop(server.display), nullptr);
-  if (!server.backend) {
+bool
+WlrServer::create_backend() {
+  backend =
+    wlr_backend_autocreate(wl_display_get_event_loop(display), nullptr);
+  if (!backend) {
     std::fprintf(stderr, "Failed to create wlroots backend\n");
     return false;
   }
@@ -2372,32 +2370,38 @@ create_display_and_backend(WlrServer& server)
 }
 
 bool
-create_renderer_and_allocator(WlrServer& server)
+WlrServer::create_renderer()
 {
-  server.renderer = wlr_renderer_autocreate(server.backend);
-  if (!server.renderer) {
+  renderer = wlr_renderer_autocreate(backend);
+  if (!renderer) {
     std::fprintf(stderr, "Failed to create renderer\n");
     return false;
   }
-  if (!wlr_renderer_init_wl_display(server.renderer, server.display)) {
+  if (!wlr_renderer_init_wl_display(renderer, display)) {
     std::fprintf(stderr, "Failed to init renderer for wl_display\n");
     return false;
   }
+  return true;
+}
 
-  server.allocator = wlr_allocator_autocreate(server.backend, server.renderer);
-  if (!server.allocator) {
+bool
+WlrServer::create_allocator() {
+
+  allocator = wlr_allocator_autocreate(backend, renderer);
+  if (!allocator) {
     std::fprintf(stderr, "Failed to create allocator\n");
     return false;
   }
+
   // Detect X11 backend (common for nested testing).
   const char* backend_env = std::getenv("WLR_BACKENDS");
   if (backend_env && std::string(backend_env).find("x11") != std::string::npos) {
-    server.isX11Backend = true;
+    isX11Backend = true;
   } else if (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY")) {
-    server.isX11Backend = true;
+    isX11Backend = true;
   }
   const char* backend_kind = "unknown";
-  if (server.isX11Backend) {
+  if (isX11Backend) {
     backend_kind = "x11";
   } else if (std::getenv("WAYLAND_DISPLAY")) {
     backend_kind = "wayland";
@@ -2515,16 +2519,6 @@ start_backend_and_socket(WlrServer& server)
           "wlroots compositor ready; WAYLAND_DISPLAY=%s",
           socket ? socket : "(null)");
   return true;
-}
-
-void
-install_sigint_handler()
-{
-  std::signal(SIGINT, [](int) {
-    if (g_server && g_server->display) {
-      wl_display_terminate(g_server->display);
-    }
-  });
 }
 
 void

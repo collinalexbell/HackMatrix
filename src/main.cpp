@@ -13,13 +13,15 @@ int main(int argc, char** argv, char** envp) {
   write_pid_for_kill();
   apply_backend_env_defaults();
 
-  if (!create_display_and_backend(server)) {
+  if(!server.create_display() || !server.create_backend()) {
     return EXIT_FAILURE;
   }
-  if (!create_renderer_and_allocator(server)) {
+
+  if (!server.create_renderer() || !server.create_allocator()) {
     teardown_server(server);
     return EXIT_FAILURE;
   }
+
   if (!init_protocols_and_seat(server)) {
     teardown_server(server);
     return EXIT_FAILURE;
@@ -30,8 +32,6 @@ int main(int argc, char** argv, char** envp) {
     teardown_server(server);
     return EXIT_FAILURE;
   }
-
-  install_sigint_handler();
 
   wl_display_run(server.display);
 
