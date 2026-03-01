@@ -2502,7 +2502,25 @@ bool WlrServer::init_resources()
       !create_allocator() || !init_protocols() || !create_seat()) {
     return false;
   }
+  register_listeners();
   return true;
+}
+
+bool 
+WlrServer::start() {
+  if (!start_backend_and_socket()) {
+    return false;
+  }
+  wl_display_run(display);
+  return true;
+}
+
+WlrServer::WlrServer(char** envp): envp(envp) {
+  hotkeyModifier = parse_hotkey_modifier();
+  hotkeyModifierMask = hotkey_modifier_mask(hotkeyModifier);
+
+  initialize_wlr_logging();
+  apply_backend_env_defaults();
 }
 
 WlrServer::~WlrServer()

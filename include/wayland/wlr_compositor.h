@@ -108,6 +108,7 @@ struct ReplayKeyRelease {
 };
 
 struct WlrServer {
+  WlrServer(char** envp);
   ~WlrServer();
   bool init_resources();
   bool create_display();
@@ -118,6 +119,7 @@ struct WlrServer {
   bool init_protocols();
   void register_listeners();
   bool start_backend_and_socket();
+  bool start();
   wl_display* display = nullptr;
   wlr_backend* backend = nullptr;
   wlr_renderer* renderer = nullptr;
