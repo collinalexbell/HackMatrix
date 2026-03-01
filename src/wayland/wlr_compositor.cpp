@@ -2484,13 +2484,13 @@ WlrServer::register_listeners()
 }
 
 bool
-start_backend_and_socket(WlrServer& server)
+WlrServer::start_backend_and_socket()
 {
-  if (!wlr_backend_start(server.backend)) {
+  if (!wlr_backend_start(backend)) {
     std::fprintf(stderr, "Failed to start wlroots backend\n");
     return false;
   }
-  const char* socket = wl_display_add_socket_auto(server.display);
+  const char* socket = wl_display_add_socket_auto(display);
   if (!socket) {
     std::fprintf(stderr, "Failed to create Wayland socket\n");
     return false;

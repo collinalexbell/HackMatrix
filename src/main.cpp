@@ -22,7 +22,7 @@ int main(int argc, char** argv, char** envp) {
 
   server.register_listeners();
 
-  if(!start_backend_and_socket(server)) { return EXIT_FAILURE; }
+  if(!server.start_backend_and_socket()) { return EXIT_FAILURE; }
 
   wl_display_run(server.display);
 

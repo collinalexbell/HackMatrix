@@ -116,6 +116,7 @@ struct WlrServer {
   bool create_seat();
   bool init_protocols();
   void register_listeners();
+  bool start_backend_and_socket();
   wl_display* display = nullptr;
   wlr_backend* backend = nullptr;
   wlr_renderer* renderer = nullptr;
@@ -174,6 +175,5 @@ void log_env();
 void initialize_wlr_logging();
 
 void apply_backend_env_defaults();
-bool start_backend_and_socket(WlrServer& server);
 void install_sigint_handler();
 void teardown_server(WlrServer& server);
