@@ -421,18 +421,6 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       }
       break;
     }
-    case KEY_REPLAY: {
-      if (wm) {
-        std::vector<std::pair<std::string, uint32_t>> entries;
-        const auto& replay = batchedRequest.request.keyreplay();
-        entries.reserve(replay.entries_size());
-        for (const auto& e : replay.entries()) {
-          entries.emplace_back(e.sym(), e.delay_ms());
-        }
-        wm->keyReplay(entries);
-      }
-      break;
-    }
     case POINTER_REPLAY: {
       if (controls) {
         const auto& replay = batchedRequest.request.pointerreplay();

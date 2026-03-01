@@ -1072,31 +1072,6 @@ process_key_sym(WlrServer* server,
   }
 }
 
-static void
-flush_pending_replay_keyups(WlrServer* server,
-                            wlr_keyboard* keyboard,
-                            uint32_t now_msec)
-{
-  if (!server || server->pendingReplayKeyups.empty()) {
-    return;
-  }
-  auto it = server->pendingReplayKeyups.begin();
-  while (it != server->pendingReplayKeyups.end()) {
-    if (now_msec >= it->release_time_msec) {
-      process_key_sym(server,
-                      keyboard,
-                      it->sym,
-                      false,
-                      now_msec,
-                      it->keycode,
-                      it->update_mods);
-      it = server->pendingReplayKeyups.erase(it);
-    } else {
-      ++it;
-    }
-  }
-}
-
 void
 handle_keyboard_key(wl_listener* listener, void* data)
 {
@@ -1869,6 +1844,9 @@ handle_output_frame(wl_listener* listener, void* data)
   struct wlr_output_state output_state;
   wlr_output_state_init(&output_state);
 
+  // no-op if the swapchain has already been configured
+  // only errors if old swapchain isn't configured properly
+  // and a new one couldn't be created & configured
   if (!wlr_output_configure_primary_swapchain(
         handle->output, &output_state, &handle->swapchain)) {
     wlr_log(WLR_ERROR, "Failed to configure primary swapchain");
@@ -1921,125 +1899,6 @@ handle_output_frame(wl_listener* listener, void* data)
   }
   // Ensure Wayland apps have textures attached once the renderer exists.
   ensure_wayland_apps_registered(server);
-
-  if (server->engine) {
-    auto wm = server->engine->getWindowManager();
-    if (wm) {
-      uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                          std::chrono::steady_clock::now().time_since_epoch())
-                          .count();
-      uint32_t now_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
-      auto ready = wm->consumeReadyReplaySyms(now_ms);
-      wlr_keyboard* kbd = nullptr;
-      if (server->last_keyboard_device) {
-        kbd = wlr_keyboard_from_input_device(server->last_keyboard_device);
-      } else if (server->seat && server->seat->keyboard_state.keyboard) {
-        kbd = server->seat->keyboard_state.keyboard;
-      } else {
-        kbd = ensure_virtual_keyboard(server);
-      }
-      static bool logged_missing_keyboard = false;
-      if (!kbd && !logged_missing_keyboard) {
-        logged_missing_keyboard = true;
-      }
-      auto shift_lookup = keycode_for_keysym(kbd, XKB_KEY_Shift_L);
-      xkb_keysym_t modifier_sym_left =
-        server->hotkeyModifier == HotkeyModifier::Alt ? XKB_KEY_Alt_L : XKB_KEY_Super_L;
-      auto modifier_lookup = keycode_for_keysym(kbd, modifier_sym_left);
-      uint32_t base_msec = now_msec;
-      uint32_t step = 0;
-      constexpr uint32_t kReplayHoldMs = 16;
-      for (size_t i = 0; i < ready.size(); ++i) {
-        auto sym = ready[i].sym;
-      auto lookup = keycode_for_keysym(kbd, sym);
-      if (!lookup.has_value() || lookup->keycode == 0) {
-        continue;
-      }
-      uint32_t hw_keycode = lookup->keycode >= 8 ? lookup->keycode - 8 : lookup->keycode;
-      uint32_t time_msec = base_msec + step;
-      bool is_modifier_sym = is_hotkey_sym(server->hotkeyModifier, sym);
-      bool is_shift_sym = sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R;
-      bool is_last = (i + 1) == ready.size();
-      bool replay_has_future = wm->hasPendingReplay();
-      if (is_modifier_sym && server->pendingReplayModifier &&
-          server->pendingReplayModifierKeycode != 0) {
-        // Avoid overlapping modifier presses that clear modifiers out of order.
-          process_key_sym(server,
-                          kbd,
-                          server->pendingReplayModifierSym,
-                          false,
-                          time_msec,
-                          server->pendingReplayModifierKeycode,
-                          true);
-          server->pendingReplayModifier = false;
-          server->pendingReplayModifierKeycode = 0;
-          server->pendingReplayModifierSym = XKB_KEY_NoSymbol;
-        }
-      if ((is_modifier_sym || is_shift_sym) && (replay_has_future || !is_last)) {
-        // Hold modifiers (including shift) across the next keypress to mirror
-        // physical combos like Shift+0.
-        if (is_shift_sym && shift_lookup.has_value() && shift_lookup->keycode) {
-          server->pendingReplayShift = true;
-        }
-        server->pendingReplayModifier = true;
-        server->pendingReplayModifierKeycode = hw_keycode;
-        server->pendingReplayModifierSym = sym;
-        process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
-        // Do not release yet; move to next symbol.
-          step += 1;
-          continue;
-        }
-        if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
-          uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
-                                                         : shift_lookup->keycode;
-          process_key_sym(server,
-                          kbd,
-                          XKB_KEY_Shift_L,
-                          true,
-                          time_msec,
-                          shift_hw,
-                          true);
-          time_msec += 1;
-          step += 1;
-        }
-        process_key_sym(server, kbd, sym, true, time_msec, hw_keycode, true);
-        uint64_t hold_ms = kReplayHoldMs;
-        if (i + 1 < ready.size()) {
-          auto delta_ms = ready[i + 1].ready_ms - ready[i].ready_ms;
-          if (delta_ms > hold_ms) {
-            hold_ms = static_cast<uint32_t>(std::min<uint64_t>(delta_ms, 10000));
-          }
-        }
-        uint32_t release_time = time_msec + static_cast<uint32_t>(hold_ms);
-        server->pendingReplayKeyups.push_back(
-          ReplayKeyRelease{ sym, release_time, hw_keycode, true });
-        if (lookup->needsShift && shift_lookup.has_value() && shift_lookup->keycode) {
-          uint32_t shift_hw = shift_lookup->keycode >= 8 ? shift_lookup->keycode - 8
-                                                         : shift_lookup->keycode;
-          server->pendingReplayKeyups.push_back(
-            ReplayKeyRelease{ XKB_KEY_Shift_L, release_time + 1, shift_hw, true });
-          step += 1;
-        }
-        step += 2;
-        if (server->pendingReplayModifier && !is_modifier_sym && !is_shift_sym) {
-          // Release held modifier after the combo key with a realistic hold so the
-          // replay path mirrors physical key timing.
-          uint32_t modifier_release_time =
-            time_msec + static_cast<uint32_t>(std::max<uint64_t>(hold_ms, kReplayHoldMs));
-          server->pendingReplayKeyups.push_back(
-            ReplayKeyRelease{ server->pendingReplayModifierSym,
-                              modifier_release_time,
-                              server->pendingReplayModifierKeycode,
-                              true });
-          server->pendingReplayModifier = false;
-          server->pendingReplayModifierKeycode = 0;
-          server->pendingReplayModifierSym = XKB_KEY_NoSymbol;
-          step += 1;
-        }
-      }
-      flush_pending_replay_keyups(server, kbd, now_msec);
-    }
-  }
 
   if (server->engine) {
     Controls* controls = server->engine->getControls();
@@ -2156,6 +2015,8 @@ handle_output_frame(wl_listener* listener, void* data)
   server->lastFrameTime = frameStart;
 }
 
+// This is called when wayland detects a new output such as a monitor
+// It sets up size, cursor info, and frame notify handler (which will render each frame)
 void
 handle_new_output(wl_listener* listener, void* data)
 {

@@ -68,9 +68,6 @@ public:
   virtual void registerControls(Controls* controls) = 0;
   virtual void tick() = 0;
   virtual void handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool shiftHeld) = 0;
-  virtual void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries) = 0;
-  virtual std::vector<ReplayEvent> consumeReadyReplaySyms(uint64_t now_ms) = 0;
-  virtual bool hasPendingReplay() const = 0;
   virtual bool consumeScreenshotRequest() = 0;
   virtual void requestScreenshot() = 0;
   virtual bool consumeMenuSpawnPending() = 0;
@@ -192,9 +189,6 @@ public:
   void registerControls(Controls* controls) override;
   void tick() override;
   void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld) override;
-  void keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries) override;
-  std::vector<ReplayEvent> consumeReadyReplaySyms(uint64_t now_ms) override;
-  bool hasPendingReplay() const override { return replayActive; }
   bool consumeScreenshotRequest() override;
   void requestScreenshot() override;
   bool consumeMenuSpawnPending() override { return menuSpawnPending.exchange(false); }

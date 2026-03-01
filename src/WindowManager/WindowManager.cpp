@@ -1110,63 +1110,6 @@ WindowManager::setCursorVisible(bool visible)
 }
 
 void
-WindowManager::keyReplay(const std::vector<std::pair<std::string, uint32_t>>& entries)
-{
-  replayQueue.clear();
-  replayIndex = 0;
-  replayActive = false;
-  replayStart = std::chrono::steady_clock::now();
-  uint64_t cumulative = 0;
-  for (const auto& e : entries) {
-    if (e.first.empty()) {
-      continue;
-    }
-    xkb_keysym_t sym =
-      xkb_keysym_from_name(e.first.c_str(), XKB_KEYSYM_NO_FLAGS);
-    if (sym == XKB_KEY_NoSymbol) {
-      continue;
-    }
-    cumulative += e.second;
-    char name[64] = {0};
-    xkb_keysym_get_name(sym, name, sizeof(name));
-    // Detailed replay log to debug dropped/garbled input; keep to avoid
-    // reintroducing silent failures in future refactors.
-    WL_WM_LOG("WM: keyReplay add sym=%s(%u) delay=%u cumulative=%llu\n",
-              name,
-              sym,
-              e.second,
-              (unsigned long long)cumulative);
-    replayQueue.push_back(ReplayEvent{ sym, cumulative });
-  }
-  WL_WM_LOG("WM: keyReplay queued count=%zu cumulative=%llu\n",
-            replayQueue.size(),
-            (unsigned long long)cumulative);
-  replayActive = !replayQueue.empty();
-}
-
-std::vector<ReplayEvent>
-WindowManager::consumeReadyReplaySyms(uint64_t now_ms)
-{
-  std::vector<ReplayEvent> ready;
-  if (!replayActive) {
-    return ready;
-  }
-  uint64_t start_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        replayStart.time_since_epoch())
-                        .count();
-  uint64_t elapsed = now_ms > start_ms ? now_ms - start_ms : 0;
-  while (replayIndex < replayQueue.size() &&
-         elapsed >= replayQueue[replayIndex].ready_ms) {
-    ready.push_back(replayQueue[replayIndex]);
-    ++replayIndex;
-  }
-  if (replayIndex >= replayQueue.size()) {
-    replayActive = false;
-  }
-  return ready;
-}
-
-void
 WindowManager::requestScreenshot()
 {
   screenshotRequested = true;
