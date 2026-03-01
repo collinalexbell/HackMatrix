@@ -2386,44 +2386,21 @@ WlrServer::create_allocator() {
 }
 
 bool
-init_protocols_and_seat(WlrServer& server)
-{
-  server.output_layout = wlr_output_layout_create(server.display);
-
-  server.compositor = wlr_compositor_create(server.display, 5, server.renderer);
-  if (!server.compositor) {
-    std::fprintf(stderr, "Failed to create compositor\n");
-    return false;
-  }
-  // Some clients (e.g., foot) require wl_subcompositor to be advertised.
-  if (!wlr_subcompositor_create(server.display)) {
-    std::fprintf(stderr, "Failed to create subcompositor\n");
-    return false;
-  }
-  server.layer_shell = wlr_layer_shell_v1_create(server.display, 4);
-  if (!server.layer_shell) {
-    std::fprintf(stderr, "Failed to create layer-shell\n");
-    return false;
-  }
-  server.xdg_shell = wlr_xdg_shell_create(server.display, 3);
-  if (!server.xdg_shell) {
-    std::fprintf(stderr, "Failed to create xdg-shell\n");
-    return false;
-  }
-  server.seat = wlr_seat_create(server.display, "seat0");
-  if (server.seat) {
-    wlr_seat_set_capabilities(server.seat,
+WlrServer::create_seat() {
+  seat = wlr_seat_create(display, "seat0");
+  if (seat) {
+    wlr_seat_set_capabilities(seat,
                               WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
     // Prefer the default theme, but allow fallback later if it is missing.
-    server.cursor_mgr = wlr_xcursor_manager_create("default", 24);
-    if (server.cursor_mgr) {
-      wlr_xcursor_manager_load(server.cursor_mgr, 1);
+    cursor_mgr = wlr_xcursor_manager_create("default", 24);
+    if (cursor_mgr) {
+      wlr_xcursor_manager_load(cursor_mgr, 1);
     }
-    server.cursor = wlr_cursor_create();
-    if (server.cursor && server.output_layout) {
-      wlr_cursor_attach_output_layout(server.cursor, server.output_layout);
+    cursor = wlr_cursor_create();
+    if (cursor && output_layout) {
+      wlr_cursor_attach_output_layout(cursor, output_layout);
     }
-    server.request_set_cursor.notify = [](wl_listener* listener, void* data) {
+    request_set_cursor.notify = [](wl_listener* listener, void* data) {
       auto* server =
         wl_container_of(listener, static_cast<WlrServer*>(nullptr), request_set_cursor);
       auto* event = static_cast<wlr_seat_pointer_request_set_cursor_event*>(data);
@@ -2444,32 +2421,66 @@ init_protocols_and_seat(WlrServer& server)
       server->pointer_x = server->cursor->x;
       server->pointer_y = server->cursor->y;
     };
-    wl_signal_add(&server.seat->events.request_set_cursor, &server.request_set_cursor);
+    wl_signal_add(&seat->events.request_set_cursor, &request_set_cursor);
     // Set an initial default cursor.
-    set_cursor_visible(&server, wayland_pointer_focus_requested(&server));
+    set_cursor_visible(this, wayland_pointer_focus_requested(this));
+    return true;
+  } else {
+    std::fprintf(stderr, "Failed to create seat");
+    return false;
   }
-  server.data_device_manager = wlr_data_device_manager_create(server.display);
+}
+
+bool
+WlrServer::init_protocols()
+{
+  output_layout = wlr_output_layout_create(display);
+
+  compositor = wlr_compositor_create(display, 5, renderer);
+  if (!compositor) {
+    std::fprintf(stderr, "Failed to create compositor\n");
+    return false;
+  }
+  // Some clients (e.g., foot) require wl_subcompositor to be advertised.
+  if (!wlr_subcompositor_create(display)) {
+    std::fprintf(stderr, "Failed to create subcompositor\n");
+    return false;
+  }
+  layer_shell = wlr_layer_shell_v1_create(display, 4);
+  if (!layer_shell) {
+    std::fprintf(stderr, "Failed to create layer-shell\n");
+    return false;
+  }
+  xdg_shell = wlr_xdg_shell_create(display, 3);
+  if (!xdg_shell) {
+    std::fprintf(stderr, "Failed to create xdg-shell\n");
+    return false;
+  }
+  
+  data_device_manager = wlr_data_device_manager_create(display);
   // Advertise the screencopy protocol so tools like grim can capture frames.
-  server.screencopy_manager = wlr_screencopy_manager_v1_create(server.display);
-  if (server.output_layout) {
-    server.xdg_output_manager =
-      wlr_xdg_output_manager_v1_create(server.display, server.output_layout);
+  screencopy_manager = wlr_screencopy_manager_v1_create(display);
+  if (output_layout) {
+    xdg_output_manager =
+      wlr_xdg_output_manager_v1_create(display, output_layout);
   }
   return true;
 }
 
 void
-register_global_listeners(WlrServer& server)
+WlrServer::register_listeners()
 {
-  server.new_layer_surface.notify = handle_new_layer_surface;
-  wl_signal_add(&server.layer_shell->events.new_surface, &server.new_layer_surface);
-  server.new_xdg_surface.notify = handle_new_xdg_surface;
-  wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
+  new_layer_surface.notify = handle_new_layer_surface;
+  wl_signal_add(&layer_shell->events.new_surface, &new_layer_surface);
 
-  server.new_output.notify = handle_new_output;
-  wl_signal_add(&server.backend->events.new_output, &server.new_output);
-  server.new_input.notify = handle_new_input;
-  wl_signal_add(&server.backend->events.new_input, &server.new_input);
+  new_xdg_surface.notify = handle_new_xdg_surface;
+  wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
+
+  new_output.notify = handle_new_output;
+  wl_signal_add(&backend->events.new_output, &new_output);
+
+  new_input.notify = handle_new_input;
+  wl_signal_add(&backend->events.new_input, &new_input);
 }
 
 bool
