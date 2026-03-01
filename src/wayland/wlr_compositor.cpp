@@ -461,15 +461,6 @@ ensure_wayland_apps_registered(WlrServer* server)
       }
     }
   }
-#if WLROOTS_DEBUG_LOGS
-  f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
-  if (!server->pending_wl_actions.empty() && f) {
-    std::fprintf(f,
-                 "wayland deferred queue drain: count=%zu\n",
-                 server->pending_wl_actions.size());
-    std::fflush(f);
-  }
-#endif
   auto actions = std::move(server->pending_wl_actions);
   server->pending_wl_actions.clear();
   std::vector<PendingWlAction> retry;
