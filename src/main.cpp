@@ -9,17 +9,12 @@ int main(int argc, char** argv, char** envp) {
   server.hotkeyModifierMask = hotkey_modifier_mask(server.hotkeyModifier);
 
   initialize_wlr_logging();
-
-  write_pid_for_kill();
   apply_backend_env_defaults();
 
-  if(!server.create_display()) { return EXIT_FAILURE; }
-  if(!server.create_backend()) { return EXIT_FAILURE; }
-  if(!server.create_renderer()) { return EXIT_FAILURE; }
-  if(!server.create_allocator()) { return EXIT_FAILURE; }
-  if(!server.init_protocols()) { return EXIT_FAILURE; }
-  if(!server.create_seat()) { return EXIT_FAILURE; }
-
+  if(!server.init_resources()) { 
+    return EXIT_FAILURE; 
+  }
+ 
   server.register_listeners();
 
   if(!server.start_backend_and_socket()) { return EXIT_FAILURE; }

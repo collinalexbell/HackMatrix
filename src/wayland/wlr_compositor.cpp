@@ -1613,10 +1613,8 @@ handle_new_layer_surface(wl_listener* listener, void* data)
       return;
     }
     if (!handle->configured) {
-      uint32_t out_w =
-        handle->server->primary_output ? handle->server->primary_output->width : SCREEN_WIDTH;
-      uint32_t out_h =
-        handle->server->primary_output ? handle->server->primary_output->height : SCREEN_HEIGHT;
+      uint32_t out_w = handle->server->primary_output->width;
+      uint32_t out_h = handle->server->primary_output->height;
       uint32_t desired_w =
         handle->layer && handle->layer->current.desired_width > 0
           ? handle->layer->current.desired_width
@@ -2273,15 +2271,6 @@ hotkey_modifier_mask(HotkeyModifier mod)
   return mod == HotkeyModifier::Alt ? WLR_MODIFIER_ALT : WLR_MODIFIER_LOGO;
 }
 
-void write_pid_for_kill() {
-  const char* pidPath = "/tmp/matrix-wlroots.pid";
-  FILE* f = std::fopen(pidPath, "w");
-  if (f) {
-    std::fprintf(f, "%d\n", (int)getpid());
-    std::fclose(f);
-  }
-}
-
 void initialize_wlr_logging() { wlr_log_init(WLR_DEBUG, nullptr); }
 
 // --- Main bootstrap helpers -------------------------------------------------
@@ -2504,6 +2493,15 @@ WlrServer::start_backend_and_socket()
   wlr_log(WLR_DEBUG,
           "wlroots compositor ready; WAYLAND_DISPLAY=%s",
           socket ? socket : "(null)");
+  return true;
+}
+
+bool WlrServer::init_resources()
+{
+  if (!create_display() || !create_backend() || !create_renderer() ||
+      !create_allocator() || !init_protocols() || !create_seat()) {
+    return false;
+  }
   return true;
 }
 

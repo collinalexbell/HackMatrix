@@ -109,6 +109,7 @@ struct ReplayKeyRelease {
 
 struct WlrServer {
   ~WlrServer();
+  bool init_resources();
   bool create_display();
   bool create_backend();
   bool create_renderer();
@@ -170,7 +171,6 @@ HotkeyModifier parse_hotkey_modifier();
 uint32_t hotkey_modifier_mask(HotkeyModifier modifier);
 const char* hotkey_modifier_label(HotkeyModifier modifier);
 void delay_if_launching_nested_from_hackmatrix(int argc, char** argv);
-void write_pid_for_kill();
 void log_env();
 void initialize_wlr_logging();
 
