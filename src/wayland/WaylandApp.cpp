@@ -455,23 +455,6 @@ WaylandApp::appTexture()
   size_t srcStride = 0;
   std::vector<uint8_t> fallbackPixels;
   bool beganDataPtrAccess = false;
-
-  static const bool kLogSamples = []() {
-    const char* env = std::getenv("MATRIX_WAYLANDAPP_SAMPLE_LOGS");
-    return env && env[0] != '\0';
-  };
-  auto logSamplesEnabled = []() {
-    return kLogSamples;
-  };
-
-  auto logFileForSamples = []() -> FILE* {
-    static FILE* logFile = []() {
-      FILE* f = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-      return f ? f : stderr;
-    }();
-    return logFile;
-  };
-
   bool haveData = false;
 
   if (wlr_buffer_begin_data_ptr_access(buffer,
@@ -483,18 +466,6 @@ WaylandApp::appTexture()
     srcStride = stride;
     beganDataPtrAccess = true;
     haveData = true;
-    if (logSamplesEnabled()) {
-      FILE* logFile = logFileForSamples();
-      if (logFile) {
-        std::fprintf(logFile,
-                     "wayland-app: begin_data_ptr_access ok fmt=%u stride=%zu size=%dx%d\n",
-                     format,
-                     stride,
-                     width,
-                     height);
-        std::fflush(logFile);
-      }
-    }
   } else if (renderer) {
     // Fallback: read pixels via wlroots renderer (handles dmabuf-only buffers).
     wlr_texture* tex = wlr_texture_from_buffer(renderer, buffer);
@@ -515,67 +486,13 @@ WaylandApp::appTexture()
         stride = srcStride;
         format = opts.format;
         haveData = true;
-        if (logSamplesEnabled()) {
-          FILE* logFile = logFileForSamples();
-          if (logFile) {
-            std::fprintf(logFile,
-                         "wayland-app: read_pixels fallback ok fmt=%u stride=%u size=%dx%d\n",
-                         opts.format,
-                         opts.stride,
-                         width,
-                         height);
-            std::fflush(logFile);
-          }
-        }
-      } else if (logSamplesEnabled()) {
-        FILE* logFile = logFileForSamples();
-        if (logFile) {
-          std::fprintf(logFile,
-                       "wayland-app: read_pixels fallback failed size=%dx%d\n",
-                       width,
-                       height);
-          std::fflush(logFile);
-        }
       }
       wlr_texture_destroy(tex);
     }
   }
 
   if (!haveData) {
-    if (logSamplesEnabled()) {
-      FILE* logFile = logFileForSamples();
-      if (logFile) {
-        std::fprintf(logFile,
-                     "wayland-app: begin_data_ptr_access failed fmt=%u stride=%zu size=%dx%d\n",
-                     format,
-                     stride,
-                     width,
-                     height);
-        std::fflush(logFile);
-      }
-    }
     return;
-  }
-
-  if (logSamplesEnabled()) {
-    FILE* logFile = logFileForSamples();
-    if (logFile) {
-      static int lastW = -1;
-      static int lastH = -1;
-      if (width != lastW || height != lastH) {
-        std::fprintf(logFile,
-                     "wayland-app: uploading %dx%d stride=%zu fmt=%u texId=%d unit=%d\n",
-                     width,
-                     height,
-                     srcStride,
-                     format,
-                     textureId,
-                     textureUnit - GL_TEXTURE0);
-        std::fflush(logFile);
-        lastW = width;
-        lastH = height;
-      }
-    }
   }
 
   // Fast path: directly upload all common 32-bit formats without swizzle when
@@ -645,23 +562,6 @@ WaylandApp::appTexture()
     uploadedWidth = width;
     uploadedHeight = height;
     GLenum errAfter = glGetError();
-    if constexpr (kWlrootsDebugLogs) {
-      FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-      if (logFile2) {
-        std::fprintf(logFile2,
-                     "WaylandApp direct upload: texId=%d unit=%d texSize=%dx%d stride=%zu fmt=%u glFmt=0x%x glErr=0x%x\n",
-                     textureId,
-                     textureUnit - GL_TEXTURE0,
-                     width,
-                     height,
-                     srcStride,
-                     format,
-                     glFormat,
-                     errAfter);
-        std::fflush(logFile2);
-        std::fclose(logFile2);
-      }
-    }
     needsImport = false;
     if (beganDataPtrAccess) {
       wlr_buffer_end_data_ptr_access(buffer);
@@ -870,31 +770,6 @@ WaylandApp::appTexture()
     maxA = 255;
   }
 
-  if (logSamplesEnabled() && !sampleLogged) {
-    FILE* logFile = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-    if (logFile) {
-      uint8_t firstR = static_cast<uint8_t>((firstPixel >> 24) & 0xFF);
-      uint8_t firstG = static_cast<uint8_t>((firstPixel >> 16) & 0xFF);
-      uint8_t firstB = static_cast<uint8_t>((firstPixel >> 8) & 0xFF);
-      uint8_t firstA = static_cast<uint8_t>(firstPixel & 0xFF);
-      bool ok = (firstR | firstG | firstB | firstA | centerPixel) != 0;
-      std::fprintf(logFile,
-                   "wayland-app: sample firstPixel=(%u,%u,%u,%u) center=%x size=%dx%d fmt=%u ok=%d\n",
-                   firstR,
-                   firstG,
-                   firstB,
-                   firstA,
-                   centerPixel,
-                   width,
-                   height,
-                   format,
-                   ok ? 1 : 0);
-      std::fflush(logFile);
-      std::fclose(logFile);
-      sampleLogged = true;
-    }
-  }
-
   glActiveTexture(textureUnit);
   glBindTexture(GL_TEXTURE_2D, textureId);
   GLboolean valid = glIsTexture(textureId);
@@ -932,37 +807,6 @@ WaylandApp::appTexture()
                     GL_UNSIGNED_BYTE,
                     converted.data());
     errAfter = glGetError();
-  }
-  if constexpr (kWlrootsDebugLogs) {
-    FILE* logFile2 = std::fopen("/tmp/matrix-wlroots-waylandapp.log", "a");
-    if (logFile2) {
-      std::fprintf(logFile2,
-                   "WaylandApp upload: texId=%d unit=%d texSize=%dx%d uploadSize=%dx%d stride=%zu fmt=%u glErr=0x%x firstPixel=0x%08x rawFirst=0x%08x center=0x%08x rawCenter=0x%08x rowChecksum=%u min=(%u,%u,%u,%u) max=(%u,%u,%u,%u)\n",
-                   textureId,
-                   textureUnit - GL_TEXTURE0,
-                   width,
-                   height,
-                   width,
-                   height,
-                   stride,
-                   format,
-                   errAfter,
-                   firstPixel,
-                   rawFirstBytes,
-                   centerPixel,
-                   rawCenterBytes,
-                   rowChecksum,
-                   minR,
-                   minG,
-                   minB,
-                   minA,
-                   maxR,
-                   maxG,
-                   maxB,
-                   maxA);
-      std::fflush(logFile2);
-      std::fclose(logFile2);
-    }
   }
   importedBuffer = buffer;
   needsImport = false;
