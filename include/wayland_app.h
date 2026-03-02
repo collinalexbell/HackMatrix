@@ -105,7 +105,7 @@ public:
   bool isSelected() override { return selected; }
 
   void focus(unsigned long /*matrix*/) override { focused = true; }
-  void unfocus(unsigned long /*matrix*/) override { focused = false; }
+  void unfocus(unsigned long /*matrix*/) override;
   void takeInputFocus() override;
   void requestSize(int width, int height);
   void setSeat(wlr_seat* seat, wlr_surface* surface)

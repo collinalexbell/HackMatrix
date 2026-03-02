@@ -108,20 +108,6 @@ currentTimeSeconds()
   return elapsed.count();
 }
 
-static void
-clear_input_forces(WlrServer* server)
-{
-  if (!server) {
-    return;
-  }
-  server->input.forward = false;
-  server->input.back = false;
-  server->input.left = false;
-  server->input.right = false;
-  server->input.delta_x = 0.0;
-  server->input.delta_y = 0.0;
-}
-
 static size_t
 wayland_app_count(WlrServer* server)
 {
@@ -860,24 +846,12 @@ process_key_sym(WlrServer* server,
   if (server->engine) {
     Controls* controls = server->engine->getControls();
     uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
-    bool modifierHeld =
-      (mods & server->hotkeyModifierMask) || server->replayModifierActive;
+    bool modifierHeld = (mods & server->hotkeyModifierMask);
     bool shiftHeld = (mods & WLR_MODIFIER_SHIFT) || server->pendingReplayShift ||
                      server->replayShiftHeld > 0;
     if (controls) {
       auto resp =
         controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld, waylandFocusActive);
-      bool handled = resp.consumed || resp.blockClientDelivery || resp.requestQuit ||
-                     resp.clearInputForces || resp.clearSeatFocus;
-      
-      if (resp.clearInputForces) {
-        clear_input_forces(server);
-      }
-      if (resp.clearSeatFocus && server->seat) {
-        wlr_seat_keyboard_notify_clear_focus(server->seat);
-        wlr_seat_pointer_notify_clear_focus(server->seat);
-        server->replayModifierActive = false;
-      }
       if (resp.requestQuit) {
         wl_display_terminate(server->display);
         return;
@@ -934,7 +908,6 @@ process_key_sym(WlrServer* server,
               if (auto* controls = server->engine->getControls()) {
                 controls->clearMovementInput();
               }
-              clear_input_forces(server);
             }
           }
         }

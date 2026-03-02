@@ -173,6 +173,12 @@ WaylandApp::~WaylandApp()
   }
 }
 
+void WaylandApp::unfocus(unsigned long /*matrix*/) { 
+    focused = false; 
+    wlr_seat_keyboard_notify_clear_focus(seat);
+    wlr_seat_pointer_notify_clear_focus(seat);
+}
+
 void
 WaylandApp::handle_destroy()
 {

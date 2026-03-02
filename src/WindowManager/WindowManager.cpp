@@ -994,19 +994,6 @@ void WindowManager::focusApp(entt::entity appEntity) {
 
 void WindowManager::unfocusApp() {
   pruneInvalidFocus();
-  if (waylandMode) {
-    auto ent = currentlyFocusedApp.has_value() ? (int)entt::to_integral(*currentlyFocusedApp)
-                                               : -1;
-    size_t wlCount = 0;
-    if (registry) {
-      auto view = registry->view<WaylandApp::Component>();
-      view.each([&](auto /*e*/, auto& /*comp*/) { ++wlCount; });
-    }
-    WL_WM_LOG("WM: unfocusApp (wayland) ent=%d wlCount=%zu\n", ent, wlCount);
-    currentlyFocusedApp = std::nullopt;
-    pendingFocusedApp = std::nullopt;
-    return;
-  }
   logger->debug("unfocusing app");
   if (!currentlyFocusedApp.has_value()) {
     return;
@@ -1016,8 +1003,8 @@ void WindowManager::unfocusApp() {
     currentlyFocusedApp = std::nullopt;
     return;
   }
-  auto& app = registry->get<X11App>(ent);
-  app.unfocus(matrix);
+  auto& appComponent = registry->get<WaylandApp::Component>(ent);
+  appComponent.app->unfocus(matrix);
   currentlyFocusedApp = std::nullopt;
   pendingFocusedApp = std::nullopt;
   WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n", (int)entt::to_integral(ent));

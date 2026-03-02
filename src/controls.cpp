@@ -489,6 +489,8 @@ void Controls::pollPressedKeys() {
   }
 }
 
+
+// called by the wayland server when input is detected
 ControlResponse
 Controls::handleKeySym(xkb_keysym_t sym,
                        bool is_pressed,
