@@ -836,20 +836,6 @@ keycode_for_keysym(wlr_keyboard* keyboard, xkb_keysym_t sym)
   return std::nullopt;
 }
 
-// Determines if sym is a hotkey and then either increments or decrements
-// the hotkey count depending of if the event was a pressed or not (ie released)
-static void
-recompute_hotkeys_held(WlrServer* server, xkb_keysym_t sym, bool pressed) {
-  if (isHotkeySym(server, sym)) {
-    if (pressed) {
-      ++server->replayModifierHeld;
-    } else if (server->replayModifierHeld > 0) {
-      --server->replayModifierHeld;
-    }
-    server->replayModifierActive = server->replayModifierHeld > 0;
-  }
-}
-
 static void
 process_key_sym(WlrServer* server,
                 wlr_keyboard* keyboard,
@@ -861,47 +847,6 @@ process_key_sym(WlrServer* server,
 {
   if (!server) {
     return;
-  }
-
-  recompute_hotkeys_held(server, sym, pressed);
-
-  if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
-    if (pressed) {
-      ++server->replayShiftHeld;
-      server->pendingReplayShift = true;
-    } else if (server->replayShiftHeld > 0) {
-      --server->replayShiftHeld;
-      server->pendingReplayShift = false;
-    }
-  }
-  if (update_mods && keyboard) {
-    uint32_t depressed = keyboard->modifiers.depressed;
-    if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
-      if (pressed) {
-        depressed |= WLR_MODIFIER_SHIFT;
-      } else {
-        depressed &= ~WLR_MODIFIER_SHIFT;
-      }
-    }
-    if (isHotkeySym(server, sym)) {
-      if (pressed) {
-        depressed |= server->hotkeyModifierMask;
-      } else {
-        // Only clear modifier when no other matching key is logically held.
-        if (server->replayModifierHeld <= 0) {
-          depressed &= ~server->hotkeyModifierMask;
-        }
-      }
-    }
-    keyboard->modifiers.depressed = depressed;
-    wlr_keyboard_notify_modifiers(keyboard,
-                                  keyboard->modifiers.depressed,
-                                  keyboard->modifiers.latched,
-                                  keyboard->modifiers.locked,
-                                  keyboard->modifiers.group);
-    if (server->seat) {
-      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-    }
   }
 
   // Detect if a Wayland app currently has WM focus; if so, avoid feeding
