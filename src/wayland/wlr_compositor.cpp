@@ -836,6 +836,20 @@ keycode_for_keysym(wlr_keyboard* keyboard, xkb_keysym_t sym)
   return std::nullopt;
 }
 
+// Determines if sym is a hotkey and then either increments or decrements
+// the hotkey count depending of if the event was a pressed or not (ie released)
+static void
+recompute_hotkeys_held(WlrServer* server, xkb_keysym_t sym, bool pressed) {
+  if (isHotkeySym(server, sym)) {
+    if (pressed) {
+      ++server->replayModifierHeld;
+    } else if (server->replayModifierHeld > 0) {
+      --server->replayModifierHeld;
+    }
+    server->replayModifierActive = server->replayModifierHeld > 0;
+  }
+}
+
 static void
 process_key_sym(WlrServer* server,
                 wlr_keyboard* keyboard,
@@ -849,14 +863,8 @@ process_key_sym(WlrServer* server,
     return;
   }
 
-  if (isHotkeySym(server, sym)) {
-    if (pressed) {
-      ++server->replayModifierHeld;
-    } else if (server->replayModifierHeld > 0) {
-      --server->replayModifierHeld;
-    }
-    server->replayModifierActive = server->replayModifierHeld > 0;
-  }
+  recompute_hotkeys_held(server, sym, pressed);
+
   if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
     if (pressed) {
       ++server->replayShiftHeld;
@@ -922,9 +930,6 @@ process_key_sym(WlrServer* server,
       (mods & server->hotkeyModifierMask) || server->replayModifierActive;
     bool shiftHeld = (mods & WLR_MODIFIER_SHIFT) || server->pendingReplayShift ||
                      server->replayShiftHeld > 0;
-    if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
-        sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
-    }
     if (controls) {
       auto resp =
         controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld, waylandFocusActive);
