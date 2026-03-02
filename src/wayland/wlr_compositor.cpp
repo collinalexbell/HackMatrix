@@ -849,10 +849,6 @@ process_key_sym(WlrServer* server,
     return;
   }
 
-  if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
-      sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
-  }
-
   if (isHotkeySym(server, sym)) {
     if (pressed) {
       ++server->replayModifierHeld;
