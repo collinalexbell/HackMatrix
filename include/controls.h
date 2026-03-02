@@ -1,13 +1,15 @@
 #pragma once
 
-#include "blocks.h"
-#include "camera.h"
 #include <functional>
 #include <mutex>
+#include <queue>
+#include <unordered_set>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <xkbcommon/xkbcommon.h>
 #include <memory>
+#include "blocks.h"
+#include "camera.h"
 #include "app.h"
 #include "world.h"
 #include "WindowManager/WindowManager.h"
@@ -54,7 +56,16 @@ class Controls
   shared_ptr<WindowManager::Space> windowManagerSpace;
   bool keysEnabled = true;
 
-  void handleControls(GLFWwindow* window, Camera* camera);
+  std::unordered_set<xkb_keysym_t> pressed;
+
+  struct KeysymEvent {
+    xkb_keysym_t sym;
+    bool pressed;
+  };
+  std::queue<KeysymEvent> keysymQueue;
+  std::mutex keysymMutex;
+
+  void handleMovement();
   void handleQuit(GLFWwindow* window);
   void handleModEscape(GLFWwindow* window);
   void handleToggleCursor(GLFWwindow* window);
@@ -75,6 +86,7 @@ class Controls
   void handleMakeWindowBootable(GLFWwindow* window);
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
+  void handleKeys();
   void handleClicks(GLFWwindow* window, World* world);
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
@@ -95,6 +107,8 @@ public:
     lastWaylandFocusActive = false;
   }
   void poll(GLFWwindow* window, Camera* camera, World* world);
+  void poll();
+  void pollPressedKeys();
   void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void goToApp(entt::entity);
   void moveTo(glm::vec3 pos,

@@ -59,6 +59,7 @@ public:
   virtual void createAndRegisterApps(char** envp) = 0;
   virtual optional<entt::entity> getCurrentlyFocusedApp() = 0;
   virtual optional<entt::entity> getPendingFocusedApp() = 0;
+  virtual bool hasCurrentOrPendingFocus() = 0;
   virtual void focusApp(entt::entity) = 0;
   virtual void wire(shared_ptr<WindowManagerInterface>, Camera* camera, Renderer* renderer) = 0;
   virtual void handleSubstructure() = 0;
@@ -179,6 +180,7 @@ public:
   ~WindowManager();
   optional<entt::entity> getCurrentlyFocusedApp() override;
   optional<entt::entity> getPendingFocusedApp() override { return pendingFocusedApp; }
+  bool hasCurrentOrPendingFocus() override; 
   void focusApp(entt::entity) override;
   void wire(WindowManagerPtr sharedThis, Camera* camera, Renderer* renderer) override;
   void handleSubstructure() override;

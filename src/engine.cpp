@@ -267,8 +267,7 @@ Engine::frame(double frameStart)
     api->mutateEntities();
   }
 
-
-
+  controls->pollPressedKeys();
   renderer->render();
 
   if (engineGui) {
@@ -310,10 +309,7 @@ Engine::frame(double frameStart)
     disableKeysIfImguiActive();
   }
   if (controls) {
-    controls->runQueuedActions();
-    if (window != nullptr) {
-      controls->poll(window, camera, world);
-    }
+    controls->poll();
   }
   multiplayerClientIteration(frameStart);
 

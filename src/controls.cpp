@@ -58,6 +58,13 @@ Controls::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 }
 
 void
+Controls::poll() {
+  runQueuedActions();
+  pollPressedKeys();
+  handleKeys();
+}
+
+void
 Controls::poll(GLFWwindow* window, Camera* camera, World* world)
 {
   runQueuedActions();
@@ -66,13 +73,19 @@ Controls::poll(GLFWwindow* window, Camera* camera, World* world)
   doDeferedActions();
 }
 
+void Controls::handleKeys() {
+  auto appFocused = wm->hasCurrentOrPendingFocus();
+  if(!appFocused){
+    handleMovement();
+  }
+}
+
 void
 Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
 {
   handleQuit(window);
   if (keysEnabled) {
     handleModEscape(window);
-    handleControls(window, camera);
     handleToggleCursor(window);
     handleToggleApp(window, world, camera);
     handleScreenshot(window);
@@ -254,13 +267,13 @@ Controls::handleClicks(GLFWwindow* window, World* world)
 }
 
 void
-Controls::handleControls(GLFWwindow* window, Camera* camera)
+Controls::handleMovement()
 {
 
-  bool up = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
-  bool down = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
-  bool left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-  bool right = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+  bool up = pressed.count(XKB_KEY_w) > 0;
+  bool down = pressed.count(XKB_KEY_s) > 0;
+  bool left = pressed.count(XKB_KEY_a) > 0;
+  bool right = pressed.count(XKB_KEY_d) > 0;
   camera->handleTranslateForce(up, down, left, right);
 }
 
@@ -471,18 +484,41 @@ Controls::handlePointerButton(uint32_t button, bool pressed)
   return false;
 }
 
+void Controls::pollPressedKeys() {
+  std::lock_guard<std::mutex> lock(keysymMutex);
+  KeysymEvent keysymEvent;
+  while(keysymQueue.size() > 0) {
+    keysymEvent = keysymQueue.front();
+    if(keysymEvent.pressed) {
+      pressed.insert(keysymEvent.sym); 
+    } else {
+      pressed.erase(keysymEvent.sym);
+    }
+    keysymQueue.pop();
+  }
+}
+
 ControlResponse
 Controls::handleKeySym(xkb_keysym_t sym,
-                       bool pressed,
+                       bool is_pressed,
                        bool modifierHeld,
                        bool shiftHeld,
                        bool waylandFocusActive)
 {
-  ControlResponse resp;
+
+  {
+    std::lock_guard<std::mutex> lock(keysymMutex);
+    keysymQueue.push(KeysymEvent{sym, is_pressed});
+  }
+
+
   lastWaylandFocusActive = waylandFocusActive;
-  if (!pressed) {
+  ControlResponse resp;
+  if (!is_pressed) {
     return resp;
   }
+
+  //handleControls(sym);
 
   if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
     lastShiftPressTime = nowSeconds();
@@ -497,7 +533,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
       sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
     log_controls("controls: debug sym=%u pressed=%d modifier=%d shift=%d focus=%d\n",
                  sym,
-                 pressed ? 1 : 0,
+                 is_pressed ? 1 : 0,
                  modifierHeld ? 1 : 0,
                  shiftHeld ? 1 : 0,
                  waylandFocusActive ? 1 : 0);

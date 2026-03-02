@@ -339,6 +339,20 @@ WindowManager::wire(WindowManagerPtr sharedThis,
   this->camera = camera;
 }
 
+bool
+WindowManager::hasCurrentOrPendingFocus()
+{
+  auto rv = false;
+  std::optional<entt::entity> focusCandidate = getPendingFocusedApp();
+  if (!focusCandidate) {
+    focusCandidate = getCurrentlyFocusedApp();
+  }
+  if (focusCandidate) {
+    rv = true;
+  }
+  return rv;
+}
+
 optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {
     return currentlyFocusedApp;
  }

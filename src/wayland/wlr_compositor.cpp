@@ -854,20 +854,10 @@ process_key_sym(WlrServer* server,
   bool waylandFocusActive = false;
   if (server->engine) {
     if (auto wm = server->engine->getWindowManager()) {
-      std::optional<entt::entity> focusCandidate = wm->getPendingFocusedApp();
-      if (!focusCandidate) {
-        focusCandidate = wm->getCurrentlyFocusedApp();
-      }
-      if (focusCandidate) {
-        if (server->registry &&
-            server->registry->all_of<WaylandApp::Component>(*focusCandidate)) {
-          waylandFocusActive = true;
-        }
-      }
+      waylandFocusActive = wm->hasCurrentOrPendingFocus(); 
     }
   }
-
-  if (pressed && server->engine) {
+  if (server->engine) {
     Controls* controls = server->engine->getControls();
     uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
     bool modifierHeld =
@@ -897,6 +887,7 @@ process_key_sym(WlrServer* server,
       }
     }
   }
+  /*
   switch (sym) {
     case XKB_KEY_w:
     case XKB_KEY_W:
@@ -933,6 +924,8 @@ process_key_sym(WlrServer* server,
     default:
       break;
   }
+  */
+  
   if constexpr (kWlrootsDebugLogs) {
     FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
     if (f) {
