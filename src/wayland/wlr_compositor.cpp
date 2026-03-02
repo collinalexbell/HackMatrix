@@ -887,45 +887,7 @@ process_key_sym(WlrServer* server,
       }
     }
   }
-  /*
-  switch (sym) {
-    case XKB_KEY_w:
-    case XKB_KEY_W:
-      if (!waylandFocusActive) {
-        server->input.forward = pressed;
-      } else if (!pressed) {
-        server->input.forward = false;
-      }
-      break;
-    case XKB_KEY_s:
-    case XKB_KEY_S:
-      if (!waylandFocusActive) {
-        server->input.back = pressed;
-      } else if (!pressed) {
-        server->input.back = false;
-      }
-      break;
-    case XKB_KEY_a:
-    case XKB_KEY_A:
-      if (!waylandFocusActive) {
-        server->input.left = pressed;
-      } else if (!pressed) {
-        server->input.left = false;
-      }
-      break;
-    case XKB_KEY_d:
-    case XKB_KEY_D:
-      if (!waylandFocusActive) {
-        server->input.right = pressed;
-      } else if (!pressed) {
-        server->input.right = false;
-      }
-      break;
-    default:
-      break;
-  }
-  */
-  
+ 
   if constexpr (kWlrootsDebugLogs) {
     FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
     if (f) {

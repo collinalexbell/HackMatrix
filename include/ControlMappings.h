@@ -5,7 +5,6 @@
 
 // Map for direct key mappings (e.g., "W" -> GLFW_KEY_W)
 class ControlMappings {
-  static std::unordered_map<std::string, int> keyMap;
   std::unordered_map<std::string, int> functionMap;
   std::unordered_map<std::string, std::string> functionNameMap;
  public:

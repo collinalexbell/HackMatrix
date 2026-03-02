@@ -66,7 +66,6 @@ class Controls
   std::mutex keysymMutex;
 
   void handleMovement();
-  void handleQuit(GLFWwindow* window);
   void handleModEscape(GLFWwindow* window);
   void handleToggleCursor(GLFWwindow* window);
   void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
@@ -115,6 +114,7 @@ public:
               optional<glm::vec3> rotation,
               float secs,
               optional<function<void()>> = nullopt);
+  bool matchesConfiguredKey(xkb_keysym_t sym, const std::string fn);
   void runQueuedActions();
   ControlResponse handleKeySym(xkb_keysym_t sym,
                                bool pressed,

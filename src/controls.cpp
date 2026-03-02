@@ -83,7 +83,7 @@ void Controls::handleKeys() {
 void
 Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
 {
-  handleQuit(window);
+  //handleQuit(window);
   if (keysEnabled) {
     handleModEscape(window);
     handleToggleCursor(window);
@@ -275,15 +275,6 @@ Controls::handleMovement()
   bool left = pressed.count(XKB_KEY_a) > 0;
   bool right = pressed.count(XKB_KEY_d) > 0;
   camera->handleTranslateForce(up, down, left, right);
-}
-
-void
-Controls::handleQuit(GLFWwindow* window)
-{
-  auto quitKey = controlMappings.getKey("quit");
-  if (glfwGetKey(window, quitKey)) {
-    glfwSetWindowShouldClose(window, true);
-  }
 }
 
 void
@@ -518,8 +509,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
-  //handleControls(sym);
-
   if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R) {
     lastShiftPressTime = nowSeconds();
     log_controls("controls: shift pressed\n");
@@ -529,33 +518,13 @@ Controls::handleKeySym(xkb_keysym_t sym,
     lastShiftPressTime = nowSeconds();
   }
 
-  if (sym == XKB_KEY_equal || sym == XKB_KEY_plus || sym == XKB_KEY_minus ||
-      sym == XKB_KEY_underscore || sym == XKB_KEY_0 || sym == XKB_KEY_9) {
-    log_controls("controls: debug sym=%u pressed=%d modifier=%d shift=%d focus=%d\n",
-                 sym,
-                 is_pressed ? 1 : 0,
-                 modifierHeld ? 1 : 0,
-                 shiftHeld ? 1 : 0,
-                 waylandFocusActive ? 1 : 0);
-  }
-
-  auto matchesConfiguredKey = [&](const std::string& fn) -> bool {
-    auto keyName = controlMappings.getKeyName(fn);
-    if (!keyName.has_value()) {
-      return false;
-    }
-    xkb_keysym_t configured =
-      xkb_keysym_from_name(keyName->c_str(), XKB_KEYSYM_CASE_INSENSITIVE);
-    return configured != XKB_KEY_NoSymbol && sym == configured;
-  };
-
   // If a Wayland client holds focus and no modifier is pressed, let the app see
   // the key (except for modifier-based WM hotkeys handled later).
   if (waylandFocusActive && !modifierHeld) {
     return resp;
   }
 
-  if (matchesConfiguredKey("quit")) {
+  if (sym == controlMappings.getKey("quit")) {
     resp.requestQuit = true;
     resp.blockClientDelivery = true;
     resp.consumed = true;
@@ -581,7 +550,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
-  const bool toggleCursorPressed = matchesConfiguredKey("toggle_cursor") || sym == XKB_KEY_f ||
+  const bool toggleCursorPressed = sym == controlMappings.getKey("toggle_cursor") || sym == XKB_KEY_f ||
                                    sym == XKB_KEY_F;
   if (toggleCursorPressed) {
     debounce(lastKeyPressTime);
@@ -607,7 +576,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
-  if (matchesConfiguredKey("screenshot") && debounce(lastKeyPressTime)) {
+  if (sym == controlMappings.getKey("screenshot") && debounce(lastKeyPressTime)) {
     log_controls("controls: screenshot\n");
     enqueueAction([this]() { triggerScreenshot(); });
     resp.blockClientDelivery = true;
