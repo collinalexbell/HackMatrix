@@ -888,16 +888,6 @@ process_key_sym(WlrServer* server,
     }
   }
  
-  if constexpr (kWlrootsDebugLogs) {
-    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-    if (f) {
-      std::fprintf(f, "key sym=%u pressed=%d\n", sym, pressed ? 1 : 0);
-      std::fflush(f);
-      std::fclose(f);
-    }
-    wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", sym, pressed ? 1 : 0);
-  }
-
   if (server->seat && keyboard && time_msec != 0) {
     bool duplicate = false;
     if (keycode != 0) {
