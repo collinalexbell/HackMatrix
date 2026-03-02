@@ -1340,23 +1340,7 @@ handle_new_input(wl_listener* listener, void* data)
   auto* handle = new WlrKeyboardHandle();
   handle->server = server;
   handle->keyboard = keyboard;
-  handle->key.notify = [](wl_listener* listener, void* data) {
-    auto* handle =
-      wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), key);
-    auto* event = static_cast<wlr_keyboard_key_event*>(data);
-    FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
-    if (f) {
-      std::fprintf(f,
-                   "wlr: key time=%u keycode=%u state=%u device=%p\n",
-                   event->time_msec,
-                   event->keycode,
-                   event->state,
-                   (void*)handle->keyboard);
-      std::fflush(f);
-      std::fclose(f);
-    }
-    handle_keyboard_key(listener, data);
-  };
+  handle->key.notify = handle_keyboard_key;
   wl_signal_add(&keyboard->events.key, &handle->key);
   handle->modifiers.notify = [](wl_listener* listener, void* data) {
     (void)data;
