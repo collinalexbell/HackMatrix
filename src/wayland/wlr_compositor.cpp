@@ -852,7 +852,6 @@ process_key_sym(WlrServer* server,
   // Detect if a Wayland app currently has WM focus; if so, avoid feeding
   // movement/game controls so keys pass through to the client.
   bool waylandFocusActive = false;
-  bool blockClientDelivery = false;
   if (server->engine) {
     if (auto wm = server->engine->getWindowManager()) {
       std::optional<entt::entity> focusCandidate = wm->getPendingFocusedApp();
@@ -892,9 +891,6 @@ process_key_sym(WlrServer* server,
       if (resp.requestQuit) {
         wl_display_terminate(server->display);
         return;
-      }
-      if (resp.blockClientDelivery) {
-        blockClientDelivery = true;
       }
       if (resp.consumed) {
         return;
@@ -947,9 +943,6 @@ process_key_sym(WlrServer* server,
     wlr_log(WLR_DEBUG, "key sym=%u pressed=%d", sym, pressed ? 1 : 0);
   }
 
-  if (blockClientDelivery) {
-    return;
-  }
   if (server->seat && keyboard && time_msec != 0) {
     bool duplicate = false;
     if (keycode != 0) {
