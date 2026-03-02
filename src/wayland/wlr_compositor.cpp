@@ -225,7 +225,7 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
     auto it = server->surface_map.find(surf);
     if (it != server->surface_map.end() && isValidWaylandAppComponent(server, it->second)) {
       auto& comp = server->registry->get<WaylandApp::Component>(it->second);
-      if (comp.accessory) {
+      if (comp.accessory && isValidWaylandAppComponent(server, comp.parent)) {
         auto& parentComp = server->registry->get<WaylandApp::Component>(comp.parent);
         if (parentComp.app) {
           int parentW = parentComp.app->getWidth();
