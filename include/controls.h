@@ -119,8 +119,7 @@ public:
   ControlResponse handleKeySym(xkb_keysym_t sym,
                                bool pressed,
                                bool modifierHeld,
-                               bool shiftHeld,
-                               bool waylandFocusActive);
+                               bool shiftHeld);
   void applyMovementInput(bool forward, bool back, bool left, bool right);
   void clearMovementInput();
   void applyLookDelta(double dx, double dy);

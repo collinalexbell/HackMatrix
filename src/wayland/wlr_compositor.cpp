@@ -831,102 +831,32 @@ process_key_sym(WlrServer* server,
                 uint32_t keycode = 0,
                 bool update_mods = false)
 {
-  if (!server) {
+  if (!server || !server->engine) {
     return;
   }
 
-  // Detect if a Wayland app currently has WM focus; if so, avoid feeding
-  // movement/game controls so keys pass through to the client.
-  bool waylandFocusActive = false;
-  if (server->engine) {
-    if (auto wm = server->engine->getWindowManager()) {
-      waylandFocusActive = wm->hasCurrentOrPendingFocus(); 
-    }
+  auto wm = server->engine->getWindowManager();
+  auto controls = server->engine->getControls();
+
+  uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
+
+  bool modifierHeld = (mods & server->hotkeyModifierMask);
+  bool shiftHeld = (mods & WLR_MODIFIER_SHIFT);
+
+  auto resp = controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld);
+  if (resp.requestQuit) {
+    // wlr is the owner of the display, so it must handle terminate
+    wl_display_terminate(server->display);
+    return;
   }
-  if (server->engine) {
-    Controls* controls = server->engine->getControls();
-    uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
-    bool modifierHeld = (mods & server->hotkeyModifierMask);
-    bool shiftHeld = (mods & WLR_MODIFIER_SHIFT) || server->pendingReplayShift ||
-                     server->replayShiftHeld > 0;
-    if (controls) {
-      auto resp =
-        controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld, waylandFocusActive);
-      if (resp.requestQuit) {
-        wl_display_terminate(server->display);
-        return;
-      }
-      if (resp.consumed) {
-        return;
-      }
-    }
+  if (resp.consumed) {
+    // the WM handled the key, do not pass to an app
+    return;
   }
- 
-  if (server->seat && keyboard && time_msec != 0) {
-    bool duplicate = false;
-    if (keycode != 0) {
-      if (pressed) {
-        if (server->input.pressed_keys.count(keycode) > 0) {
-          duplicate = true;
-        } else {
-          server->input.pressed_keys.insert(keycode);
-        }
-      } else {
-        server->input.pressed_keys.erase(keycode);
-      }
-    }
-    if (duplicate) {
-      return;
-    }
-    // Deliver to the seat-focused surface if it maps to a Wayland app; otherwise fall
-    // back to the WM-focused Wayland app.
-    wlr_surface* target_surface = server->seat->keyboard_state.focused_surface;
-    if (!target_surface && server->seat && server->seat->pointer_state.focused_surface) {
-      target_surface = server->seat->pointer_state.focused_surface;
-    }
-    if (!target_surface && server->engine) {
-      if (auto wm = server->engine->getWindowManager()) {
-        if (auto focused = wm->getCurrentlyFocusedApp()) {
-          if (server->registry &&
-              server->registry->all_of<WaylandApp::Component>(*focused)) {
-            auto& comp = server->registry->get<WaylandApp::Component>(*focused);
-            target_surface = comp.app ? comp.app->getSurface() : nullptr;
-          }
-        }
-      }
-    }
-    if (target_surface) {
-      bool focusChanged =
-        server->seat->keyboard_state.focused_surface != target_surface;
-      // Keep WM focus in sync with the seat when we can map the surface.
-      if (server->engine) {
-        if (auto wm = server->engine->getWindowManager()) {
-          auto it = server->surface_map.find(target_surface);
-          if (it != server->surface_map.end()) {
-            // Do not force WM focus here; explicit hotkeys handle focus.
-            if (focusChanged) {
-              if (auto* controls = server->engine->getControls()) {
-                controls->clearMovementInput();
-              }
-            }
-          }
-        }
-      }
-      wlr_seat_set_keyboard(server->seat, keyboard);
-      if (server->seat->keyboard_state.focused_surface != target_surface) {
-        wlr_seat_keyboard_notify_enter(server->seat,
-                                       target_surface,
-                                       keyboard->keycodes,
-                                       keyboard->num_keycodes,
-                                       &keyboard->modifiers);
-        wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-      }
-    }
-    enum wl_keyboard_key_state state =
-      pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
-    wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
-    wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-  }
+  enum wl_keyboard_key_state state =
+    pressed ? WL_KEYBOARD_KEY_STATE_PRESSED : WL_KEYBOARD_KEY_STATE_RELEASED;
+  wlr_seat_keyboard_notify_key(server->seat, time_msec, keycode, state);
+  wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
 }
 
 void

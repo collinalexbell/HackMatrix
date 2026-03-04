@@ -495,8 +495,7 @@ ControlResponse
 Controls::handleKeySym(xkb_keysym_t sym,
                        bool is_pressed,
                        bool modifierHeld,
-                       bool shiftHeld,
-                       bool waylandFocusActive)
+                       bool shiftHeld)
 {
 
   {
@@ -505,7 +504,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
   }
 
 
-  lastWaylandFocusActive = waylandFocusActive;
+  bool waylandFocusActive = wm->hasCurrentOrPendingFocus();
   ControlResponse resp;
   if (!is_pressed) {
     return resp;
@@ -533,22 +532,21 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
+  // When a Wayland client is focused, let unmodified keys pass through so they reach
+  // the client instead of being eaten by engine controls.
+  const bool allowControls = !waylandFocusActive || modifierHeld;
+  if (!allowControls) {
+    return resp;
+  }
+
   // Only allow menu toggle when no Wayland client has focus, or when modifier
   // is held (so unmodified 'v' passes through to focused apps).
-  if ((sym == XKB_KEY_v || sym == XKB_KEY_V) && wm && debounce(lastKeyPressTime) &&
-      (!waylandFocusActive || modifierHeld)) {
+  if ((sym == XKB_KEY_v || sym == XKB_KEY_V) && debounce(lastKeyPressTime)) {
     log_controls("controls: menu\n");
     resp.clearInputForces = true;
     wm->menu();
     resp.blockClientDelivery = true;
     resp.consumed = true;
-    return resp;
-  }
-
-  // When a Wayland client is focused, let unmodified keys pass through so they reach
-  // the client instead of being eaten by engine controls.
-  const bool allowControls = !waylandFocusActive || modifierHeld;
-  if (!allowControls) {
     return resp;
   }
 
