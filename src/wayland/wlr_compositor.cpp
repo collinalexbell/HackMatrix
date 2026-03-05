@@ -792,36 +792,6 @@ struct KeycodeLookupResult {
   bool needsShift = false;
 };
 
-static std::optional<KeycodeLookupResult>
-keycode_for_keysym(wlr_keyboard* keyboard, xkb_keysym_t sym)
-{
-  if (!keyboard || !keyboard->keymap) {
-    return std::nullopt;
-  }
-  const xkb_keycode_t min = xkb_keymap_min_keycode(keyboard->keymap);
-  const xkb_keycode_t max = xkb_keymap_max_keycode(keyboard->keymap);
-  for (xkb_keycode_t code = min; code <= max; ++code) {
-    int layouts = xkb_keymap_num_layouts_for_key(keyboard->keymap, code);
-    for (int layout = 0; layout < layouts; ++layout) {
-      int levels = xkb_keymap_num_levels_for_key(keyboard->keymap, code, layout);
-      for (int level = 0; level < levels; ++level) {
-        const xkb_keysym_t* syms = nullptr;
-        int nsyms =
-          xkb_keymap_key_get_syms_by_level(keyboard->keymap, code, layout, level, &syms);
-        for (int i = 0; i < nsyms; ++i) {
-          if (syms[i] == sym) {
-            KeycodeLookupResult res;
-            res.keycode = code;
-            res.needsShift = level > 0;
-            return res;
-          }
-        }
-      }
-    }
-  }
-  return std::nullopt;
-}
-
 static void
 process_key_sym(WlrServer* server,
                 wlr_keyboard* keyboard,
