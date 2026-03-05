@@ -707,36 +707,6 @@ struct XdgSurfaceHandle {
 };
 
 static bool
-wayland_app_has_pointer_focus(WlrServer* server)
-{
-  if (!server || !server->engine) {
-    return false;
-  }
-  auto wm = server->engine->getWindowManager();
-  if (!wm || !server->registry) {
-    return false;
-  }
-  auto focused = wm->getCurrentlyFocusedApp();
-  if (!focused.has_value() || !server->registry->valid(*focused)) {
-    return false;
-  }
-  auto entity = focused.value();
-  if (!server->registry->all_of<WaylandApp::Component>(entity)) {
-    return false;
-  }
-  auto& comp = server->registry->get<WaylandApp::Component>(entity);
-  wlr_surface* focused_surface = comp.app ? comp.app->getSurface() : nullptr;
-  if (!focused_surface) {
-    return false;
-  }
-  if (server->seat && server->seat->pointer_state.focused_surface) {
-    return server->seat->pointer_state.focused_surface == focused_surface;
-  }
-  // Fallback: if we can't inspect seat focus, honor the WM focus flag.
-  return true;
-}
-
-static bool
 pick_output_size(bool isX11Backend, int* out_width, int* out_height)
 {
   // Order of preference:
