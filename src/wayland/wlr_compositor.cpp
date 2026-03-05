@@ -282,64 +282,6 @@ wayland_pointer_focus_requested(WlrServer* server)
   return server->registry->all_of<WaylandApp::Component>(*focused);
 }
 
-static void
-ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* preferred = nullptr)
-{
-  if (!server || !server->seat) {
-    return;
-  }
-  // Prefer an existing focused surface if present.
-  wlr_surface* surf = preferred ? preferred : server->seat->pointer_state.focused_surface;
-  // If WM has a different focused Wayland app, prefer that surface so hotkey
-  // focus also updates pointer focus.
-  if (server->engine && server->registry) {
-    if (auto wm = server->engine->getWindowManager()) {
-      if (auto focused = wm->getCurrentlyFocusedApp();
-          focused && server->registry->valid(*focused) &&
-          server->registry->all_of<WaylandApp::Component>(*focused)) {
-        auto& comp = server->registry->get<WaylandApp::Component>(*focused);
-        wlr_surface* wmSurf = comp.app ? comp.app->getSurface() : nullptr;
-        if (wmSurf && wmSurf != surf) {
-          surf = wmSurf;
-        }
-      }
-    }
-  }
-  if (!surf) {
-    if (server->engine && server->registry) {
-      if (auto wm = server->engine->getWindowManager()) {
-        if (auto focused = wm->getCurrentlyFocusedApp();
-            focused && server->registry->valid(*focused) &&
-            server->registry->all_of<WaylandApp::Component>(*focused)) {
-          auto& comp = server->registry->get<WaylandApp::Component>(*focused);
-          if (comp.app) {
-            surf = comp.app->getSurface();
-          }
-        }
-      }
-    }
-    // Fallback: pick the first known Wayland surface.
-    if (!surf && !server->surface_map.empty()) {
-      surf = server->surface_map.begin()->first;
-    }
-  }
-  if (!surf) {
-    return;
-  }
-  auto mapped = map_pointer_to_surface(server, surf);
-  double sx = mapped.first;
-  double sy = mapped.second;
-  if (time_msec == 0) {
-    uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::steady_clock::now().time_since_epoch())
-                        .count();
-    time_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
-  }
-  wlr_seat_pointer_notify_enter(server->seat, surf, sx, sy);
-  wlr_seat_pointer_notify_motion(server->seat, time_msec, sx, sy);
-  wlr_seat_pointer_notify_frame(server->seat);
-}
-
 static std::pair<wlr_surface*, entt::entity>
 pick_any_surface(WlrServer* server)
 {
@@ -811,7 +753,6 @@ handle_new_input(wl_listener* listener, void* data)
         if (focusRequested) {
           auto surfEnt = pick_any_surface(handle->server);
           auto* surf = surfEnt.first;
-          ensure_pointer_focus(handle->server, event->time_msec, surf);
         }
         wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
                 event->delta_x,
@@ -849,7 +790,6 @@ handle_new_input(wl_listener* listener, void* data)
         if (focusRequested) {
           auto surfEnt = pick_any_surface(handle->server);
           auto* surf = surfEnt.first;
-          ensure_pointer_focus(handle->server, event->time_msec, surf);
         }
         FILE* f = std::fopen("/tmp/matrix-wlroots-wm.log", "a");
         if (f) {
@@ -875,7 +815,6 @@ handle_new_input(wl_listener* listener, void* data)
           auto picked = pick_any_surface(handle->server);
           preferred_surface = picked.first;
         }
-        ensure_pointer_focus(handle->server, event->time_msec, preferred_surface);
         if (handle->server && handle->server->seat) {
           wlr_seat_pointer_notify_axis(handle->server->seat,
                                        event->time_msec,
@@ -957,7 +896,6 @@ handle_new_input(wl_listener* listener, void* data)
               }
               if (focusEnt != entt::null && focusSurf) {
                 wm->focusApp(focusEnt);
-                ensure_pointer_focus(handle->server, event->time_msec, focusSurf);
                 if (auto* focusComp =
                       handle->server->registry->try_get<WaylandApp::Component>(focusEnt)) {
                   if (focusComp->app) {
@@ -973,7 +911,6 @@ handle_new_input(wl_listener* listener, void* data)
           // Only forward to Wayland clients if a surface currently has pointer focus.
           wlr_surface* surf = preferred_surface ? preferred_surface : pointer_surface;
           if (surf) {
-            ensure_pointer_focus(handle->server, event->time_msec, surf);
             auto mapped = map_pointer_to_surface(handle->server, surf);
             wlr_seat_pointer_notify_motion(handle->server->seat,
                                            event->time_msec,
