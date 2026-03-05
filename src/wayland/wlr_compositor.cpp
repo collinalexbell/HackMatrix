@@ -787,11 +787,6 @@ handle_keyboard_destroy(wl_listener* listener, void* data)
   delete handle;
 }
 
-struct KeycodeLookupResult {
-  xkb_keycode_t keycode = 0;
-  bool needsShift = false;
-};
-
 static void
 process_key_sym(WlrServer* server,
                 wlr_keyboard* keyboard,
@@ -847,6 +842,9 @@ process_key_sym(WlrServer* server,
   wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
 }
 
+// This is the handler callback for a physical wlr_keyboard event.
+// This function converts the event into a keysym and then sends it to another function
+// for processing and potential action.
 void
 handle_keyboard_key(wl_listener* listener, void* data)
 {
