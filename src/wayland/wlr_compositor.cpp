@@ -415,7 +415,6 @@ ensure_wayland_apps_registered(WlrServer* server)
   if (!renderer) {
     return;
   }
-  FILE* f = nullptr;
   // Detect cases where surfaces exist but no Wayland apps are registered and
   // requeue adds so they don't stall.
   if (server->surface_map.size() > 0) {
@@ -470,12 +469,6 @@ ensure_wayland_apps_registered(WlrServer* server)
       }
       // Drop duplicate adds for the same surface if it's already registered.
       if (server->surface_map.find(action.surface) != server->surface_map.end()) {
-        if (f) {
-          std::fprintf(f,
-                       "wayland app add skipped (already registered): surface=%p\n",
-                       (void*)action.surface);
-          std::fflush(f);
-        }
         continue;
       }
       entt::entity parentEnt = entt::null;
@@ -580,29 +573,12 @@ ensure_wayland_apps_registered(WlrServer* server)
         if (comp && comp->app && !action.accessory) {
           comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
         }
-        if (f) {
-          std::fprintf(f,
-                       "wayland app add (deferred): surface=%p ent=%d texId=%d texUnit=%d app=%p\n",
-                       (void*)action.surface,
-                       (int)entt::to_integral(entity),
-                       action.app->getTextureId(),
-                       action.app->getTextureUnit() - GL_TEXTURE0,
-                       (void*)action.app.get());
-          std::fflush(f);
-        }
         if (server->engine) {
           if (auto api = server->engine->getApi()) {
             api->forceUpdateCachedStatus();
           }
         }
-      } else {
-        if (f) {
-          std::fprintf(f,
-                       "wayland app add (deferred) failed: surface=%p\n",
-                       (void*)action.surface);
-          std::fflush(f);
-        }
-      }
+      } 
     } else if (action.type == PendingWlAction::Remove) {
       auto it = server->surface_map.find(action.surface);
       if (it != server->surface_map.end()) {
@@ -629,28 +605,12 @@ ensure_wayland_apps_registered(WlrServer* server)
           api->forceUpdateCachedStatus();
         }
       }
-      if (f) {
-        std::fprintf(f,
-                     "wayland app remove (deferred): surface=%p\n",
-                     (void*)action.surface);
-        std::fflush(f);
-      }
-    } else {
-      if (f) {
-        std::fprintf(f,
-                     "wayland app action unknown (deferred): surface=%p\n",
-                     (void*)action.surface);
-        std::fflush(f);
-      }
-    }
+    } 
   }
   // Requeue any popup actions that lacked a registered parent when first seen.
   if (!retry.empty()) {
     server->pending_wl_actions.insert(
       server->pending_wl_actions.end(), retry.begin(), retry.end());
-  }
-  if (f) {
-    std::fclose(f);
   }
 }
 
