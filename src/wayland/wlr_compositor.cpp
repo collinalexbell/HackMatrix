@@ -382,21 +382,6 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr
 }
 
 static bool
-is_menu_surface(const std::shared_ptr<WaylandApp>& app)
-{
-  if (!app) {
-    return false;
-  }
-  std::string name = app->getWindowName();
-  std::string lowered = name;
-  std::transform(lowered.begin(), lowered.end(), lowered.begin(), [](unsigned char c) {
-    return static_cast<char>(std::tolower(c));
-  });
-  return lowered.find("rofi") != std::string::npos || lowered.find("wofi") != std::string::npos ||
-         lowered.find("menu") != std::string::npos;
-}
-
-static bool
 isHotkeySym(const WlrServer* server, xkb_keysym_t sym)
 {
   if (!server) {
@@ -533,16 +518,6 @@ ensure_wayland_apps_registered(WlrServer* server)
         const char* name = comp && comp->app ? comp->app->getWindowName().c_str() : "(null)";
         if ((action.accessory || action.layer_shell) && action.parent_surface == nullptr &&
             !action.menu_surface) {
-        }
-        // Always give menu surfaces immediate focus/input so they can receive keystrokes.
-        if (is_menu_surface(action.app) && server->engine) {
-          if (auto wm = server->engine->getWindowManager()) {
-            wm->unfocusApp();
-            wm->focusApp(entity);
-            if (comp && comp->app) {
-              comp->app->takeInputFocus();
-            }
-          }
         }
         if (renderer && comp && comp->app) {
           bool needsTexture =
