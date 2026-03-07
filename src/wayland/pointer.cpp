@@ -8,6 +8,7 @@ extern "C" {
 #include <wlr/util/log.h>
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_compositor.h>
+#include <linux/input-event-codes.h>
 }
 
 bool _isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
@@ -15,6 +16,10 @@ bool _isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
 		server->registry->all_of<WaylandApp::Component>(entity);
 }
 
+// Map the global pointer into surface-local coords assuming the surface is
+// centered in the output (matches render overlay) and clamp to surface size.
+//
+// TODO: Remove the clamp which is causing inputs that aren't on the window to be passed into the window.
 static std::pair<double, double>
 _map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
 {
@@ -128,8 +133,8 @@ _ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* pr
   wlr_seat_pointer_notify_frame(server->seat);
 }
 
-static bool
-_wayland_pointer_focus_requested(WlrServer* server)
+bool
+wayland_pointer_focus_requested(WlrServer* server)
 {
   if (!server || !server->engine) {
     return false;
@@ -172,27 +177,221 @@ _pick_any_surface(WlrServer* server)
   return { nullptr, entt::null };
 }
 
-void handle_pointer_motion (wl_listener* listener, void* data) {
-        auto* handle =
-          wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), motion);
-        auto* event = static_cast<wlr_pointer_motion_event*>(data);
-        handle->server->input.delta_x += event->delta_x;
-        handle->server->input.delta_y += event->delta_y;
-        if (handle->server->cursor) {
-          wlr_cursor_move(handle->server->cursor,
-                          handle->server->last_pointer_device,
-                          event->delta_x,
-                          event->delta_y);
-          handle->server->pointer_x = handle->server->cursor->x;
-          handle->server->pointer_y = handle->server->cursor->y;
+void
+handle_pointer_motion(wl_listener* listener, void* data)
+{
+  auto* handle =
+    wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), motion);
+  auto* event = static_cast<wlr_pointer_motion_event*>(data);
+  handle->server->input.delta_x += event->delta_x;
+  handle->server->input.delta_y += event->delta_y;
+  if (handle->server->cursor) {
+    wlr_cursor_move(handle->server->cursor,
+                    handle->server->last_pointer_device,
+                    event->delta_x,
+                    event->delta_y);
+    handle->server->pointer_x = handle->server->cursor->x;
+    handle->server->pointer_y = handle->server->cursor->y;
+  }
+  bool focusRequested = wayland_pointer_focus_requested(handle->server);
+  if (focusRequested) {
+    auto surfEnt = _pick_any_surface(handle->server);
+    auto* surf = surfEnt.first;
+    _ensure_pointer_focus(handle->server, event->time_msec, surf);
+  }
+  wlr_log(WLR_DEBUG,
+          "pointer motion rel dx=%.3f dy=%.3f",
+          event->delta_x,
+          event->delta_y);
+}
+
+void
+handle_pointer_motion_abs(wl_listener* listener, void* data)
+{
+  auto* handle = wl_container_of(
+    listener, static_cast<WlrPointerHandle*>(nullptr), motion_abs);
+  auto* event = static_cast<wlr_pointer_motion_absolute_event*>(data);
+  if (handle->server->input.have_abs) {
+    // Normalize deltas into something closer to pixel units.
+    double dx = (event->x - handle->server->input.last_abs_x) * 1000.0;
+    double dy = (event->y - handle->server->input.last_abs_y) * 1000.0;
+    handle->server->input.delta_x += dx;
+    handle->server->input.delta_y += dy;
+  }
+  handle->server->input.have_abs = true;
+  handle->server->input.last_abs_x = event->x;
+  handle->server->input.last_abs_y = event->y;
+  if (handle->server->cursor) {
+    wlr_cursor_warp_absolute(handle->server->cursor,
+                             handle->server->last_pointer_device,
+                             event->x,
+                             event->y);
+    handle->server->pointer_x = handle->server->cursor->x;
+    handle->server->pointer_y = handle->server->cursor->y;
+    if (handle->server->engine) {
+      handle->server->engine->updateImGuiPointer(
+        handle->server->pointer_x,
+        handle->server->pointer_y,
+        handle->server->input.mouse_buttons);
+    }
+  }
+  bool focusRequested = wayland_pointer_focus_requested(handle->server);
+  if (focusRequested) {
+    auto surfEnt = _pick_any_surface(handle->server);
+    auto* surf = surfEnt.first;
+    _ensure_pointer_focus(handle->server, event->time_msec, surf);
+  }
+  wlr_log(WLR_DEBUG,
+          "pointer motion abs dx=%.3f dy=%.3f",
+          handle->server->input.delta_x,
+          handle->server->input.delta_y);
+}
+
+void
+handle_pointer_axis(wl_listener* listener, void* data)
+{
+  auto* handle =
+    wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), axis);
+  auto* event = static_cast<wlr_pointer_axis_event*>(data);
+  wlr_surface* preferred_surface = nullptr;
+  if (handle->server && handle->server->seat &&
+      handle->server->seat->pointer_state.focused_surface) {
+    preferred_surface = handle->server->seat->pointer_state.focused_surface;
+  }
+  if (!preferred_surface) {
+    auto picked = _pick_any_surface(handle->server);
+    preferred_surface = picked.first;
+  }
+  _ensure_pointer_focus(handle->server, event->time_msec, preferred_surface);
+  if (handle->server && handle->server->seat) {
+    wlr_seat_pointer_notify_axis(handle->server->seat,
+                                 event->time_msec,
+                                 event->orientation,
+                                 event->delta,
+                                 event->delta_discrete,
+                                 event->source,
+                                 event->relative_direction);
+    wlr_seat_pointer_notify_frame(handle->server->seat);
+  }
+}
+
+void handle_pointer_button(wl_listener* listener, void* data)
+{
+  auto* handle =
+    wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), button);
+  auto* event = static_cast<wlr_pointer_button_event*>(data);
+  bool handled_by_game = false;
+  bool wayland_focus_requested =
+    wayland_pointer_focus_requested(handle->server);
+  wlr_surface* pointer_surface = nullptr;
+  if (handle->server && handle->server->seat) {
+    pointer_surface = handle->server->seat->pointer_state.focused_surface;
+  }
+  wlr_surface* preferred_surface = nullptr;
+  Controls* controls = handle->server && handle->server->engine
+                         ? handle->server->engine->getControls()
+                         : nullptr;
+  auto update_mouse_button = [&](uint32_t button, bool pressed) {
+    if (!handle->server) {
+      return;
+    }
+    if (button == BTN_LEFT) {
+      handle->server->input.mouse_buttons[0] = pressed;
+    } else if (button == BTN_RIGHT) {
+      handle->server->input.mouse_buttons[1] = pressed;
+    } else if (button == BTN_MIDDLE) {
+      handle->server->input.mouse_buttons[2] = pressed;
+    }
+    if (handle->server->engine) {
+      handle->server->engine->updateImGuiPointer(
+        handle->server->pointer_x,
+        handle->server->pointer_y,
+        handle->server->input.mouse_buttons);
+    }
+  };
+  if (static_cast<uint32_t>(event->state) ==
+        static_cast<uint32_t>(WLR_BUTTON_PRESSED) &&
+      handle->server && handle->server->engine) {
+    update_mouse_button(event->button, true);
+    // If a Wayland client has (or is requesting) focus, bypass game controls so
+    // the click reaches the client immediately.
+    if (controls && !wayland_focus_requested) {
+      handled_by_game = controls->handlePointerButton(event->button, true);
+    }
+    if (auto wm = handle->server->engine->getWindowManager()) {
+      // Only focus a Wayland client when the player is looking at it up close;
+      // otherwise treat the click as a game interaction.
+      if (!handled_by_game) {
+        // Focus only when the player is actually looking at an app within
+        // range.
+        entt::entity focusEnt = entt::null;
+        wlr_surface* focusSurf = nullptr;
+        if (auto space = wm->getSpace()) {
+          if (auto looked = space->getLookedAtApp()) {
+            entt::entity ent = *looked;
+            if (handle->server->registry &&
+                handle->server->registry->valid(ent) &&
+                handle->server->registry->all_of<WaylandApp::Component>(ent)) {
+              auto* comp =
+                handle->server->registry->try_get<WaylandApp::Component>(ent);
+              entt::entity targetEnt = ent;
+              if (comp && comp->accessory && comp->parent != entt::null &&
+                  handle->server->registry->valid(comp->parent)) {
+                targetEnt = comp->parent;
+                comp = handle->server->registry->try_get<WaylandApp::Component>(
+                  targetEnt);
+              }
+              if (comp && comp->app) {
+                focusEnt = targetEnt;
+                focusSurf = comp->app->getSurface();
+              }
+            }
+          }
         }
-        bool focusRequested = _wayland_pointer_focus_requested(handle->server);
-        if (focusRequested) {
-          auto surfEnt = _pick_any_surface(handle->server);
-          auto* surf = surfEnt.first;
-          _ensure_pointer_focus(handle->server, event->time_msec, surf);
+        if (focusEnt != entt::null && focusSurf) {
+          wm->focusApp(focusEnt);
+          _ensure_pointer_focus(handle->server, event->time_msec, focusSurf);
+          if (auto* focusComp =
+                handle->server->registry->try_get<WaylandApp::Component>(
+                  focusEnt)) {
+            if (focusComp->app) {
+              focusComp->app->takeInputFocus();
+            }
+          }
+          preferred_surface = focusSurf;
         }
-        wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
-                event->delta_x,
-                event->delta_y);
       }
+    }
+  }
+  if (handle->server->seat && !handled_by_game) {
+    // Only forward to Wayland clients if a surface currently has pointer focus.
+    wlr_surface* surf = preferred_surface ? preferred_surface : pointer_surface;
+    if (surf) {
+      _ensure_pointer_focus(handle->server, event->time_msec, surf);
+      auto mapped = _map_pointer_to_surface(handle->server, surf);
+      wlr_seat_pointer_notify_motion(
+        handle->server->seat, event->time_msec, mapped.first, mapped.second);
+      wlr_seat_pointer_notify_button(
+        handle->server->seat, event->time_msec, event->button, event->state);
+      wlr_seat_pointer_notify_frame(handle->server->seat);
+      if (static_cast<uint32_t>(event->state) ==
+          static_cast<uint32_t>(WLR_BUTTON_RELEASED)) {
+        update_mouse_button(event->button, false);
+      }
+    }
+  }
+}
+
+void
+handle_pointer_destroy(wl_listener* listener, void* data)
+{
+  (void)data;
+  auto* handle =
+    wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), destroy);
+  wl_list_remove(&handle->motion.link);
+  wl_list_remove(&handle->motion_abs.link);
+  wl_list_remove(&handle->button.link);
+  wl_list_remove(&handle->axis.link);
+  wl_list_remove(&handle->destroy.link);
+  delete handle;
+};

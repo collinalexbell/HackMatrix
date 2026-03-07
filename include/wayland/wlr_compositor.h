@@ -175,7 +175,6 @@ const char* hotkey_modifier_label(HotkeyModifier modifier);
 void delay_if_launching_nested_from_hackmatrix(int argc, char** argv);
 void log_env();
 void initialize_wlr_logging();
-
 void apply_backend_env_defaults();
 void install_sigint_handler();
 void teardown_server(WlrServer& server);
