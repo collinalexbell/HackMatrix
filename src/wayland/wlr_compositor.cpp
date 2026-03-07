@@ -68,6 +68,7 @@ keysym_name(xkb_keysym_t sym)
 #include "Config.h"
 #include "controls.h"
 #include "wayland/wlr_compositor.h"
+#include "wayland/pointer.h"
 
 #ifdef WLROOTS_DEBUG_LOGS
 constexpr bool kWlrootsDebugLogs = true;
@@ -788,35 +789,7 @@ handle_new_input(wl_listener* listener, void* data)
       auto* handle = new WlrPointerHandle();
       handle->server = server;
       handle->pointer = pointer;
-      handle->motion.notify = [](wl_listener* listener, void* data) {
-        auto* handle =
-          wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), motion);
-        auto* event = static_cast<wlr_pointer_motion_event*>(data);
-        handle->server->input.delta_x += event->delta_x;
-        handle->server->input.delta_y += event->delta_y;
-        if (handle->server->cursor) {
-          wlr_cursor_move(handle->server->cursor,
-                          handle->server->last_pointer_device,
-                          event->delta_x,
-                          event->delta_y);
-          handle->server->pointer_x = handle->server->cursor->x;
-          handle->server->pointer_y = handle->server->cursor->y;
-          if (handle->server->engine) {
-            handle->server->engine->updateImGuiPointer(handle->server->pointer_x,
-                                                       handle->server->pointer_y,
-                                                       handle->server->input.mouse_buttons);
-          }
-        }
-        bool focusRequested = wayland_pointer_focus_requested(handle->server);
-        if (focusRequested) {
-          auto surfEnt = pick_any_surface(handle->server);
-          auto* surf = surfEnt.first;
-          ensure_pointer_focus(handle->server, event->time_msec, surf);
-        }
-        wlr_log(WLR_DEBUG, "pointer motion rel dx=%.3f dy=%.3f",
-                event->delta_x,
-                event->delta_y);
-      };
+      handle->motion.notify = handle_pointer_motion;
       wl_signal_add(&pointer->events.motion, &handle->motion);
       handle->motion_abs.notify = [](wl_listener* listener, void* data) {
         auto* handle =
