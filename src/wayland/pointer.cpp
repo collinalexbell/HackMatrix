@@ -133,6 +133,19 @@ _ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* pr
   wlr_seat_pointer_notify_frame(server->seat);
 }
 
+static std::pair<wlr_surface*, entt::entity>
+_pick_any_surface(WlrServer* server)
+{
+  if (!server) {
+    return { nullptr, entt::null };
+  }
+  if (!server->surface_map.empty()) {
+    auto it = server->surface_map.begin();
+    return { it->first, it->second };
+  }
+  return { nullptr, entt::null };
+}
+
 bool
 wayland_pointer_focus_requested(WlrServer* server)
 {
@@ -162,19 +175,6 @@ wayland_pointer_focus_requested(WlrServer* server)
     return false;
   }
   return server->registry->all_of<WaylandApp::Component>(*focused);
-}
-
-static std::pair<wlr_surface*, entt::entity>
-_pick_any_surface(WlrServer* server)
-{
-  if (!server) {
-    return { nullptr, entt::null };
-  }
-  if (!server->surface_map.empty()) {
-    auto it = server->surface_map.begin();
-    return { it->first, it->second };
-  }
-  return { nullptr, entt::null };
 }
 
 void
