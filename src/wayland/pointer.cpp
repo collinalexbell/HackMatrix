@@ -395,3 +395,29 @@ handle_pointer_destroy(wl_listener* listener, void* data)
   wl_list_remove(&handle->destroy.link);
   delete handle;
 };
+
+void
+handle_new_pointer(WlrServer* server, wlr_input_device* device) {
+      auto* pointer = wlr_pointer_from_input_device(device);
+      server->last_pointer_device = device;
+      wlr_cursor_attach_input_device(server->cursor, device);
+
+      auto* handle = new WlrPointerHandle();
+      handle->server = server;
+      handle->pointer = pointer;
+
+      handle->motion.notify = handle_pointer_motion;
+      wl_signal_add(&pointer->events.motion, &handle->motion);
+
+      handle->motion_abs.notify = handle_pointer_motion_abs;
+      wl_signal_add(&pointer->events.motion_absolute, &handle->motion_abs);
+
+      handle->axis.notify = handle_pointer_axis;
+      wl_signal_add(&pointer->events.axis, &handle->axis);
+
+      handle->button.notify = handle_pointer_button; 
+      wl_signal_add(&pointer->events.button, &handle->button);
+
+      handle->destroy.notify = handle_pointer_destroy;
+      wl_signal_add(&device->events.destroy, &handle->destroy);
+}

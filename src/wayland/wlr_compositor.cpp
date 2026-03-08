@@ -612,77 +612,52 @@ handle_new_input(wl_listener* listener, void* data)
   auto* server =
     wl_container_of(listener, static_cast<WlrServer*>(nullptr), new_input);
   auto* device = static_cast<wlr_input_device*>(data);
-  if (device->type != WLR_INPUT_DEVICE_KEYBOARD) {
-    if (device->type == WLR_INPUT_DEVICE_POINTER) {
-      auto* pointer = wlr_pointer_from_input_device(device);
-      server->last_pointer_device = device;
-      if (server->cursor) {
-        wlr_cursor_attach_input_device(server->cursor, device);
-        // Only show the cursor when a Wayland app is focused.
-        set_cursor_visible(server, wayland_pointer_focus_requested(server));
+  if (device->type == WLR_INPUT_DEVICE_POINTER) {
+    handle_new_pointer(server, device);
+  }
+
+  if (device->type == WLR_INPUT_DEVICE_KEYBOARD) {
+    auto* keyboard = wlr_keyboard_from_input_device(device);
+    server->last_keyboard_device = device;
+    if (server->seat) {
+      wlr_seat_set_capabilities(server->seat,
+                                WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+      wlr_seat_set_keyboard(server->seat, keyboard);
+    }
+    auto* handle = new WlrKeyboardHandle();
+    handle->server = server;
+    handle->keyboard = keyboard;
+    handle->key.notify = handle_keyboard_key;
+    wl_signal_add(&keyboard->events.key, &handle->key);
+    handle->modifiers.notify = [](wl_listener* listener, void* data) {
+      (void)data;
+      auto* handle =
+        wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), modifiers);
+      if (handle->server && handle->server->seat) {
+        wlr_seat_keyboard_notify_modifiers(handle->server->seat,
+                                          &handle->keyboard->modifiers);
       }
-      auto* handle = new WlrPointerHandle();
-      handle->server = server;
-      handle->pointer = pointer;
+    };
+    wl_signal_add(&keyboard->events.modifiers, &handle->modifiers);
+    handle->destroy.notify = handle_keyboard_destroy;
+    wl_signal_add(&device->events.destroy, &handle->destroy);
 
-      handle->motion.notify = handle_pointer_motion;
-      wl_signal_add(&pointer->events.motion, &handle->motion);
-
-      handle->motion_abs.notify = handle_pointer_motion_abs;
-      wl_signal_add(&pointer->events.motion_absolute, &handle->motion_abs);
-
-      handle->axis.notify = handle_pointer_axis;
-      wl_signal_add(&pointer->events.axis, &handle->axis);
-
-      handle->button.notify = handle_pointer_button; 
-      wl_signal_add(&pointer->events.button, &handle->button);
-
-      handle->destroy.notify = handle_pointer_destroy;
-      wl_signal_add(&device->events.destroy, &handle->destroy);
-    }
-    return;
-  }
-
-  auto* keyboard = wlr_keyboard_from_input_device(device);
-  server->last_keyboard_device = device;
-  if (server->seat) {
-    wlr_seat_set_capabilities(server->seat,
-                              WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
-    wlr_seat_set_keyboard(server->seat, keyboard);
-  }
-  auto* handle = new WlrKeyboardHandle();
-  handle->server = server;
-  handle->keyboard = keyboard;
-  handle->key.notify = handle_keyboard_key;
-  wl_signal_add(&keyboard->events.key, &handle->key);
-  handle->modifiers.notify = [](wl_listener* listener, void* data) {
-    (void)data;
-    auto* handle =
-      wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), modifiers);
-    if (handle->server && handle->server->seat) {
-      wlr_seat_keyboard_notify_modifiers(handle->server->seat,
-                                         &handle->keyboard->modifiers);
-    }
-  };
-  wl_signal_add(&keyboard->events.modifiers, &handle->modifiers);
-  handle->destroy.notify = handle_keyboard_destroy;
-  wl_signal_add(&device->events.destroy, &handle->destroy);
-
-  xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-  xkb_keymap* keymap =
-    xkb_keymap_new_from_names(context, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS);
-  wlr_keyboard_set_keymap(keyboard, keymap);
-  xkb_keymap_unref(keymap);
-  xkb_context_unref(context);
-  wlr_keyboard_set_repeat_info(keyboard, 25, 600);
-  if (server->seat) {
-    wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-    if (server->seat->keyboard_state.focused_surface) {
-      wlr_seat_keyboard_notify_enter(server->seat,
-                                     server->seat->keyboard_state.focused_surface,
-                                     keyboard->keycodes,
-                                     keyboard->num_keycodes,
-                                     &keyboard->modifiers);
+    xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+    xkb_keymap* keymap =
+      xkb_keymap_new_from_names(context, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS);
+    wlr_keyboard_set_keymap(keyboard, keymap);
+    xkb_keymap_unref(keymap);
+    xkb_context_unref(context);
+    wlr_keyboard_set_repeat_info(keyboard, 25, 600);
+    if (server->seat) {
+      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+      if (server->seat->keyboard_state.focused_surface) {
+        wlr_seat_keyboard_notify_enter(server->seat,
+                                      server->seat->keyboard_state.focused_surface,
+                                      keyboard->keycodes,
+                                      keyboard->num_keycodes,
+                                      &keyboard->modifiers);
+      }
     }
   }
 }
