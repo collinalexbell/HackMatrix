@@ -607,58 +607,66 @@ handle_keyboard_key(wl_listener* listener, void* data)
 }
 
 void
+handle_new_keyboard(WlrServer* server, wlr_input_device* device)
+{
+  auto* keyboard = wlr_keyboard_from_input_device(device);
+  server->last_keyboard_device = device;
+  if (server->seat) {
+    wlr_seat_set_capabilities(
+      server->seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+    wlr_seat_set_keyboard(server->seat, keyboard);
+  }
+  auto* handle = new WlrKeyboardHandle();
+  handle->server = server;
+  handle->keyboard = keyboard;
+  handle->key.notify = handle_keyboard_key;
+  wl_signal_add(&keyboard->events.key, &handle->key);
+  handle->modifiers.notify = [](wl_listener* listener, void* data) {
+    (void)data;
+    auto* handle = wl_container_of(
+      listener, static_cast<WlrKeyboardHandle*>(nullptr), modifiers);
+    if (handle->server && handle->server->seat) {
+      wlr_seat_keyboard_notify_modifiers(handle->server->seat,
+                                         &handle->keyboard->modifiers);
+    }
+  };
+  wl_signal_add(&keyboard->events.modifiers, &handle->modifiers);
+  handle->destroy.notify = handle_keyboard_destroy;
+  wl_signal_add(&device->events.destroy, &handle->destroy);
+
+  xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+  xkb_keymap* keymap =
+    xkb_keymap_new_from_names(context, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS);
+  wlr_keyboard_set_keymap(keyboard, keymap);
+  xkb_keymap_unref(keymap);
+  xkb_context_unref(context);
+  wlr_keyboard_set_repeat_info(keyboard, 25, 600);
+  if (server->seat) {
+    wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
+    if (server->seat->keyboard_state.focused_surface) {
+      wlr_seat_keyboard_notify_enter(
+        server->seat,
+        server->seat->keyboard_state.focused_surface,
+        keyboard->keycodes,
+        keyboard->num_keycodes,
+        &keyboard->modifiers);
+    }
+  }
+}
+
+void
 handle_new_input(wl_listener* listener, void* data)
 {
   auto* server =
     wl_container_of(listener, static_cast<WlrServer*>(nullptr), new_input);
   auto* device = static_cast<wlr_input_device*>(data);
-  if (device->type == WLR_INPUT_DEVICE_POINTER) {
-    handle_new_pointer(server, device);
-  }
-
-  if (device->type == WLR_INPUT_DEVICE_KEYBOARD) {
-    auto* keyboard = wlr_keyboard_from_input_device(device);
-    server->last_keyboard_device = device;
-    if (server->seat) {
-      wlr_seat_set_capabilities(server->seat,
-                                WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
-      wlr_seat_set_keyboard(server->seat, keyboard);
-    }
-    auto* handle = new WlrKeyboardHandle();
-    handle->server = server;
-    handle->keyboard = keyboard;
-    handle->key.notify = handle_keyboard_key;
-    wl_signal_add(&keyboard->events.key, &handle->key);
-    handle->modifiers.notify = [](wl_listener* listener, void* data) {
-      (void)data;
-      auto* handle =
-        wl_container_of(listener, static_cast<WlrKeyboardHandle*>(nullptr), modifiers);
-      if (handle->server && handle->server->seat) {
-        wlr_seat_keyboard_notify_modifiers(handle->server->seat,
-                                          &handle->keyboard->modifiers);
-      }
-    };
-    wl_signal_add(&keyboard->events.modifiers, &handle->modifiers);
-    handle->destroy.notify = handle_keyboard_destroy;
-    wl_signal_add(&device->events.destroy, &handle->destroy);
-
-    xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    xkb_keymap* keymap =
-      xkb_keymap_new_from_names(context, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    wlr_keyboard_set_keymap(keyboard, keymap);
-    xkb_keymap_unref(keymap);
-    xkb_context_unref(context);
-    wlr_keyboard_set_repeat_info(keyboard, 25, 600);
-    if (server->seat) {
-      wlr_seat_keyboard_notify_modifiers(server->seat, &keyboard->modifiers);
-      if (server->seat->keyboard_state.focused_surface) {
-        wlr_seat_keyboard_notify_enter(server->seat,
-                                      server->seat->keyboard_state.focused_surface,
-                                      keyboard->keycodes,
-                                      keyboard->num_keycodes,
-                                      &keyboard->modifiers);
-      }
-    }
+  switch(device->type) {
+    case WLR_INPUT_DEVICE_POINTER:
+      handle_new_pointer(server, device);
+      break;
+    case WLR_INPUT_DEVICE_KEYBOARD:
+      handle_new_keyboard(server, device);
+      break;
   }
 }
 
