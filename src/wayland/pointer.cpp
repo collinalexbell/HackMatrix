@@ -8,6 +8,7 @@ extern "C" {
 #include <wlr/util/log.h>
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_compositor.h>
+#include <wlr/types/wlr_xcursor_manager.h>
 #include <linux/input-event-codes.h>
 }
 
@@ -395,6 +396,70 @@ handle_pointer_destroy(wl_listener* listener, void* data)
   wl_list_remove(&handle->destroy.link);
   delete handle;
 };
+
+void
+set_default_cursor(WlrServer* server, wlr_output* output = nullptr)
+{
+  if (!server || !server->cursor || !server->cursor_mgr) {
+    return;
+  }
+  float scale = 1.0f;
+  if (output) {
+    scale = output->scale;
+  } else if (server->primary_output) {
+    scale = server->primary_output->scale;
+  }
+  if (scale <= 0.0f) {
+    scale = 1.0f;
+  }
+  // Load the theme for the target scale and set a sane default pointer image.
+  int loaded = wlr_xcursor_manager_load(server->cursor_mgr, scale);
+  if (loaded < 0) {
+    wlr_xcursor_manager_destroy(server->cursor_mgr);
+    server->cursor_mgr = wlr_xcursor_manager_create("Adwaita", 24);
+    if (server->cursor_mgr) {
+      loaded = wlr_xcursor_manager_load(server->cursor_mgr, scale);
+    }
+  }
+  if (loaded < 0 ||
+      !wlr_xcursor_manager_get_xcursor(server->cursor_mgr, "left_ptr", scale)) {
+    return;
+  }
+  wlr_cursor_set_xcursor(server->cursor, server->cursor_mgr, "left_ptr");
+  server->pointer_x = server->cursor->x;
+  server->pointer_y = server->cursor->y;
+}
+
+
+
+void
+set_cursor_visible(WlrServer* server, bool visible, wlr_output* output)
+{
+  if (!server || !server->cursor) {
+    return;
+  }
+  if (server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      // If WM tracks a visibility override, respect it.
+      if (auto sp = wm->getCursorVisibleOverride()) {
+        visible = *sp;
+      }
+    }
+  }
+  if (visible == server->cursor_visible) {
+    return;
+  }
+  if (visible) {
+    // Always ensure a sane default image; clients can override via set_cursor.
+    set_default_cursor(server, output);
+  } else {
+    wlr_cursor_unset_image(server->cursor);
+    if (server->seat) {
+      wlr_seat_pointer_notify_clear_focus(server->seat);
+    }
+  }
+  server->cursor_visible = visible;
+}
 
 void
 handle_new_pointer(WlrServer* server, wlr_input_device* device) {
