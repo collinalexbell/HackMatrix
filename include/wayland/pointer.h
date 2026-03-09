@@ -9,3 +9,5 @@ struct WlrServer;
 void handle_new_pointer(WlrServer* server, wlr_input_device* device);
 bool wayland_pointer_focus_requested(WlrServer* server);
 void set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr);
+void handle_request_set_cursor(wl_listener* listener, void* data);
+void create_cursor(WlrServer* server);

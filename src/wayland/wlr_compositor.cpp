@@ -1278,6 +1278,7 @@ WlrServer::create_allocator() {
   return true;
 }
 
+// event handler for copy/paste
 void handle_set_selection(wl_listener* listener, void* data) {
   auto* server =
         wl_container_of(listener, static_cast<WlrServer*>(nullptr), request_set_selection);
@@ -1289,47 +1290,13 @@ bool
 WlrServer::create_seat() {
   seat = wlr_seat_create(display, "seat0");
   if (seat) {
-    wlr_seat_set_capabilities(seat,
-                              WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+    wlr_seat_set_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
 
-
+    // copy/paste
     request_set_selection.notify = handle_set_selection;
     wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
 
-
-    // Prefer the default theme, but allow fallback later if it is missing.
-    cursor_mgr = wlr_xcursor_manager_create("default", 24);
-    if (cursor_mgr) {
-      wlr_xcursor_manager_load(cursor_mgr, 1);
-    }
-    cursor = wlr_cursor_create();
-    if (cursor && output_layout) {
-      wlr_cursor_attach_output_layout(cursor, output_layout);
-    }
-    request_set_cursor.notify = [](wl_listener* listener, void* data) {
-      auto* server =
-        wl_container_of(listener, static_cast<WlrServer*>(nullptr), request_set_cursor);
-      auto* event = static_cast<wlr_seat_pointer_request_set_cursor_event*>(data);
-      if (!server || !server->cursor || !server->seat) {
-        return;
-      }
-      // Only honor cursor requests from the focused client.
-      if (server->seat->pointer_state.focused_client != event->seat_client) {
-        return;
-      }
-      if (event->surface) {
-        wlr_cursor_set_surface(
-          server->cursor, event->surface, event->hotspot_x, event->hotspot_y);
-        server->cursor_visible = true;
-      } else {
-        set_cursor_visible(server, wayland_pointer_focus_requested(server));
-      }
-      server->pointer_x = server->cursor->x;
-      server->pointer_y = server->cursor->y;
-    };
-    wl_signal_add(&seat->events.request_set_cursor, &request_set_cursor);
-    // Set an initial default cursor.
-    set_cursor_visible(this, wayland_pointer_focus_requested(this));
+    create_cursor(this);
     return true;
   } else {
     std::fprintf(stderr, "Failed to create seat");

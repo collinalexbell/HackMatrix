@@ -486,3 +486,45 @@ handle_new_pointer(WlrServer* server, wlr_input_device* device) {
       handle->destroy.notify = handle_pointer_destroy;
       wl_signal_add(&device->events.destroy, &handle->destroy);
 }
+
+void
+handle_request_set_cursor(wl_listener* listener, void* data)
+{
+  auto* server = wl_container_of(
+    listener, static_cast<WlrServer*>(nullptr), request_set_cursor);
+  auto* event = static_cast<wlr_seat_pointer_request_set_cursor_event*>(data);
+  if (!server || !server->cursor || !server->seat) {
+    return;
+  }
+  // Only honor cursor requests from the focused client.
+  if (server->seat->pointer_state.focused_client != event->seat_client) {
+    return;
+  }
+  if (event->surface) {
+    wlr_cursor_set_surface(
+      server->cursor, event->surface, event->hotspot_x, event->hotspot_y);
+    server->cursor_visible = true;
+  } else {
+    set_cursor_visible(server, wayland_pointer_focus_requested(server));
+  }
+  server->pointer_x = server->cursor->x;
+  server->pointer_y = server->cursor->y;
+}
+
+void
+create_cursor(WlrServer* server) {
+    // Prefer the default theme, but allow fallback later if it is missing.
+    server->cursor_mgr = wlr_xcursor_manager_create("default", 24);
+    if (server->cursor_mgr) {
+      wlr_xcursor_manager_load(server->cursor_mgr, 1);
+    }
+    server->cursor = wlr_cursor_create();
+    if (server->cursor && server->output_layout) {
+      wlr_cursor_attach_output_layout(server->cursor, server->output_layout);
+    }
+
+    server->request_set_cursor.notify = handle_request_set_cursor;
+    wl_signal_add(&server->seat->events.request_set_cursor, &server->request_set_cursor);
+    // Set an initial default cursor.
+    set_cursor_visible(server, wayland_pointer_focus_requested(server));
+}
