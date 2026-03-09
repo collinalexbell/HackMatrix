@@ -166,6 +166,7 @@ struct WlrServer {
   double pointer_x = 0.0;
   double pointer_y = 0.0;
   wl_listener request_set_cursor;
+  wl_listener request_set_selection;
 };
 
 // Helper APIs exposed for the main entry.

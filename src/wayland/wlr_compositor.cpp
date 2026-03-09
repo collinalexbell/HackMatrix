@@ -127,35 +127,6 @@ static const wlr_keyboard_impl kVirtualKeyboardImpl = {
   .led_update = nullptr,
 };
 
-static wlr_keyboard*
-ensure_virtual_keyboard(WlrServer* server)
-{
-  if (!server || !server->seat) {
-    return nullptr;
-  }
-  if (server->virtual_keyboard) {
-    return server->virtual_keyboard;
-  }
-  auto* kbd = new wlr_keyboard();
-  wlr_keyboard_init(kbd, &kVirtualKeyboardImpl, "virtual-keyboard");
-  xkb_context* ctx = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-  if (ctx) {
-    xkb_keymap* keymap =
-      xkb_keymap_new_from_names(ctx, nullptr, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    if (keymap) {
-      wlr_keyboard_set_keymap(kbd, keymap);
-      xkb_keymap_unref(keymap);
-    }
-    xkb_context_unref(ctx);
-  }
-  wlr_keyboard_set_repeat_info(kbd, 25, 600);
-  wlr_seat_set_keyboard(server->seat, kbd);
-  wlr_seat_keyboard_notify_modifiers(server->seat, &kbd->modifiers);
-  server->virtual_keyboard = kbd;
-  server->last_keyboard_device = &kbd->base;
-  return kbd;
-}
-
 static bool
 isHotkeySym(const WlrServer* server, xkb_keysym_t sym)
 {
@@ -1307,12 +1278,25 @@ WlrServer::create_allocator() {
   return true;
 }
 
+void handle_set_selection(wl_listener* listener, void* data) {
+  auto* server =
+        wl_container_of(listener, static_cast<WlrServer*>(nullptr), request_set_selection);
+  wlr_seat_request_set_selection_event *event = static_cast<wlr_seat_request_set_selection_event*>(data);
+  wlr_seat_set_selection(server->seat, event->source, event->serial);
+}
+
 bool
 WlrServer::create_seat() {
   seat = wlr_seat_create(display, "seat0");
   if (seat) {
     wlr_seat_set_capabilities(seat,
                               WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
+
+
+    request_set_selection.notify = handle_set_selection;
+    wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
+
+
     // Prefer the default theme, but allow fallback later if it is missing.
     cursor_mgr = wlr_xcursor_manager_create("default", 24);
     if (cursor_mgr) {
