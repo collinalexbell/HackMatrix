@@ -11,7 +11,7 @@ extern "C" {
 #include <linux/input-event-codes.h>
 }
 
-bool _isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
+bool isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
 	return server->registry->valid(entity) &&
 		server->registry->all_of<WaylandApp::Component>(entity);
 }
@@ -21,7 +21,7 @@ bool _isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
 //
 // TODO: Remove the clamp which is causing inputs that aren't on the window to be passed into the window.
 static std::pair<double, double>
-_map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
+map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
 {
   double sx = server ? server->pointer_x : 0.0;
   double sy = server ? server->pointer_y : 0.0;
@@ -33,9 +33,9 @@ _map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
   // top-left using the same math as renderWaylandPopup().
   if (server && surf && server->registry) {
     auto it = server->surface_map.find(surf);
-    if (it != server->surface_map.end() && _isValidWaylandAppComponent(server, it->second)) {
+    if (it != server->surface_map.end() && isValidWaylandAppComponent(server, it->second)) {
       auto& comp = server->registry->get<WaylandApp::Component>(it->second);
-      if (comp.accessory && _isValidWaylandAppComponent(server, comp.parent)) {
+      if (comp.accessory && isValidWaylandAppComponent(server, comp.parent)) {
         auto& parentComp = server->registry->get<WaylandApp::Component>(comp.parent);
         if (parentComp.app) {
           int parentW = parentComp.app->getWidth();
@@ -76,7 +76,7 @@ _map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
 }
 
 static void
-_ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* preferred = nullptr)
+ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* preferred = nullptr)
 {
   if (!server || !server->seat) {
     return;
@@ -119,7 +119,7 @@ _ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* pr
   if (!surf) {
     return;
   }
-  auto mapped = _map_pointer_to_surface(server, surf);
+  auto mapped = map_pointer_to_surface(server, surf);
   double sx = mapped.first;
   double sy = mapped.second;
   if (time_msec == 0) {
@@ -197,7 +197,7 @@ handle_pointer_motion(wl_listener* listener, void* data)
   if (focusRequested) {
     auto surfEnt = _pick_any_surface(handle->server);
     auto* surf = surfEnt.first;
-    _ensure_pointer_focus(handle->server, event->time_msec, surf);
+    ensure_pointer_focus(handle->server, event->time_msec, surf);
   }
   wlr_log(WLR_DEBUG,
           "pointer motion rel dx=%.3f dy=%.3f",
@@ -239,7 +239,7 @@ handle_pointer_motion_abs(wl_listener* listener, void* data)
   if (focusRequested) {
     auto surfEnt = _pick_any_surface(handle->server);
     auto* surf = surfEnt.first;
-    _ensure_pointer_focus(handle->server, event->time_msec, surf);
+    ensure_pointer_focus(handle->server, event->time_msec, surf);
   }
   wlr_log(WLR_DEBUG,
           "pointer motion abs dx=%.3f dy=%.3f",
@@ -262,7 +262,7 @@ handle_pointer_axis(wl_listener* listener, void* data)
     auto picked = _pick_any_surface(handle->server);
     preferred_surface = picked.first;
   }
-  _ensure_pointer_focus(handle->server, event->time_msec, preferred_surface);
+  ensure_pointer_focus(handle->server, event->time_msec, preferred_surface);
   if (handle->server && handle->server->seat) {
     wlr_seat_pointer_notify_axis(handle->server->seat,
                                  event->time_msec,
@@ -350,7 +350,7 @@ void handle_pointer_button(wl_listener* listener, void* data)
         }
         if (focusEnt != entt::null && focusSurf) {
           wm->focusApp(focusEnt);
-          _ensure_pointer_focus(handle->server, event->time_msec, focusSurf);
+          ensure_pointer_focus(handle->server, event->time_msec, focusSurf);
           if (auto* focusComp =
                 handle->server->registry->try_get<WaylandApp::Component>(
                   focusEnt)) {
@@ -367,8 +367,8 @@ void handle_pointer_button(wl_listener* listener, void* data)
     // Only forward to Wayland clients if a surface currently has pointer focus.
     wlr_surface* surf = preferred_surface ? preferred_surface : pointer_surface;
     if (surf) {
-      _ensure_pointer_focus(handle->server, event->time_msec, surf);
-      auto mapped = _map_pointer_to_surface(handle->server, surf);
+      ensure_pointer_focus(handle->server, event->time_msec, surf);
+      auto mapped = map_pointer_to_surface(handle->server, surf);
       wlr_seat_pointer_notify_motion(
         handle->server->seat, event->time_msec, mapped.first, mapped.second);
       wlr_seat_pointer_notify_button(
