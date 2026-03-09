@@ -6,8 +6,13 @@
 
 struct WlrServer;
 
+// handles an event when a new physical pointer device is created
 void handle_new_pointer(WlrServer* server, wlr_input_device* device);
+
 bool wayland_pointer_focus_requested(WlrServer* server);
+
+// used to hide and show the cursor whenever a window is focused or unfocused
 void set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr);
-void handle_request_set_cursor(wl_listener* listener, void* data);
+
+// creates the abstract pointer in wayland roots terminology
 void create_cursor(WlrServer* server);
