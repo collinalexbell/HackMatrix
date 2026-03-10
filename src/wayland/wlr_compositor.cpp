@@ -77,6 +77,11 @@ constexpr bool kWlrootsDebugLogs = true;
 constexpr bool kWlrootsDebugLogs = false;
 #endif
 
+// Initialize the externed variables found in screen.h
+// Use null values until the server is created.
+float SCREEN_WIDTH = 0;
+float SCREEN_HEIGHT = 0;
+
 namespace {
 
 static void
