@@ -77,16 +77,6 @@ constexpr bool kWlrootsDebugLogs = true;
 constexpr bool kWlrootsDebugLogs = false;
 #endif
 
-static bool
-wlroots_debug_logs_enabled()
-{
-  // Enable only if set to 1
-  if (const char* env = std::getenv("WLROOTS_DEBUG_LOGS")) {
-    return std::strcmp(env, "1") == 0;
-  }
-  return false;
-}
-
 namespace {
 
 double
