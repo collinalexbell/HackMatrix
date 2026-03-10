@@ -233,38 +233,6 @@ void WindowManager::createAndRegisterApps(char **envp) {
   logger->info("exit createAndRegisterApps()");
 }
 
-void WindowManager::capture_input(Window window, bool shapeBounding,
-                                  bool shapeInput) {
-  if (waylandMode) {
-    return;
-  }
-  // Create a region covering the entire window
-  XserverRegion region = XFixesCreateRegion(display, NULL, 0);
-  XRectangle rect;
-  rect.x = 0;
-  rect.y = 0;
-  rect.width = SCREEN_WIDTH;  // Replace with your window's width
-  rect.height = SCREEN_HEIGHT; // Replace with your window's height
-  XFixesSetRegion(display, region, &rect, 1);
-
-  if (shapeBounding) {
-    XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0, 0, region);
-  }
-  if (shapeInput) {
-    XFixesSetWindowShapeRegion(display, window, ShapeInput, 0, 0, region);
-  }
-  XFixesDestroyRegion(display, region);
-}
-
-void WindowManager::captureInput() {
-  if (waylandMode) {
-    return;
-  }
-  capture_input(overlay, true, true);
-  capture_input(matrix, true, true);
-  XFlush(display);
-}
-
 void
 WindowManager::wire(WindowManagerPtr sharedThis,
                     Camera* camera,

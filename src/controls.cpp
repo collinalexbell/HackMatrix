@@ -550,7 +550,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
       grabbedCursor = false;
       resetMouse = true;
       if (wm) {
-        wm->captureInput();
         wm->setCursorVisible(true);
       }
       log_controls("controls: toggle_cursor=0\n");

@@ -54,7 +54,6 @@ public:
   virtual ~WindowManagerInterface() = default;
   virtual void unfocusApp() = 0;
   virtual void menu() = 0;
-  virtual void captureInput() = 0;
   virtual void createAndRegisterApps(char** envp) = 0;
   virtual optional<entt::entity> getCurrentlyFocusedApp() = 0;
   virtual optional<entt::entity> getPendingFocusedApp() = 0;
@@ -132,8 +131,6 @@ class WindowManager : public WindowManagerInterface
                  unsigned int width = Bootable::DEFAULT_WIDTH,
                  unsigned int height = Bootable::DEFAULT_HEIGHT);
   void addApp(X11App*, entt::entity);
-  void allow_input_passthrough(Window window);
-  void capture_input(Window window, bool shapeBounding, bool shapeInput);
   void createUnfocusHackThread(entt::entity entity);
   int waitForRemovalChangeSize(int curSize);
   void logWaitForRemovalChangeSize(int changeSize);
@@ -164,7 +161,6 @@ class WindowManager : public WindowManagerInterface
 public:
   void unfocusApp() override;
   void menu() override;
-  void captureInput() override;
   void createAndRegisterApps(char** envp) override;
   WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, bool waylandMode, char** envp = nullptr);
   bool isWaylandMode() const override { return waylandMode; }
