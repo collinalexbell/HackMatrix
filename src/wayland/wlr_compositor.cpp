@@ -278,6 +278,7 @@ ensure_wayland_apps_registered(WlrServer* server)
   }
 }
 
+// Removes a listener from the linked list of listeners
 static void
 safe_remove_listener(wl_listener* listener)
 {
@@ -289,45 +290,6 @@ safe_remove_listener(wl_listener* listener)
     listener->link.prev = nullptr;
     listener->link.next = nullptr;
   }
-}
-
-static bool
-pick_output_size(bool isX11Backend, int* out_width, int* out_height)
-{
-  // Order of preference:
-  // 1) Explicit SCREEN_WIDTH/HEIGHT envs.
-  // 2) For X11 backend, use WLR_X11_OUTPUT_{WIDTH,HEIGHT} if set.
-  // 3) Default (no override) => let backend choose.
-  int width = 0;
-  int height = 0;
-
-  if (const char* w_env = std::getenv("SCREEN_WIDTH")) {
-    width = std::atoi(w_env);
-  }
-  if (const char* h_env = std::getenv("SCREEN_HEIGHT")) {
-    height = std::atoi(h_env);
-  }
-
-  if (width <= 0 || height <= 0) {
-    if (isX11Backend) {
-      if (const char* wx = std::getenv("WLR_X11_OUTPUT_WIDTH")) {
-        width = std::atoi(wx);
-      }
-      if (const char* hx = std::getenv("WLR_X11_OUTPUT_HEIGHT")) {
-        height = std::atoi(hx);
-      }
-      if (width <= 0 || height <= 0) {
-        width = 1920;
-        height = 1080;
-      }
-    } else {
-      return false;
-    }
-  }
-
-  *out_width = width;
-  *out_height = height;
-  return true;
 }
 
 void
@@ -990,18 +952,7 @@ handle_new_output(wl_listener* listener, void* data)
   struct wlr_output_state state;
   wlr_output_state_init(&state);
   wlr_output_state_set_enabled(&state, true);
-  int desired_width = 0;
-  int desired_height = 0;
-  bool have_override =
-    pick_output_size(server->isX11Backend, &desired_width, &desired_height);
-  if (have_override) {
-    int refresh = server->isX11Backend ? 0 : 60000; // X11 backend ignores refresh
-    if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
-      refresh = mode->refresh;
-    }
-    wlr_output_state_set_custom_mode(
-      &state, desired_width, desired_height, refresh);
-  } else if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
+  if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
     wlr_output_state_set_mode(&state, mode);
   }
   if (!wlr_output_commit_state(output, &state)) {
