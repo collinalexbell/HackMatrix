@@ -89,18 +89,6 @@ wlroots_debug_logs_enabled()
 
 namespace {
 
-static bool
-is_hotkey_sym(HotkeyModifier mod, xkb_keysym_t sym)
-{
-  switch (mod) {
-    case HotkeyModifier::Alt:
-      return sym == XKB_KEY_Alt_L || sym == XKB_KEY_Alt_R;
-    case HotkeyModifier::Super:
-    default:
-      return sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R;
-  }
-}
-
 double
 currentTimeSeconds()
 {
@@ -126,15 +114,6 @@ static const wlr_keyboard_impl kVirtualKeyboardImpl = {
   .name = "virtual-keyboard",
   .led_update = nullptr,
 };
-
-static bool
-isHotkeySym(const WlrServer* server, xkb_keysym_t sym)
-{
-  if (!server) {
-    return false;
-  }
-  return is_hotkey_sym(server->hotkeyModifier, sym);
-}
 
 static void
 ensure_wayland_apps_registered(WlrServer* server)
