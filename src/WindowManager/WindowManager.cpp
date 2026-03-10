@@ -213,6 +213,7 @@ void WindowManager::menu() {
 
 void WindowManager::createAndRegisterApps(char **envp) {
   if (waylandMode) {
+    // TODO: Fix, we need the bootable system
     return;
   }
   logger->info("enter createAndRegisterApps()");
