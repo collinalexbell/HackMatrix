@@ -88,11 +88,6 @@ currentTimeSeconds()
   return elapsed.count();
 }
 
-static const wlr_keyboard_impl kVirtualKeyboardImpl = {
-  .name = "virtual-keyboard",
-  .led_update = nullptr,
-};
-
 static void
 ensure_wayland_apps_registered(WlrServer* server)
 {
