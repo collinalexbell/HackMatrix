@@ -152,7 +152,6 @@ public:
   glm::vec2 mapCursorToScreen(float xPixels, float yPixels) const;
   void renderSoftwareCursor(float xPixels, float yPixels, float sizePixels);
   void reloadChunk();
-  void screenshot();
   void screenshotFromCurrentFramebuffer(int width, int height, unsigned int fbo = 0);
   void toggleMeshing();
   void toggleWireframe();

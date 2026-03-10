@@ -822,31 +822,6 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
 }
 
 void
-Renderer::screenshot()
-{
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  stbi_flip_vertically_on_write(true);
-  auto t = std::time(nullptr);
-  auto tm = *std::localtime(&t);
-  stringstream filenameSS;
-  filenameSS << "screenshots/" << std::put_time(&tm, "%d-%m-%Y %H-%M-%S.png");
-
-  string filename = filenameSS.str();
-
-  // Capture the screenshot and save it as a PNG file
-  int width = getScreenWidth();  // Width of your rendering area
-  int height = getScreenHeight(); // Height of your rendering area
-  std::vector<unsigned char> data;
-  readFramebufferToRgba(width, height, data);
-  std::thread saver([filename, width, height, data = std::move(data)]() mutable {
-    int channels = 4;  // 4 for RGBA
-    stbi_write_png(
-      filename.c_str(), width, height, channels, data.data(), width * channels);
-  });
-  saver.detach();
-}
-
-void
 Renderer::screenshotFromCurrentFramebuffer(int width, int height, unsigned int fbo)
 {
   GLint prevReadFbo = 0;

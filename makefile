@@ -171,9 +171,6 @@ build/ControlMappings.o: src/ControlMappings.cpp include/ControlMappings.h inclu
 build/app.o: src/app.cpp include/app.h include/screen.h
 	g++  -std=c++20 $(FLAGS) -o build/app.o -c src/app.cpp $(INCLUDES) -Wno-narrowing
 
-build/screen.o: src/screen.cpp include/screen.h 
-	g++  -std=c++20 $(FLAGS) -o build/screen.o -c src/screen.cpp $(INCLUDES) -Wno-narrowing
-
 build/WindowManager/WindowManager.o: src/WindowManager/WindowManager.cpp include/WindowManager/WindowManager.h include/controls.h include/logger.h include/world.h include/WindowManager/Space.h include/systems/Boot.h include/components/Bootable.h include/screen.h include/Config.h
 	g++ -std=c++20 $(FLAGS) -o build/WindowManager/WindowManager.o -c src/WindowManager/WindowManager.cpp $(INCLUDES)
 build_debug/WindowManager/WindowManager.debug.o: src/WindowManager/WindowManager.cpp include/WindowManager/WindowManager.h include/controls.h include/logger.h include/world.h include/WindowManager/Space.h include/systems/Boot.h include/components/Bootable.h include/screen.h include/Config.h

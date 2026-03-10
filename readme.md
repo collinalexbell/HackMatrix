@@ -1,6 +1,6 @@
 # HackMatrix
 
-*WARNING* this project is a bit of a mess right now. I merged a vibe coded migration to Wayland that I will need to heavily refactor. Checkout revision  39d3d3 if you want the X11 version. If you want to try the wayland version, `./launch` after building with `make matrix`. Also ctrl+f the readme for "submodule" (you will need this or make will fail). 
+*WARNING* this project is a bit of a mess right now. I merged a vibe coded migration to Wayland that I will need to heavily refactor. Checkout revision  39d3d3 if you want the X11 version. If you want to try the wayland version, `./launch` after building with `make matrix`. Also ctrl+f the readme for "submodule" (you will need this or make will fail). I've tried to update the dependency list with Wayland deps, but some may be missing. Also X11 deps will need to be installed until I get that code factored out.
 
 <img src="images/header_img.png" width="800">
 
@@ -90,8 +90,9 @@ See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engin
 ### Dependencies
 
 Before compiling or running the program, ensure that you have the following libraries installed on your Linux system:
+Even for the wayland port you will need to have X11 installed until I finish the refactor.
 
-- rofi (`rofi`)
+- wofi (`wofi`)
 - ZeroMQ (`libzmq`)
 - X11 (`libX11`)
 - Xcomposite (`libXcomposite`)
@@ -116,13 +117,13 @@ To install these libraries, you can use your distribution's package manager. Her
 #### Ubuntu or Debian
 
 ```bash
-sudo apt-get install rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
+sudo apt-get install wofi wayland rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
 ```
 
 #### Fedora or CentOS
 
 ```bash
-sudo dnf install rofi xdotool xorg-x11-utils protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
+sudo dnf install wayland wofi rofi xdotool xorg-x11-utils protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
 ```
 
 #### Arch Linux
@@ -131,11 +132,11 @@ I'm currently working on an issue with protobuf compilation errors for Arch. [Th
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
-sudo pacman -S --needed xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
+sudo pacman -S --needed wofi wayland xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```
 #### Gentoo
 ```bash
- sudo emerge --autounmask-write x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
+ sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
 ```
 > [!NOTE]
 > you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.

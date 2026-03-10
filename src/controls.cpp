@@ -229,14 +229,7 @@ Controls::handleScreenshot(GLFWwindow* window)
 void
 Controls::triggerScreenshot()
 {
-  // Wayland mode consumes screenshot requests in the compositor render loop so
-  // that the capture happens on the swapchain framebuffer. X11 uses the legacy
-  // renderer path.
-  if (wm && wm->isWaylandMode()) {
-    wm->requestScreenshot();
-  } else if (renderer) {
-    renderer->screenshot();
-  }
+  wm->requestScreenshot();
 }
 
 void
