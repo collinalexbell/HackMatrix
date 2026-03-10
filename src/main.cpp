@@ -1,6 +1,11 @@
 #include <cstdlib>
+#include "screen.h"
 #include "engine.h"
 #include "wayland/wlr_compositor.h"
+
+// just initialize, server will take care of actual init
+float SCREEN_WIDTH = 0;
+float SCREEN_HEIGHT = 0;
 
 int main(int argc, char** argv, char** envp) {
   WlrServer server = WlrServer(envp);

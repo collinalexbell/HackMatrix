@@ -232,27 +232,6 @@ void WindowManager::createAndRegisterApps(char **envp) {
   logger->info("exit createAndRegisterApps()");
 }
 
-void WindowManager::allow_input_passthrough(Window window) {
-  if (waylandMode) {
-    return;
-  }
-  XserverRegion region = XFixesCreateRegion(display, NULL, 0);
-
-  XFixesSetWindowShapeRegion(display, window, ShapeBounding, 0, 0, 0);
-  XFixesSetWindowShapeRegion(display, window, ShapeInput, 0, 0, region);
-
-  XFixesDestroyRegion(display, region);
-}
-
-void WindowManager::passthroughInput() {
-  if (waylandMode) {
-    return;
-  }
-  allow_input_passthrough(overlay);
-  allow_input_passthrough(matrix);
-  XFlush(display);
-}
-
 void WindowManager::capture_input(Window window, bool shapeBounding,
                                   bool shapeInput) {
   if (waylandMode) {

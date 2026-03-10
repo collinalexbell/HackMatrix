@@ -346,7 +346,6 @@ Controls::goToApp(entt::entity app)
   if (!wm || !windowManagerSpace) {
     return;
   }
-  wm->passthroughInput();
   float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
   glm::vec3 rotationDegrees = windowManagerSpace->getAppRotation(app);
   glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
@@ -559,7 +558,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
       grabbedCursor = true;
       resetMouse = true;
       if (wm) {
-        wm->passthroughInput();
         wm->setCursorVisible(false);
       }
       log_controls("controls: toggle_cursor=1\n");

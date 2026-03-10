@@ -54,7 +54,6 @@ public:
   virtual ~WindowManagerInterface() = default;
   virtual void unfocusApp() = 0;
   virtual void menu() = 0;
-  virtual void passthroughInput() = 0;
   virtual void captureInput() = 0;
   virtual void createAndRegisterApps(char** envp) = 0;
   virtual optional<entt::entity> getCurrentlyFocusedApp() = 0;
@@ -165,7 +164,6 @@ class WindowManager : public WindowManagerInterface
 public:
   void unfocusApp() override;
   void menu() override;
-  void passthroughInput() override;
   void captureInput() override;
   void createAndRegisterApps(char** envp) override;
   WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, bool waylandMode, char** envp = nullptr);
