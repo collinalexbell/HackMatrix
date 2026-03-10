@@ -472,6 +472,11 @@ compute_layer_shell_position(WlrServer* server,
   return { x, y };
 }
 
+
+// This handles desktop level UI, specifically the wofi menu which does not render as a normal app, but as an overlay
+// wlr-layer-shell is a Wayland extension that defines how desktop components such as panels, notifications, and backgrounds 
+// can be displayed as “layers” above or below application windows.
+// These should bypass window management
 static void
 handle_new_layer_surface(wl_listener* listener, void* data)
 {
@@ -591,6 +596,9 @@ handle_new_layer_surface(wl_listener* listener, void* data)
   wl_signal_add(&layer->surface->events.destroy, &handle->destroy);
 }
 
+
+// xdg-shell is a Wayland extension that defines how desktop-style applications create and manage their windows
+// these are "normal" applications that are to be rendered using window management
 void
 handle_new_xdg_surface(wl_listener* listener, void* data)
 {
