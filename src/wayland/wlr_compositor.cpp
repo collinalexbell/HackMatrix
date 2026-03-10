@@ -440,6 +440,20 @@ compute_layer_shell_position(WlrServer* server,
                              int width,
                              int height)
 {
+  int x = width;
+  int y = height;
+
+  return {0,0};
+}
+
+/*
+// Primarily positions the Wofi menu (and other overlay style desktop notifications/apps)
+static std::pair<int, int>
+compute_layer_shell_position(WlrServer* server,
+                             wlr_layer_surface_v1* layer,
+                             int width,
+                             int height)
+{
   int out_w = SCREEN_WIDTH;
   int out_h = SCREEN_HEIGHT;
   if (server && server->primary_output) {
@@ -471,6 +485,7 @@ compute_layer_shell_position(WlrServer* server,
   }
   return { x, y };
 }
+*/
 
 
 // This handles desktop level UI, specifically the wofi menu which does not render as a normal app, but as an overlay
