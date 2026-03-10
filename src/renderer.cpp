@@ -983,42 +983,10 @@ void
 Renderer::renderApps()
 {
   auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
-  // Unconditional logging here to diagnose Wayland focus/unfocus draw issues.
-  static FILE* logFile = []() {
-    FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-    return f ? f : stderr;
-  }();
   static std::unordered_set<void*> loggedApps;
   auto wlPositionable =
     registry->view<WaylandApp::Component, Positionable>(entt::exclude<Bootable>);
   size_t wlCount = wlPositionable.size_hint();
-  if (logFile) {
-    int focusedEnt = -1;
-    if (wm && wm->getCurrentlyFocusedApp().has_value()) {
-      focusedEnt = (int)entt::to_integral(wm->getCurrentlyFocusedApp().value());
-    }
-    int lookedEnt = -1;
-    if (lookedAtAppEntity.has_value()) {
-      lookedEnt = (int)entt::to_integral(lookedAtAppEntity.value());
-    }
-    std::fprintf(logFile,
-                 "renderer: frame start focused=%d looked=%d\n",
-                 focusedEnt,
-                 lookedEnt);
-    GLint vaoBound = 0;
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vaoBound);
-    GLint fboBound = 0;
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fboBound);
-    GLint prog = 0;
-    glGetIntegerv(GL_CURRENT_PROGRAM, &prog);
-    std::fprintf(logFile,
-                 "renderer: vaoBound=%d fbo=%d program=%d countWayland=%zu\n",
-                 vaoBound,
-                 fboBound,
-                 prog,
-                 wlCount);
-    std::fflush(logFile);
-  }
   TracyGpuZone("render apps");
   shader->setBool("appSelected", false);
 
@@ -1034,55 +1002,17 @@ Renderer::renderApps()
     1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
   glDisable(GL_CULL_FACE);
-  if (logFile) {
-    GLint vaoBound = 0;
-    GLint arrayBuffer = 0;
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vaoBound);
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &arrayBuffer);
-    auto logAttribState = [&](int idx) {
-      GLint enabled = 0;
-      GLint buf = 0;
-      void* ptr = nullptr;
-      glGetVertexAttribiv(idx, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &enabled);
-      glGetVertexAttribiv(idx, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &buf);
-      glGetVertexAttribPointerv(idx, GL_VERTEX_ATTRIB_ARRAY_POINTER, &ptr);
-      std::fprintf(logFile,
-                   "renderer: attrib%d enabled=%d buf=%d ptr=%p\n",
-                   idx,
-                   enabled,
-                   buf,
-                   ptr);
-    };
-    std::fprintf(logFile,
-                 "renderer: vao state pre-apps vaoBound=%d arrayBuffer=%d\n",
-                 vaoBound,
-                 arrayBuffer);
-    logAttribState(0);
-    logAttribState(1);
-    std::fflush(logFile);
-  }
+ 
+
   auto bindAppTexture = [&](int index) {
     auto it = textures.find("app" + std::to_string(index));
     if (index < 0 || index >= appTextureCount ||
         it == textures.end() || !it->second || !glIsTexture(it->second->ID)) {
-      if (logFile) {
-        std::fprintf(logFile,
-                     "renderer: bindAppTexture skip idx=%d (missing/invalid)\n",
-                     index);
-        std::fflush(logFile);
-      }
       return false;
     }
     glActiveTexture(GL_TEXTURE0 + index);
     glBindTexture(GL_TEXTURE_2D, it->second->ID);
     shader->setInt("appNumber", index);
-    if (logFile) {
-      std::fprintf(logFile,
-                   "renderer: bindAppTexture idx=%d texId=%d\n",
-                   index,
-                   it->second->ID);
-      std::fflush(logFile);
-    }
     return true;
   };
   auto renderWaylandPopup = [&](WaylandApp::Component& popup,
@@ -1236,7 +1166,7 @@ Renderer::renderApps()
           && wm->getCurrentlyFocusedApp().value() == ent
           && (!bootable || !bootable->transparent)) {
         shader->setBool("appFocused", app.isFocused());
-        drawAppDirect(&app);
+        //drawAppDirect(&app);
         shader->setBool("appFocused", false);
       }
     }
@@ -1248,7 +1178,7 @@ Renderer::renderApps()
     if (!bindAppTexture(static_cast<int>(directApp.getAppIndex()))) {
       continue;
     }
-    drawAppDirect(&directApp);
+    //drawAppDirect(&directApp);
   }
 
   auto directRenderNonBlits =
@@ -1257,7 +1187,7 @@ Renderer::renderApps()
     if (!bindAppTexture(static_cast<int>(directApp.getAppIndex()))) {
       continue;
     }
-    drawAppDirect(&directApp, &bootable);
+    //drawAppDirect(&directApp, &bootable);
   }
 
   // Wayland apps: render any that were registered by the wlroots backend.
