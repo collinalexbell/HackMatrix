@@ -205,54 +205,11 @@ void
 Engine::frame()
 {
   double frameStart = currentTimeSeconds();
-  if (api != nullptr) {
-    api->mutateEntities();
-  }
-
+  api->mutateEntities();
   controls->pollPressedKeys();
   renderer->render();
-
-  if (engineGui) {
-    engineGui->render(fps, frameIndex, frameTimes);
-    // Flip ImGui draw data vertically when running headless (wlroots) so it matches compositor output.
-    /*
-    ImDrawData* draw_data = ImGui::GetDrawData();
-    if (window == nullptr && draw_data) {
-	    const float fb_height = draw_data->DisplaySize.y * draw_data->FramebufferScale.y;
-	    for (int n = 0; n < draw_data->CmdListsCount; n++) {
-		    ImDrawList* cmd_list = draw_data->CmdLists[n];
-		    for (int v = 0; v < cmd_list->VtxBuffer.Size; v++) {
-			    cmd_list->VtxBuffer[v].pos.y = fb_height - cmd_list->VtxBuffer[v].pos.y;
-		    }
-		    for (int c = 0; c < cmd_list->CmdBuffer.Size; c++) {
-			    ImDrawCmd& cmd = cmd_list->CmdBuffer[c];
-			    const float old_y0 = cmd.ClipRect.y;
-			    const float old_y1 = cmd.ClipRect.w;
-			    cmd.ClipRect.y = fb_height - old_y1;
-			    cmd.ClipRect.w = fb_height - old_y0;
-		    }
-	    }
-    }
-    */
-    //ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-  }
-
-
-  // this has the potential to make OpenGL calls (for lighting; 1 render
-  // call per light)
   world->tick();
-
-  //api->mutateEntities();
-  if (wm) {
-    wm->tick();
-  }
-
-  if (engineGui) {
-    disableKeysIfImguiActive();
-  }
-  if (controls) {
-    controls->poll();
-  }
+  controls->poll();
   multiplayerClientIteration(frameStart);
 
   // Save state ImGui might clobber on GLES2 (primitive restart/poly mode).

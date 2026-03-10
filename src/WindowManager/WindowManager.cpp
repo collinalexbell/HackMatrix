@@ -8,10 +8,6 @@
 #include "systems/Boot.h"
 #include "Config.h"
 #include "model.h"
-#include <X11/X.h>
-#include <X11/Xatom.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
@@ -23,7 +19,6 @@
 #include <glm/gtc/quaternion.hpp>
 #include <iostream>
 
-#include <X11/extensions/shape.h>
 #include <cstdlib>
 #include <memory>
 #include <mutex>
@@ -792,86 +787,6 @@ void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemova
   appsToAdd.assign(waitForRemoval.begin(), waitForRemoval.end());
 }
 
-void WindowManager::tick() {
-  // In Wayland mode, there are no X11 events to process, but we still want
-  // camera animations (moveTo) to advance each frame.
-  if (waylandMode) {
-    if (camera) {
-      camera->tick();
-      int focusedEnt = currentlyFocusedApp.has_value()
-                         ? (int)entt::to_integral(*currentlyFocusedApp)
-                         : -1;
-      WL_WM_LOG("WM: tick (wayland) camPos=(%.2f,%.2f,%.2f) focused=%d\n",
-                camera->position.x,
-                camera->position.y,
-                camera->position.z,
-                focusedEnt);
-    }
-    return;
-  }
-  lock_guard<mutex> lock(renderLoopMutex);
-
-  for (auto it = events.begin(); it != events.end(); it++) {
-    auto app = registry->try_get<X11App>(it->window);
-    if(it->type == SMALLER) {
-      app->smaller();
-    }
-    if(it->type == LARGER) {
-      app->larger();
-    }
-  }
-  events.clear();
-
-  for (auto it = appsToRemove.begin(); it != appsToRemove.end(); it++) {
-    try {
-      if (currentlyFocusedApp == *it) {
-        unfocusApp();
-      }
-      if (registry->all_of<X11App>(*it)) {
-        space->removeApp(*it);
-        if (registry->orphan(*it)) {
-          registry->destroy(*it);
-        }
-      }
-    } catch (exception &e) {
-      logger->error(e.what());
-      logger->flush();
-    }
-  }
-  appsToRemove.clear();
-
-  vector<X11App *> waitForRemoval;
-  for (auto it = appsToAdd.begin(); it != appsToAdd.end(); it++) {
-    try {
-
-      auto appEntity = dynamicApps[(*it)->getWindow()];
-
-      if(registry->valid(appEntity)) {
-        if(registry->all_of<X11App>(appEntity)) {
-          waitForRemoval.push_back(*it);
-        } else {
-          registry->emplace<X11App>(appEntity, std::move(**it));
-          delete *it;
-
-          auto spawnAtCamera = !currentlyFocusedApp.has_value();
-          space->addApp(appEntity, spawnAtCamera);
-          positionRelativeToFocus(appEntity);
-
-          if(registry->all_of<X11App>(appEntity)) {
-            createUnfocusHackThread(appEntity);
-          } else {
-            dynamicApps.erase((*it)->getWindow());
-          }
-        }
-      }
-    } catch (exception &e) {
-      logger->error(e.what());
-      logger->flush();
-    }
-  }
-  adjustAppsToAddAfterAdditions(waitForRemoval);
-}
-
 void WindowManager::focusApp(entt::entity appEntity) {
   if (waylandMode) {
     // Wayland focus is handled via wlroots; record focus only.
@@ -1041,89 +956,6 @@ void WindowManager::registerControls(Controls *controls) {
     return;
   }
   this->controls = controls;
-}
-
-void WindowManager::setWMProps(Window root) {
-
-  Window screen_owner = XCreateSimpleWindow(display, root, 0, 0, 1, 1, 0, 0, 0);
-  Xutf8SetWMProperties(display, screen_owner, "matrixWM", "matrixWM", NULL,
-                       0, NULL, NULL, NULL);
-
-  char name[] = "_NET_WM_CM_S##";
-  snprintf(name, sizeof(name), "_NET_WM_CM_S%d", screen);
-
-  Atom atom = XInternAtom(display, name, 0);
-  XSetSelectionOwner(display, atom, screen_owner, 0);
-  // Set the _NET_SUPPORTED property
-  Atom net_supported = XInternAtom(display, "_NET_SUPPORTED", False);
-  Atom net_supported_atoms[] = {
-      XInternAtom(display, "_NET_WM_ACTION_CLOSE", False),
-      XInternAtom(display, "_NET_WM_ACTION_MOVE", False),
-      XInternAtom(display, "_NET_WM_ACTION_RESIZE", False),
-      XInternAtom(display, "_NET_WM_ACTION_MINIMIZE", False),
-      XInternAtom(display, "_NET_WM_ACTION_FULLSCREEN", False),
-      XInternAtom(display, "_NET_WM_ACTION_SHADE", False),
-      XInternAtom(display, "_NET_WM_OPACITY", False),
-      XInternAtom(display, "_NET_WM_STATE_MODAL", False),
-      XInternAtom(display, "_NET_WM_STATE_STICKY", False),
-      XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_VERT", False),
-      XInternAtom(display, "_NET_WM_STATE_MAXIMIZED_HORZ", False),
-      XInternAtom(display, "_NET_WM_STATE_SHADED", False),
-      XInternAtom(display, "_NET_WM_STATE_SKIP_TASKBAR", False),
-      XInternAtom(display, "_NET_WM_STATE_SKIP_PAGER", False),
-      XInternAtom(display, "_NET_WM_STATE_HIDDEN", False),
-      XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False),
-      XInternAtom(display, "_NET_WM_STATE_ABOVE", False),
-      XInternAtom(display, "_NET_WM_STATE_BELOW", False),
-      XInternAtom(display, "_NET_WM_STATE_DEMANDS_ATTENTION", False)
-  };
-
-  int num_supported_atoms = sizeof(net_supported_atoms) / sizeof(Atom);
-
-  // Set _NET_SUPPORTED property on the root window
-  XChangeProperty(display, root, XInternAtom(display, "_NET_SUPPORTED", False),
-                  XA_ATOM, 32, PropModeReplace,
-                  (unsigned char *)net_supported_atoms, num_supported_atoms);
-
-  int workarea_x = 0;
-  int workarea_y = 0;
-  int workarea_width = SCREEN_WIDTH;
-  int workarea_height = SCREEN_HEIGHT;
-
-  // Convert the work area rectangle into a format suitable for the
-  // _NET_WORKAREA property
-  long workarea[] = {workarea_x, workarea_y, workarea_width, workarea_height};
-
-  // Set the _NET_WORKAREA property on the root window
-  Atom net_workarea = XInternAtom(display, "_NET_WORKAREA", False);
-  XChangeProperty(display, root, net_workarea, XA_CARDINAL, 32, PropModeReplace,
-                  (unsigned char *)&workarea, 4);
-
-  long desktop_viewport[] = {0, 0};
-
-  // Set the _NET_DESKTOP_VIEWPORT property on the root window
-  Atom net_desktop_viewport =
-      XInternAtom(display, "_NET_DESKTOP_VIEWPORT", False);
-  XChangeProperty(display, root, net_desktop_viewport, XA_CARDINAL, 32,
-                  PropModeReplace, (unsigned char *)&desktop_viewport, 2);
-
-  // Set the _NET_SUPPORTING_WM_CHECK property on the root window
-  Atom net_supporting_wm_check =
-      XInternAtom(display, "_NET_SUPPORTING_WM_CHECK", False);
-  XChangeProperty(display, root, net_supporting_wm_check,
-                  XA_WINDOW, 32, PropModeReplace,
-                  (unsigned char *)&screen_owner, 1);
-
-  // Set the _NET_SUPPORTING_WM_CHECK property on matrix
-  XChangeProperty(display, screen_owner, net_supporting_wm_check,
-                  XA_WINDOW, 32, PropModeReplace, (unsigned char *)&screen_owner, 1);
-
-  // Set the _NET_WM_NAME property of the matrix window
-  Atom net_wm_name = XInternAtom(display, "_NET_WM_NAME", False);
-  XChangeProperty(display, screen_owner, net_wm_name, XA_STRING, 8,
-                  PropModeReplace, (unsigned char *)"matrixWM", strlen("matrixWM"));
-
-  XFlush(display);
 }
 
 void WindowManager::setupLogger() {
