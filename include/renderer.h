@@ -1,5 +1,5 @@
-#ifndef __RENDERER_H__
-#define __RENDERER_H__
+#pragma once
+
 #include "IndexPool.h"
 #include "WindowManager/WindowManager.h"
 #include "blocks.h"
@@ -100,6 +100,7 @@ class Renderer
   void renderDynamicObjects();
   void renderModels(RenderPerspective);
   void renderVoxels();
+  void renderPopup(WaylandApp::Component& popup, WaylandApp::Component& parent);
   std::shared_ptr<spdlog::logger> logger;
   void genMeshResources();
 
@@ -168,5 +169,3 @@ public:
 
   glm::mat4 projection;
 };
-
-#endif

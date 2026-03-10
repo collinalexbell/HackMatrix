@@ -979,44 +979,7 @@ Renderer::renderChunkMesh()
   shader->setBool("isMesh", false);
 }
 
-void
-Renderer::renderApps()
-{
-  auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
-  static std::unordered_set<void*> loggedApps;
-  auto wlPositionable =
-    registry->view<WaylandApp::Component, Positionable>(entt::exclude<Bootable>);
-  size_t wlCount = wlPositionable.size_hint();
-  TracyGpuZone("render apps");
-  shader->setBool("appSelected", false);
-
-  shader->setBool("isApp", true);
-  shader->setBool("directRender", false);
-  glBindVertexArray(APP_VAO);
-  // Defensive: ensure app quad attributes are enabled/bound even if VAO state
-  // was clobbered by other GL paths.
-  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(
-    1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
-  glDisable(GL_CULL_FACE);
- 
-
-  auto bindAppTexture = [&](int index) {
-    auto it = textures.find("app" + std::to_string(index));
-    if (index < 0 || index >= appTextureCount ||
-        it == textures.end() || !it->second || !glIsTexture(it->second->ID)) {
-      return false;
-    }
-    glActiveTexture(GL_TEXTURE0 + index);
-    glBindTexture(GL_TEXTURE_2D, it->second->ID);
-    shader->setInt("appNumber", index);
-    return true;
-  };
-  auto renderWaylandPopup = [&](WaylandApp::Component& popup,
-                                WaylandApp::Component& parent) {
+void Renderer::renderPopup(WaylandApp::Component& popup, WaylandApp::Component& parent) {
     auto* popupApp = popup.app.get();
     auto* parentApp = parent.app.get();
     if (!popupApp || !parentApp) {
@@ -1063,6 +1026,43 @@ Renderer::renderApps()
                       GL_COLOR_BUFFER_BIT,
                       GL_NEAREST);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
+}
+
+void
+Renderer::renderApps()
+{
+  auto lookedAtAppEntity = windowManagerSpace->getLookedAtApp();
+  static std::unordered_set<void*> loggedApps;
+  auto wlPositionable =
+    registry->view<WaylandApp::Component, Positionable>(entt::exclude<Bootable>);
+  size_t wlCount = wlPositionable.size_hint();
+  TracyGpuZone("render apps");
+  shader->setBool("appSelected", false);
+
+  shader->setBool("isApp", true);
+  shader->setBool("directRender", false);
+  glBindVertexArray(APP_VAO);
+  // Defensive: ensure app quad attributes are enabled/bound even if VAO state
+  // was clobbered by other GL paths.
+  glBindBuffer(GL_ARRAY_BUFFER, APP_VBO);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(
+    1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
+  glDisable(GL_CULL_FACE);
+ 
+
+  auto bindAppTexture = [&](int index) {
+    auto it = textures.find("app" + std::to_string(index));
+    if (index < 0 || index >= appTextureCount ||
+        it == textures.end() || !it->second || !glIsTexture(it->second->ID)) {
+      return false;
+    }
+    glActiveTexture(GL_TEXTURE0 + index);
+    glBindTexture(GL_TEXTURE_2D, it->second->ID);
+    shader->setInt("appNumber", index);
+    return true;
   };
   auto renderLayerShell = [&](WaylandApp::Component& comp) {
     auto* app = comp.app.get();
@@ -1206,7 +1206,7 @@ Renderer::renderApps()
         if (!parentComp || !parentComp->app) {
           continue;
         }
-        renderWaylandPopup(comp, *parentComp);
+        renderPopup(comp, *parentComp);
       }
     }
   }
