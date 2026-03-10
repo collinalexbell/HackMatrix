@@ -1189,52 +1189,6 @@ void WindowManager::setupLogger() {
 }
 
 WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
-                             Window matrix,
-                             spdlog::sink_ptr loggerSink,
-                             char** envp)
-    : matrix(matrix), logSink(loggerSink), registry(registry), envp(envp) {
-
-  menuProgram = Config::singleton()->get<std::string>("menu_program");
-  if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
-    menuProgram = envMenu;
-  }
-  hotkeyModifierMask = resolveHotkeyMaskFromConfig();
-  setupLogger();
-  display = XOpenDisplay(NULL);
-  screen = XDefaultScreen(display);
-  X11App::initAppClass(display, screen);
-  Window root = RootWindow(display, screen);
-  setWMProps(root);
-  XCompositeRedirectSubwindows(display, RootWindow(display, screen),
-                                 CompositeRedirectAutomatic);
-
-  overlay = XCompositeGetOverlayWindow(display, root);
-  XReparentWindow(display, matrix, overlay, 0, 0);
-
-  XFixesSelectCursorInput(display, overlay, XFixesDisplayCursorNotifyMask);
-
-  XSelectInput(display, root,
-               EnterWindowMask | SubstructureRedirectMask |
-                   SubstructureNotifyMask | FocusChangeMask | LeaveWindowMask |
-                   EnterWindowMask);
-
-  XSelectInput(display, matrix, FocusChangeMask | LeaveWindowMask);
-
-  for (int i = 0; i < 10; i++) {
-    KeyCode code = XKeysymToKeycode(display, XK_0 + i);
-    XGrabKey(display, code, hotkeyModifierMask, root, true, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, code, hotkeyModifierMask | ShiftMask, root, true, GrabModeAsync, GrabModeAsync);
-  }
-  XSync(display, false);
-  XFlush(display);
-
-  passthroughInput();
-  allow_input_passthrough(overlay);
-  substructureThread = thread(&WindowManager::handleSubstructure, this);
-  substructureThread.detach();
-}
-
-WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
                              spdlog::sink_ptr loggerSink,
                              bool waylandMode,
                              char** envp)

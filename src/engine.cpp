@@ -57,15 +57,6 @@ mouseCallback(GLFWwindow* window, double xpos, double ypos)
   engine->controls->mouseCallback(window, xpos, ypos);
 }
 
-// The engineGui can't be created until the callback is registered
-// Encapsulate in Engine, even though it uses glfw
-void
-Engine::registerCursorCallback()
-{
-  glfwSetWindowUserPointer(window, (void*)this);
-  glfwSetCursorPosCallback(window, mouseCallback);
-}
-
 void
 Engine::setupRegistry()
 {
@@ -122,9 +113,8 @@ shared_ptr<LoggerVector> Engine::setupLogger() {
   return loggerVector;
 }
 
-Engine::Engine(GLFWwindow* window, char** envp, EngineOptions options)
-  : window(window)
-  , envp(envp)
+Engine::Engine(char** envp, EngineOptions options)
+  : envp(envp)
   , options(options)
   , frameTimes(20, 0.0)
 {
@@ -137,24 +127,11 @@ Engine::Engine(GLFWwindow* window, char** envp, EngineOptions options)
   auto loggerVector = setupLogger();
   initializeMemberObjs();
 
-  if (window != nullptr) {
-    glfwFocusWindow(window);
-  }
-
   TracyGpuContext;
 
   wire();
   if (wm) {
     wm->createAndRegisterApps(envp);
-  }
-
-  if (options.enableControls && window != nullptr) {
-    registerCursorCallback();
-  }
-  // Has to be be created after the cursorCallback because gui wraps the
-  // callback. In wlroots mode window is null; EngineGui handles a headless path.
-  if (options.enableGui) {
-    engineGui = make_shared<EngineGui>(this, window, registry, loggerVector);
   }
 }
 
@@ -192,16 +169,7 @@ Engine::initializeMemberObjs()
   }
 
   auto texturePack = blocks::initializeBasicPack();
-  // Default to X11 WM only when we have a GLFW X11 window; wlroots path uses a
-  // Wayland-aware WM. For wlroots, matrix window is null so we skip X11 setup.
-  if (window != nullptr) {
-    wm = make_shared<WindowManager::WindowManager>(
-      registry, glfwGetX11Window(window), loggerSink, envp);
-  } else {
-    // Wayland-only path (wlroots) doesn't have a GLFW window; build a WM in
-    // headless mode so we can still place/render apps.
-    wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true, envp);
-  }
+  wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true, envp);
   camera = new Camera();
   world = new World(
     registry, camera, texturePack, true, loggerSink);
@@ -237,25 +205,6 @@ void Engine::multiplayerClientIteration(double frameStart) {
   if (client && frameStart - lastPlayerUpdate > 1.0 / 20.0) {
     client->sendPlayer(camera->position, camera->front);
     lastPlayerUpdate = frameStart;
-  }
-}
-
-void
-Engine::loop()
-{
-  // Skip shadow-map lighting pass while experimenting with voxel outlines to
-  // avoid crashes in the lighting pipeline.
-  // systems::updateLighting(registry, renderer);
-  try {
-    while (!glfwWindowShouldClose(window)) {
-      TracyGpuZone("loop");
-      glfwPollEvents();
-      frame();
-      glfwSwapBuffers(window);
-    }
-  } catch (const std::exception& e) {
-    logger->error(e.what());
-    throw;
   }
 }
 
@@ -361,7 +310,7 @@ Engine::disableKeysIfImguiActive() {
 void
 Engine::updateImGuiPointer(float xPixels, float yPixels, const bool buttons[3])
 {
-  if (!engineGui || window != nullptr) {
+  if (!engineGui) {
     return;
   }
   ImGuiIO& io = ImGui::GetIO();

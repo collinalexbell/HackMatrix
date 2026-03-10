@@ -32,7 +32,6 @@ class Engine
   Controls* controls;
   Camera* camera;
   WindowManager::WindowManagerPtr wm;
-  GLFWwindow* window;
   char** envp = nullptr;
   EngineOptions options;
   std::vector<double> frameTimes;
@@ -54,7 +53,7 @@ class Engine
   void multiplayerClientIteration(double frameStart);
 
 public:
-  Engine(GLFWwindow* window, char** envp, EngineOptions options = {});
+  Engine(char** envp, EngineOptions options = {});
   ~Engine();
   shared_ptr<EntityRegistry> getRegistry();
   Camera* getCamera() { return camera; }
@@ -64,9 +63,7 @@ public:
   Controls* getControls() { return controls; }
   void action(Action action);
   void wire();
-  void loop();
   void frame();
-  void registerCursorCallback();
   void registerServer(shared_ptr<MultiPlayer::Server>);
   void registerClient(shared_ptr<MultiPlayer::Client>);
   void updateImGuiPointer(float xPixels, float yPixels, const bool buttons[3]);

@@ -168,7 +168,6 @@ public:
   void passthroughInput() override;
   void captureInput() override;
   void createAndRegisterApps(char** envp) override;
-  WindowManager(shared_ptr<EntityRegistry>, Window, spdlog::sink_ptr, char** envp = nullptr);
   WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, bool waylandMode, char** envp = nullptr);
   bool isWaylandMode() const override { return waylandMode; }
   ~WindowManager();
