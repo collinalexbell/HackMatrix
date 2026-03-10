@@ -79,15 +79,6 @@ constexpr bool kWlrootsDebugLogs = false;
 
 namespace {
 
-double
-currentTimeSeconds()
-{
-  static const auto start = std::chrono::steady_clock::now();
-  const auto now = std::chrono::steady_clock::now();
-  std::chrono::duration<double> elapsed = now - start;
-  return elapsed.count();
-}
-
 static void
 ensure_wayland_apps_registered(WlrServer* server)
 {
@@ -918,8 +909,7 @@ handle_output_frame(wl_listener* listener, void* data)
   }
 
   glViewport(0, 0, width, height);
-  double frameStart = currentTimeSeconds();
-  server->engine->frame(frameStart);
+  server->engine->frame();
   // Run screenshot capture after the frame has been drawn so the image matches
   // what was just rendered.
   if (server->engine && server->engine->getWindowManager() &&
@@ -977,7 +967,6 @@ handle_output_frame(wl_listener* listener, void* data)
   }
   wlr_output_state_finish(&output_state);
   wlr_buffer_unlock(buffer);
-  server->lastFrameTime = frameStart;
 }
 
 // This is called when wayland detects a new output such as a monitor

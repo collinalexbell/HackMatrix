@@ -173,7 +173,6 @@ struct WlrServer {
   std::unique_ptr<Engine> engine;
   std::shared_ptr<EntityRegistry> registry;
   bool gladLoaded = false;
-  double lastFrameTime = 0.0;
   char** envp = nullptr;
   InputState input;
   wlr_compositor* compositor = nullptr;

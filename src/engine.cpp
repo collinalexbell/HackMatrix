@@ -250,8 +250,7 @@ Engine::loop()
     while (!glfwWindowShouldClose(window)) {
       TracyGpuZone("loop");
       glfwPollEvents();
-      double frameStart = currentTimeSeconds();
-      frame(frameStart);
+      frame();
       glfwSwapBuffers(window);
     }
   } catch (const std::exception& e) {
@@ -261,8 +260,9 @@ Engine::loop()
 }
 
 void
-Engine::frame(double frameStart)
+Engine::frame()
 {
+  double frameStart = currentTimeSeconds();
   if (api != nullptr) {
     api->mutateEntities();
   }

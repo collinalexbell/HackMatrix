@@ -65,7 +65,7 @@ public:
   void action(Action action);
   void wire();
   void loop();
-  void frame(double frameStart);
+  void frame();
   void registerCursorCallback();
   void registerServer(shared_ptr<MultiPlayer::Server>);
   void registerClient(shared_ptr<MultiPlayer::Client>);
