@@ -51,13 +51,6 @@ currentTimeSeconds()
 } // namespace
 
 void
-mouseCallback(GLFWwindow* window, double xpos, double ypos)
-{
-  Engine* engine = (Engine*)glfwGetWindowUserPointer(window);
-  engine->controls->mouseCallback(window, xpos, ypos);
-}
-
-void
 Engine::setupRegistry()
 {
   registry = make_shared<EntityRegistry>();
