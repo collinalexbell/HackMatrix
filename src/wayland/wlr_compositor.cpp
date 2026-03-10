@@ -88,18 +88,6 @@ currentTimeSeconds()
   return elapsed.count();
 }
 
-static size_t
-wayland_app_count(WlrServer* server)
-{
-  if (!server || !server->registry) {
-    return 0;
-  }
-  size_t count = 0;
-  auto view = server->registry->view<WaylandApp::Component>();
-  view.each([&](auto /*ent*/, auto& /*comp*/) { ++count; });
-  return count;
-}
-
 static const wlr_keyboard_impl kVirtualKeyboardImpl = {
   .name = "virtual-keyboard",
   .led_update = nullptr,
