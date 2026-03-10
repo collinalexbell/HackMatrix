@@ -225,32 +225,6 @@ int forkApp(string cmd, char **envp, string args) {
   }
 }
 
-void WindowManager::forkOrFindApp(string cmd, string pidOf, string className,
-                                  entt::entity &appEntity, char **envp,
-                                  string args) {
-  char *line;
-  std::size_t len = 0;
-  FILE *pidPipe = popen(string("pgrep " + pidOf).c_str(), "r");
-  if (getline(&line, &len, pidPipe) == -1) {
-    forkApp(cmd, envp, args);
-    if (className == "obs") {
-      sleep(30);
-    } else if (className == "magicavoxel.exe") {
-      sleep(6);
-    } else {
-      sleep(4);
-    }
-  }
-  X11App *app =
-    X11App::byClass(className, display, screen,
-                    Bootable::DEFAULT_WIDTH,
-                    Bootable::DEFAULT_HEIGHT);
-  appEntity = registry->create();
-  registry->emplace<X11App>(appEntity, std::move(*app));
-  dynamicApps[app->getWindow()] = appEntity;
-  logger->info("created " + className + " app");
-}
-
 void WindowManager::createAndRegisterApps(char **envp) {
   if (waylandMode) {
     return;

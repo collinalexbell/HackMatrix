@@ -120,12 +120,6 @@ class WindowManager : public WindowManagerInterface
   vector<X11App*> appsToAdd;
   vector<entt::entity> appsToRemove;
   vector<WindowEvent> events;
-  void forkOrFindApp(string cmd,
-                     string pidOf,
-                     string className,
-                     entt::entity&,
-                     char** envp,
-                     string args = "");
   std::thread substructureThread;
   bool continueRunning = true;
   void removeAppForWindow(Window);
