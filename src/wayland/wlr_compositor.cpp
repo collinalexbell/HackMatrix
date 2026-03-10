@@ -335,35 +335,6 @@ ensure_wayland_apps_registered(WlrServer* server)
   }
 }
 
-struct WaylandAppHandle {
-  WlrServer* server = nullptr;
-  std::shared_ptr<WaylandApp> app;
-  wlr_xdg_surface* xdg_surface = nullptr;
-  wlr_surface* surface = nullptr;
-  bool accessory = false;
-  wlr_surface* parent_surface = nullptr;
-  int offset_x = 0;
-  int offset_y = 0;
-  wl_listener destroy;
-  wl_listener unmap;
-  wl_listener commit;
-  bool registered = false;
-  entt::entity entity = entt::null;
-  bool unmapLinked = false;
-};
-
-struct LayerSurfaceHandle {
-  WlrServer* server = nullptr;
-  std::shared_ptr<WaylandApp> app;
-  wlr_layer_surface_v1* layer = nullptr;
-  wl_listener commit;
-  wl_listener destroy;
-  wl_listener unmap;
-  bool registered = false;
-  bool configured = false;
-  entt::entity entity = entt::null;
-};
-
 static void
 safe_remove_listener(wl_listener* listener)
 {
@@ -376,16 +347,6 @@ safe_remove_listener(wl_listener* listener)
     listener->link.next = nullptr;
   }
 }
-
-struct XdgSurfaceHandle {
-  WlrServer* server = nullptr;
-  wlr_xdg_surface* xdg = nullptr;
-  bool created = false;
-  bool configured_sent = false;
-  wl_listener commit;
-  wl_listener map;
-  wl_listener destroy;
-};
 
 static bool
 pick_output_size(bool isX11Backend, int* out_width, int* out_height)

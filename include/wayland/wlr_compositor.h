@@ -9,6 +9,9 @@
 #include "entt.hpp"
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_keyboard.h>
+#define namespace namespace_keyword_workaround
+#include <wlr/types/wlr_layer_shell_v1.h>
+#undef namespace
 
 struct Engine;
 class EntityRegistry;
@@ -105,6 +108,45 @@ struct ReplayKeyRelease {
   uint32_t release_time_msec = 0;
   uint32_t keycode = 0;
   bool update_mods = false;
+};
+
+struct WaylandAppHandle {
+  WlrServer* server = nullptr;
+  std::shared_ptr<WaylandApp> app;
+  wlr_xdg_surface* xdg_surface = nullptr;
+  wlr_surface* surface = nullptr;
+  bool accessory = false;
+  wlr_surface* parent_surface = nullptr;
+  int offset_x = 0;
+  int offset_y = 0;
+  wl_listener destroy;
+  wl_listener unmap;
+  wl_listener commit;
+  bool registered = false;
+  entt::entity entity = entt::null;
+  bool unmapLinked = false;
+};
+
+struct LayerSurfaceHandle {
+  WlrServer* server = nullptr;
+  std::shared_ptr<WaylandApp> app;
+  wlr_layer_surface_v1* layer = nullptr;
+  wl_listener commit;
+  wl_listener destroy;
+  wl_listener unmap;
+  bool registered = false;
+  bool configured = false;
+  entt::entity entity = entt::null;
+};
+
+struct XdgSurfaceHandle {
+  WlrServer* server = nullptr;
+  wlr_xdg_surface* xdg = nullptr;
+  bool created = false;
+  bool configured_sent = false;
+  wl_listener commit;
+  wl_listener map;
+  wl_listener destroy;
 };
 
 struct WlrServer {
