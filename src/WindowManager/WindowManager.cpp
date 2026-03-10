@@ -211,20 +211,6 @@ void WindowManager::menu() {
   }).detach();
 }
 
-int forkApp(string cmd, char **envp, string args) {
-  int pid = fork();
-  if (pid == 0) {
-    setsid();
-    if (args != "") {
-      execle(cmd.c_str(), cmd.c_str(), args.c_str(), NULL, envp);
-    }
-    execle(cmd.c_str(), cmd.c_str(), NULL, envp);
-    exit(0);
-  } else {
-    return pid;
-  }
-}
-
 void WindowManager::createAndRegisterApps(char **envp) {
   if (waylandMode) {
     return;
