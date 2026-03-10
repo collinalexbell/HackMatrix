@@ -574,24 +574,16 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
-  // Focus key (mirrors click focus) is handled on the main thread via the
-  // queued action system to match engine timing.
   if ((sym == XKB_KEY_r || sym == XKB_KEY_R) && debounce(lastKeyPressTime)) {
     resp.clearInputForces = true;
     enqueueAction([this]() {
       if (!wm) {
         return;
       }
-      // Prefer the app currently looked at; fall back to focusLookedAtApp to
-      // keep parity with click-based focus.
-      if (windowManagerSpace) {
-        if (auto looked = windowManagerSpace->getLookedAtApp()) {
-          wm->focusApp(*looked);
-          wm->goToLookedAtApp();
-          return;
-        }
+      if (auto looked = windowManagerSpace->getLookedAtApp()) {
+        wm->focusApp(*looked);
+        return;
       }
-      wm->focusLookedAtApp();
     });
     resp.blockClientDelivery = true;
     resp.consumed = true;

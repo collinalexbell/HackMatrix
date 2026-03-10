@@ -133,7 +133,7 @@ build_debug/WindowManager/Space.debug.o: src/WindowManager/Space.cpp
 	mkdir -p build_debug/WindowManager
 	g++ -std=c++20 $(DEBUG_FLAGS) $(INCLUDES) -o build_debug/WindowManager/Space.debug.o -c src/WindowManager/Space.cpp
 
-build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
+build/renderer.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/WindowManager.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/renderer.o -c src/renderer.cpp $(INCLUDES)
 build_debug/renderer.debug.o: src/renderer.cpp include/renderer.h include/texture.h include/shader.h include/world.h include/camera.h include/cube.h include/logger.h include/dynamicObject.h include/model.h include/WindowManager/Space.h include/components/Bootable.h include/components/Light.h include/screen.h include/time_utils.h
 	mkdir -p build_debug
@@ -157,7 +157,7 @@ build/world.o: src/world.cpp include/world.h include/app.h include/camera.h incl
 build/camera.o: src/camera.cpp include/camera.h include/time_utils.h
 	g++  -std=c++20 $(FLAGS) -o build/camera.o -c src/camera.cpp $(INCLUDES)
 
-build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h include/time_utils.h
+build/api.o: src/api.cpp include/api.h include/world.h include/logger.h include/protos/api.pb.h include/time_utils.h include/WindowManager/WindowManager.h
 	g++  -std=c++20 $(FLAGS) -o build/api.o -c src/api.cpp $(INCLUDES)
 
 build/controls.o: src/controls.cpp include/controls.h include/camera.h include/WindowManager/WindowManager.h include/world.h include/ControlMappings.h include/time_utils.h

@@ -321,17 +321,6 @@ void WindowManager::focusEntityAfterMove(entt::entity ent) {
   }
 }
 
-void WindowManager::goToLookedAtApp() {
-  if (!space || !camera) {
-    return;
-  }
-  auto looked = space->getLookedAtApp();
-  if (!looked) {
-    return;
-  }
-  moveCameraToApp(looked.value(), "goToLookedAtApp");
-}
-
 void WindowManager::addApp(X11App *app, entt::entity entity) {
   std::lock_guard<std::mutex> lock(renderLoopMutex);
   auto window = app->getWindow();
@@ -660,76 +649,6 @@ void WindowManager::onHotkeyPress(XKeyEvent event) {
   }
 }
 
-void WindowManager::handleSubstructure() {
-  if (waylandMode) {
-    return;
-  }
-  for (;;) {
-    {
-      lock_guard<std::mutex> continueLock(continueMutex);
-      if(!continueRunning) {
-        break;
-      }
-    }
-    XEvent e;
-    XNextEvent(display, &e);
-    stringstream eventInfo;
-    Window root = XRootWindow(display, 0);
-
-    XWindowAttributes attrs;
-
-    switch (e.type) {
-    case CreateNotify:
-      logger->info("CreateNotify event");
-      logger->flush();
-      XGetWindowAttributes(display, e.xcreatewindow.window, &attrs);
-      if (e.xcreatewindow.override_redirect == True) {
-        if(e.xcreatewindow.width > 30) {
-          createApp(e.xcreatewindow.window, e.xcreatewindow.width,
-                    e.xcreatewindow.height);
-        }
-      }
-      break;
-    case DestroyNotify:
-      logger->info("DestroyNotify event");
-      logger->flush();
-      removeAppForWindow(e.xdestroywindow.window);
-      break;
-    case UnmapNotify:
-      logger->info("UnmapNotify event");
-      removeAppForWindow(e.xunmap.window);
-      break;
-
-    case MapNotify:
-      {
-        logger->info("MapNotify event");
-        renderLoopMutex.lock();
-        bool alreadyCreated = dynamicApps.contains(e.xmap.window);
-        renderLoopMutex.unlock();
-        XGetWindowAttributes(display, e.xmap.window, &attrs);
-        if (!alreadyCreated && e.xmap.override_redirect == True) {
-          if(attrs.width > 30) {
-            createApp(e.xmap.window, attrs.width,
-                attrs.height);
-          }
-        }
-        break;
-      }
-    case MapRequest:
-      logger->info("MapRequest event");
-      onMapRequest(e.xmaprequest);
-      break;
-    case KeyPress:
-      onHotkeyPress(e.xkey);
-      break;
-    case ConfigureNotify:
-      logger->info("ConfigureNotify");
-      reconfigureWindow(e.xconfigure);
-      break;
-    }
-  }
-}
-
 void WindowManager::reconfigureWindow(XConfigureEvent configureEvent) {
   if (waylandMode) {
     return;
@@ -787,32 +706,22 @@ void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemova
   appsToAdd.assign(waitForRemoval.begin(), waitForRemoval.end());
 }
 
-void WindowManager::focusApp(entt::entity appEntity) {
-  if (waylandMode) {
-    // Wayland focus is handled via wlroots; record focus only.
-    pendingFocusedApp = std::nullopt;
-    currentlyFocusedApp = appEntity;
-    if (controls) {
-      // Clear any stuck movement when compositor focus moves to a client.
-      controls->clearMovementInput();
-    }
-    if (registry && registry->valid(appEntity) &&
-        registry->all_of<WaylandApp::Component>(appEntity)) {
-      // Notify the Wayland client so keyboard/pointer focus matches click focus.
-      if (auto* comp = registry->try_get<WaylandApp::Component>(appEntity)) {
-        if (comp->app) {
-          comp->app->takeInputFocus();
-        }
-      }
-    }
-    // Also move camera toward the app for waylandMode when focused via API.
-    goToLookedAtApp();
-    return;
-  }
-  currentlyFocusedApp = appEntity;
+void
+WindowManager::focusApp(entt::entity appEntity)
+{
+  // Wayland focus is handled via wlroots; record focus only.
   pendingFocusedApp = std::nullopt;
-  auto &app = registry->get<X11App>(appEntity);
-  app.focus(matrix);
+  currentlyFocusedApp = appEntity;
+  // Clear any stuck movement when compositor focus moves to a client.
+  controls->clearMovementInput();
+  if (registry->valid(appEntity) &&
+      registry->all_of<WaylandApp::Component>(appEntity)) {
+    // Notify the Wayland client so keyboard/pointer focus matches click focus.
+    if (auto* comp = registry->try_get<WaylandApp::Component>(appEntity)) {
+      comp->app->takeInputFocus();
+    }
+    moveCameraToApp(appEntity, "goToLookedAtApp");
+  }
 }
 
 void WindowManager::unfocusApp() {
@@ -896,35 +805,6 @@ WindowManager::positionRelativeToFocus(entt::entity appEntity)
   positionable.pos = pos;
   positionable.rotate = rot;
   positionable.damage();
-}
-
-void WindowManager::focusLookedAtApp() {
-  if (!space) {
-    return;
-  }
-  if (auto looked = space->getLookedAtApp()) {
-    auto entity = looked.value();
-    WL_WM_LOG("WM: focusLookedAtApp entity=%d isWayland=%d isX11=%d pos=(%.2f,%.2f,%.2f)\n",
-              (int)entt::to_integral(entity),
-              registry->all_of<WaylandApp::Component>(entity) ? 1 : 0,
-              registry->all_of<X11App>(entity) ? 1 : 0,
-              registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.x : 0.0f,
-              registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.y : 0.0f,
-              registry->all_of<Positionable>(entity) ? registry->get<Positionable>(entity).pos.z : 0.0f);
-    if (registry->all_of<WaylandApp::Component>(entity)) {
-      // Wayland app path: just record focus and let wlroots handle input.
-      pendingFocusedApp = std::nullopt;
-      currentlyFocusedApp = entity;
-      if (auto* comp = registry->try_get<WaylandApp::Component>(entity)) {
-        if (comp->app) {
-          comp->app->takeInputFocus();
-        }
-      }
-    } else if (registry->all_of<X11App>(entity)) {
-      focusApp(entity);
-    }
-    goToLookedAtApp();
-  }
 }
 
 void

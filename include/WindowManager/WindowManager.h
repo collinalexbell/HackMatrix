@@ -60,9 +60,6 @@ public:
   virtual bool hasCurrentOrPendingFocus() = 0;
   virtual void focusApp(entt::entity) = 0;
   virtual void wire(shared_ptr<WindowManagerInterface>, Camera* camera, Renderer* renderer) = 0;
-  virtual void handleSubstructure() = 0;
-  virtual void goToLookedAtApp() = 0;
-  virtual void focusLookedAtApp() = 0;
   virtual std::shared_ptr<Space> getSpace() = 0;
   virtual void registerControls(Controls* controls) = 0;
   virtual void handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool shiftHeld) = 0;
@@ -168,9 +165,6 @@ public:
   bool hasCurrentOrPendingFocus() override; 
   void focusApp(entt::entity) override;
   void wire(WindowManagerPtr sharedThis, Camera* camera, Renderer* renderer) override;
-  void handleSubstructure() override;
-  void goToLookedAtApp() override;
-  void focusLookedAtApp() override;
   void setCursorVisible(bool visible) override;
   std::shared_ptr<Space> getSpace() override { return space; }
   void registerControls(Controls* controls) override;
