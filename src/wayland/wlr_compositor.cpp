@@ -374,20 +374,6 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
     if (w <= 0 || h <= 0) {
       return;
     }
-    if (handle->xdg_surface && handle->xdg_surface->popup) {
-      handle->parent_surface = handle->xdg_surface->popup->parent;
-      if (handle->parent_surface) {
-        double sx = 0.0;
-        double sy = 0.0;
-        wlr_xdg_popup_get_position(handle->xdg_surface->popup, &sx, &sy);
-        handle->offset_x = static_cast<int>(sx);
-        handle->offset_y = static_cast<int>(sy);
-      } else {
-        handle->accessory = false;
-        handle->offset_x = 0;
-        handle->offset_y = 0;
-      }
-    }
     // Defer registration to the render loop to avoid GL/context races.
     handle->server->pending_wl_actions.push_back(
       PendingWlAction{ PendingWlAction::Add,
