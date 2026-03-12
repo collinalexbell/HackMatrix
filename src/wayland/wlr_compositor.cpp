@@ -13,7 +13,6 @@
 #include <EGL/egl.h>
 #include <wayland-server-core.h>
 #include <xkbcommon/xkbcommon.h>
-#include "interfaces/wlr_input_device.h"
 #include <linux/input-event-codes.h>
 
 extern "C" {
@@ -94,37 +93,7 @@ ensure_wayland_apps_registered(WlrServer* server)
   if (!renderer) {
     return;
   }
-  // Detect cases where surfaces exist but no Wayland apps are registered and
-  // requeue adds so they don't stall.
-  if (server->surface_map.size() > 0) {
-    auto view = server->registry->view<WaylandApp::Component>();
-    if (view.size() == 0) {
-      for (auto& entry : server->surface_map) {
-        auto it = server->surface_map.find(entry.first);
-        if (it != server->surface_map.end()) {
-          entt::entity ent = it->second;
-          if (server->registry->valid(ent)) {
-            if (auto* comp = server->registry->try_get<WaylandApp::Component>(ent)) {
-              if (comp->app) {
-                server->pending_wl_actions.push_back(
-                  PendingWlAction{ PendingWlAction::Add,
-                                   comp->app,
-                                   entry.first,
-                                   comp->accessory,
-                                   comp->layer_shell,
-                                   false,
-                                   nullptr,
-                                   comp->offset_x,
-                                   comp->offset_y,
-                                   comp->screen_x,
-                                   comp->screen_y });
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+
   auto actions = std::move(server->pending_wl_actions);
   server->pending_wl_actions.clear();
   std::vector<PendingWlAction> retry;
@@ -136,15 +105,6 @@ ensure_wayland_apps_registered(WlrServer* server)
             action.menu_surface = true;
           }
         }
-      }
-      // Force menu surfaces into a screen-space layer shell so they render as overlays.
-      if (!action.layer_shell && action.menu_surface) {
-        action.layer_shell = true;
-        action.accessory = true; // skip Positionable placement
-        action.screen_x =
-          std::max(0, static_cast<int>((SCREEN_WIDTH - action.app->getWidth()) / 2));
-        action.screen_y =
-          std::max(0, static_cast<int>((SCREEN_HEIGHT - action.app->getHeight()) / 2));
       }
       // Drop duplicate adds for the same surface if it's already registered.
       if (server->surface_map.find(action.surface) != server->surface_map.end()) {
