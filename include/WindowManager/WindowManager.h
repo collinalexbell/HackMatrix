@@ -80,6 +80,7 @@ public:
   virtual std::optional<bool> getCursorVisibleOverride() const = 0;
   virtual void setCursorVisible(bool visible) = 0;
   virtual bool isWaylandMode() const = 0;
+  virtual vector<optional<entt::entity>> getAppsWithHotKeys() = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -102,7 +103,6 @@ class WindowManager : public WindowManagerInterface
 
   IdeSelection ideSelection;
 
-  vector<optional<entt::entity>> appsWithHotKeys;
   optional<entt::entity> currentlyFocusedApp;
   shared_ptr<Space> space;
   Window matrix;
@@ -120,7 +120,6 @@ class WindowManager : public WindowManagerInterface
   void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
   void setupLogger();
-  void onHotkeyPress(XKeyEvent event);
   void assignHotkeySlot(entt::entity ent);
   void compactHotkeyList();
   void createApp(Window window,
@@ -152,8 +151,10 @@ class WindowManager : public WindowManagerInterface
   unsigned int hotkeyModifierMask = Mod4Mask;
   std::optional<bool> cursorVisible;
   std::optional<entt::entity> pendingFocusedApp;
+  vector<optional<entt::entity>> appsWithHotKeys;
 
 public:
+  vector<optional<entt::entity>> getAppsWithHotKeys() override {return appsWithHotKeys;}
   void unfocusApp() override;
   void menu() override;
   void createAndRegisterApps(char** envp) override;

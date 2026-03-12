@@ -75,18 +75,6 @@ namespace WindowManager {
 
 namespace {
 
-void
-appendMenuLog(const std::string& line)
-{
-  FILE* f = std::fopen("/tmp/matrix-wlroots-menu.log", "a");
-  if (!f) {
-    return;
-  }
-  auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::fprintf(f, "[%lld] %s\n", static_cast<long long>(now), line.c_str());
-  std::fclose(f);
-}
-
 const char*
 getEnv(const char* name, char** envp)
 {
@@ -156,36 +144,16 @@ void WindowManager::menu() {
       runtimeDir = envVal;
     }
   }
-  appendMenuLog("env WAYLAND_DISPLAY=" +
-                (waylandDisplay.empty() ? std::string("(null)") : waylandDisplay) +
-                " XDG_RUNTIME_DIR=" +
-                (runtimeDir.empty() ? std::string("(null)") : runtimeDir));
   if (!runtimeDir.empty()) {
     struct stat st;
     if (stat(runtimeDir.c_str(), &st) != 0) {
       int mk = mkdir(runtimeDir.c_str(), 0700);
-      if (mk != 0) {
-        appendMenuLog("menu() could not create XDG_RUNTIME_DIR " + runtimeDir +
-                      " errno=" + std::to_string(errno));
-      } else {
-        appendMenuLog("menu() created XDG_RUNTIME_DIR " + runtimeDir);
-      }
     }
   }
-  appendMenuLog("menu() launching: " + program);
   std::thread([program, envForChild, runtimeDir, waylandDisplay] {
-    const std::string ioLog = "/tmp/matrix-wlroots-menu.stderr.log";
-    int fd = ::open(ioLog.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
-    if (fd < 0) {
-      appendMenuLog("menu() failed to open stderr log file");
-      return;
-    }
     pid_t pid = fork();
     if (pid == 0) {
       setsid();
-      dup2(fd, STDOUT_FILENO);
-      dup2(fd, STDERR_FILENO);
-      close(fd);
       if (!waylandDisplay.empty()) {
         setenv("WAYLAND_DISPLAY", waylandDisplay.c_str(), 1);
       }
@@ -194,15 +162,12 @@ void WindowManager::menu() {
       }
       execle("/bin/sh", "sh", "-c", program.c_str(), (char*)nullptr, envForChild);
       // execle only returns on failure.
-      appendMenuLog("menu() exec failed, errno=" + std::to_string(errno));
       _exit(127);
     }
-    close(fd);
     int status = 0;
     if (pid > 0) {
       waitpid(pid, &status, 0);
     }
-    appendMenuLog("menu() exited rc=" + std::to_string(status));
   }).detach();
 }
 
@@ -445,97 +410,7 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool sh
   }
 
   auto swapOrFocus = [&](int index) {
-    if (shiftHeld && currentlyFocusedApp.has_value()) {
-      int source = findAppsHotKey(currentlyFocusedApp.value());
-      swapHotKeys(source, index);
-      return;
-    }
-    unfocusApp();
-    if (index >= 0 && index < static_cast<int>(appsWithHotKeys.size())) {
-      if (!appsWithHotKeys[index].has_value()) {
-        return;
-      }
-      auto ent = appsWithHotKeys[index].value();
-      bool isX11 = registry && registry->all_of<X11App>(ent);
-      WL_WM_LOG("WM: hotkey preparing focus ent=%d\n",
-                (int)entt::to_integral(ent));
-      pendingFocusedApp = ent;
-
-      if (isX11) {
-        auto& app = registry->get<X11App>(ent);
-        app.deselect();
-      }
-
-      glm::vec3 targetPos{0.0f};
-      glm::vec3 rotationDegrees{0.0f};
-      if (!computeAppCameraTarget(ent,
-                                  targetPos,
-                                  rotationDegrees,
-                                  "hotkey focus target")) {
-        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d no target -> immediate focus\n",
-                  index,
-                  (int)entt::to_integral(ent));
-        if (isX11) {
-          auto& app = registry->get<X11App>(ent);
-          app.select();
-        }
-        focusEntityAfterMove(ent);
-        return;
-      }
-
-      WL_WM_LOG("WM: hotkey focus idx=%d ent=%d after target controls=%d\n",
-                index,
-                (int)entt::to_integral(ent),
-                controls ? 1 : 0);
-
-      auto finishFocus = [this, ent, isX11]() {
-        WL_WM_LOG("WM: hotkey focus finishing ent=%d isX11=%d\n",
-                  (int)entt::to_integral(ent),
-                  isX11 ? 1 : 0);
-        pendingFocusedApp = std::nullopt;
-        if (registry && registry->valid(ent) && isX11) {
-          auto& app = registry->get<X11App>(ent);
-          app.select();
-        }
-        focusEntityAfterMove(ent);
-      };
-
-      if (controls) {
-        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d move start (controls)\n",
-                  index,
-                  (int)entt::to_integral(ent));
-        controls->moveTo(targetPos,
-                         rotationDegrees,
-                         0.5f,
-                         finishFocus);
-      } else {
-        // Fallback when controls are unavailable: move via camera then focus.
-        glm::quat rotationQuat = glm::quat(glm::radians(rotationDegrees));
-        glm::vec3 facing = rotationQuat * glm::vec3(0, 0, -1);
-        WL_WM_LOG("WM: hotkey focus idx=%d ent=%d move start (no controls)\n",
-                  index,
-                  (int)entt::to_integral(ent));
-        auto isDone = camera ? camera->moveTo(targetPos, facing, 0.5f) : nullptr;
-        if (!isDone) {
-          finishFocus();
-          return;
-        }
-        auto weakDone = std::weak_ptr<bool>(isDone);
-        std::thread([finishFocus, weakDone]() {
-          while (true) {
-            auto shared = weakDone.lock();
-            if (!shared) {
-              return;
-            }
-            if (*shared) {
-              break;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-          }
-          finishFocus();
-        }).detach();
-      }
-    }
+    
   };
 
   switch (sym) {
@@ -567,85 +442,8 @@ void WindowManager::handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool sh
         controls->moveTo(glm::vec3(3.0, 5.0, 16), std::nullopt, 4);
       }
       break;
-    case XKB_KEY_1:
-    case XKB_KEY_2:
-    case XKB_KEY_3:
-    case XKB_KEY_4:
-    case XKB_KEY_5:
-    case XKB_KEY_6:
-    case XKB_KEY_7:
-    case XKB_KEY_8:
-    case XKB_KEY_9: {
-      int idx = static_cast<int>(sym - XKB_KEY_1);
-      // Mirror hotkey presses into the compositor log so tests can verify cycling.
-      if (FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a")) {
-        std::fprintf(f, "hotkey: idx=%d\n", idx);
-        std::fclose(f);
-      }
-      WL_WM_LOG("WM: unfocusApp (hotkey) idx=%d\n", idx);
-      swapOrFocus(idx);
-      break;
-    }
     default:
       break;
-  }
-}
-
-void WindowManager::onHotkeyPress(XKeyEvent event) {
-  pruneInvalidFocus();
-  KeyCode eKeyCode = XKeysymToKeycode(display, XK_e);
-  KeyCode qKeyCode = XKeysymToKeycode(display, XK_q);
-  KeyCode oneKeyCode = XKeysymToKeycode(display, XK_1);
-
-  KeyCode windowLargerCode = XKeysymToKeycode(display, XK_equal);
-  KeyCode windowSmallerCode = XKeysymToKeycode(display, XK_minus);
-
-  if (event.keycode == eKeyCode && event.state & hotkeyModifierMask) {
-    // Hotkey modifier + E is pressed
-    unfocusApp();
-  }
-  if (event.keycode == qKeyCode && event.state & hotkeyModifierMask) {
-    // Hotkey modifier + Q is pressed
-    if (currentlyFocusedApp.has_value()) {
-      auto& app = registry->get<X11App>(currentlyFocusedApp.value());
-      app.close();
-    }
-  }
-
-  if (event.keycode == windowLargerCode && event.state & hotkeyModifierMask) {
-    if (currentlyFocusedApp.has_value()) {
-      lock_guard<mutex> lock(renderLoopMutex);
-      events.push_back(WindowEvent{ LARGER, currentlyFocusedApp.value() });
-    }
-  }
-
-  if (event.keycode == windowSmallerCode && event.state & hotkeyModifierMask) {
-    if (currentlyFocusedApp.has_value()) {
-      lock_guard<mutex> lock(renderLoopMutex);
-      events.push_back(WindowEvent{ SMALLER, currentlyFocusedApp.value() });
-    }
-  }
-
-  for (int i = 0; i < min((int)appsWithHotKeys.size(), 9); i++) {
-    KeyCode code = XKeysymToKeycode(display, XK_1 + i);
-    if (event.keycode == code && event.state & hotkeyModifierMask && event.state & ShiftMask) {
-      if (currentlyFocusedApp.has_value()) {
-        int source = findAppsHotKey(currentlyFocusedApp.value());
-        swapHotKeys(source, i);
-        return;
-      }
-    }
-    if (event.keycode == code && event.state & hotkeyModifierMask) {
-      unfocusApp();
-      if(appsWithHotKeys[i]) {
-        controls->goToApp(appsWithHotKeys[i].value());
-      }
-    }
-  }
-  KeyCode code = XKeysymToKeycode(display, XK_0);
-  if (event.keycode == code && event.state & hotkeyModifierMask) {
-    unfocusApp();
-    controls->moveTo(glm::vec3(3.0, 5.0, 16), nullopt, 4);
   }
 }
 
@@ -720,7 +518,7 @@ WindowManager::focusApp(entt::entity appEntity)
     if (auto* comp = registry->try_get<WaylandApp::Component>(appEntity)) {
       comp->app->takeInputFocus();
     }
-    moveCameraToApp(appEntity, "goToLookedAtApp");
+    moveCameraToApp(appEntity, "because AI slop");
   }
 }
 

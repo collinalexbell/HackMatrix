@@ -5,6 +5,7 @@
 #define GLFW_EXPOSE_NATIVE_X11
 #include <GLFW/glfw3native.h>
 
+#include <iostream>
 #include <sstream>
 #include <iomanip>
 #include <ctime>
@@ -62,6 +63,7 @@ Controls::poll() {
   runQueuedActions();
   pollPressedKeys();
   handleKeys();
+  doDeferedActions();
 }
 
 void
@@ -601,7 +603,18 @@ Controls::handleKeySym(xkb_keysym_t sym,
     }
     if (sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
       resp.clearInputForces = true;
-      wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
+      int index = static_cast<int>(sym - XKB_KEY_1);
+      log_controls("number hotkey: %d" ,index); 
+      if (index >= 0 && index < static_cast<int>(wm->getAppsWithHotKeys().size())) {
+        log_controls("didnt have size");
+        if (!wm->getAppsWithHotKeys()[index].has_value()) {
+          log_controls("didn't find value");
+          return resp;
+        }
+        wm->unfocusApp();
+        auto ent = wm->getAppsWithHotKeys()[index].value();
+        goToApp(ent);
+      }
       // When jumping via hotkey, drop the current seat focus so pointer/keyboard
       // focus can be rebound to the destination app after the move finishes.
       resp.clearSeatFocus = true;
@@ -750,9 +763,6 @@ Controls::runQueuedActions()
       fn();
     }
   }
-  // Also process any deferred callbacks (e.g., moveTo completion) so they run
-  // even when no GLFW window is present (Wayland compositor path).
-  doDeferedActions();
 }
 
 void
