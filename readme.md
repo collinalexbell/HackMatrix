@@ -99,8 +99,6 @@ See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engin
 - pthread (`libpthread`)
 - Assimp (`libassimp`)
 - SQLite3 (`libsqlite3`)
-- XWinInfo (`x11-utils`)
-- xdotool (`xdotool`)
 - Protobuf (`protobuf1`)
 - Base development tools (`basedevel`)
 
@@ -110,6 +108,8 @@ This project still unfortunately has X11 cruft in it due to a semi botch AI slop
 - Xtst (`libXtst`)
 - Xext (`libXext`)
 - Xfixes (`libXfixes`)
+- XWinInfo (`x11-utils`)
+- xdotool (`xdotool`
 
 
 To install these libraries, you can use your distribution's package manager. Here are the commands for some common distributions:
@@ -145,11 +145,6 @@ sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xin
 
 
 ```bash
-git submodule update --init
-cd wlroots
-meson build/
-ninja -C build/
-cd ..
 mkdir -p build
 cd build
 cmake ..
