@@ -88,9 +88,6 @@ See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engin
 
 ### Dependencies
 
-Before compiling or running the program, ensure that you have the following libraries installed on your Linux system:
-Even for the wayland port you will need to have X11 installed until I finish the refactor.
-
 - wayland-protocols (`wayland-protocols`) (also pulls in wayland core)
 - wofi (`wofi`)
 - ZeroMQ (`libzmq`)
@@ -107,7 +104,7 @@ Even for the wayland port you will need to have X11 installed until I finish the
 - Protobuf (`protobuf1`)
 - Base development tools (`basedevel`)
 
-This project still unfortunately has X11 cruft in it due to a semi botch AI slop migration that intended to add wayland support instead of replacing X11 with wayland. Will be cleaned up soon.
+This project still unfortunately has X11 cruft in it due to a semi botch AI slop migration that intended to add wayland support alongside X11 instead of replacing X11. Will be cleaned up soon.
 - X11 (`libX11`)
 - Xcomposite (`libXcomposite`)
 - Xtst (`libXtst`)
