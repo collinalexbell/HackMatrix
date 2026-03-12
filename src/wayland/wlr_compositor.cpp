@@ -83,23 +83,9 @@ float SCREEN_HEIGHT = 0;
 
 namespace {
 
-static void
-ensure_wayland_apps_registered(WlrServer* server)
-{
-  if (!server || !server->registry || !server->engine) {
-    return;
-  }
+static void add_action(WlrServer* server, PendingWlAction action) {
   auto* renderer = server->engine->getRenderer();
-  if (!renderer) {
-    return;
-  }
-
-  auto actions = std::move(server->pending_wl_actions);
-  server->pending_wl_actions.clear();
-  std::vector<PendingWlAction> retry;
-  for (auto& action : actions) {
-    if (action.type == PendingWlAction::Add) {
-      if (!action.menu_surface && server->engine) {
+if (!action.menu_surface && server->engine) {
         if (auto wm = server->engine->getWindowManager()) {
           if (wm->consumeMenuSpawnPending()) {
             action.menu_surface = true;
@@ -108,7 +94,7 @@ ensure_wayland_apps_registered(WlrServer* server)
       }
       // Drop duplicate adds for the same surface if it's already registered.
       if (server->surface_map.find(action.surface) != server->surface_map.end()) {
-        continue;
+        return;
       }
       entt::entity parentEnt = entt::null;
       if (action.parent_surface) {
@@ -119,10 +105,14 @@ ensure_wayland_apps_registered(WlrServer* server)
       }
       // If this is a popup/accessory whose parent hasn't registered yet, retry
       // once the parent arrives.
+
+      // REMOVING FOR TEST, THIS MAY BREAK SOME THINGS SO KEEPING HERE SO I REMEMBER
+      /*
       if (action.accessory && !action.layer_shell && parentEnt == entt::null) {
         retry.push_back(action);
-        continue;
+        return;
       }
+      */
       entt::entity entity = entt::null;
       if (auto wm = server->engine->getWindowManager()) {
         bool spawnAtCamera = !action.accessory;
@@ -207,7 +197,26 @@ ensure_wayland_apps_registered(WlrServer* server)
             api->forceUpdateCachedStatus();
           }
         }
-      } 
+      }
+}
+
+static void
+ensure_wayland_apps_registered(WlrServer* server)
+{
+  if (!server || !server->registry || !server->engine) {
+    return;
+  }
+  auto* renderer = server->engine->getRenderer();
+  if (!renderer) {
+    return;
+  }
+
+  auto actions = std::move(server->pending_wl_actions);
+  server->pending_wl_actions.clear();
+  std::vector<PendingWlAction> retry;
+  for (auto& action : actions) {
+    if (action.type == PendingWlAction::Add) {
+      add_action(server, action);
     } else if (action.type == PendingWlAction::Remove) {
       auto it = server->surface_map.find(action.surface);
       if (it != server->surface_map.end()) {
