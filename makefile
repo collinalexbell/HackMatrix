@@ -14,8 +14,8 @@ endif
 # Prefer a local wlroots build tree if present.
 # You can override by exporting WLROOTS_PC_DIR=/path/to/wlroots/build
 WLROOTS_PC_DIR ?= ./wlroots/build/meson-uninstalled
-WLROOTS_PC_FILE := $(firstword $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.20-uninstalled.pc) $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.20.pc))
-WLROOTS_PC_NAME ?= $(if $(WLROOTS_PC_FILE),$(basename $(notdir $(WLROOTS_PC_FILE))),wlroots-0.20)
+WLROOTS_PC_FILE := $(firstword $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.19-uninstalled.pc) $(wildcard $(WLROOTS_PC_DIR)/wlroots-0.19.pc))
+WLROOTS_PC_NAME ?= $(if $(WLROOTS_PC_FILE),$(basename $(notdir $(WLROOTS_PC_FILE))),wlroots-0.19)
 ifneq (,$(WLROOTS_PC_FILE))
     export PKG_CONFIG_PATH := $(abspath $(dir $(WLROOTS_PC_FILE))):$(PKG_CONFIG_PATH)
 endif
@@ -25,11 +25,6 @@ WLROOTS_BUILD_DIR := wlroots/build
 WLROOTS_SETUP_FLAGS := -Dbackends=x11,drm,libinput -Dxwayland=disabled -Dexamples=false --wrap-mode=forcefallback
 WLROOTS_TOLERANT_CFLAGS := -Wno-error=packed -Wno-error=format-overflow -Wno-error=calloc-transposed-args -Wno-error=maybe-uninitialized -U_FORTIFY_SOURCE
 WLROOTS_WERROR_OPTS := -Dwerror=false -Dlibdrm:werror=false -Dlibxkbcommon:werror=false -Dlibdisplay-info:werror=false -Dseatd:werror=false -Dwayland:werror=false -Dpixman:werror=false -Dv4l-utils:werror=false
-
-.PHONY: wlroots-local
-wlroots-local: $(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json
-	@echo "Building local wlroots with X11 backend..."
-	ninja -C $(WLROOTS_BUILD_DIR)
 
 $(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json:
 	@echo "Ensuring wlroots source..."
@@ -64,9 +59,11 @@ else
     RPATH_WLROOTS :=
 endif
 
+.DEFAULT_GOAL := matrix
+
 
 all: FLAGS+=-O3 -g
-all: tracy include/protos/api.pb.h matrix trampoline build/diagnosis tools/deployTools/bootServer
+all: tracy include/protos/api.pb.h matrix build/diagnosis tools/deployTools/bootServer
 
 add:
 	git add src include
@@ -87,6 +84,13 @@ matrix-wlroots:
 	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor target." >&2
 	@exit 1
 endif
+
+.PHONY: wlroots-local
+wlroots-local: $(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json
+	@echo "Building local wlroots with X11 backend..."
+	ninja -C $(WLROOTS_BUILD_DIR)
+
+
 
 tracy:
 	git submodule update --init
