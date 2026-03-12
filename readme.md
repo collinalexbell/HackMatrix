@@ -1,6 +1,5 @@
 # HackMatrix
 
-*WARNING* this project is a bit of a mess right now. I merged a vibe coded migration to Wayland that I'm in the process of refactoring
 
 <img src="images/header_img.png" width="800">
 
