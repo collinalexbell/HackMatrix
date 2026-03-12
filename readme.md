@@ -1,6 +1,6 @@
 # HackMatrix
 
-*WARNING* this project is a bit of a mess right now. I merged a vibe coded migration to Wayland that I will need to heavily refactor. Checkout revision  39d3d3 if you want the X11 version. If you want to try the wayland version, `./launch` after building with `make matrix`. Also ctrl+f the readme for "submodule" (you will need this or make will fail). I've tried to update the dependency list with Wayland deps, but some may be missing. Also X11 deps will need to be installed until I get that code factored out.
+*WARNING* this project is a bit of a mess right now. I merged a vibe coded migration to Wayland that I will need to heavily refactor. Checkout revision  39d3d3 if you want the X11 version. If you want to try the wayland version, `./launch` after building with cmake (see build instructions below). Also ctrl+f the readme for "submodule" (you will need this or make will fail). I've tried to update the dependency list with Wayland deps, but some may be missing. Also X11 deps will need to be installed until I get that code factored out.
 
 <img src="images/header_img.png" width="800">
 
@@ -149,6 +149,11 @@ sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xin
 
 
 ```bash
+git submodule update --init
+cd wlroots
+meson build/
+ninja -C build/
+cd ..
 mkdir -p build
 cd build
 cmake ..
