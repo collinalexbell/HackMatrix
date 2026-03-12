@@ -518,7 +518,6 @@ WindowManager::focusApp(entt::entity appEntity)
     if (auto* comp = registry->try_get<WaylandApp::Component>(appEntity)) {
       comp->app->takeInputFocus();
     }
-    moveCameraToApp(appEntity, "because AI slop");
   }
 }
 
