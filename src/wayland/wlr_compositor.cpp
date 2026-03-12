@@ -10,10 +10,13 @@
 #include <drm_fourcc.h>
 #include <ctime>
 #include <unordered_map>
-
-extern "C" {
 #include <EGL/egl.h>
 #include <wayland-server-core.h>
+#include <xkbcommon/xkbcommon.h>
+#include "interfaces/wlr_input_device.h"
+#include <linux/input-event-codes.h>
+
+extern "C" {
 #include <wlr/backend.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/render/allocator.h>
@@ -22,7 +25,6 @@ extern "C" {
 #include <wlr/render/swapchain.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/interfaces/wlr_keyboard.h>
-#include "interfaces/wlr_input_device.h"
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_buffer.h>
@@ -33,17 +35,15 @@ extern "C" {
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_cursor.h>
-#include <linux/input-event-codes.h>
 #include <wlr/types/wlr_xcursor_manager.h>
-#define namespace namespace_keyword_workaround
+#define namespace namespace_
 #include <wlr/types/wlr_layer_shell_v1.h>
 #undef namespace
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/util/log.h>
-#include <xkbcommon/xkbcommon.h>
-}
+};
 
 #include <glad/glad.h>
 #include <cstdarg>
