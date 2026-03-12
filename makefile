@@ -73,7 +73,7 @@ profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
 
 ifeq ($(WLROOTS_AVAILABLE),1)
-matrix: build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS)
+matrix: tracy build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) 
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
 matrix-debug: build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG)
 	g++ -std=c++20 $(DEBUG_FLAGS) -g -o matrix-debug build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
