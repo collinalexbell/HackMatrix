@@ -26,13 +26,6 @@ WLROOTS_SETUP_FLAGS := -Dbackends=x11,drm,libinput -Dxwayland=disabled -Dexample
 WLROOTS_TOLERANT_CFLAGS := -Wno-error=packed -Wno-error=format-overflow -Wno-error=calloc-transposed-args -Wno-error=maybe-uninitialized -U_FORTIFY_SOURCE
 WLROOTS_WERROR_OPTS := -Dwerror=false -Dlibdrm:werror=false -Dlibxkbcommon:werror=false -Dlibdisplay-info:werror=false -Dseatd:werror=false -Dwayland:werror=false -Dpixman:werror=false -Dv4l-utils:werror=false
 
-$(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json:
-	@echo "Ensuring wlroots source..."
-	@if [ ! -d wlroots ]; then git clone $(WLROOTS_REPO) wlroots; fi
-	@echo "Configuring wlroots..."
-	meson setup $(WLROOTS_BUILD_DIR) $(WLROOTS_SETUP_FLAGS) -Doptimization=1 -Dc_args='$(WLROOTS_TOLERANT_CFLAGS)' $(WLROOTS_WERROR_OPTS) || meson setup $(WLROOTS_BUILD_DIR) $(WLROOTS_SETUP_FLAGS) --wipe -Doptimization=1 -Dc_args='$(WLROOTS_TOLERANT_CFLAGS)' $(WLROOTS_WERROR_OPTS)
-	meson configure $(WLROOTS_BUILD_DIR) -Dlibdisplay-info:c_args='$(WLROOTS_TOLERANT_CFLAGS)'
-
 PROTO_DIR = protos
 PROTO_FILES = $(wildcard $(PROTO_DIR)/*.proto)
 PROTO_CPP_FILES = $(patsubst %.proto, %.pb.cc, $(PROTO_FILES))
@@ -48,22 +41,10 @@ DEBUG_FLAGS = $(FLAGS) -O0 -g3 -DWLROOTS_DEBUG_LOGS
 
 LIBS = -lzmq -lX11 -lXcomposite -lXtst -lXext -lXfixes -lprotobuf -lspdlog -lfmt -Llib $(shell pkg-config --libs glfw3) -lGL -lpthread -lassimp -lsqlite3 $(shell pkg-config --libs protobuf)
 
-WLROOTS_AVAILABLE := $(shell pkg-config --exists $(WLROOTS_PC_NAME) wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0)
-ifeq ($(WLROOTS_AVAILABLE),1)
-    WLROOTS_CFLAGS := $(shell pkg-config --cflags $(WLROOTS_PC_NAME) wayland-server xkbcommon) -DWLR_USE_UNSTABLE -I$(abspath wlroots/build/protocol)
-    WLROOTS_LIBS := $(shell pkg-config --libs $(WLROOTS_PC_NAME) wayland-server xkbcommon) -lpixman-1
-    RPATH_WLROOTS := -Wl,-rpath,$(abspath wlroots/build) -Wl,-rpath,$(abspath wlroots/build/subprojects/wayland/src)
-else
-    WLROOTS_CFLAGS :=
-    WLROOTS_LIBS :=
-    RPATH_WLROOTS :=
-endif
-
 .DEFAULT_GOAL := matrix
 
-
 all: FLAGS+=-O3 -g
-all: tracy include/protos/api.pb.h matrix build/diagnosis tools/deployTools/bootServer
+all: submodule include/protos/api.pb.h matrix build/diagnosis tools/deployTools/bootServer
 
 add:
 	git add src include
@@ -72,27 +53,22 @@ add:
 profiled: FLAGS+=-O3 -g -D TRACY_ENABLE
 profiled: matrix
 
-ifeq ($(WLROOTS_AVAILABLE),1)
-matrix: tracy build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) 
+matrix: submodule wlroots build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) 
 	g++ -std=c++20 $(FLAGS) -g -o matrix build/main.o build/wayland/wlr_compositor.o $(ALL_OBJECTS) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
 matrix-debug: build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG)
 	g++ -std=c++20 $(DEBUG_FLAGS) -g -o matrix-debug build/main.o build_debug/wayland/wlr_compositor.debug.o $(ALL_OBJECTS_DEBUG) $(LIBS) $(WLROOTS_LIBS) -lEGL -lGLESv2 -Wl,--as-needed $(INCLUDES) $(RPATH_WLROOTS)
-matrix-wlroots: matrix
-else
-matrix-wlroots:
-	@echo "wlroots development files not found (pkg-config targets: wlroots wayland-server xkbcommon)." >&2
-	@echo "Install the dependencies or set PKG_CONFIG_PATH before building the compositor target." >&2
-	@exit 1
-endif
 
-.PHONY: wlroots-local
-wlroots-local: $(WLROOTS_BUILD_DIR)/meson-info/intro-buildoptions.json
+wlroots: submodule
 	@echo "Building local wlroots with X11 backend..."
-	ninja -C $(WLROOTS_BUILD_DIR)
+	cd wlroots && meson build/ && ninja -C build/
+		@echo "Configuring WLROOTS variables..."
+	$(eval WLROOTS_AVAILABLE := $(shell pkg-config --exists $(WLROOTS_PC_NAME) wayland-server xkbcommon >/dev/null 2>&1 && echo 1 || echo 0))
+	$(eval WLROOTS_CFLAGS := $(shell pkg-config --cflags $(WLROOTS_PC_NAME) wayland-server xkbcommon) -DWLR_USE_UNSTABLE -I$(abspath wlroots/build/protocol))
+	$(eval WLROOTS_LIBS := $(shell pkg-config --libs $(WLROOTS_PC_NAME) wayland-server xkbcommon) -lpixman-1)
+	$(eval RPATH_WLROOTS := -Wl,-rpath,$(abspath wlroots/build) -Wl,-rpath,$(abspath wlroots/build/subprojects/wayland/src))
 
 
-
-tracy:
+submodule:
 	git submodule update --init
 
 trampoline: src/trampoline.cpp build/x-raise
