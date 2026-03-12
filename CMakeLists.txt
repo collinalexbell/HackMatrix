@@ -12,16 +12,67 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(PkgConfig REQUIRED)
+find_package(Git QUIET)
 
 # Prefer the locally built wlroots tree.
-set(WLROOTS_BUILD_DIR "${CMAKE_SOURCE_DIR}/wlroots/build")
+set(WLROOTS_DIR "${CMAKE_SOURCE_DIR}/wlroots")
+set(WLROOTS_BUILD_DIR "${WLROOTS_DIR}/build")
 set(WLROOTS_PC_DIR "${WLROOTS_BUILD_DIR}/meson-uninstalled")
 set(WLROOTS_PROTOCOL_DIR "${WLROOTS_BUILD_DIR}/protocol")
+
+set(WLROOTS_PC_NAME "wlroots-0.19")
+find_program(MESON_EXECUTABLE meson)
+find_program(NINJA_EXECUTABLE ninja)
+
+# Build wlroots locally via meson/ninja, matching the makefile flow, and bootstrap the submodule if missing.
+function(build_wlroots_if_needed)
+  if(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19-uninstalled.pc" OR EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19.pc")
+    return()
+  endif()
+
+  if(NOT GIT_FOUND)
+    message(FATAL_ERROR "Git is required to initialize the wlroots submodule automatically.")
+  endif()
+  if(NOT MESON_EXECUTABLE OR NOT NINJA_EXECUTABLE)
+    message(FATAL_ERROR "Meson and Ninja are required to build wlroots automatically.")
+  endif()
+
+  message(STATUS "Initializing wlroots submodule")
+  execute_process(
+    COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive wlroots
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    RESULT_VARIABLE WLROOTS_GIT_RESULT
+  )
+  if(NOT WLROOTS_GIT_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to initialize wlroots submodule (exit code ${WLROOTS_GIT_RESULT}).")
+  endif()
+
+  message(STATUS "Configuring wlroots with meson")
+  execute_process(
+    COMMAND "${MESON_EXECUTABLE}" build
+    WORKING_DIRECTORY "${WLROOTS_DIR}"
+    RESULT_VARIABLE WLROOTS_MESON_RESULT
+  )
+  if(NOT WLROOTS_MESON_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to configure wlroots with meson (exit code ${WLROOTS_MESON_RESULT}).")
+  endif()
+
+  message(STATUS "Building wlroots with ninja")
+  execute_process(
+    COMMAND "${NINJA_EXECUTABLE}" -C build
+    WORKING_DIRECTORY "${WLROOTS_DIR}"
+    RESULT_VARIABLE WLROOTS_NINJA_RESULT
+  )
+  if(NOT WLROOTS_NINJA_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to build wlroots with ninja (exit code ${WLROOTS_NINJA_RESULT}).")
+  endif()
+endfunction()
+
+build_wlroots_if_needed()
+
 if(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19-uninstalled.pc")
   set(WLROOTS_PC_NAME "wlroots-0.19-uninstalled")
 elseif(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19.pc")
-  set(WLROOTS_PC_NAME "wlroots-0.19")
-else()
   set(WLROOTS_PC_NAME "wlroots-0.19")
 endif()
 if(EXISTS "${WLROOTS_PC_DIR}")
@@ -33,8 +84,6 @@ pkg_check_modules(GLFW REQUIRED glfw3)
 pkg_check_modules(PROTOBUF REQUIRED protobuf)
 
 # Build wlroots locally via meson/ninja, matching the makefile flow.
-find_program(MESON_EXECUTABLE meson)
-find_program(NINJA_EXECUTABLE ninja)
 if(MESON_EXECUTABLE AND NINJA_EXECUTABLE)
   add_custom_command(
     OUTPUT "${WLROOTS_BUILD_DIR}/build.ninja"
@@ -52,82 +101,32 @@ if(MESON_EXECUTABLE AND NINJA_EXECUTABLE)
   add_custom_target(wlroots_build DEPENDS "${WLROOTS_BUILD_DIR}/meson-info/intro-targets.json")
 endif()
 
-# Core sources mirroring the makefile's matrix target.
-set(MATRIX_SOURCES
-  src/main.cpp
-  src/wayland/wlr_compositor.cpp
-  src/wayland/WaylandApp.cpp
-  src/wayland/pointer.cpp
-  src/wayland/keyboard.cpp
-  src/ControlMappings.cpp
-  src/Config.cpp
-  src/systems/Player.cpp
-  src/MultiPlayer/Server.cpp
-  src/MultiPlayer/Client.cpp
-  src/MultiPlayer/Gui.cpp
-  src/systems/Light.cpp
-  src/components/Light.cpp
-  src/systems/Boot.cpp
-  src/components/Bootable.cpp
-  src/IndexPool.cpp
-  src/WindowManager/Space.cpp
-  src/systems/Move.cpp
-  src/systems/ApplyTranslation.cpp
-  src/systems/Derivative.cpp
-  src/systems/Update.cpp
-  src/systems/Intersections.cpp
-  src/systems/Scripts.cpp
-  src/components/Scriptable.cpp
-  src/components/Parent.cpp
-  src/components/RotateMovement.cpp
-  src/components/Lock.cpp
-  src/components/Key.cpp
-  src/systems/KeyAndLock.cpp
-  src/systems/Door.cpp
-  src/systems/ApplyRotation.cpp
-  src/persister.cpp
-  src/engineGui.cpp
-  src/entity.cpp
-  src/renderer.cpp
-  src/shader.cpp
-  src/texture.cpp
-  src/world.cpp
-  src/camera.cpp
-  src/api.cpp
-  src/controls.cpp
-  src/app.cpp
-  src/WindowManager/WindowManager.cpp
-  src/logger.cpp
-  src/engine.cpp
-  src/cube.cpp
-  src/chunk.cpp
-  src/mesher.cpp
-  src/loader.cpp
-  src/utility.cpp
-  src/blocks.cpp
-  src/dynamicObject.cpp
-  src/assets.cpp
-  src/model.cpp
-  src/mesh.cpp
-  src/Voxel/VoxelSpace.cpp
-  src/imgui/imgui.cpp
-  src/imgui/imgui_draw.cpp
-  src/imgui/imgui_impl_opengl3.cpp
-  src/imgui/imgui_widgets.cpp
-  src/imgui/imgui_demo.cpp
-  src/imgui/imgui_impl_glfw.cpp
-  src/imgui/imgui_tables.cpp
-  src/enkimi.c
-  src/miniz.c
-  src/time_utils.cpp
-  src/api.pb.cc
-  src/glad.c
-  src/glad_glx.c
-  tracy/public/TracyClient.cpp
+# Core sources mirroring the makefile's matrix target without enumerating every
+# translation unit manually.
+file(GLOB MATRIX_SOURCES CONFIGURE_DEPENDS
+  src/*.cpp
+  src/*.cc
+  src/*.c
+  src/components/*.cpp
+  src/systems/*.cpp
+  src/wayland/*.cpp
+  src/MultiPlayer/*.cpp
+  src/WindowManager/*.cpp
+  src/Voxel/*.cpp
+  src/imgui/*.cpp
+  src/sqlite/*.cpp
 )
+file(GLOB TRACY_SOURCES CONFIGURE_DEPENDS tracy/public/*.cpp)
+list(APPEND MATRIX_SOURCES ${TRACY_SOURCES})
 
-file(GLOB SQLITE_SOURCES CONFIGURE_DEPENDS "src/sqlite/*.cpp")
-list(APPEND MATRIX_SOURCES ${SQLITE_SOURCES})
+# Exclude helper binaries and test harnesses that define their own entry point.
+list(FILTER MATRIX_SOURCES EXCLUDE REGEX "catch_amalgamated\\.cpp$")
+list(FILTER MATRIX_SOURCES EXCLUDE REGEX "diagnosis\\.cpp$")
+list(FILTER MATRIX_SOURCES EXCLUDE REGEX "trampoline\\.cpp$")
+list(FILTER MATRIX_SOURCES EXCLUDE REGEX "/MultiPlayer/bootServer\\.cpp$")
+list(FILTER MATRIX_SOURCES EXCLUDE REGEX "/MultiPlayer/bot\\.cpp$")
+list(FILTER MATRIX_SOURCES EXCLUDE REGEX "objectObserver\\.cpp$")
+list(REMOVE_DUPLICATES MATRIX_SOURCES)
 
 add_executable(matrix ${MATRIX_SOURCES})
 
