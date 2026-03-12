@@ -89,18 +89,6 @@ Api::buildStatus() const
     }
   }
   status.set_wayland_focus(waylandFocus);
-  // Debug: dump registry counts to /tmp when requested.
-  FILE* f = std::fopen("/tmp/matrix-wlroots-output.log", "a");
-  if (f) {
-    std::fprintf(f,
-                 "status: total=%u wayland=%u focus=%d registry_ptr=%p wm_ptr=%p\n",
-                 totalEntities,
-                 status.wayland_apps(),
-                 status.wayland_focus() ? 1 : 0,
-                 registry.get(),
-                 wm.get());
-    std::fclose(f);
-  }
   if (renderer) {
     if (auto* camera = renderer->getCamera()) {
       auto* pos = status.mutable_camera_position();
@@ -116,15 +104,6 @@ void
 Api::updateCachedStatus()
 {
   auto newStatus = buildStatus();
-  {
-    char buf[128];
-    snprintf(buf,
-             sizeof(buf),
-             "cachedStatus update wayland=%u total=%u\n",
-             newStatus.wayland_apps(),
-             newStatus.total_entities());
-    log_to_tmp_api(std::string(buf));
-  }
   std::lock_guard<std::mutex> lk(statusMutex);
   cachedStatus = newStatus;
   // Fulfill any pending STATUS requests.
