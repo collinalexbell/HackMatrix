@@ -24,7 +24,7 @@ Move with <br>
 
 ### Open a window
 
-HackMatrix uses `dmenu`.
+HackMatrix uses `wofi`.
 
 `d` is mapped to movement, so press `v` without a modifier
 
@@ -92,13 +92,9 @@ See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engin
 Before compiling or running the program, ensure that you have the following libraries installed on your Linux system:
 Even for the wayland port you will need to have X11 installed until I finish the refactor.
 
+- wayland-protocols (`wayland-protocols`) (also pulls in wayland core)
 - wofi (`wofi`)
 - ZeroMQ (`libzmq`)
-- X11 (`libX11`)
-- Xcomposite (`libXcomposite`)
-- Xtst (`libXtst`)
-- Xext (`libXext`)
-- Xfixes (`libXfixes`)
 - Protocol Buffers (`libprotobuf`)
 - spdlog (`libspdlog`)
 - fmt (`libfmt`)
@@ -112,18 +108,26 @@ Even for the wayland port you will need to have X11 installed until I finish the
 - Protobuf (`protobuf1`)
 - Base development tools (`basedevel`)
 
+This project still unfortunately has X11 cruft in it due to a semi botch AI slop migration that intended to add wayland support instead of replacing X11 with wayland. Will be cleaned up soon.
+- X11 (`libX11`)
+- Xcomposite (`libXcomposite`)
+- Xtst (`libXtst`)
+- Xext (`libXext`)
+- Xfixes (`libXfixes`)
+
+
 To install these libraries, you can use your distribution's package manager. Here are the commands for some common distributions:
 
 #### Ubuntu or Debian
 
 ```bash
-sudo apt-get install wofi wayland rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
+sudo apt-get install wofi wayland-protocols rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
 ```
 
 #### Fedora or CentOS
 
 ```bash
-sudo dnf install wayland wofi rofi xdotool xorg-x11-utils protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
+sudo dnf install wayland-protocols wayland wofi rofi xdotool xorg-x11-utils protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
 ```
 
 #### Arch Linux
@@ -132,89 +136,28 @@ I'm currently working on an issue with protobuf compilation errors for Arch. [Th
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
-sudo pacman -S --needed wofi wayland xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
+sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```
 #### Gentoo
 ```bash
- sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
+ sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland-protocols x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
 ```
 > [!NOTE]
 > you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.
 
-### Installing
+## Building
 
-#### Compiling from source
 
-Right now this is the only way to install the project.
-
-#### Tracy submodule
-Clone the project (with submodules `git clone --recurse-submodules`), navigate to the project directory and run `make`:
-
-or
-
-if you have already cloned the project, use
+```bash
+mkdir -p build
+cd build
+cmake ..
+make -j
 ```
-git submodule update --init
-```
-
-The build process will generate the `matrix` executable in the current directory.
 
 ## Running
 
-`matrix` is an X11 window manager, so it needs to be added to your X11 startup file
-
-#### Standard
-
-HackMatrix v1 is prone to crash, so you may want to run in [developer](#developer) mode to auto-restart HackMatrix if it crashes.
-
-Add the following line at the end of your `~/.xinitrc` file:
-
- ```bash
- cd ~/<replace with repository directory>
- exec ~/<replace with repository directory>/matrix
- ```
-
-#### Developer
-
-When developing HackMatrix, I frequently quit and rerun the `matrix` program without restarting X.
-I wrote a trampoline program that will restart HackMatrix every time you exit.
-Unfortunately, if you use a bleeding edge distro like Arch, there is a resource leak in GLFW that prevents you from using this. I've submitted a patch PR and you can compile and install my [fork of GLFW](https://github.com/collinalexbell/glfw/tree/fixleak) if you wish to use the `trampoline`. Be sure to compile the `fixleak` branch, not `master`.
-
- ```bash
- cd ~/<replace with repository directory>
- exec ~/<replace with repository directory>/trampoline
- ```
-
-To restart normally, just press `<esc>`
-
-To exit to a terminal where you can manually start the program (to see stdout) or run a debugger press `<del>`
-
-To exit the `trampoline`, run `pkill trampoline` in the terminal
-
-
-##### How to use a debugger
-- Press `<del>` in `trampoline` mode to escape to terminal
-- Open a TTY with CTRL+FN+ALT+2
-- Run `tmux`
-- Split the window `CTRL+b %`
-- Run `<project root>/devtools/gdb` in one split (and start the program)
-- Change to other split `CTLR+b <right arrow>`. Press `<enter>` to make sure the shell is accepting input.
-- Run `<project root>/devtools/display` to go back to TTY1 (or CTRL+FN+ALT+1 if your machine lets you do that)
-
-
-### Start X11 with startx
-
-After you have edited your `~/.xinitrc` ([see this](#running)) just run `startx` to boot HackMatrix
-
-### Start X11 with a graphical session manager
-
-If you use something like GDM, you will have to create a .desktop file that calls `<project_dir>/matrix` or `<project_dir>`/trampoline.
-
-See [this article](https://www.maketecheasier.com/customize-the-gdm-sessions-list/) for how to do that.
-
-At some point I may install a session manager myself and I'll be able to write this desktop config.
-
-If you create a working config yourself, it would be great if you PR'd it!
+Run `./launch`. 
 
 ### How to get the client_libraries working
 run `scripts/install-python-clientlib.sh` from the HackMatrix root to do an automated install

@@ -1,3 +1,4 @@
+.codex-session
 **/*.o
 tinygrad
 .cache/
