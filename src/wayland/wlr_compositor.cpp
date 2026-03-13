@@ -123,20 +123,7 @@ if (!action.menu_surface && server->engine) {
         const char* name = comp && comp->app ? comp->app->getWindowName().c_str() : "(null)";
         server->surface_map[action.surface] = entity;
 
-        // Layer-shell menus should take focus immediately so they receive keystrokes.
-        if (action.layer_shell && server->engine) {
-          if (auto wm = server->engine->getWindowManager()) {
-            auto focused = wm->getCurrentlyFocusedApp();
-            bool allowFocus = (action.parent_surface != nullptr) || action.menu_surface;
-            if (allowFocus) {
-              wm->unfocusApp();
-              wm->focusApp(entity);
-              if (comp && comp->app) {
-                comp->app->takeInputFocus();
-              }
-            }
-          }
-        }
+        
         // Request a default window size that matches the X11 defaults.
         if (comp && comp->app && !action.accessory) {
           comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
