@@ -121,17 +121,8 @@ if (!action.menu_surface && server->engine) {
       if (entity != entt::null) {
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
         const char* name = comp && comp->app ? comp->app->getWindowName().c_str() : "(null)";
-        if ((action.accessory || action.layer_shell) && action.parent_surface == nullptr &&
-            !action.menu_surface) {
-        }
-        if (renderer && comp && comp->app) {
-          bool needsTexture =
-            comp->app->getTextureId() <= 0 || comp->app->getTextureUnit() < 0;
-          if (needsTexture) {
-            renderer->registerApp(comp->app.get());
-          }
-        }
         server->surface_map[action.surface] = entity;
+
         // Layer-shell menus should take focus immediately so they receive keystrokes.
         if (action.layer_shell && server->engine) {
           if (auto wm = server->engine->getWindowManager()) {

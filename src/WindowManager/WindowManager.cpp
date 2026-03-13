@@ -716,6 +716,7 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
     WL_WM_LOG("WM: renderer missing; registered component only for entity=%d\n",
               (int)entt::to_integral(entity));
   }
+
   // Accessory apps (e.g. popups/menus) should not be positionable or bound to
   // hotkeys; they are rendered relative to their parent.
   if (accessory) {
