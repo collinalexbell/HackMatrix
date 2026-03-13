@@ -241,22 +241,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
       wlr_xdg_popup_get_position(xdg_surface->popup, &sx, &sy);
       offset_x = static_cast<int>(sx);
       offset_y = static_cast<int>(sy);
-    } else {
-      // Treat popups without a parent as non-accessory to avoid crashes.
-      is_popup = false;
-    }
-  }
-  // Heuristic: only treat popups/override-redirect style surfaces as accessory
-  // if they're small (menus, tooltips). Large surfaces (e.g., OBS main window)
-  // should be normal apps.
-  if (is_popup && xdg_surface && xdg_surface->surface) {
-    int w = xdg_surface->surface->current.width;
-    int h = xdg_surface->surface->current.height;
-    int maxAccessoryW = static_cast<int>(SCREEN_WIDTH / 2);
-    int maxAccessoryH = static_cast<int>(SCREEN_HEIGHT / 2);
-    if (w > maxAccessoryW || h > maxAccessoryH) {
-      is_popup = false;
-    }
+    } 
   }
   auto app = std::make_shared<WaylandApp>(server->renderer,
                                           server->allocator,
