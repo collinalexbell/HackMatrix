@@ -152,7 +152,6 @@ ensure_wayland_apps_registered(WlrServer* server)
 {
   auto actions = std::move(server->pending_wl_actions);
   server->pending_wl_actions.clear();
-  std::vector<PendingWlAction> retry;
   for (auto& action : actions) {
     if (action.type == PendingWlAction::Add) {
       add_action(server, action);
