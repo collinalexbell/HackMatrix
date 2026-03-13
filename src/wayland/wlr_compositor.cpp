@@ -201,6 +201,38 @@ if (!action.menu_surface && server->engine) {
 }
 
 static void
+remove_action(WlrServer* server, PendingWlAction action)
+{
+  auto it = server->surface_map.find(action.surface);
+  if (it != server->surface_map.end()) {
+    entt::entity e = it->second;
+    if (server->registry && server->registry->valid(e)) {
+      if (auto wm =
+            server->engine ? server->engine->getWindowManager() : nullptr) {
+        if (auto focused = wm->getCurrentlyFocusedApp();
+            focused && *focused == e) {
+          wm->unfocusApp();
+        }
+      }
+      if (auto* renderer = server->engine->getRenderer()) {
+        if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {
+          if (comp->app) {
+            renderer->deregisterApp((int)comp->app->getAppIndex());
+          }
+        }
+      }
+      server->registry->destroy(e);
+    }
+    server->surface_map.erase(it);
+  }
+  if (server->engine) {
+    if (auto api = server->engine->getApi()) {
+      api->forceUpdateCachedStatus();
+    }
+  }
+}
+
+static void
 ensure_wayland_apps_registered(WlrServer* server)
 {
   if (!server || !server->registry || !server->engine) {
@@ -218,31 +250,7 @@ ensure_wayland_apps_registered(WlrServer* server)
     if (action.type == PendingWlAction::Add) {
       add_action(server, action);
     } else if (action.type == PendingWlAction::Remove) {
-      auto it = server->surface_map.find(action.surface);
-      if (it != server->surface_map.end()) {
-        entt::entity e = it->second;
-        if (server->registry && server->registry->valid(e)) {
-          if (auto wm = server->engine ? server->engine->getWindowManager() : nullptr) {
-            if (auto focused = wm->getCurrentlyFocusedApp(); focused && *focused == e) {
-              wm->unfocusApp();
-            }
-          }
-          if (auto* renderer = server->engine->getRenderer()) {
-            if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {
-              if (comp->app) {
-                renderer->deregisterApp((int)comp->app->getAppIndex());
-              }
-            }
-          }
-          server->registry->destroy(e);
-        }
-        server->surface_map.erase(it);
-      }
-      if (server->engine) {
-        if (auto api = server->engine->getApi()) {
-          api->forceUpdateCachedStatus();
-        }
-      }
+      remove_action(server, action);
     } 
   }
   // Requeue any popup actions that lacked a registered parent when first seen.
