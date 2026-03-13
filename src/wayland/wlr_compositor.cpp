@@ -10,10 +10,12 @@
 #include <drm_fourcc.h>
 #include <ctime>
 #include <unordered_map>
-
-extern "C" {
 #include <EGL/egl.h>
 #include <wayland-server-core.h>
+#include <xkbcommon/xkbcommon.h>
+#include <linux/input-event-codes.h>
+
+extern "C" {
 #include <wlr/backend.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/render/allocator.h>
@@ -22,7 +24,6 @@ extern "C" {
 #include <wlr/render/swapchain.h>
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/interfaces/wlr_keyboard.h>
-#include "interfaces/wlr_input_device.h"
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_subcompositor.h>
 #include <wlr/types/wlr_buffer.h>
@@ -33,17 +34,15 @@ extern "C" {
 #include <wlr/types/wlr_data_device.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_cursor.h>
-#include <linux/input-event-codes.h>
 #include <wlr/types/wlr_xcursor_manager.h>
-#define namespace namespace_keyword_workaround
+#define namespace namespace_
 #include <wlr/types/wlr_layer_shell_v1.h>
 #undef namespace
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/util/log.h>
-#include <xkbcommon/xkbcommon.h>
-}
+};
 
 #include <glad/glad.h>
 #include <cstdarg>
@@ -84,71 +83,18 @@ float SCREEN_HEIGHT = 0;
 
 namespace {
 
-static void
-ensure_wayland_apps_registered(WlrServer* server)
-{
-  if (!server || !server->registry || !server->engine) {
-    return;
-  }
+static void add_action(WlrServer* server, PendingWlAction action) {
   auto* renderer = server->engine->getRenderer();
-  if (!renderer) {
-    return;
-  }
-  // Detect cases where surfaces exist but no Wayland apps are registered and
-  // requeue adds so they don't stall.
-  if (server->surface_map.size() > 0) {
-    auto view = server->registry->view<WaylandApp::Component>();
-    if (view.size() == 0) {
-      for (auto& entry : server->surface_map) {
-        auto it = server->surface_map.find(entry.first);
-        if (it != server->surface_map.end()) {
-          entt::entity ent = it->second;
-          if (server->registry->valid(ent)) {
-            if (auto* comp = server->registry->try_get<WaylandApp::Component>(ent)) {
-              if (comp->app) {
-                server->pending_wl_actions.push_back(
-                  PendingWlAction{ PendingWlAction::Add,
-                                   comp->app,
-                                   entry.first,
-                                   comp->accessory,
-                                   comp->layer_shell,
-                                   false,
-                                   nullptr,
-                                   comp->offset_x,
-                                   comp->offset_y,
-                                   comp->screen_x,
-                                   comp->screen_y });
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  auto actions = std::move(server->pending_wl_actions);
-  server->pending_wl_actions.clear();
-  std::vector<PendingWlAction> retry;
-  for (auto& action : actions) {
-    if (action.type == PendingWlAction::Add) {
-      if (!action.menu_surface && server->engine) {
+if (!action.menu_surface && server->engine) {
         if (auto wm = server->engine->getWindowManager()) {
           if (wm->consumeMenuSpawnPending()) {
             action.menu_surface = true;
           }
         }
       }
-      // Force menu surfaces into a screen-space layer shell so they render as overlays.
-      if (!action.layer_shell && action.menu_surface) {
-        action.layer_shell = true;
-        action.accessory = true; // skip Positionable placement
-        action.screen_x =
-          std::max(0, static_cast<int>((SCREEN_WIDTH - action.app->getWidth()) / 2));
-        action.screen_y =
-          std::max(0, static_cast<int>((SCREEN_HEIGHT - action.app->getHeight()) / 2));
-      }
       // Drop duplicate adds for the same surface if it's already registered.
       if (server->surface_map.find(action.surface) != server->surface_map.end()) {
-        continue;
+        return;
       }
       entt::entity parentEnt = entt::null;
       if (action.parent_surface) {
@@ -156,12 +102,6 @@ ensure_wayland_apps_registered(WlrServer* server)
         if (pit != server->surface_map.end()) {
           parentEnt = pit->second;
         }
-      }
-      // If this is a popup/accessory whose parent hasn't registered yet, retry
-      // once the parent arrives.
-      if (action.accessory && !action.layer_shell && parentEnt == entt::null) {
-        retry.push_back(action);
-        continue;
       }
       entt::entity entity = entt::null;
       if (auto wm = server->engine->getWindowManager()) {
@@ -177,67 +117,13 @@ ensure_wayland_apps_registered(WlrServer* server)
                                         action.screen_y,
                                         action.screen_w,
                                         action.screen_h);
-        if (entity != entt::null) {
-          if (auto* comp = server->registry->try_get<WaylandApp::Component>(entity)) {
-            action.app = comp->app;
-            comp->accessory = action.accessory;
-            comp->parent = parentEnt;
-            comp->offset_x = action.offset_x;
-            comp->offset_y = action.offset_y;
-            comp->layer_shell = action.layer_shell;
-            comp->screen_x = action.screen_x;
-            comp->screen_y = action.screen_y;
-            comp->screen_w = action.screen_w > 0 ? action.screen_w : comp->screen_w;
-            comp->screen_h = action.screen_h > 0 ? action.screen_h : comp->screen_h;
-          }
-        }
-      }
-      if (entity == entt::null && server->registry) {
-        entity = server->registry->create();
-        server->registry->emplace<WaylandApp::Component>(
-          entity,
-          action.app,
-          action.accessory,
-          action.layer_shell,
-          parentEnt,
-          action.offset_x,
-          action.offset_y,
-          action.screen_x,
-          action.screen_y,
-          action.screen_w,
-          action.screen_h);
       }
       if (entity != entt::null) {
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
         const char* name = comp && comp->app ? comp->app->getWindowName().c_str() : "(null)";
-        if ((action.accessory || action.layer_shell) && action.parent_surface == nullptr &&
-            !action.menu_surface) {
-        }
-        if (renderer && comp && comp->app) {
-          bool needsTexture =
-            comp->app->getTextureId() <= 0 || comp->app->getTextureUnit() < 0;
-          if (needsTexture) {
-            renderer->registerApp(comp->app.get());
-          }
-        }
         server->surface_map[action.surface] = entity;
-        if (server->registry) {
-          auto view = server->registry->view<WaylandApp::Component>();
-        }
-        // Layer-shell menus should take focus immediately so they receive keystrokes.
-        if (action.layer_shell && server->engine) {
-          if (auto wm = server->engine->getWindowManager()) {
-            auto focused = wm->getCurrentlyFocusedApp();
-            bool allowFocus = (action.parent_surface != nullptr) || action.menu_surface;
-            if (allowFocus) {
-              wm->unfocusApp();
-              wm->focusApp(entity);
-              if (comp && comp->app) {
-                comp->app->takeInputFocus();
-              }
-            }
-          }
-        }
+
+        
         // Request a default window size that matches the X11 defaults.
         if (comp && comp->app && !action.accessory) {
           comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
@@ -247,33 +133,60 @@ ensure_wayland_apps_registered(WlrServer* server)
             api->forceUpdateCachedStatus();
           }
         }
-      } 
+      }
+}
+
+static void
+remove_action(WlrServer* server, PendingWlAction action)
+{
+  auto it = server->surface_map.find(action.surface);
+  if (it != server->surface_map.end()) {
+    entt::entity e = it->second;
+    if (server->registry && server->registry->valid(e)) {
+      if (auto wm =
+            server->engine ? server->engine->getWindowManager() : nullptr) {
+        if (auto focused = wm->getCurrentlyFocusedApp();
+            focused && *focused == e) {
+          wm->unfocusApp();
+        }
+      }
+      if (auto* renderer = server->engine->getRenderer()) {
+        if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {
+          if (comp->app) {
+            renderer->deregisterApp((int)comp->app->getAppIndex());
+          }
+        }
+      }
+      server->registry->destroy(e);
+    }
+    server->surface_map.erase(it);
+  }
+  if (server->engine) {
+    if (auto api = server->engine->getApi()) {
+      api->forceUpdateCachedStatus();
+    }
+  }
+}
+
+static void
+ensure_wayland_apps_registered(WlrServer* server)
+{
+  if (!server || !server->registry || !server->engine) {
+    return;
+  }
+  auto* renderer = server->engine->getRenderer();
+  if (!renderer) {
+    return;
+  }
+
+  auto actions = std::move(server->pending_wl_actions);
+  server->pending_wl_actions.clear();
+  std::vector<PendingWlAction> retry;
+  for (auto& action : actions) {
+    if (action.type == PendingWlAction::Add) {
+      add_action(server, action);
     } else if (action.type == PendingWlAction::Remove) {
-      auto it = server->surface_map.find(action.surface);
-      if (it != server->surface_map.end()) {
-        entt::entity e = it->second;
-        if (server->registry && server->registry->valid(e)) {
-          if (auto wm = server->engine ? server->engine->getWindowManager() : nullptr) {
-            if (auto focused = wm->getCurrentlyFocusedApp(); focused && *focused == e) {
-              wm->unfocusApp();
-            }
-          }
-          if (auto* renderer = server->engine->getRenderer()) {
-            if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {
-              if (comp->app) {
-                renderer->deregisterApp((int)comp->app->getAppIndex());
-              }
-            }
-          }
-          server->registry->destroy(e);
-        }
-        server->surface_map.erase(it);
-      }
-      if (server->engine) {
-        if (auto api = server->engine->getApi()) {
-          api->forceUpdateCachedStatus();
-        }
-      }
+      remove_action(server, action);
     } 
   }
   // Requeue any popup actions that lacked a registered parent when first seen.
@@ -328,22 +241,7 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
       wlr_xdg_popup_get_position(xdg_surface->popup, &sx, &sy);
       offset_x = static_cast<int>(sx);
       offset_y = static_cast<int>(sy);
-    } else {
-      // Treat popups without a parent as non-accessory to avoid crashes.
-      is_popup = false;
-    }
-  }
-  // Heuristic: only treat popups/override-redirect style surfaces as accessory
-  // if they're small (menus, tooltips). Large surfaces (e.g., OBS main window)
-  // should be normal apps.
-  if (is_popup && xdg_surface && xdg_surface->surface) {
-    int w = xdg_surface->surface->current.width;
-    int h = xdg_surface->surface->current.height;
-    int maxAccessoryW = static_cast<int>(SCREEN_WIDTH / 2);
-    int maxAccessoryH = static_cast<int>(SCREEN_HEIGHT / 2);
-    if (w > maxAccessoryW || h > maxAccessoryH) {
-      is_popup = false;
-    }
+    } 
   }
   auto app = std::make_shared<WaylandApp>(server->renderer,
                                           server->allocator,

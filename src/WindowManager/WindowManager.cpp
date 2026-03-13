@@ -716,6 +716,16 @@ entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,
     WL_WM_LOG("WM: renderer missing; registered component only for entity=%d\n",
               (int)entt::to_integral(entity));
   }
+
+  // Layer-shell menus should take focus immediately so they receive keystrokes.
+  if (layerShell) {
+    auto focused = getCurrentlyFocusedApp();
+    // bool allowFocus = (action.parent_surface != nullptr) ||
+    // action.menu_surface;
+    unfocusApp();
+    focusApp(entity);
+  }
+
   // Accessory apps (e.g. popups/menus) should not be positionable or bound to
   // hotkeys; they are rendered relative to their parent.
   if (accessory) {
