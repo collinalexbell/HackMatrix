@@ -150,14 +150,6 @@ remove_action(WlrServer* server, PendingWlAction action)
 static void
 ensure_wayland_apps_registered(WlrServer* server)
 {
-  if (!server || !server->registry || !server->engine) {
-    return;
-  }
-  auto* renderer = server->engine->getRenderer();
-  if (!renderer) {
-    return;
-  }
-
   auto actions = std::move(server->pending_wl_actions);
   server->pending_wl_actions.clear();
   std::vector<PendingWlAction> retry;
@@ -167,11 +159,6 @@ ensure_wayland_apps_registered(WlrServer* server)
     } else if (action.type == PendingWlAction::Remove) {
       remove_action(server, action);
     } 
-  }
-  // Requeue any popup actions that lacked a registered parent when first seen.
-  if (!retry.empty()) {
-    server->pending_wl_actions.insert(
-      server->pending_wl_actions.end(), retry.begin(), retry.end());
   }
 }
 
