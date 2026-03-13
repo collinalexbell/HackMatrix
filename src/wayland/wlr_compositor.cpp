@@ -117,35 +117,6 @@ if (!action.menu_surface && server->engine) {
                                         action.screen_y,
                                         action.screen_w,
                                         action.screen_h);
-        if (entity != entt::null) {
-          if (auto* comp = server->registry->try_get<WaylandApp::Component>(entity)) {
-            action.app = comp->app;
-            comp->accessory = action.accessory;
-            comp->parent = parentEnt;
-            comp->offset_x = action.offset_x;
-            comp->offset_y = action.offset_y;
-            comp->layer_shell = action.layer_shell;
-            comp->screen_x = action.screen_x;
-            comp->screen_y = action.screen_y;
-            comp->screen_w = action.screen_w > 0 ? action.screen_w : comp->screen_w;
-            comp->screen_h = action.screen_h > 0 ? action.screen_h : comp->screen_h;
-          }
-        }
-      }
-      if (entity == entt::null && server->registry) {
-        entity = server->registry->create();
-        server->registry->emplace<WaylandApp::Component>(
-          entity,
-          action.app,
-          action.accessory,
-          action.layer_shell,
-          parentEnt,
-          action.offset_x,
-          action.offset_y,
-          action.screen_x,
-          action.screen_y,
-          action.screen_w,
-          action.screen_h);
       }
       if (entity != entt::null) {
         auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
