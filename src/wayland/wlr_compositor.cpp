@@ -83,57 +83,41 @@ float SCREEN_HEIGHT = 0;
 
 namespace {
 
-static void add_action(WlrServer* server, PendingWlAction action) {
+static void
+add_action(WlrServer* server, PendingWlAction action)
+{
   auto* renderer = server->engine->getRenderer();
-if (!action.menu_surface && server->engine) {
-        if (auto wm = server->engine->getWindowManager()) {
-          if (wm->consumeMenuSpawnPending()) {
-            action.menu_surface = true;
-          }
-        }
+  if (!action.menu_surface && server->engine) {
+    // Drop duplicate adds for the same surface if it's already registered.
+    if (server->surface_map.find(action.surface) != server->surface_map.end()) {
+      return;
+    }
+    entt::entity parentEnt = entt::null;
+    if (action.parent_surface) {
+      auto pit = server->surface_map.find(action.parent_surface);
+      if (pit != server->surface_map.end()) {
+        parentEnt = pit->second;
       }
-      // Drop duplicate adds for the same surface if it's already registered.
-      if (server->surface_map.find(action.surface) != server->surface_map.end()) {
-        return;
-      }
-      entt::entity parentEnt = entt::null;
-      if (action.parent_surface) {
-        auto pit = server->surface_map.find(action.parent_surface);
-        if (pit != server->surface_map.end()) {
-          parentEnt = pit->second;
-        }
-      }
-      entt::entity entity = entt::null;
-      if (auto wm = server->engine->getWindowManager()) {
-        bool spawnAtCamera = !action.accessory;
-        entity = wm->registerWaylandApp(action.app,
-                                        spawnAtCamera,
-                                        action.accessory,
-                                        parentEnt,
-                                        action.offset_x,
-                                        action.offset_y,
-                                        action.layer_shell,
-                                        action.screen_x,
-                                        action.screen_y,
-                                        action.screen_w,
-                                        action.screen_h);
-      }
-      if (entity != entt::null) {
-        auto* comp = server->registry->try_get<WaylandApp::Component>(entity);
-        const char* name = comp && comp->app ? comp->app->getWindowName().c_str() : "(null)";
-        server->surface_map[action.surface] = entity;
-
-        
-        // Request a default window size that matches the X11 defaults.
-        if (comp && comp->app && !action.accessory) {
-          comp->app->requestSize(Bootable::DEFAULT_WIDTH, Bootable::DEFAULT_HEIGHT);
-        }
-        if (server->engine) {
-          if (auto api = server->engine->getApi()) {
-            api->forceUpdateCachedStatus();
-          }
-        }
-      }
+    }
+    entt::entity entity = entt::null;
+    if (auto wm = server->engine->getWindowManager()) {
+      bool spawnAtCamera = !action.accessory;
+      entity = wm->registerWaylandApp(action.app,
+                                      spawnAtCamera,
+                                      action.accessory,
+                                      parentEnt,
+                                      action.offset_x,
+                                      action.offset_y,
+                                      action.layer_shell,
+                                      action.screen_x,
+                                      action.screen_y,
+                                      action.screen_w,
+                                      action.screen_h);
+    }
+    if (entity != entt::null) {
+      server->surface_map[action.surface] = entity;
+    }
+  }
 }
 
 static void
@@ -160,11 +144,6 @@ remove_action(WlrServer* server, PendingWlAction action)
       server->registry->destroy(e);
     }
     server->surface_map.erase(it);
-  }
-  if (server->engine) {
-    if (auto api = server->engine->getApi()) {
-      api->forceUpdateCachedStatus();
-    }
   }
 }
 

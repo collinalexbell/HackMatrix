@@ -134,9 +134,6 @@ protected:
   void updateCachedStatus();
 
 public:
-  // Exposed for compositor paths that need to refresh cached status immediately
-  // after registering new Wayland apps.
-  void forceUpdateCachedStatus() { updateCachedStatus(); }
   Api(std::string bindAddress,
       shared_ptr<EntityRegistry>,
       Controls* controls,
