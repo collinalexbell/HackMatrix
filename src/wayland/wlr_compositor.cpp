@@ -103,16 +103,6 @@ if (!action.menu_surface && server->engine) {
           parentEnt = pit->second;
         }
       }
-      // If this is a popup/accessory whose parent hasn't registered yet, retry
-      // once the parent arrives.
-
-      // REMOVING FOR TEST, THIS MAY BREAK SOME THINGS SO KEEPING HERE SO I REMEMBER
-      /*
-      if (action.accessory && !action.layer_shell && parentEnt == entt::null) {
-        retry.push_back(action);
-        return;
-      }
-      */
       entt::entity entity = entt::null;
       if (auto wm = server->engine->getWindowManager()) {
         bool spawnAtCamera = !action.accessory;
@@ -171,9 +161,6 @@ if (!action.menu_surface && server->engine) {
           }
         }
         server->surface_map[action.surface] = entity;
-        if (server->registry) {
-          auto view = server->registry->view<WaylandApp::Component>();
-        }
         // Layer-shell menus should take focus immediately so they receive keystrokes.
         if (action.layer_shell && server->engine) {
           if (auto wm = server->engine->getWindowManager()) {
