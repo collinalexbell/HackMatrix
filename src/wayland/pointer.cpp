@@ -229,12 +229,6 @@ handle_pointer_motion_abs(wl_listener* listener, void* data)
                              event->y);
     handle->server->pointer_x = handle->server->cursor->x;
     handle->server->pointer_y = handle->server->cursor->y;
-    if (handle->server->engine) {
-      handle->server->engine->updateImGuiPointer(
-        handle->server->pointer_x,
-        handle->server->pointer_y,
-        handle->server->input.mouse_buttons);
-    }
   }
   bool focusRequested = wayland_pointer_focus_requested(handle->server);
   if (focusRequested) {
@@ -281,7 +275,7 @@ void handle_pointer_button(wl_listener* listener, void* data)
   auto* handle =
     wl_container_of(listener, static_cast<WlrPointerHandle*>(nullptr), button);
   auto* event = static_cast<wlr_pointer_button_event*>(data);
-  bool handled_by_game = false;
+  bool button_consumed_by_controls = false;
   bool wayland_focus_requested =
     wayland_pointer_focus_requested(handle->server);
   wlr_surface* pointer_surface = nullptr;
@@ -292,79 +286,16 @@ void handle_pointer_button(wl_listener* listener, void* data)
   Controls* controls = handle->server && handle->server->engine
                          ? handle->server->engine->getControls()
                          : nullptr;
-  auto update_mouse_button = [&](uint32_t button, bool pressed) {
-    if (!handle->server) {
-      return;
-    }
-    if (button == BTN_LEFT) {
-      handle->server->input.mouse_buttons[0] = pressed;
-    } else if (button == BTN_RIGHT) {
-      handle->server->input.mouse_buttons[1] = pressed;
-    } else if (button == BTN_MIDDLE) {
-      handle->server->input.mouse_buttons[2] = pressed;
-    }
-    if (handle->server->engine) {
-      handle->server->engine->updateImGuiPointer(
-        handle->server->pointer_x,
-        handle->server->pointer_y,
-        handle->server->input.mouse_buttons);
-    }
-  };
   if (static_cast<uint32_t>(event->state) ==
         static_cast<uint32_t>(WLR_BUTTON_PRESSED) &&
       handle->server && handle->server->engine) {
-    update_mouse_button(event->button, true);
     // If a Wayland client has (or is requesting) focus, bypass game controls so
     // the click reaches the client immediately.
     if (controls && !wayland_focus_requested) {
-      handled_by_game = controls->handlePointerButton(event->button, true);
-    }
-    if (auto wm = handle->server->engine->getWindowManager()) {
-      // Only focus a Wayland client when the player is looking at it up close;
-      // otherwise treat the click as a game interaction.
-      if (!handled_by_game) {
-        // Focus only when the player is actually looking at an app within
-        // range.
-        entt::entity focusEnt = entt::null;
-        wlr_surface* focusSurf = nullptr;
-        if (auto space = wm->getSpace()) {
-          if (auto looked = space->getLookedAtApp()) {
-            entt::entity ent = *looked;
-            if (handle->server->registry &&
-                handle->server->registry->valid(ent) &&
-                handle->server->registry->all_of<WaylandApp::Component>(ent)) {
-              auto* comp =
-                handle->server->registry->try_get<WaylandApp::Component>(ent);
-              entt::entity targetEnt = ent;
-              if (comp && comp->accessory && comp->parent != entt::null &&
-                  handle->server->registry->valid(comp->parent)) {
-                targetEnt = comp->parent;
-                comp = handle->server->registry->try_get<WaylandApp::Component>(
-                  targetEnt);
-              }
-              if (comp && comp->app) {
-                focusEnt = targetEnt;
-                focusSurf = comp->app->getSurface();
-              }
-            }
-          }
-        }
-        if (focusEnt != entt::null && focusSurf) {
-          wm->focusApp(focusEnt);
-          ensure_pointer_focus(handle->server, event->time_msec, focusSurf);
-          if (auto* focusComp =
-                handle->server->registry->try_get<WaylandApp::Component>(
-                  focusEnt)) {
-            if (focusComp->app) {
-              focusComp->app->takeInputFocus();
-            }
-          }
-          preferred_surface = focusSurf;
-        }
-      }
+      button_consumed_by_controls = controls->handlePointerButton(event->button, true);
     }
   }
-  if (handle->server->seat && !handled_by_game) {
+  if (handle->server->seat && !button_consumed_by_controls) {
     // Only forward to Wayland clients if a surface currently has pointer focus.
     wlr_surface* surf = preferred_surface ? preferred_surface : pointer_surface;
     if (surf) {
@@ -375,10 +306,6 @@ void handle_pointer_button(wl_listener* listener, void* data)
       wlr_seat_pointer_notify_button(
         handle->server->seat, event->time_msec, event->button, event->state);
       wlr_seat_pointer_notify_frame(handle->server->seat);
-      if (static_cast<uint32_t>(event->state) ==
-          static_cast<uint32_t>(WLR_BUTTON_RELEASED)) {
-        update_mouse_button(event->button, false);
-      }
     }
   }
 }

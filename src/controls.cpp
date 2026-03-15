@@ -451,13 +451,9 @@ Controls::handlePointerButton(uint32_t button, bool pressed)
       auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
                                     : std::optional<entt::entity>();
       if (app.has_value()) {
-        log_controls("controls: pointer goToApp ent=%d button=%u\n",
-                     (int)entt::to_integral(app.value()),
-                     button);
         goToApp(app.value());
         return true;
       }
-      log_controls("controls: pointer place voxel button=%u\n", button);
       world->action(PLACE_VOXEL);
       return true;
     }

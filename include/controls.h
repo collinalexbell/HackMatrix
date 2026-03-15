@@ -40,7 +40,7 @@ class Controls
   World* world;
   Camera* camera;
   Renderer* renderer;
-  bool grabbedCursor = false;
+  bool grabbedCursor = true;
   bool appFocused = false;
   double lastClickTime = 0;
   double lastKeyPressTime = 0;
