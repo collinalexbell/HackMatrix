@@ -574,15 +574,9 @@ Controls::handleKeySym(xkb_keysym_t sym,
 
   if ((sym == XKB_KEY_r || sym == XKB_KEY_R) && debounce(lastKeyPressTime)) {
     resp.clearInputForces = true;
-    enqueueAction([this]() {
-      if (!wm) {
-        return;
-      }
-      if (auto looked = windowManagerSpace->getLookedAtApp()) {
-        wm->focusApp(*looked);
-        return;
-      }
-    });
+    if (auto looked = windowManagerSpace->getLookedAtApp()) {
+      goToApp(*looked);
+    }
     resp.blockClientDelivery = true;
     resp.consumed = true;
     return resp;
