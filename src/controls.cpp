@@ -79,6 +79,7 @@ void Controls::handleKeys() {
   auto appFocused = wm->hasCurrentOrPendingFocus();
   if(!appFocused){
     handleMovement();
+    handleFocus();
   }
 }
 
@@ -258,6 +259,16 @@ Controls::handleClicks(GLFWwindow* window, World* world)
   state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
   if (state == GLFW_PRESS && debounce(lastClickTime)) {
     // world->action(REMOVE_CUBE);
+  }
+}
+
+void
+Controls::handleFocus()
+{
+    if (pressed.count(XKB_KEY_r) > 0 && debounce(lastKeyPressTime)) {
+    if (auto looked = windowManagerSpace->getLookedAtApp()) {
+      goToApp(*looked);
+    }
   }
 }
 
@@ -572,7 +583,8 @@ Controls::handleKeySym(xkb_keysym_t sym,
     return resp;
   }
 
-  if ((sym == XKB_KEY_r || sym == XKB_KEY_R) && debounce(lastKeyPressTime)) {
+  /*
+  if ((sym == XKB_KEY_r) && debounce(lastKeyPressTime)) {
     resp.clearInputForces = true;
     if (auto looked = windowManagerSpace->getLookedAtApp()) {
       goToApp(*looked);
@@ -581,6 +593,7 @@ Controls::handleKeySym(xkb_keysym_t sym,
     resp.consumed = true;
     return resp;
   }
+  */
 
   // Modifier-driven window manager hotkeys.
   if (modifierHeld && wm) {

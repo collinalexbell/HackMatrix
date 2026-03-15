@@ -70,6 +70,7 @@ class Controls
   void handleToggleCursor(GLFWwindow* window);
   void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
   void handleSelectApp(GLFWwindow* window);
+  void handleFocus();
   void handleDMenu(GLFWwindow* window, World* world);
   void handleScreenshot(GLFWwindow* window);
   void handleSave(GLFWwindow* window);
