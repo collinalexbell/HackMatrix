@@ -143,7 +143,7 @@ sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xin
 
 ## Building
 
-***warning*** this is a new Wayland build. It will be buggy, but I merged it to maun regardless
+***warning*** this is a new Wayland build. It will be buggy, but I merged it to main regardless
 
 
 ```bash
