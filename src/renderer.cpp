@@ -454,10 +454,10 @@ Renderer::initAppTextures()
   }
   for (int index = 0; index < appTextureCount; index++) {
     int textureN = index;
-    int textureUnit = GL_TEXTURE0 + index; // dedicate a unit per app slot
+    int textureUnit = GL_TEXTURE0; // dedicate a unit per app slot
     string textureName = "app" + to_string(index);
     textures[textureName] = new Texture(textureUnit);
-    shader->setInt(textureName, index); // map sampler to its texture unit
+    shader->setInt(textureName, 0); // map sampler to its texture unit
     if constexpr (kWlrootsDebugLogs) {
       static FILE* logFile = []() {
         FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
@@ -777,12 +777,12 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
         GL_NEAREST);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
     } else {
-      glActiveTexture(GL_TEXTURE0 + index);
+      glActiveTexture(GL_TEXTURE0);
       auto texIt = textures.find("app" + std::to_string(index));
       if (texIt != textures.end()) {
         glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
       }
-      shader->setInt("appNumber", index);
+      shader->setInt("appNumber", 0);
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
       static int x = -1;
@@ -1034,9 +1034,9 @@ Renderer::renderApps()
         it == textures.end() || !it->second || !glIsTexture(it->second->ID)) {
       return false;
     }
-    glActiveTexture(GL_TEXTURE0 + index);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, it->second->ID);
-    shader->setInt("appNumber", index);
+    shader->setInt("appNumber", 0);
     return true;
   };
   auto renderLayerShell = [&](WaylandApp::Component& comp) {
@@ -1112,7 +1112,7 @@ Renderer::renderApps()
     glm::mat4 model = positionable.modelMatrix;
     shader->setMatrix4("model", model);
     shader->setMatrix4("bootableScale", app->getHeightScalar());
-    shader->setInt("appNumber", idx);
+    shader->setInt("appNumber", 0);
     shader->setBool("appTransparent", false);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -1124,7 +1124,7 @@ Renderer::renderApps()
         continue;
       }
       shader->setBool("directRender", true);
-      shader->setInt("appNumber", idx);
+      shader->setInt("appNumber", 0);
       glm::mat4 model = glm::mat4(1.0f);
       float sx = static_cast<float>(app->getWidth()) /
                  static_cast<float>(SCREEN_WIDTH);
@@ -1430,9 +1430,11 @@ Renderer::getCamera()
 void
 Renderer::registerApp(AppSurface* app)
 {
+  attachSharedAppTexture(app);
   // We need to keep track of which textureN has been used.
   // because deletions means this won't work
   // indices will change.
+  /*
   auto index = appIndexPool.acquireIndex();
   if (index < 0) {
     WL_RENDERER_LOG("registerApp: no available texture slots; using shared slot 0\n");
@@ -1498,6 +1500,7 @@ Renderer::registerApp(AppSurface* app)
       std::fflush(logFile2);
     }
   }
+    */
 }
 
 void
@@ -1515,24 +1518,21 @@ Renderer::attachSharedAppTexture(AppSurface* app)
     return;
   }
   // Use index 0 slot, unit 0; avoids consuming extra texture units.
-  auto it = textures.find("app0");
-  if (it == textures.end()) {
-    return;
-  }
+  auto index = appIndexPool.acquireIndex();
+  int textureId = textures["app" + to_string(index)]->ID;
   int textureUnit = GL_TEXTURE0;
-  int textureId = it->second->ID;
-  app->attachTexture(textureUnit, textureId, 0);
+  app->attachTexture(textureUnit, textureId, index);
   app->appTexture();
-  if (kWlrootsDebugLogs) {
-    FILE* logFile = wlroots_renderer_log();
-    if (logFile) {
-      std::fprintf(logFile,
-                   "attachSharedAppTexture: texId=%d unit=%d\n",
-                   textureId,
-                   textureUnit - GL_TEXTURE0);
-      std::fflush(logFile);
-    }
-  }
+
+  unsigned int framebufferId;
+  glGenFramebuffers(1, &framebufferId);
+  frameBuffers[index] = framebufferId;
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferId);
+  glFramebufferTexture2D(GL_READ_FRAMEBUFFER,
+                         GL_COLOR_ATTACHMENT0,
+                         GL_TEXTURE_2D,
+                         textures["app" + to_string(index)]->ID,
+                         0);
 }
 
 void
