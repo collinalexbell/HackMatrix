@@ -10,18 +10,8 @@ in vec3 VoxelColor;
 
 uniform sampler2DArray allBlocks;
 uniform sampler2D texture_diffuse1;
-uniform sampler2D app0;
-uniform sampler2D app1;
-uniform sampler2D app2;
-uniform sampler2D app3;
-uniform sampler2D app4;
-uniform sampler2D app5;
-uniform sampler2D app6;
-uniform sampler2D app7;
-uniform sampler2D app8;
-uniform sampler2D app9;
+uniform sampler2D appTex;
 uniform bool isApp;
-uniform int appNumber;
 uniform bool SHADOWS_ENABLED;
 uniform bool isModel;
 uniform bool isLine;
@@ -159,35 +149,7 @@ void main()
 	// need to pass this in as vertex data, but hold for now
 if(isApp) {
     // Visualize TexCoord mapping instead of sampling the app texture.
-    //FragColor = debugTexcoordColor(TexCoord);
-    //return;
-		if(appNumber == 0) {
-			FragColor = colorFromTexture(app0, TexCoord);
-    } else if (appNumber == 1) {
-			FragColor = colorFromTexture(app1, TexCoord);
-		} else if (appNumber == 2) {
-			FragColor = colorFromTexture(app2, TexCoord);
-		} else if (appNumber == 3) {
-			FragColor = colorFromTexture(app3, TexCoord);
-		} else if (appNumber == 4) {
-			FragColor = colorFromTexture(app4, TexCoord);
-		} else if (appNumber == 5) {
-			FragColor = colorFromTexture(app5, TexCoord);
-		} 
-
-		else if (appNumber == 6) {
-			FragColor = colorFromTexture(app6, TexCoord);
-		} else if (appNumber == 7) {
-			FragColor = colorFromTexture(app7, TexCoord);
-		} else if (appNumber == 8) {
-			FragColor = colorFromTexture(app8, TexCoord);
-		} 
-
-		/*
-		else if (appNumber == 9) {
-			FragColor = colorFromTexture(app9, TexCoord);
-		} 
-		*/
+    FragColor = colorFromTexture(appTex, TexCoord);
 		if(appSelected) {
 			FragColor = mix(FragColor, floorEffect(TexCoord), 0.1);
 		}

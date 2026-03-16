@@ -382,6 +382,8 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   shader->use(); // may need to move into loop to use changing uniforms
 
   shader->setInt("allBlocks", 0);
+  // apps are on texture unit 0
+  shader->setInt("appTex", 0);
   shader->setInt("totalBlockTypes", images.size());
   shader->setBool("SHADOWS_ENABLED", shadowsEnabled);
 
@@ -686,7 +688,6 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
     } else {
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, app->getTextureId());
-      shader->setInt("appNumber", 0);
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
       static int x = -1;
@@ -932,7 +933,6 @@ Renderer::renderApps()
   auto bindAppTexture = [&](WaylandApp* app) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, app->getTextureId());
-    shader->setInt("appNumber", 0);
     return true;
   };
   auto renderLayerShell = [&](WaylandApp::Component& comp) {
@@ -1006,7 +1006,6 @@ Renderer::renderApps()
     glm::mat4 model = positionable.modelMatrix;
     shader->setMatrix4("model", model);
     shader->setMatrix4("bootableScale", app->getHeightScalar());
-    shader->setInt("appNumber", 0);
     shader->setBool("appTransparent", false);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -1018,7 +1017,6 @@ Renderer::renderApps()
         continue;
       }
       shader->setBool("directRender", true);
-      shader->setInt("appNumber", 0);
       glm::mat4 model = glm::mat4(1.0f);
       float sx = static_cast<float>(app->getWidth()) /
                  static_cast<float>(SCREEN_WIDTH);
