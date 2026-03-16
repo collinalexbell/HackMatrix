@@ -82,7 +82,7 @@ public:
   static glm::mat4 recomputeHeightScaler(double width, double height);
   void positionNotify(int x, int y);
   void appTexture() override;
-  void attachTexture(int textureUnit, int textureId, size_t appIndex) override;
+  int createTexture() override;
   void focus(unsigned long matrix) override;
   void takeInputFocus() override;
   void unfocus(unsigned long matrix) override;
@@ -94,11 +94,9 @@ public:
   string getWindowName() override;
   Window getWindow();
   array<int, 2> getPosition() const override;
-  size_t getAppIndex() const override { return appIndex; }
   int getWidth() const override { return width; }
   int getHeight() const override { return height; }
   int getTextureId() const override { return textureId; }
-  int getTextureUnit() const override { return textureUnit; }
   glm::mat4 getHeightScalar() const override { return heightScalar; }
   void select() override;
   void deselect() override;

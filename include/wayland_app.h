@@ -17,6 +17,7 @@
 #include <memory>
 #include "AppSurface.h"
 #include "entity.h"
+#include "texture.h"
 
 struct wlr_surface;
 struct wlr_xdg_surface;
@@ -44,11 +45,9 @@ class WaylandApp : public AppSurface {
   bool mapped = false;
   std::string title = "wayland-app";
 
-  int textureUnit = -1;
   int textureId = -1;
   std::atomic_bool focused = false;
   std::atomic_bool selected = false;
-  size_t appIndex = 0;
   int x = 0;
   int y = 0;
   int clientPid = -1;
@@ -59,6 +58,7 @@ class WaylandApp : public AppSurface {
   EGLImageKHR importedImage = EGL_NO_IMAGE_KHR;
   bool needsImport = false;
   bool importedBufferLocked = false;
+  unique_ptr<Texture> texture;
 
 public:
   int width = 0;
@@ -90,11 +90,11 @@ public:
              size_t index);
   ~WaylandApp();
 
-  void attachTexture(int unit, int id, size_t index) override
+  int createTexture() override
   {
-    textureUnit = unit;
-    textureId = id;
-    appIndex = index;
+    texture = make_unique<Texture>(GL_TEXTURE0);
+    textureId = texture->ID;
+    return textureId;
   }
 
   // Upload/copy the latest Wayland buffer into the attached texture.
@@ -132,7 +132,6 @@ public:
   std::array<int, 2> getPosition() const override { return { x, y }; }
   glm::mat4 getHeightScalar() const override { return heightScalar; }
   int getTextureId() const override { return textureId; }
-  int getTextureUnit() const override { return textureUnit; }
   bool supportsDirectRender() const { return importedImage != EGL_NO_IMAGE_KHR; }
   wlr_surface* getSurface() const { return surface; }
   bool needsTextureImport() const { return needsImport; }
@@ -140,7 +139,6 @@ public:
   std::string getWindowName() override { return title; }
   int getPID() override { return clientPid; }
 
-  size_t getAppIndex() const override { return appIndex; }
   void close();
 
 private:

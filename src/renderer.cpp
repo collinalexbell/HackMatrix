@@ -715,50 +715,18 @@ readFramebufferToRgba(int width, int height, std::vector<unsigned char>& out)
 void
 Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
 {
-  int index = app->getAppIndex();
   int screenWidth = SCREEN_WIDTH;
   int screenHeight = SCREEN_HEIGHT;
   int appWidth = app->getWidth();
   int appHeight = app->getHeight();
   auto pos = app->getPosition();
-  auto fbIt = frameBuffers.find(index);
+  auto fbIt = frameBuffers.find(app->getTextureId());
 
-  auto logRenderAppDirect = [&](const char* status, int destX, int destY) {
-    FILE* rlog = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-    if (!rlog) {
-      return;
-    }
-    std::fprintf(rlog,
-                 "Renderer: renderAppDirect status=%s appNumber=%d texId=%d texUnit=%d dest=(%d,%d) size=%dx%d direct=1 bootable=%d\n",
-                 status,
-                 index,
-                 app->getTextureId(),
-                 app->getTextureUnit() - GL_TEXTURE0,
-                 destX,
-                 destY,
-                 appWidth,
-                 appHeight,
-                 bootable ? 1 : 0);
-    std::fflush(rlog);
-    std::fclose(rlog);
-  };
-
-  if (fbIt == frameBuffers.end()) {
-    logRenderAppDirect("missing-fbo", pos[0], pos[1]);
-    return;
-  }
-
-  if (index >= 0) {
     if (!bootable) {
-      if (!supportsFramebufferBlit()) {
-        logRenderAppDirect("no-blit-support", pos[0], pos[1]);
-        return;
-      }
       GLint prevReadFbo = 0;
       GLint prevDrawFbo = 0;
       glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prevReadFbo);
       glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prevDrawFbo);
-      logRenderAppDirect("blit", pos[0], pos[1]);
       glBindFramebuffer(GL_READ_FRAMEBUFFER, fbIt->second);
       glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDrawFbo);
       glBlitFramebuffer(
@@ -778,10 +746,7 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
       glBindFramebuffer(GL_READ_FRAMEBUFFER, prevReadFbo);
     } else {
       glActiveTexture(GL_TEXTURE0);
-      auto texIt = textures.find("app" + std::to_string(index));
-      if (texIt != textures.end()) {
-        glBindTexture(GL_TEXTURE_2D, texIt->second->ID);
-      }
+      glBindTexture(GL_TEXTURE_2D, app->getTextureId());
       shader->setInt("appNumber", 0);
       glBindVertexArray(DIRECT_RENDER_VAO);
       shader->setBool("directRender", true);
@@ -812,13 +777,11 @@ Renderer::drawAppDirect(AppSurface* app, Bootable* bootable)
         x = bootable->x;
         y = bootable->y;
       }
-      logRenderAppDirect("bootable", bootable->x, bootable->y);
       shader->setBool("appTransparent", bootable->transparent);
       shader->setMatrix4("model", model);
       glDrawArrays(GL_TRIANGLES, 0, 6);
       shader->setBool("directRender", false);
     }
-  }
 }
 
 void
@@ -976,8 +939,7 @@ void Renderer::renderPopup(WaylandApp::Component& popup, WaylandApp::Component& 
     if (popupApp->needsTextureImport()) {
       popupApp->appTexture();
     }
-    int idx = static_cast<int>(popupApp->getAppIndex());
-    auto fbIt = frameBuffers.find(idx);
+    auto fbIt = frameBuffers.find(popupApp->getTextureId());
     if (fbIt == frameBuffers.end()) {
       return;
     }
@@ -1028,14 +990,9 @@ Renderer::renderApps()
   glDisable(GL_CULL_FACE);
  
 
-  auto bindAppTexture = [&](int index) {
-    auto it = textures.find("app" + std::to_string(index));
-    if (index < 0 || index >= appTextureCount ||
-        it == textures.end() || !it->second || !glIsTexture(it->second->ID)) {
-      return false;
-    }
+  auto bindAppTexture = [&](WaylandApp* app) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, it->second->ID);
+    glBindTexture(GL_TEXTURE_2D, app->getTextureId());
     shader->setInt("appNumber", 0);
     return true;
   };
@@ -1052,8 +1009,7 @@ Renderer::renderApps()
     if (app->needsTextureImport()) {
       app->appTexture();
     }
-    int idx = static_cast<int>(app->getAppIndex());
-    auto fbIt = frameBuffers.find(idx);
+    auto fbIt = frameBuffers.find(app->getTextureId());
     if (fbIt == frameBuffers.end()) {
       return;
     }
@@ -1093,14 +1049,13 @@ Renderer::renderApps()
       continue;
     }
 
-    int idx = static_cast<int>(app->getAppIndex());
     // Upload latest buffer only when a new commit arrived, then bind to the
     // app's dedicated unit to avoid stale or shared textures when multiple
     // Wayland apps are present.
     if (app->needsTextureImport()) {
       app->appTexture();
     }
-    if (!bindAppTexture(idx)) {
+    if (!bindAppTexture(app)) {
       continue;
     }
     // Keep the in-world quad at the positionable's size; just track the app's
@@ -1120,7 +1075,7 @@ Renderer::renderApps()
     // If focused, also draw directly to screen to ensure visibility.
     if (wm && wm->getCurrentlyFocusedApp().has_value() &&
         wm->getCurrentlyFocusedApp().value() == entity) {
-      if (!bindAppTexture(idx)) {
+      if (!bindAppTexture(app)) {
         continue;
       }
       shader->setBool("directRender", true);
@@ -1430,109 +1385,29 @@ Renderer::getCamera()
 void
 Renderer::registerApp(AppSurface* app)
 {
-  attachSharedAppTexture(app);
-  // We need to keep track of which textureN has been used.
-  // because deletions means this won't work
-  // indices will change.
-  /*
-  auto index = appIndexPool.acquireIndex();
-  if (index < 0) {
-    WL_RENDERER_LOG("registerApp: no available texture slots; using shared slot 0\n");
-    attachSharedAppTexture(app);
-    return;
-  }
-  static GLint maxTextureUnits = -1;
-  if (maxTextureUnits < 0) {
-    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
-    if (maxTextureUnits <= 0) {
-      maxTextureUnits = 8;
-    }
-  }
-  if (index >= maxTextureUnits) {
-    std::fprintf(stderr,
-                 "Renderer: app index %u exceeds max texture units %d; skipping registration\n",
-                 static_cast<unsigned>(index),
-                 maxTextureUnits);
-    appIndexPool.relinquishIndex(index);
-    return;
-  }
-  FILE* logFile = kWlrootsDebugLogs ? wlroots_renderer_log() : nullptr;
-  try {
-    int textureId = textures["app" + to_string(index)]->ID;
-    int textureUnit = GL_TEXTURE0 + index;
-    app->attachTexture(textureUnit, textureId, index);
-    app->appTexture();
-    if (logFile) {
-      std::fprintf(logFile,
-                   "registerApp: index=%u textureId=%d unit=%d\n",
-                   static_cast<unsigned>(index),
-                   textureId,
-                   textureUnit - GL_TEXTURE0);
-    }
-  } catch (...) {
-    if (logFile) {
-      std::fprintf(logFile, "registerApp: exception, releasing index\n");
-    }
-    appIndexPool.relinquishIndex(index);
-    throw;
-  }
-  if (logFile) {
-    std::fflush(logFile);
-  }
-
-  unsigned int framebufferId;
-  glGenFramebuffers(1, &framebufferId);
-  frameBuffers[index] = framebufferId;
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferId);
-  glFramebufferTexture2D(GL_READ_FRAMEBUFFER,
-                         GL_COLOR_ATTACHMENT0,
-                         GL_TEXTURE_2D,
-                         textures["app" + to_string(index)]->ID,
-                         0);
-  if (kWlrootsDebugLogs) {
-    FILE* logFile2 = wlroots_renderer_log();
-    if (logFile2) {
-      std::fprintf(logFile2,
-                   "registerApp: framebuffer %u attached to texId=%u index=%u\n",
-                   framebufferId,
-                   textures["app" + to_string(index)]->ID,
-                   static_cast<unsigned>(index));
-      std::fflush(logFile2);
-    }
-  }
-    */
-}
-
-void
-Renderer::deregisterApp(int index)
-{
-  appIndexPool.relinquishIndex(index);
-  glDeleteFramebuffers(1, &frameBuffers[index]);
-  frameBuffers.erase(index);
-}
-
-void
-Renderer::attachSharedAppTexture(AppSurface* app)
-{
   if (!app) {
     return;
   }
   // Use index 0 slot, unit 0; avoids consuming extra texture units.
-  auto index = appIndexPool.acquireIndex();
-  int textureId = textures["app" + to_string(index)]->ID;
-  int textureUnit = GL_TEXTURE0;
-  app->attachTexture(textureUnit, textureId, index);
+  auto textureId = app->createTexture();
   app->appTexture();
 
   unsigned int framebufferId;
   glGenFramebuffers(1, &framebufferId);
-  frameBuffers[index] = framebufferId;
+  frameBuffers[textureId] = framebufferId;
   glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufferId);
   glFramebufferTexture2D(GL_READ_FRAMEBUFFER,
                          GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_2D,
-                         textures["app" + to_string(index)]->ID,
+                         textureId,
                          0);
+}
+
+void
+Renderer::deregisterApp(AppSurface* surface)
+{
+  glDeleteFramebuffers(1, &frameBuffers[surface->getTextureId()]);
+  frameBuffers.erase(surface->getTextureId());
 }
 
 void

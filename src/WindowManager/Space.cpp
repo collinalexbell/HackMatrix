@@ -78,7 +78,7 @@ Space::removeApp(entt::entity entity)
     registry->remove<WaylandApp::Component>(entity);
   }
   if (surface) {
-    renderer->deregisterApp(static_cast<int>(surface->getAppIndex()));
+    renderer->deregisterApp(surface);
   }
   // registry->destroy(entity);
 }

@@ -146,9 +146,7 @@ public:
   void addLine(int index, Line line);
   unsigned int getCurrentFbo() const { return currentFbo; }
   void registerApp(AppSurface* app);
-  // Wayland path can reuse a single texture unit to avoid GL unit exhaustion.
-  void attachSharedAppTexture(AppSurface* app);
-  void deregisterApp(int index);
+  void deregisterApp(AppSurface* app);
   glm::vec2 mapCursorToScreen(float xPixels, float yPixels) const;
   void renderSoftwareCursor(float xPixels, float yPixels, float sizePixels);
   void reloadChunk();
