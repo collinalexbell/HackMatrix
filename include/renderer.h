@@ -75,7 +75,6 @@ class Renderer
   Shader* cursorShader;
   bool invertY = false;
   std::map<string, Texture*> textures;
-  void initAppTextures();
   glm::mat4 trans;
   glm::mat4 view;
   glm::mat4 orthographicMatrix;
@@ -119,10 +118,6 @@ class Renderer
   int verticesInMesh = 0;
   int verticesInDynamicObjects = 0;
 
-  IndexPool appIndexPool;
-  int appTextureBaseUnit = 0; // highest usable texture unit index
-  int appTextureCount = 0;    // how many app textures we reserve
-  bool appTexturesInitialized = false;
   bool voxelsEnabled = true;
   VoxelSpace voxelSpace;
   RenderedVoxelSpace voxelMesh;

@@ -304,9 +304,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
                    bool invertY)
   : texturePack(texturePack)
   , registry(registry)
-  , appIndexPool(IndexPool(8))
   , invertY(invertY)
-  , appTexturesInitialized(false)
 {
   this->camera = camera;
   this->world = world;
@@ -387,7 +385,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   shader->setInt("totalBlockTypes", images.size());
   shader->setBool("SHADOWS_ENABLED", shadowsEnabled);
 
-  initAppTextures();
   cursorShader = new Shader("shaders/cursor.vert", "shaders/cursor.frag");
 
   shader->setBool("lookedAtValid", false);
@@ -418,64 +415,6 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   } else {
     glLineWidth(1.0f);
   }
-}
-
-void
-Renderer::initAppTextures()
-{
-  if (appTexturesInitialized) {
-    if constexpr (kWlrootsDebugLogs) {
-      static FILE* logFile = []() {
-        FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-        return f ? f : stderr;
-      }();
-      std::fprintf(logFile, "initAppTextures: already initialized, skipping\n");
-      std::fflush(logFile);
-    }
-    return;
-  }
-  GLint maxUnits = 0;
-  // Fragment shader texture units; use these to stay GLES-compatible.
-  glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxUnits);
-  if (maxUnits <= 0) {
-    maxUnits = 8;
-  }
-  // Keep a small pool to avoid exhausting units (GLES2 often has 8).
-  appTextureCount = std::min(4, maxUnits);
-  // Ensure pool starts at the same capacity it was constructed with to avoid
-  // silently growing on re-init.
-  appIndexPool = IndexPool(std::max(1, appTextureCount - 1));
-  if constexpr (kWlrootsDebugLogs) {
-    static FILE* logFile = []() {
-      FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-      return f ? f : stderr;
-    }();
-    std::fprintf(logFile, "initAppTextures: maxUnits=%d appTextures=%d\n", maxUnits, appTextureCount);
-  }
-  for (int index = 0; index < appTextureCount; index++) {
-    int textureN = index;
-    int textureUnit = GL_TEXTURE0; // dedicate a unit per app slot
-    string textureName = "app" + to_string(index);
-    textures[textureName] = new Texture(textureUnit);
-    shader->setInt(textureName, 0); // map sampler to its texture unit
-    if constexpr (kWlrootsDebugLogs) {
-      static FILE* logFile = []() {
-        FILE* f = std::fopen("/tmp/matrix-wlroots-renderer.log", "a");
-        return f ? f : stderr;
-      }();
-      std::fprintf(logFile,
-                   "initAppTextures: index=%d texName=%s texId=%u unit=%d\n",
-                   index,
-                   textureName.c_str(),
-                   textures[textureName]->ID,
-                   textureUnit - GL_TEXTURE0);
-    }
-  }
-  if constexpr (kWlrootsDebugLogs) {
-    static FILE* logFile = wlroots_renderer_log();
-    std::fflush(logFile);
-  }
-  appTexturesInitialized = true;
 }
 
 void
