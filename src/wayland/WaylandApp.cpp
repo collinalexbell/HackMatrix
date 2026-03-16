@@ -80,7 +80,6 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
                        bool request_initial_size)
   : renderer(renderer)
   , allocator(allocator)
-  , appIndex(index)
 {
   this->xdg_surface = xdg;
   this->xdg_toplevel = xdg_surface->toplevel;
@@ -120,7 +119,6 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
                        size_t index)
   : renderer(renderer)
   , allocator(allocator)
-  , appIndex(index)
 {
   this->surface = surf;
   this->xdg_surface = nullptr;
@@ -315,7 +313,7 @@ WaylandApp::update_height_scalar()
 void
 WaylandApp::appTexture()
 {
-  if (!pending_buffer.has_value() || textureId < 0 || textureUnit < 0) {
+  if (!pending_buffer.has_value() || textureId < 0 ) {
     return;
   }
 
@@ -425,7 +423,8 @@ WaylandApp::appTexture()
           eglDisplay, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, imageAttrs.data());
       }
       if (image != EGL_NO_IMAGE_KHR) {
-        glActiveTexture(textureUnit);
+        // TODO: remove, not needed (but keeping just for debugging purposes)
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -549,7 +548,7 @@ WaylandApp::appTexture()
     if (glFormat == GL_BGRA && !bgraSupported) {
       return false;
     }
-    glActiveTexture(textureUnit);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -776,7 +775,7 @@ WaylandApp::appTexture()
     maxA = 255;
   }
 
-  glActiveTexture(textureUnit);
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, textureId);
   GLboolean valid = glIsTexture(textureId);
   if (!valid) {

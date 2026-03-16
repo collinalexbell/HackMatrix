@@ -721,12 +721,10 @@ X11App::getPosition() const
   return { x, y };
 }
 
-void
-X11App::attachTexture(int textureUnit, int textureId, size_t appIndex)
+int
+X11App::createTexture()
 {
-  this->textureUnit = textureUnit;
-  this->textureId = textureId;
-  this->appIndex = appIndex;
+  return 0;
 }
 
 bool

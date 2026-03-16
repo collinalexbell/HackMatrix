@@ -9,7 +9,7 @@ class AppSurface {
 public:
   virtual ~AppSurface() = default;
 
-  virtual void attachTexture(int textureUnit, int textureId, size_t appIndex) = 0;
+  virtual int createTexture() = 0;
   virtual void appTexture() = 0;
 
   virtual void focus(unsigned long matrixWindow) = 0;
@@ -29,9 +29,7 @@ public:
   virtual std::array<int, 2> getPosition() const = 0;
   virtual glm::mat4 getHeightScalar() const = 0;
   virtual int getTextureId() const = 0;
-  virtual int getTextureUnit() const = 0;
 
   virtual std::string getWindowName() = 0;
   virtual int getPID() = 0;
-  virtual size_t getAppIndex() const = 0;
 };

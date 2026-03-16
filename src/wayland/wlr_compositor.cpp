@@ -137,7 +137,7 @@ remove_action(WlrServer* server, PendingWlAction action)
       if (auto* renderer = server->engine->getRenderer()) {
         if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {
           if (comp->app) {
-            renderer->deregisterApp((int)comp->app->getAppIndex());
+            renderer->deregisterApp(comp->app.get());
           }
         }
       }
