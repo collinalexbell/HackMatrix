@@ -160,7 +160,6 @@ list(APPEND MATRIX_SOURCES ${TRACY_SOURCES})
 
 # Exclude helper binaries and test harnesses that define their own entry point.
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "catch_amalgamated\\.cpp$")
-list(FILTER MATRIX_SOURCES EXCLUDE REGEX "api\\.pb\\.cc$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "diagnosis\\.cpp$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "trampoline\\.cpp$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "/MultiPlayer/bootServer\\.cpp$")
