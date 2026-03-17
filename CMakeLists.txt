@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(PkgConfig REQUIRED)
 find_package(Git QUIET)
+find_program(PROTOC_EXECUTABLE protoc REQUIRED)
 
 # Prefer the locally built wlroots tree.
 set(WLROOTS_DIR "${CMAKE_SOURCE_DIR}/wlroots")
@@ -83,6 +84,43 @@ pkg_check_modules(WLROOTS REQUIRED ${WLROOTS_PC_NAME} wayland-server xkbcommon)
 pkg_check_modules(GLFW REQUIRED glfw3)
 pkg_check_modules(PROTOBUF REQUIRED protobuf)
 
+set(PROTO_FILES
+  "protos/api.proto"
+)
+set(PROTO_CPP_OUTPUT_DIR "${CMAKE_BINARY_DIR}/generated")
+set(PROTO_CPP_SOURCE "${PROTO_CPP_OUTPUT_DIR}/protos/api.pb.cc")
+set(PROTO_CPP_HEADER "${PROTO_CPP_OUTPUT_DIR}/protos/api.pb.h")
+set(PROTO_PYTHON_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/client_libs/python/hackMatrix")
+set(PROTO_PYTHON_MODULE "${PROTO_PYTHON_OUTPUT_DIR}/protos/api_pb2.py")
+
+add_custom_command(
+  OUTPUT
+    "${PROTO_CPP_SOURCE}"
+    "${PROTO_CPP_HEADER}"
+    "${PROTO_PYTHON_MODULE}"
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_CPP_OUTPUT_DIR}"
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_PYTHON_OUTPUT_DIR}/protos"
+  COMMAND
+    "${PROTOC_EXECUTABLE}"
+    --proto_path=${CMAKE_SOURCE_DIR}
+    --cpp_out=${PROTO_CPP_OUTPUT_DIR}
+    ${PROTO_FILES}
+  COMMAND
+    "${PROTOC_EXECUTABLE}"
+    --proto_path=${CMAKE_SOURCE_DIR}
+    --python_out=${PROTO_PYTHON_OUTPUT_DIR}
+    ${PROTO_FILES}
+  DEPENDS "${CMAKE_SOURCE_DIR}/protos/api.proto"
+  COMMENT "Generating protobuf sources"
+  VERBATIM
+)
+
+add_custom_target(generate_protos DEPENDS
+  "${PROTO_CPP_SOURCE}"
+  "${PROTO_CPP_HEADER}"
+  "${PROTO_PYTHON_MODULE}"
+)
+
 # Build wlroots locally via meson/ninja, matching the makefile flow.
 if(MESON_EXECUTABLE AND NINJA_EXECUTABLE)
   add_custom_command(
@@ -117,10 +155,12 @@ file(GLOB MATRIX_SOURCES CONFIGURE_DEPENDS
   src/sqlite/*.cpp
 )
 file(GLOB TRACY_SOURCES CONFIGURE_DEPENDS tracy/public/*.cpp)
+list(APPEND MATRIX_SOURCES "${PROTO_CPP_SOURCE}")
 list(APPEND MATRIX_SOURCES ${TRACY_SOURCES})
 
 # Exclude helper binaries and test harnesses that define their own entry point.
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "catch_amalgamated\\.cpp$")
+list(FILTER MATRIX_SOURCES EXCLUDE REGEX "api\\.pb\\.cc$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "diagnosis\\.cpp$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "trampoline\\.cpp$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "/MultiPlayer/bootServer\\.cpp$")
@@ -133,6 +173,7 @@ add_executable(matrix ${MATRIX_SOURCES})
 if(TARGET wlroots_build)
   add_dependencies(matrix wlroots_build)
 endif()
+add_dependencies(matrix generate_protos)
 
 set_target_properties(matrix PROPERTIES
   POSITION_INDEPENDENT_CODE ON
@@ -140,6 +181,7 @@ set_target_properties(matrix PROPERTIES
 
 target_include_directories(matrix PRIVATE
   include
+  "${PROTO_CPP_OUTPUT_DIR}"
   include/imgui
   tracy/public
   /usr/local/include
