@@ -234,9 +234,11 @@ WaylandApp::close()
 {
   if (xwayland_surface) {
     wlr_xwayland_surface_close(xwayland_surface);
+    return;
   }
   if (xdg_toplevel) {
     wlr_xdg_toplevel_send_close(xdg_toplevel);
+    return;
   }
   if (clientPid > 0) {
     kill(clientPid, SIGTERM);
