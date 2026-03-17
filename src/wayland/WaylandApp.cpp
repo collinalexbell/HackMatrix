@@ -34,6 +34,9 @@ extern "C" {
 #include <chrono>
 #include <vector>
 
+#include "wayland/pointer.h"
+
+
 #ifdef WLROOTS_DEBUG_LOGS
 constexpr bool kWlrootsDebugLogs = true;
 #else
@@ -183,6 +186,7 @@ void WaylandApp::unfocus(unsigned long /*matrix*/) {
     }
     wlr_seat_keyboard_notify_clear_focus(seat);
     wlr_seat_pointer_notify_clear_focus(seat);
+    update_pointer_constraint(static_cast<WlrServer*>(seat ? seat->data : nullptr), nullptr);
 }
 
 void
@@ -197,6 +201,7 @@ WaylandApp::handle_destroy()
   if (seat && seat_surface) {
     if (seat->pointer_state.focused_surface == seat_surface) {
       wlr_seat_pointer_notify_clear_focus(seat);
+      update_pointer_constraint(static_cast<WlrServer*>(seat->data), nullptr);
     }
     if (seat->keyboard_state.focused_surface == seat_surface) {
       wlr_seat_keyboard_notify_clear_focus(seat);
@@ -292,6 +297,7 @@ WaylandApp::takeInputFocus()
         .count());
     wlr_seat_pointer_notify_motion(seat, now_ms, 0, 0);
     wlr_seat_pointer_notify_frame(seat);
+    update_pointer_constraint(static_cast<WlrServer*>(seat ? seat->data : nullptr), seat_surface);
   }
 }
 

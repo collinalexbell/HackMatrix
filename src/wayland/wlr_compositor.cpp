@@ -41,6 +41,8 @@ extern "C" {
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_pointer_constraints_v1.h>
+#include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/util/log.h>
 #define class class_
 #include <wlr/xwayland.h>
@@ -974,6 +976,7 @@ handle_output_frame(wl_listener* listener, void* data)
       if (!pointerVisible && server->seat &&
           server->seat->pointer_state.focused_surface) {
         wlr_seat_pointer_notify_clear_focus(server->seat);
+        update_pointer_constraint(server, nullptr);
       }
       set_cursor_visible(server, pointerVisible, handle->output);
       // Always clear accumulated deltas so they don't apply after focus changes.
@@ -1263,6 +1266,7 @@ bool
 WlrServer::create_seat() {
   seat = wlr_seat_create(display, "seat0");
   if (seat) {
+    seat->data = this;
     wlr_seat_set_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
 
     // copy/paste
@@ -1308,6 +1312,16 @@ WlrServer::init_protocols()
   xwayland = wlr_xwayland_create(display, compositor, false);
   if (!xwayland) {
     std::fprintf(stderr, "Failed to create XWayland\n");
+    return false;
+  }
+  relative_pointer_manager = wlr_relative_pointer_manager_v1_create(display);
+  if (!relative_pointer_manager) {
+    std::fprintf(stderr, "Failed to create relative-pointer manager\n");
+    return false;
+  }
+  pointer_constraints = wlr_pointer_constraints_v1_create(display);
+  if (!pointer_constraints) {
+    std::fprintf(stderr, "Failed to create pointer-constraints manager\n");
     return false;
   }
   
@@ -1419,6 +1433,16 @@ WlrServer::~WlrServer()
   remove_listener(new_xdg_surface);
   remove_listener(xwayland_ready);
   remove_listener(new_xwayland_surface);
+  if (active_pointer_constraint) {
+    wlr_pointer_constraint_v1_send_deactivated(active_pointer_constraint);
+    active_pointer_constraint = nullptr;
+  }
+  if (active_pointer_constraint_destroy_linked) {
+    wl_list_remove(&active_pointer_constraint_destroy.link);
+    active_pointer_constraint_destroy_linked = false;
+  }
+  active_pointer_constraint_destroy.link.prev = nullptr;
+  active_pointer_constraint_destroy.link.next = nullptr;
   if (xwayland) {
     wlr_xwayland_destroy(xwayland);
     xwayland = nullptr;

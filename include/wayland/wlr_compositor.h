@@ -40,6 +40,9 @@ struct wlr_surface;
 struct wlr_xdg_surface;
 struct wlr_xwayland;
 struct wlr_xwayland_surface;
+struct wlr_relative_pointer_manager_v1;
+struct wlr_pointer_constraints_v1;
+struct wlr_pointer_constraint_v1;
 
 enum class HotkeyModifier { Super, Alt };
 
@@ -206,6 +209,9 @@ struct WlrServer {
   wlr_xdg_output_manager_v1* xdg_output_manager = nullptr;
   wlr_layer_shell_v1* layer_shell = nullptr;
   wlr_xwayland* xwayland = nullptr;
+  wlr_relative_pointer_manager_v1* relative_pointer_manager = nullptr;
+  wlr_pointer_constraints_v1* pointer_constraints = nullptr;
+  wlr_pointer_constraint_v1* active_pointer_constraint = nullptr;
   wlr_output* primary_output = nullptr;
   wlr_input_device* last_keyboard_device = nullptr;
   wlr_input_device* last_pointer_device = nullptr;
@@ -231,6 +237,8 @@ struct WlrServer {
   double pointer_y = 0.0;
   wl_listener request_set_cursor;
   wl_listener request_set_selection;
+  wl_listener active_pointer_constraint_destroy;
+  bool active_pointer_constraint_destroy_linked = false;
 };
 
 // Helper APIs exposed for the main entry.
