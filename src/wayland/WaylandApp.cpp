@@ -240,11 +240,6 @@ WaylandApp::close()
     wlr_xdg_toplevel_send_close(xdg_toplevel);
     return;
   }
-  if (clientPid > 0) {
-    kill(clientPid, SIGTERM);
-    // In case the client ignores SIGTERM, follow up with SIGKILL.
-    kill(clientPid, SIGKILL);
-  }
 }
 
 void
