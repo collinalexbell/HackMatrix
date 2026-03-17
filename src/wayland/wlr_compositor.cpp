@@ -1007,11 +1007,14 @@ handle_output_frame(wl_listener* listener, void* data)
     }
   }
 
+  bool pointerLocked = wayland_pointer_locked(server);
   // Render software cursors (clients set them via wl_pointer.set_cursor).
-  pixman_region32_t cursor_damage;
-  pixman_region32_init_rect(&cursor_damage, 0, 0, width, height);
-  wlr_output_add_software_cursors_to_render_pass(handle->output, pass, &cursor_damage);
-  pixman_region32_fini(&cursor_damage);
+  if (!pointerLocked) {
+    pixman_region32_t cursor_damage;
+    pixman_region32_init_rect(&cursor_damage, 0, 0, width, height);
+    wlr_output_add_software_cursors_to_render_pass(handle->output, pass, &cursor_damage);
+    pixman_region32_fini(&cursor_damage);
+  }
   // Draw a compositor-owned software cursor when either a Wayland surface has focus
   // or the WM explicitly requested visibility (e.g., toggle_cursor hotkey).
   bool cursorVisibleOverride = false;
@@ -1022,7 +1025,9 @@ handle_output_frame(wl_listener* listener, void* data)
       }
     }
   }
-  if (server->engine && (wayland_pointer_focus_requested(server) || cursorVisibleOverride)) {
+  if (!pointerLocked &&
+      server->engine &&
+      (wayland_pointer_focus_requested(server) || cursorVisibleOverride)) {
     if (auto* renderer = server->engine->getRenderer()) {
       float sizePx = 24.0f * (handle->output ? handle->output->scale : 1.0f);
       renderer->renderSoftwareCursor(server->pointer_x, server->pointer_y, sizePx);

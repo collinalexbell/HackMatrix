@@ -68,6 +68,13 @@ update_pointer_constraint(WlrServer* server, wlr_surface* focused_surface)
   wlr_pointer_constraint_v1_send_activated(desired);
 }
 
+bool
+wayland_pointer_locked(WlrServer* server)
+{
+  return server && server->active_pointer_constraint &&
+         server->active_pointer_constraint->type == WLR_POINTER_CONSTRAINT_V1_LOCKED;
+}
+
 bool isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
 	return server->registry->valid(entity) &&
 		server->registry->all_of<WaylandApp::Component>(entity);
@@ -253,9 +260,7 @@ handle_pointer_motion(wl_listener* listener, void* data)
                                                          event->unaccel_dx,
                                                          event->unaccel_dy);
   }
-  bool locked_constraint = handle->server->active_pointer_constraint &&
-                           handle->server->active_pointer_constraint->type ==
-                             WLR_POINTER_CONSTRAINT_V1_LOCKED;
+  bool locked_constraint = wayland_pointer_locked(handle->server);
   if (!locked_constraint && handle->server->cursor) {
     wlr_cursor_move(handle->server->cursor,
                     handle->server->last_pointer_device,
@@ -443,6 +448,9 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output)
       }
     }
   }
+  if (wayland_pointer_locked(server)) {
+    visible = false;
+  }
   if (visible == server->cursor_visible) {
     return;
   }
@@ -488,6 +496,12 @@ handle_request_set_cursor(wl_listener* listener, void* data)
     listener, static_cast<WlrServer*>(nullptr), request_set_cursor);
   auto* event = static_cast<wlr_seat_pointer_request_set_cursor_event*>(data);
   if (!server || !server->cursor || !server->seat) {
+    return;
+  }
+  if (wayland_pointer_locked(server)) {
+    wlr_cursor_set_surface(server->cursor, nullptr, 0, 0);
+    wlr_cursor_unset_image(server->cursor);
+    server->cursor_visible = false;
     return;
   }
   // Only honor cursor requests from the focused client.

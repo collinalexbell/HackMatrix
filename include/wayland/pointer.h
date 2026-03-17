@@ -11,6 +11,7 @@ struct wlr_surface;
 void handle_new_pointer(WlrServer* server, wlr_input_device* device);
 
 bool wayland_pointer_focus_requested(WlrServer* server);
+bool wayland_pointer_locked(WlrServer* server);
 void update_pointer_constraint(WlrServer* server, wlr_surface* focused_surface);
 
 // used to hide and show the cursor whenever a window is focused or unfocused
