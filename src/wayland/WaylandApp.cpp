@@ -11,6 +11,9 @@ extern "C" {
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_seat.h>
+#define class class_
+#include <wlr/xwayland.h>
+#undef class
 }
 #include <signal.h>
 #include <unistd.h>
@@ -116,13 +119,15 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
                        wlr_allocator* allocator,
                        wlr_surface* surf,
                        const std::string& titleHint,
-                       size_t index)
+                       size_t index,
+                       wlr_xwayland_surface* xwaylandSurface)
   : renderer(renderer)
   , allocator(allocator)
 {
   this->surface = surf;
   this->xdg_surface = nullptr;
   this->xdg_toplevel = nullptr;
+  this->xwayland_surface = xwaylandSurface;
   this->title = titleHint;
   if (surface && surface->resource && surface->resource->client) {
     wl_client_get_credentials(surface->resource->client, &clientPid, nullptr, nullptr);
@@ -172,7 +177,10 @@ WaylandApp::~WaylandApp()
 }
 
 void WaylandApp::unfocus(unsigned long /*matrix*/) { 
-    focused = false; 
+    focused = false;
+    if (xwayland_surface) {
+      wlr_xwayland_surface_activate(xwayland_surface, false);
+    }
     wlr_seat_keyboard_notify_clear_focus(seat);
     wlr_seat_pointer_notify_clear_focus(seat);
 }
@@ -209,6 +217,7 @@ WaylandApp::handle_destroy()
   surface = nullptr;
   xdg_surface = nullptr;
   xdg_toplevel = nullptr;
+  xwayland_surface = nullptr;
 
   // Remove listeners to avoid dangling commit handlers.
   wl_list_remove(&surface_commit.link);
@@ -218,6 +227,9 @@ WaylandApp::handle_destroy()
 void
 WaylandApp::close()
 {
+  if (xwayland_surface) {
+    wlr_xwayland_surface_close(xwayland_surface);
+  }
   if (xdg_toplevel) {
     wlr_xdg_toplevel_send_close(xdg_toplevel);
   }
@@ -237,6 +249,9 @@ WaylandApp::requestSize(int width, int height)
     if (xdg_surface) {
       wlr_xdg_surface_schedule_configure(xdg_surface);
     }
+  } else if (xwayland_surface && width > 0 && height > 0) {
+    wlr_xwayland_surface_configure(
+      xwayland_surface, x, y, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
   }
 }
 
@@ -253,6 +268,11 @@ WaylandApp::takeInputFocus()
     if (xdg_surface) {
       wlr_xdg_surface_schedule_configure(xdg_surface);
     }
+  }
+  if (xwayland_surface) {
+    wlr_xwayland_surface_activate(xwayland_surface, true);
+    wlr_xwayland_surface_restack(xwayland_surface, nullptr, XCB_STACK_MODE_ABOVE);
+    wlr_xwayland_surface_offer_focus(xwayland_surface);
   }
   if (seat && seat_surface) {
     // Reset any previous pointer focus so the seat cleanly re-targets this app.
