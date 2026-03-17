@@ -38,6 +38,11 @@ struct wlr_compositor;
 struct wlr_xcursor_manager;
 struct wlr_surface;
 struct wlr_xdg_surface;
+struct wlr_xwayland;
+struct wlr_xwayland_surface;
+struct wlr_relative_pointer_manager_v1;
+struct wlr_pointer_constraints_v1;
+struct wlr_pointer_constraint_v1;
 
 enum class HotkeyModifier { Super, Alt };
 
@@ -127,6 +132,24 @@ struct WaylandAppHandle {
   bool unmapLinked = false;
 };
 
+struct XwaylandSurfaceHandle {
+  WlrServer* server = nullptr;
+  std::shared_ptr<WaylandApp> app;
+  wlr_xwayland_surface* xsurface = nullptr;
+  wlr_surface* surface = nullptr;
+  bool accessory = false;
+  wlr_surface* parent_surface = nullptr;
+  int offset_x = 0;
+  int offset_y = 0;
+  wl_listener associate;
+  wl_listener dissociate;
+  wl_listener destroy;
+  wl_listener request_configure;
+  wl_listener commit;
+  wl_listener unmap;
+  bool registered = false;
+};
+
 struct LayerSurfaceHandle {
   WlrServer* server = nullptr;
   std::shared_ptr<WaylandApp> app;
@@ -170,6 +193,8 @@ struct WlrServer {
   wl_listener new_input;
   wl_listener new_xdg_surface;
   wl_listener new_layer_surface;
+  wl_listener xwayland_ready;
+  wl_listener new_xwayland_surface;
   std::unique_ptr<Engine> engine;
   std::shared_ptr<EntityRegistry> registry;
   bool gladLoaded = false;
@@ -183,6 +208,10 @@ struct WlrServer {
   wlr_output_layout* output_layout = nullptr;
   wlr_xdg_output_manager_v1* xdg_output_manager = nullptr;
   wlr_layer_shell_v1* layer_shell = nullptr;
+  wlr_xwayland* xwayland = nullptr;
+  wlr_relative_pointer_manager_v1* relative_pointer_manager = nullptr;
+  wlr_pointer_constraints_v1* pointer_constraints = nullptr;
+  wlr_pointer_constraint_v1* active_pointer_constraint = nullptr;
   wlr_output* primary_output = nullptr;
   wlr_input_device* last_keyboard_device = nullptr;
   wlr_input_device* last_pointer_device = nullptr;
@@ -208,6 +237,8 @@ struct WlrServer {
   double pointer_y = 0.0;
   wl_listener request_set_cursor;
   wl_listener request_set_selection;
+  wl_listener active_pointer_constraint_destroy;
+  bool active_pointer_constraint_destroy_linked = false;
 };
 
 // Helper APIs exposed for the main entry.

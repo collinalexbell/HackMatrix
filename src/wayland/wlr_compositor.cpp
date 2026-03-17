@@ -41,7 +41,12 @@ extern "C" {
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/types/wlr_pointer_constraints_v1.h>
+#include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/util/log.h>
+#define class class_
+#include <wlr/xwayland.h>
+#undef class
 };
 
 #include <glad/glad.h>
@@ -62,6 +67,7 @@ keysym_name(xkb_keysym_t sym)
 #include "engine.h"
 #include "wayland_app.h"
 #include "AppSurface.h"
+#include "components/Bootable.h"
 #include "entity.h"
 #include "screen.h"
 #include "Config.h"
@@ -286,6 +292,28 @@ static void create_wayland_app(WlrServer* server, wlr_xdg_surface* xdg_surface)
   if (server->primary_output) {
     wlr_surface_send_enter(xdg_surface->surface, server->primary_output);
   }
+}
+
+static std::shared_ptr<WaylandApp>
+create_xwayland_app_object(WlrServer* server, wlr_xwayland_surface* xsurface)
+{
+  if (!server || !xsurface || !xsurface->surface) {
+    return nullptr;
+  }
+  std::string title = "xwayland-app";
+  if (xsurface->title && xsurface->title[0] != '\0') {
+    title = xsurface->title;
+  } else if (xsurface->class_ && xsurface->class_[0] != '\0') {
+    title = xsurface->class_;
+  }
+  auto app = std::make_shared<WaylandApp>(server->renderer,
+                                          server->allocator,
+                                          xsurface->surface,
+                                          title,
+                                          0,
+                                          xsurface);
+  app->setSeat(server->seat, xsurface->surface);
+  return app;
 }
 
 static std::pair<int, int>
@@ -545,6 +573,223 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
 }
 
 void
+handle_xwayland_ready(wl_listener* listener, void* /*data*/)
+{
+  auto* server =
+    wl_container_of(listener, static_cast<WlrServer*>(nullptr), xwayland_ready);
+  if (!server || !server->xwayland || !server->xwayland->display_name) {
+    return;
+  }
+  setenv("DISPLAY", server->xwayland->display_name, true);
+  wlr_log(WLR_INFO, "XWayland ready; DISPLAY=%s", server->xwayland->display_name);
+}
+
+void
+handle_new_xwayland_surface(wl_listener* listener, void* data)
+{
+  auto* server =
+    wl_container_of(listener, static_cast<WlrServer*>(nullptr), new_xwayland_surface);
+  auto* xsurface = static_cast<wlr_xwayland_surface*>(data);
+  if (!server || !xsurface) {
+    return;
+  }
+
+  auto* handle = new XwaylandSurfaceHandle();
+  handle->server = server;
+  handle->xsurface = xsurface;
+  handle->accessory = xsurface->override_redirect;
+
+  handle->request_configure.notify = [](wl_listener* listener, void* data) {
+    auto* handle = wl_container_of(listener,
+                                   static_cast<XwaylandSurfaceHandle*>(nullptr),
+                                   request_configure);
+    auto* event = static_cast<wlr_xwayland_surface_configure_event*>(data);
+    if (!handle || !handle->xsurface || !event) {
+      return;
+    }
+    uint16_t width = event->width;
+    uint16_t height = event->height;
+    if (width == 0 || height == 0) {
+      width = static_cast<uint16_t>(Bootable::DEFAULT_WIDTH);
+      height = static_cast<uint16_t>(Bootable::DEFAULT_HEIGHT);
+    }
+    wlr_xwayland_surface_configure(
+      handle->xsurface, event->x, event->y, width, height);
+    if (handle->app) {
+      handle->app->resizeMove(width, height, event->x, event->y);
+    }
+  };
+  wl_signal_add(&xsurface->events.request_configure, &handle->request_configure);
+
+  handle->associate.notify = [](wl_listener* listener, void* /*data*/) {
+    auto* handle =
+      wl_container_of(listener, static_cast<XwaylandSurfaceHandle*>(nullptr), associate);
+    if (!handle || !handle->server || !handle->xsurface || !handle->xsurface->surface) {
+      return;
+    }
+    if ((handle->commit.link.prev || handle->commit.link.next) &&
+        handle->surface == handle->xsurface->surface) {
+      return;
+    }
+    handle->surface = handle->xsurface->surface;
+    handle->accessory = handle->xsurface->override_redirect;
+    handle->parent_surface =
+      handle->xsurface->parent ? handle->xsurface->parent->surface : nullptr;
+    if (handle->parent_surface && handle->xsurface->parent) {
+      handle->offset_x = handle->xsurface->x - handle->xsurface->parent->x;
+      handle->offset_y = handle->xsurface->y - handle->xsurface->parent->y;
+    } else {
+      handle->offset_x = 0;
+      handle->offset_y = 0;
+    }
+    if (!handle->app) {
+      handle->app = create_xwayland_app_object(handle->server, handle->xsurface);
+    }
+    if (!handle->app) {
+      return;
+    }
+    handle->commit.notify = [](wl_listener* listener, void* data) {
+      auto* handle =
+        wl_container_of(listener, static_cast<XwaylandSurfaceHandle*>(nullptr), commit);
+      auto* surf = static_cast<wlr_surface*>(data);
+      if (!handle->server || !surf || handle->registered) {
+        return;
+      }
+      int w = surf->current.width;
+      int h = surf->current.height;
+      if (w <= 0 || h <= 0) {
+        return;
+      }
+      handle->server->pending_wl_actions.push_back(
+        PendingWlAction{ PendingWlAction::Add,
+                         handle->app,
+                         surf,
+                         handle->accessory,
+                         false,
+                         false,
+                         handle->parent_surface,
+                         handle->offset_x,
+                         handle->offset_y,
+                         0,
+                         0 });
+      handle->registered = true;
+    };
+    wl_signal_add(&handle->surface->events.commit, &handle->commit);
+
+    handle->unmap.notify = [](wl_listener* listener, void* /*data*/) {
+      auto* handle =
+        wl_container_of(listener, static_cast<XwaylandSurfaceHandle*>(nullptr), unmap);
+      if (handle->server && handle->surface) {
+        handle->server->pending_wl_actions.push_back(
+          PendingWlAction{ PendingWlAction::Remove, handle->app, handle->surface });
+        handle->registered = false;
+        ensure_wayland_apps_registered(handle->server);
+      }
+      safe_remove_listener(&handle->unmap);
+    };
+    wl_signal_add(&handle->surface->events.unmap, &handle->unmap);
+
+    if (handle->server->primary_output) {
+      wlr_surface_send_enter(handle->surface, handle->server->primary_output);
+    }
+  };
+  wl_signal_add(&xsurface->events.associate, &handle->associate);
+
+  handle->dissociate.notify = [](wl_listener* listener, void* /*data*/) {
+    auto* handle =
+      wl_container_of(listener, static_cast<XwaylandSurfaceHandle*>(nullptr), dissociate);
+    if (!handle) {
+      return;
+    }
+    if (handle->server && handle->surface) {
+      handle->server->pending_wl_actions.push_back(
+        PendingWlAction{ PendingWlAction::Remove, handle->app, handle->surface });
+      ensure_wayland_apps_registered(handle->server);
+    }
+    handle->registered = false;
+    safe_remove_listener(&handle->commit);
+    safe_remove_listener(&handle->unmap);
+    handle->surface = nullptr;
+  };
+  wl_signal_add(&xsurface->events.dissociate, &handle->dissociate);
+
+  handle->destroy.notify = [](wl_listener* listener, void* /*data*/) {
+    auto* handle =
+      wl_container_of(listener, static_cast<XwaylandSurfaceHandle*>(nullptr), destroy);
+    if (!handle) {
+      return;
+    }
+    if (handle->server && handle->surface) {
+      handle->server->pending_wl_actions.push_back(
+        PendingWlAction{ PendingWlAction::Remove, handle->app, handle->surface });
+      ensure_wayland_apps_registered(handle->server);
+    }
+    safe_remove_listener(&handle->associate);
+    safe_remove_listener(&handle->dissociate);
+    safe_remove_listener(&handle->destroy);
+    safe_remove_listener(&handle->request_configure);
+    safe_remove_listener(&handle->commit);
+    safe_remove_listener(&handle->unmap);
+    delete handle;
+  };
+  wl_signal_add(&xsurface->events.destroy, &handle->destroy);
+
+  if (xsurface->surface) {
+    handle->surface = xsurface->surface;
+    handle->accessory = xsurface->override_redirect;
+    handle->parent_surface = xsurface->parent ? xsurface->parent->surface : nullptr;
+    if (handle->parent_surface && xsurface->parent) {
+      handle->offset_x = xsurface->x - xsurface->parent->x;
+      handle->offset_y = xsurface->y - xsurface->parent->y;
+    }
+    handle->app = create_xwayland_app_object(server, xsurface);
+    handle->commit.notify = [](wl_listener* listener, void* data) {
+      auto* handle =
+        wl_container_of(listener, static_cast<XwaylandSurfaceHandle*>(nullptr), commit);
+      auto* surf = static_cast<wlr_surface*>(data);
+      if (!handle->server || !surf || handle->registered) {
+        return;
+      }
+      int w = surf->current.width;
+      int h = surf->current.height;
+      if (w <= 0 || h <= 0) {
+        return;
+      }
+      handle->server->pending_wl_actions.push_back(
+        PendingWlAction{ PendingWlAction::Add,
+                         handle->app,
+                         surf,
+                         handle->accessory,
+                         false,
+                         false,
+                         handle->parent_surface,
+                         handle->offset_x,
+                         handle->offset_y,
+                         0,
+                         0 });
+      handle->registered = true;
+    };
+    wl_signal_add(&handle->surface->events.commit, &handle->commit);
+
+    handle->unmap.notify = [](wl_listener* listener, void* /*data*/) {
+      auto* handle =
+        wl_container_of(listener, static_cast<XwaylandSurfaceHandle*>(nullptr), unmap);
+      if (handle->server && handle->surface) {
+        handle->server->pending_wl_actions.push_back(
+          PendingWlAction{ PendingWlAction::Remove, handle->app, handle->surface });
+        handle->registered = false;
+        ensure_wayland_apps_registered(handle->server);
+      }
+      safe_remove_listener(&handle->unmap);
+    };
+    wl_signal_add(&handle->surface->events.unmap, &handle->unmap);
+    if (handle->server->primary_output) {
+      wlr_surface_send_enter(handle->surface, handle->server->primary_output);
+    }
+  }
+}
+
+void
 handle_output_destroy(wl_listener* listener, void* data)
 {
   (void)data;
@@ -731,6 +976,7 @@ handle_output_frame(wl_listener* listener, void* data)
       if (!pointerVisible && server->seat &&
           server->seat->pointer_state.focused_surface) {
         wlr_seat_pointer_notify_clear_focus(server->seat);
+        update_pointer_constraint(server, nullptr);
       }
       set_cursor_visible(server, pointerVisible, handle->output);
       // Always clear accumulated deltas so they don't apply after focus changes.
@@ -761,11 +1007,14 @@ handle_output_frame(wl_listener* listener, void* data)
     }
   }
 
+  bool pointerLocked = wayland_pointer_locked(server);
   // Render software cursors (clients set them via wl_pointer.set_cursor).
-  pixman_region32_t cursor_damage;
-  pixman_region32_init_rect(&cursor_damage, 0, 0, width, height);
-  wlr_output_add_software_cursors_to_render_pass(handle->output, pass, &cursor_damage);
-  pixman_region32_fini(&cursor_damage);
+  if (!pointerLocked) {
+    pixman_region32_t cursor_damage;
+    pixman_region32_init_rect(&cursor_damage, 0, 0, width, height);
+    wlr_output_add_software_cursors_to_render_pass(handle->output, pass, &cursor_damage);
+    pixman_region32_fini(&cursor_damage);
+  }
   // Draw a compositor-owned software cursor when either a Wayland surface has focus
   // or the WM explicitly requested visibility (e.g., toggle_cursor hotkey).
   bool cursorVisibleOverride = false;
@@ -776,7 +1025,9 @@ handle_output_frame(wl_listener* listener, void* data)
       }
     }
   }
-  if (server->engine && (wayland_pointer_focus_requested(server) || cursorVisibleOverride)) {
+  if (!pointerLocked &&
+      server->engine &&
+      (wayland_pointer_focus_requested(server) || cursorVisibleOverride)) {
     if (auto* renderer = server->engine->getRenderer()) {
       float sizePx = 24.0f * (handle->output ? handle->output->scale : 1.0f);
       renderer->renderSoftwareCursor(server->pointer_x, server->pointer_y, sizePx);
@@ -1020,11 +1271,15 @@ bool
 WlrServer::create_seat() {
   seat = wlr_seat_create(display, "seat0");
   if (seat) {
+    seat->data = this;
     wlr_seat_set_capabilities(seat, WL_SEAT_CAPABILITY_POINTER | WL_SEAT_CAPABILITY_KEYBOARD);
 
     // copy/paste
     request_set_selection.notify = handle_set_selection;
     wl_signal_add(&seat->events.request_set_selection, &request_set_selection);
+    if (xwayland) {
+      wlr_xwayland_set_seat(xwayland, seat);
+    }
 
     create_cursor(this);
     return true;
@@ -1059,6 +1314,21 @@ WlrServer::init_protocols()
     std::fprintf(stderr, "Failed to create xdg-shell\n");
     return false;
   }
+  xwayland = wlr_xwayland_create(display, compositor, false);
+  if (!xwayland) {
+    std::fprintf(stderr, "Failed to create XWayland\n");
+    return false;
+  }
+  relative_pointer_manager = wlr_relative_pointer_manager_v1_create(display);
+  if (!relative_pointer_manager) {
+    std::fprintf(stderr, "Failed to create relative-pointer manager\n");
+    return false;
+  }
+  pointer_constraints = wlr_pointer_constraints_v1_create(display);
+  if (!pointer_constraints) {
+    std::fprintf(stderr, "Failed to create pointer-constraints manager\n");
+    return false;
+  }
   
   data_device_manager = wlr_data_device_manager_create(display);
   // Advertise the screencopy protocol so tools like grim can capture frames.
@@ -1078,6 +1348,12 @@ WlrServer::register_listeners()
 
   new_xdg_surface.notify = handle_new_xdg_surface;
   wl_signal_add(&xdg_shell->events.new_surface, &new_xdg_surface);
+
+  xwayland_ready.notify = handle_xwayland_ready;
+  wl_signal_add(&xwayland->events.ready, &xwayland_ready);
+
+  new_xwayland_surface.notify = handle_new_xwayland_surface;
+  wl_signal_add(&xwayland->events.new_surface, &new_xwayland_surface);
 
   new_output.notify = handle_new_output;
   wl_signal_add(&backend->events.new_output, &new_output);
@@ -1149,6 +1425,7 @@ WlrServer::~WlrServer()
   }
   if (seat) {
     remove_listener(request_set_cursor);
+    remove_listener(request_set_selection);
   }
   if (virtual_keyboard) {
     wlr_keyboard_finish(virtual_keyboard);
@@ -1159,6 +1436,22 @@ WlrServer::~WlrServer()
   remove_listener(new_output);
   remove_listener(new_layer_surface);
   remove_listener(new_xdg_surface);
+  remove_listener(xwayland_ready);
+  remove_listener(new_xwayland_surface);
+  if (active_pointer_constraint) {
+    wlr_pointer_constraint_v1_send_deactivated(active_pointer_constraint);
+    active_pointer_constraint = nullptr;
+  }
+  if (active_pointer_constraint_destroy_linked) {
+    wl_list_remove(&active_pointer_constraint_destroy.link);
+    active_pointer_constraint_destroy_linked = false;
+  }
+  active_pointer_constraint_destroy.link.prev = nullptr;
+  active_pointer_constraint_destroy.link.next = nullptr;
+  if (xwayland) {
+    wlr_xwayland_destroy(xwayland);
+    xwayland = nullptr;
+  }
   if (allocator) {
     wlr_allocator_destroy(allocator);
   }

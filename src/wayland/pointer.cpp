@@ -9,7 +9,70 @@ extern "C" {
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_relative_pointer_v1.h>
+#include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <linux/input-event-codes.h>
+}
+
+static void
+clear_active_pointer_constraint_listener(WlrServer* server)
+{
+  if (!server) {
+    return;
+  }
+  if (server->active_pointer_constraint_destroy_linked) {
+    wl_list_remove(&server->active_pointer_constraint_destroy.link);
+    server->active_pointer_constraint_destroy_linked = false;
+  }
+  server->active_pointer_constraint_destroy.link.prev = nullptr;
+  server->active_pointer_constraint_destroy.link.next = nullptr;
+}
+
+void
+update_pointer_constraint(WlrServer* server, wlr_surface* focused_surface)
+{
+  if (!server || !server->seat || !server->pointer_constraints) {
+    return;
+  }
+
+  auto* desired = focused_surface
+                    ? wlr_pointer_constraints_v1_constraint_for_surface(
+                        server->pointer_constraints, focused_surface, server->seat)
+                    : nullptr;
+  if (desired == server->active_pointer_constraint) {
+    return;
+  }
+
+  if (server->active_pointer_constraint) {
+    wlr_pointer_constraint_v1_send_deactivated(server->active_pointer_constraint);
+    server->active_pointer_constraint = nullptr;
+  }
+  clear_active_pointer_constraint_listener(server);
+
+  if (!desired) {
+    return;
+  }
+
+  server->active_pointer_constraint = desired;
+  server->active_pointer_constraint_destroy.notify = [](wl_listener* listener, void* /*data*/) {
+    auto* server = wl_container_of(
+      listener, static_cast<WlrServer*>(nullptr), active_pointer_constraint_destroy);
+    if (!server) {
+      return;
+    }
+    server->active_pointer_constraint = nullptr;
+    clear_active_pointer_constraint_listener(server);
+  };
+  wl_signal_add(&desired->events.destroy, &server->active_pointer_constraint_destroy);
+  server->active_pointer_constraint_destroy_linked = true;
+  wlr_pointer_constraint_v1_send_activated(desired);
+}
+
+bool
+wayland_pointer_locked(WlrServer* server)
+{
+  return server && server->active_pointer_constraint &&
+         server->active_pointer_constraint->type == WLR_POINTER_CONSTRAINT_V1_LOCKED;
 }
 
 bool isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
@@ -132,6 +195,7 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* pre
   wlr_seat_pointer_notify_enter(server->seat, surf, sx, sy);
   wlr_seat_pointer_notify_motion(server->seat, time_msec, sx, sy);
   wlr_seat_pointer_notify_frame(server->seat);
+  update_pointer_constraint(server, surf);
 }
 
 static std::pair<wlr_surface*, entt::entity>
@@ -186,7 +250,18 @@ handle_pointer_motion(wl_listener* listener, void* data)
   auto* event = static_cast<wlr_pointer_motion_event*>(data);
   handle->server->input.delta_x += event->delta_x;
   handle->server->input.delta_y += event->delta_y;
-  if (handle->server->cursor) {
+  if (handle->server->relative_pointer_manager && handle->server->seat) {
+    uint64_t time_usec = static_cast<uint64_t>(event->time_msec) * 1000;
+    wlr_relative_pointer_manager_v1_send_relative_motion(handle->server->relative_pointer_manager,
+                                                         handle->server->seat,
+                                                         time_usec,
+                                                         event->delta_x,
+                                                         event->delta_y,
+                                                         event->unaccel_dx,
+                                                         event->unaccel_dy);
+  }
+  bool locked_constraint = wayland_pointer_locked(handle->server);
+  if (!locked_constraint && handle->server->cursor) {
     wlr_cursor_move(handle->server->cursor,
                     handle->server->last_pointer_device,
                     event->delta_x,
@@ -373,6 +448,9 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output)
       }
     }
   }
+  if (wayland_pointer_locked(server)) {
+    visible = false;
+  }
   if (visible == server->cursor_visible) {
     return;
   }
@@ -381,9 +459,6 @@ set_cursor_visible(WlrServer* server, bool visible, wlr_output* output)
     set_default_cursor(server, output);
   } else {
     wlr_cursor_unset_image(server->cursor);
-    if (server->seat) {
-      wlr_seat_pointer_notify_clear_focus(server->seat);
-    }
   }
   server->cursor_visible = visible;
 }
@@ -421,6 +496,12 @@ handle_request_set_cursor(wl_listener* listener, void* data)
     listener, static_cast<WlrServer*>(nullptr), request_set_cursor);
   auto* event = static_cast<wlr_seat_pointer_request_set_cursor_event*>(data);
   if (!server || !server->cursor || !server->seat) {
+    return;
+  }
+  if (wayland_pointer_locked(server)) {
+    wlr_cursor_set_surface(server->cursor, nullptr, 0, 0);
+    wlr_cursor_unset_image(server->cursor);
+    server->cursor_visible = false;
     return;
   }
   // Only honor cursor requests from the focused client.

@@ -22,6 +22,7 @@
 struct wlr_surface;
 struct wlr_xdg_surface;
 struct wlr_xdg_toplevel;
+struct wlr_xwayland_surface;
 struct wlr_renderer;
 struct wlr_allocator;
 struct wl_listener;
@@ -34,6 +35,7 @@ class WaylandApp : public AppSurface {
   wlr_surface* surface = nullptr;
   wlr_xdg_surface* xdg_surface = nullptr;
   wlr_xdg_toplevel* xdg_toplevel = nullptr;
+  wlr_xwayland_surface* xwayland_surface = nullptr;
   wlr_renderer* renderer = nullptr;
   wlr_allocator* allocator = nullptr;
   wl_listener surface_commit;
@@ -87,7 +89,8 @@ public:
              wlr_allocator* allocator,
              wlr_surface* surface,
              const std::string& titleHint,
-             size_t index);
+             size_t index,
+             wlr_xwayland_surface* xwayland_surface = nullptr);
   ~WaylandApp();
 
   int createTexture() override
