@@ -15,9 +15,9 @@ export DRI_PRIME="${DRI_PRIME:-1}"
 export __NV_PRIME_RENDER_OFFLOAD="${__NV_PRIME_RENDER_OFFLOAD:-1}"
 export __GLX_VENDOR_LIBRARY_NAME="${__GLX_VENDOR_LIBRARY_NAME:-nvidia}"
 export __VK_LAYER_NV_optimus="${__VK_LAYER_NV_optimus:-NVIDIA_only}"
-export GBM_BACKEND="${GBM_BACKEND:-nvidia-drm}"
+#export GBM_BACKEND="${GBM_BACKEND:-nvidia-drm}"
 # Hint to kernel/driver; requires nvidia-drm modeset enabled at boot.
-export __NV_DRM_Modeset="${__NV_DRM_Modeset:-1}"
+#export __NV_DRM_Modeset="${__NV_DRM_Modeset:-1}"
 # Force software cursors; some GPUs/DRM combos show corrupted hardware cursors.
 export WLR_NO_HARDWARE_CURSORS=1
 # Enable Wayland app sampling logs so buffer import/fallback is visible.
