@@ -598,6 +598,8 @@ handle_new_xwayland_surface(wl_listener* listener, void* data)
   handle->server = server;
   handle->xsurface = xsurface;
   handle->accessory = xsurface->override_redirect;
+  wlr_xwayland_surface_configure(xsurface, 0, 0, 1280, 720);
+  
 
   handle->request_configure.notify = [](wl_listener* listener, void* data) {
     auto* handle = wl_container_of(listener,
@@ -607,14 +609,10 @@ handle_new_xwayland_surface(wl_listener* listener, void* data)
     if (!handle || !handle->xsurface || !event) {
       return;
     }
-    uint16_t width = event->width;
-    uint16_t height = event->height;
-    if (width == 0 || height == 0) {
-      width = static_cast<uint16_t>(Bootable::DEFAULT_WIDTH);
-      height = static_cast<uint16_t>(Bootable::DEFAULT_HEIGHT);
-    }
+    uint16_t width = Bootable::DEFAULT_WIDTH;
+    uint16_t height = Bootable::DEFAULT_HEIGHT;
     wlr_xwayland_surface_configure(
-      handle->xsurface, event->x, event->y, width, height);
+      handle->xsurface, 0, 0, width, height);
     if (handle->app) {
       handle->app->resizeMove(width, height, event->x, event->y);
     }
