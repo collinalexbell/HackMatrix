@@ -90,6 +90,7 @@ set(PROTO_FILES
 set(PROTO_CPP_OUTPUT_DIR "${CMAKE_BINARY_DIR}/generated")
 set(PROTO_CPP_SOURCE "${PROTO_CPP_OUTPUT_DIR}/protos/api.pb.cc")
 set(PROTO_CPP_HEADER "${PROTO_CPP_OUTPUT_DIR}/protos/api.pb.h")
+set(PROTO_TMP_OUTPUT_DIR "${CMAKE_BINARY_DIR}/generated-tmp")
 set(PROTO_PYTHON_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/client_libs/python/hackMatrix")
 set(PROTO_PYTHON_MODULE "${PROTO_PYTHON_OUTPUT_DIR}/protos/api_pb2.py")
 
@@ -99,17 +100,31 @@ add_custom_command(
     "${PROTO_CPP_HEADER}"
     "${PROTO_PYTHON_MODULE}"
   COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_CPP_OUTPUT_DIR}"
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_TMP_OUTPUT_DIR}"
+  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_TMP_OUTPUT_DIR}/protos"
   COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_PYTHON_OUTPUT_DIR}/protos"
   COMMAND
     "${PROTOC_EXECUTABLE}"
     --proto_path=${CMAKE_SOURCE_DIR}
-    --cpp_out=${PROTO_CPP_OUTPUT_DIR}
+    --cpp_out=${PROTO_TMP_OUTPUT_DIR}
     ${PROTO_FILES}
   COMMAND
     "${PROTOC_EXECUTABLE}"
     --proto_path=${CMAKE_SOURCE_DIR}
-    --python_out=${PROTO_PYTHON_OUTPUT_DIR}
+    --python_out=${PROTO_TMP_OUTPUT_DIR}
     ${PROTO_FILES}
+  COMMAND
+    "${CMAKE_COMMAND}" -E copy_if_different
+    "${PROTO_TMP_OUTPUT_DIR}/protos/api.pb.cc"
+    "${PROTO_CPP_SOURCE}"
+  COMMAND
+    "${CMAKE_COMMAND}" -E copy_if_different
+    "${PROTO_TMP_OUTPUT_DIR}/protos/api.pb.h"
+    "${PROTO_CPP_HEADER}"
+  COMMAND
+    "${CMAKE_COMMAND}" -E copy_if_different
+    "${PROTO_TMP_OUTPUT_DIR}/protos/api_pb2.py"
+    "${PROTO_PYTHON_MODULE}"
   DEPENDS "${CMAKE_SOURCE_DIR}/protos/api.proto"
   COMMENT "Generating protobuf sources"
   VERBATIM
@@ -160,7 +175,6 @@ list(APPEND MATRIX_SOURCES ${TRACY_SOURCES})
 
 # Exclude helper binaries and test harnesses that define their own entry point.
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "catch_amalgamated\\.cpp$")
-list(FILTER MATRIX_SOURCES EXCLUDE REGEX "api\\.pb\\.cc$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "diagnosis\\.cpp$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "trampoline\\.cpp$")
 list(FILTER MATRIX_SOURCES EXCLUDE REGEX "/MultiPlayer/bootServer\\.cpp$")
