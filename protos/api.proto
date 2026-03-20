@@ -154,6 +154,7 @@ enum ComponentType {
   COMPONENT_TYPE_UNSPECIFIED = 0;
   COMPONENT_TYPE_POSITIONABLE = 1;
   COMPONENT_TYPE_MODEL = 2;
+  COMPONENT_TYPE_LIGHT = 3;
   // Add new component types here as needed
 }
 
@@ -170,11 +171,17 @@ message ModelComponent {
   string model_path = 2;               // Filepath or asset reference for 3D model
 }
 
+message LightComponent {
+  int64 entityId = 1;                  // Primary key, corresponds to the entity
+  Vector color = 2;                    // RGB color
+}
+
 message Component {
   ComponentType type = 1;              // Specifies the type of the component.
   oneof component_type {
     PositionableComponent positionable = 2;
     ModelComponent model = 3;
+    LightComponent light = 4;
   }
 }
 
@@ -189,7 +196,6 @@ message DeleteComponent {
 message EditComponent {
   Component component = 1;             // Updated component data (see oneof)
 }
-
 
 
 

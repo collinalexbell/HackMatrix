@@ -1,4 +1,5 @@
 #include "api.h"
+#include "components/Light.h"
 #include "controls.h"
 #include "dynamicObject.h"
 #include "glm/fwd.hpp"
@@ -459,6 +460,10 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
               !registry->any_of<Model>(entity)) {
             continue;
           }
+          if (filter == COMPONENT_TYPE_LIGHT &&
+              !registry->any_of<Light>(entity)) {
+            continue;
+          }
           const auto entityId = static_cast<int64_t>(entity);
           response.add_entity_ids(entityId);
           auto* info = response.add_entity_components();
@@ -468,6 +473,9 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
           }
           if (registry->any_of<Model>(entity)) {
             info->add_component_types(COMPONENT_TYPE_MODEL);
+          }
+          if (registry->any_of<Light>(entity)) {
+            info->add_component_types(COMPONENT_TYPE_LIGHT);
           }
         }
       }
@@ -504,6 +512,14 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
             auto* data = component->mutable_model();
             data->set_entityid(batchedRequest.request.entityid());
             data->set_model_path(model.path);
+            success = true;
+          } else if (type == COMPONENT_TYPE_LIGHT &&
+                     registry->any_of<Light>(target)) {
+            const auto& light = registry->get<Light>(target);
+            component->set_type(COMPONENT_TYPE_LIGHT);
+            auto* data = component->mutable_light();
+            data->set_entityid(batchedRequest.request.entityid());
+            *data->mutable_color() = toProtoVec3(light.color);
             success = true;
           }
         }
@@ -561,6 +577,19 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
           registry->emplace<Model>(target, data.model_path());
           break;
         }
+        case COMPONENT_TYPE_LIGHT: {
+          if (!component.has_light()) {
+            break;
+          }
+          const auto& data = component.light();
+          glm::vec3 color = toVec3(data.color());
+          if (registry->any_of<Light>(target)) {
+            registry->get<Light>(target).color = color;
+          } else {
+            registry->emplace<Light>(target, color);
+          }
+          break;
+        }
         default:
           break;
       }
@@ -585,6 +614,11 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
         case COMPONENT_TYPE_MODEL:
           if (registry->any_of<Model>(target)) {
             registry->removePersistent<Model>(target);
+          }
+          break;
+        case COMPONENT_TYPE_LIGHT:
+          if (registry->any_of<Light>(target)) {
+            registry->removePersistent<Light>(target);
           }
           break;
         default:
@@ -631,6 +665,14 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
             registry->removePersistent<Model>(target);
           }
           registry->emplace<Model>(target, data.model_path());
+          break;
+        }
+        case COMPONENT_TYPE_LIGHT: {
+          if (!component.has_light() || !registry->any_of<Light>(target)) {
+            break;
+          }
+          const auto& data = component.light();
+          registry->get<Light>(target).color = toVec3(data.color());
           break;
         }
         default:

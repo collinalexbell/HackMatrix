@@ -162,6 +162,40 @@ class ApiClient:
         response = self.send(request)
         return response.success
 
+    def edit_light(
+        self, entity_id: int, color: Tuple[float, float, float]
+    ) -> bool:
+        component = api_pb2.Component(
+            type=api_pb2.COMPONENT_TYPE_LIGHT,
+            light=api_pb2.LightComponent(
+                color=api_pb2.Vector(x=color[0], y=color[1], z=color[2]),
+            ),
+        )
+        request = api_pb2.ApiRequest(
+            entityId=entity_id,
+            type=api_pb2.EDIT_COMPONENT,
+            editComponent=api_pb2.EditComponent(component=component),
+        )
+        response = self.send(request)
+        return response.success
+
+    def add_light(
+        self, entity_id: int, color: Tuple[float, float, float]
+    ) -> bool:
+        component = api_pb2.Component(
+            type=api_pb2.COMPONENT_TYPE_LIGHT,
+            light=api_pb2.LightComponent(
+                color=api_pb2.Vector(x=color[0], y=color[1], z=color[2]),
+            ),
+        )
+        request = api_pb2.ApiRequest(
+            entityId=entity_id,
+            type=api_pb2.ADD_COMPONENT,
+            addComponent=api_pb2.AddComponent(component=component),
+        )
+        response = self.send(request)
+        return response.success
+
 
 def format_component_types(component_types: List[int]) -> str:
     labels = []
@@ -170,6 +204,8 @@ def format_component_types(component_types: List[int]) -> str:
             labels.append("Positionable")
         elif ctype == api_pb2.COMPONENT_TYPE_MODEL:
             labels.append("Model")
+        elif ctype == api_pb2.COMPONENT_TYPE_LIGHT:
+            labels.append("Light")
     return ", ".join(labels) if labels else "-"
 
 
@@ -192,6 +228,8 @@ def component_type_label(filter_type: int) -> str:
         return "Positionable"
     if filter_type == api_pb2.COMPONENT_TYPE_MODEL:
         return "Model"
+    if filter_type == api_pb2.COMPONENT_TYPE_LIGHT:
+        return "Light"
     return "All"
 
 
@@ -210,6 +248,7 @@ class EditState:
     entity_id: int
     has_positionable: bool
     has_model: bool
+    has_light: bool
     index: int = 0
     sub_index: int = 0
     buffer: str = ""
@@ -218,6 +257,7 @@ class EditState:
 def build_edit_fields(
     positionable: Optional[api_pb2.PositionableComponent],
     model: Optional[api_pb2.ModelComponent],
+    light: Optional[api_pb2.LightComponent],
 ) -> List[EditField]:
     fields: List[EditField] = []
     if positionable:
@@ -249,6 +289,16 @@ def build_edit_fields(
         )
     if model:
         fields.append(EditField("model_path", "Model Path", [model.model_path or ""], False, "model"))
+    if light:
+        fields.append(
+            EditField(
+                "light_color",
+                "Light Color",
+                [f"{light.color.x}", f"{light.color.y}", f"{light.color.z}"],
+                True,
+                "light",
+            )
+        )
     return fields
 
 
@@ -299,6 +349,18 @@ def apply_edit_state(edit_state: EditState, client: ApiClient) -> Tuple[bool, st
                 if model_ok:
                     edit_state.has_model = True
             ok = ok and model_ok
+        light_field = get_field(edit_state, "light_color")
+        if light_field:
+            color = tuple(float(v) for v in light_field.values)
+            if edit_state.has_light:
+                light_ok = client.edit_light(edit_state.entity_id, color)
+                message_parts.append("Light updated" if light_ok else "Light update failed")
+            else:
+                light_ok = client.add_light(edit_state.entity_id, color)
+                message_parts.append("Light added" if light_ok else "Light add failed")
+                if light_ok:
+                    edit_state.has_light = True
+            ok = ok and light_ok
         if message_parts:
             return ok, " | ".join(message_parts)
     except ValueError:
@@ -348,6 +410,7 @@ def render_details_panel(
     entity_id: Optional[int],
     positionable: Optional[api_pb2.PositionableComponent],
     model: Optional[api_pb2.ModelComponent],
+    light: Optional[api_pb2.LightComponent],
     edit_state: Optional[EditState],
     status_message: str,
 ) -> Panel:
@@ -481,6 +544,30 @@ def render_details_panel(
             text.append(f"  Path: {model.model_path}\n")
     else:
         text.append("Model: not present\n", style="dim")
+
+    light_field = get_field(edit_state, "light_color") if edit_state else None
+    if light or light_field:
+        text.append("\nLight\n", style="bold green")
+        if light_field:
+            append_tuple_line(
+                "Color",
+                light_field.values,
+                active_key == "light_color",
+                active_sub or 0,
+            )
+        elif light:
+            append_tuple_line(
+                "Color",
+                [
+                    f"{light.color.x:.2f}",
+                    f"{light.color.y:.2f}",
+                    f"{light.color.z:.2f}",
+                ],
+                False,
+                0,
+            )
+    else:
+        text.append("\nLight: not present\n", style="dim")
     if edit_state:
         text.append("\nEditing (type to change; Enter or arrows commit)\n", style="dim")
     if status_message:
@@ -496,6 +583,7 @@ def main() -> int:
         api_pb2.COMPONENT_TYPE_UNSPECIFIED,
         api_pb2.COMPONENT_TYPE_POSITIONABLE,
         api_pb2.COMPONENT_TYPE_MODEL,
+        api_pb2.COMPONENT_TYPE_LIGHT,
     ]
     filter_index = 0
     selected_index = 0
@@ -513,11 +601,18 @@ def main() -> int:
             return None
         return entities[selected_index].entity_id
 
-    def fetch_components(entity_id: int) -> Tuple[Optional[api_pb2.PositionableComponent], Optional[api_pb2.ModelComponent]]:
+    def fetch_components(
+        entity_id: int,
+    ) -> Tuple[
+        Optional[api_pb2.PositionableComponent],
+        Optional[api_pb2.ModelComponent],
+        Optional[api_pb2.LightComponent],
+    ]:
         positionable_component = client.get_component(
             entity_id, api_pb2.COMPONENT_TYPE_POSITIONABLE
         )
         model_component = client.get_component(entity_id, api_pb2.COMPONENT_TYPE_MODEL)
+        light_component = client.get_component(entity_id, api_pb2.COMPONENT_TYPE_LIGHT)
         positionable = (
             positionable_component.positionable
             if positionable_component and positionable_component.HasField("positionable")
@@ -528,11 +623,16 @@ def main() -> int:
             if model_component and model_component.HasField("model")
             else None
         )
-        return positionable, model
+        light = (
+            light_component.light
+            if light_component and light_component.HasField("light")
+            else None
+        )
+        return positionable, model, light
 
     layout = build_layout()
     help_text = Text(
-        "↑/↓ select  f filter  r refresh  n new entity  p add positionable  m add model  → edit  ← back  q quit",
+        "↑/↓ select  f filter  r refresh  n new entity  p add positionable  m add model  l add light  → edit  ← back  q quit",
         style="dim",
     )
 
@@ -553,8 +653,9 @@ def main() -> int:
             selected_id = get_selected_entity_id()
             positionable = None
             model = None
+            light = None
             if selected_id is not None:
-                positionable, model = fetch_components(selected_id)
+                positionable, model, light = fetch_components(selected_id)
 
             header = Text(
                 f"Entity TUI  |  Filter: {component_type_label(filter_cycle[filter_index])}",
@@ -579,7 +680,7 @@ def main() -> int:
             )
             layout["details"].update(
                 render_details_panel(
-                    selected_id, positionable, model, edit_state, status_message
+                    selected_id, positionable, model, light, edit_state, status_message
                 )
             )
             layout["footer"].update(Panel(help_text, border_style="blue"))
@@ -753,7 +854,7 @@ def main() -> int:
                     origin=api_pb2.Vector(x=0.0, y=0.0, z=0.0),
                     scale=1.0,
                 )
-                fields = build_edit_fields(default_positionable, model)
+                fields = build_edit_fields(default_positionable, model, light)
                 if not fields:
                     status_message = "Positionable add failed"
                     continue
@@ -762,6 +863,7 @@ def main() -> int:
                     entity_id=selected_id,
                     has_positionable=False,
                     has_model=model is not None,
+                    has_light=light is not None,
                 )
                 status_message = "Add Positionable (type to change; Enter to save)"
             elif key in ("m", "M") and selected_id is not None:
@@ -769,7 +871,7 @@ def main() -> int:
                     status_message = "Model already present (use → to edit)"
                     continue
                 default_model = api_pb2.ModelComponent(model_path="")
-                fields = build_edit_fields(positionable, default_model)
+                fields = build_edit_fields(positionable, default_model, light)
                 if not fields:
                     status_message = "Model add failed"
                     continue
@@ -778,10 +880,30 @@ def main() -> int:
                     entity_id=selected_id,
                     has_positionable=positionable is not None,
                     has_model=False,
+                    has_light=light is not None,
                 )
                 status_message = "Add Model (type path; Enter to save)"
+            elif key in ("l", "L") and selected_id is not None:
+                if light:
+                    status_message = "Light already present (use → to edit)"
+                    continue
+                default_light = api_pb2.LightComponent(
+                    color=api_pb2.Vector(x=1.0, y=1.0, z=1.0),
+                )
+                fields = build_edit_fields(positionable, model, default_light)
+                if not fields:
+                    status_message = "Light add failed"
+                    continue
+                edit_state = EditState(
+                    fields=fields,
+                    entity_id=selected_id,
+                    has_positionable=positionable is not None,
+                    has_model=model is not None,
+                    has_light=False,
+                )
+                status_message = "Add Light (edit RGB; Enter to save)"
             elif key == "\x1b[C" and selected_id is not None:  # right arrow
-                fields = build_edit_fields(positionable, model)
+                fields = build_edit_fields(positionable, model, light)
                 if not fields:
                     status_message = "No editable components for this entity"
                     continue
@@ -790,6 +912,7 @@ def main() -> int:
                     entity_id=selected_id,
                     has_positionable=positionable is not None,
                     has_model=model is not None,
+                    has_light=light is not None,
                 )
                 status_message = "Editing components"
 
