@@ -367,6 +367,57 @@ def apply_edit_state(edit_state: EditState, client: ApiClient) -> Tuple[bool, st
         return False, "Invalid numeric value"
     return False, "No changes applied"
 
+
+def clone_entity(
+    client: ApiClient,
+    source_entity_id: int,
+    positionable: Optional[api_pb2.PositionableComponent],
+    model: Optional[api_pb2.ModelComponent],
+    light: Optional[api_pb2.LightComponent],
+) -> Tuple[bool, str, Optional[int]]:
+    before_ids = {entity.entity_id for entity in client.list_entities(api_pb2.COMPONENT_TYPE_UNSPECIFIED)}
+    if not client.create_entity():
+        return False, "Entity create failed", None
+
+    after_entities = client.list_entities(api_pb2.COMPONENT_TYPE_UNSPECIFIED)
+    new_ids = [entity.entity_id for entity in after_entities if entity.entity_id not in before_ids]
+    if len(new_ids) != 1:
+        return False, "Clone failed: could not determine new entity ID", None
+
+    cloned_entity_id = new_ids[0]
+    message_parts = [f"Cloned {source_entity_id} -> {cloned_entity_id}"]
+    ok = True
+
+    if positionable is not None:
+        pos_ok = client.add_positionable(
+            cloned_entity_id,
+            (positionable.position.x, positionable.position.y, positionable.position.z),
+            (positionable.rotation.x, positionable.rotation.y, positionable.rotation.z),
+            (positionable.origin.x, positionable.origin.y, positionable.origin.z),
+            positionable.scale,
+        )
+        ok = ok and pos_ok
+        if not pos_ok:
+            message_parts.append("Positionable copy failed")
+
+    if model is not None:
+        model_ok = client.add_model(cloned_entity_id, model.model_path)
+        ok = ok and model_ok
+        if not model_ok:
+            message_parts.append("Model copy failed")
+
+    if light is not None:
+        light_ok = client.add_light(
+            cloned_entity_id,
+            (light.color.x, light.color.y, light.color.z),
+        )
+        ok = ok and light_ok
+        if not light_ok:
+            message_parts.append("Light copy failed")
+
+    return ok, " | ".join(message_parts), cloned_entity_id
+
+
 def build_layout() -> Layout:
     layout = Layout()
     layout.split_column(
@@ -632,7 +683,7 @@ def main() -> int:
 
     layout = build_layout()
     help_text = Text(
-        "↑/↓ select  f filter  r refresh  n new entity  p add positionable  m add model  l add light  → edit  ← back  q quit",
+        "↑/↓ select  f filter  r refresh  n new entity  c clone entity  p add positionable  m add model  l add light  → edit  ← back  q quit",
         style="dim",
     )
 
@@ -844,6 +895,24 @@ def main() -> int:
                         status_message = "Entity created"
                 else:
                     status_message = "Entity create failed"
+            elif key in ("c", "C") and selected_id is not None:
+                ok, message, cloned_entity_id = clone_entity(
+                    client,
+                    selected_id,
+                    positionable,
+                    model,
+                    light,
+                )
+                entities = refresh_entities()
+                if ok and cloned_entity_id is not None:
+                    for idx, entity in enumerate(entities):
+                        if entity.entity_id == cloned_entity_id:
+                            selected_index = idx
+                            break
+                else:
+                    selected_index = min(selected_index, max(len(entities) - 1, 0))
+                scroll_offset = min(scroll_offset, max(len(entities) - 1, 0))
+                status_message = message
             elif key in ("p", "P") and selected_id is not None:
                 if positionable:
                     status_message = "Positionable already present (use → to edit)"
