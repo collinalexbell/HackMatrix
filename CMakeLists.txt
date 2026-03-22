@@ -87,53 +87,151 @@ pkg_check_modules(PROTOBUF REQUIRED protobuf)
 set(PROTO_FILES
   "protos/api.proto"
 )
+set(PROTO_ABSOLUTE_FILES)
+foreach(PROTO_FILE IN LISTS PROTO_FILES)
+  list(APPEND PROTO_ABSOLUTE_FILES "${CMAKE_SOURCE_DIR}/${PROTO_FILE}")
+endforeach()
 set(PROTO_CPP_OUTPUT_DIR "${CMAKE_BINARY_DIR}/generated")
 set(PROTO_CPP_SOURCE "${PROTO_CPP_OUTPUT_DIR}/protos/api.pb.cc")
 set(PROTO_CPP_HEADER "${PROTO_CPP_OUTPUT_DIR}/protos/api.pb.h")
 set(PROTO_TMP_OUTPUT_DIR "${CMAKE_BINARY_DIR}/generated-tmp")
 set(PROTO_PYTHON_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/client_libs/python/hackMatrix")
 set(PROTO_PYTHON_MODULE "${PROTO_PYTHON_OUTPUT_DIR}/protos/api_pb2.py")
+set(PROTO_HASH_FILE "${CMAKE_BINARY_DIR}/generated/proto-inputs.sha256")
+set(PROTO_STAMP_FILE "${CMAKE_BINARY_DIR}/generated/protos.stamp")
+set(PROTO_GENERATOR_SCRIPT
+  "${CMAKE_BINARY_DIR}/generated/generate_protos_if_changed.cmake")
+
+string(JOIN "\"\n  \"" PROTO_ABSOLUTE_FILES_LITERAL ${PROTO_ABSOLUTE_FILES})
+
+set(PROTO_GENERATOR_SCRIPT_TEMPLATE [=[
+set(PROTOC_EXECUTABLE "@PROTOC_EXECUTABLE@")
+set(CMAKE_COMMAND_PATH "@CMAKE_COMMAND@")
+set(CMAKE_SOURCE_DIR_PATH "@CMAKE_SOURCE_DIR@")
+set(PROTO_CPP_OUTPUT_DIR "@PROTO_CPP_OUTPUT_DIR@")
+set(PROTO_CPP_SOURCE "@PROTO_CPP_SOURCE@")
+set(PROTO_CPP_HEADER "@PROTO_CPP_HEADER@")
+set(PROTO_TMP_OUTPUT_DIR "@PROTO_TMP_OUTPUT_DIR@")
+set(PROTO_PYTHON_OUTPUT_DIR "@PROTO_PYTHON_OUTPUT_DIR@")
+set(PROTO_PYTHON_MODULE "@PROTO_PYTHON_MODULE@")
+set(PROTO_HASH_FILE "@PROTO_HASH_FILE@")
+set(PROTO_STAMP_FILE "@PROTO_STAMP_FILE@")
+set(PROTO_FILES
+  "@PROTO_ABSOLUTE_FILES_LITERAL@"
+)
+
+set(PROTO_INPUT_HASH "")
+foreach(PROTO_FILE IN LISTS PROTO_FILES)
+  file(SHA256 "${PROTO_FILE}" PROTO_FILE_HASH)
+  string(APPEND PROTO_INPUT_HASH "${PROTO_FILE}:${PROTO_FILE_HASH}\n")
+endforeach()
+
+set(SHOULD_GENERATE TRUE)
+if(EXISTS "${PROTO_HASH_FILE}")
+  file(READ "${PROTO_HASH_FILE}" PREVIOUS_PROTO_INPUT_HASH)
+  if(PREVIOUS_PROTO_INPUT_HASH STREQUAL PROTO_INPUT_HASH
+     AND EXISTS "${PROTO_CPP_SOURCE}"
+     AND EXISTS "${PROTO_CPP_HEADER}"
+     AND EXISTS "${PROTO_PYTHON_MODULE}")
+    set(SHOULD_GENERATE FALSE)
+  endif()
+endif()
+
+if(SHOULD_GENERATE)
+  file(MAKE_DIRECTORY "${PROTO_CPP_OUTPUT_DIR}")
+  file(MAKE_DIRECTORY "${PROTO_CPP_OUTPUT_DIR}/protos")
+  file(MAKE_DIRECTORY "${PROTO_TMP_OUTPUT_DIR}")
+  file(MAKE_DIRECTORY "${PROTO_TMP_OUTPUT_DIR}/protos")
+  file(MAKE_DIRECTORY "${PROTO_PYTHON_OUTPUT_DIR}/protos")
+
+  execute_process(
+    COMMAND
+      "${PROTOC_EXECUTABLE}"
+      "--proto_path=${CMAKE_SOURCE_DIR_PATH}"
+      "--cpp_out=${PROTO_TMP_OUTPUT_DIR}"
+      ${PROTO_FILES}
+    RESULT_VARIABLE PROTO_CPP_RESULT
+  )
+  if(NOT PROTO_CPP_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to generate protobuf C++ sources.")
+  endif()
+
+  execute_process(
+    COMMAND
+      "${PROTOC_EXECUTABLE}"
+      "--proto_path=${CMAKE_SOURCE_DIR_PATH}"
+      "--python_out=${PROTO_TMP_OUTPUT_DIR}"
+      ${PROTO_FILES}
+    RESULT_VARIABLE PROTO_PYTHON_RESULT
+  )
+  if(NOT PROTO_PYTHON_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to generate protobuf Python sources.")
+  endif()
+
+  execute_process(
+    COMMAND
+      "${CMAKE_COMMAND_PATH}" -E copy_if_different
+      "${PROTO_TMP_OUTPUT_DIR}/protos/api.pb.cc"
+      "${PROTO_CPP_SOURCE}"
+    RESULT_VARIABLE COPY_CPP_RESULT
+  )
+  if(NOT COPY_CPP_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to update generated protobuf C++ source.")
+  endif()
+
+  execute_process(
+    COMMAND
+      "${CMAKE_COMMAND_PATH}" -E copy_if_different
+      "${PROTO_TMP_OUTPUT_DIR}/protos/api.pb.h"
+      "${PROTO_CPP_HEADER}"
+    RESULT_VARIABLE COPY_HEADER_RESULT
+  )
+  if(NOT COPY_HEADER_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to update generated protobuf C++ header.")
+  endif()
+
+  execute_process(
+    COMMAND
+      "${CMAKE_COMMAND_PATH}" -E copy_if_different
+      "${PROTO_TMP_OUTPUT_DIR}/protos/api_pb2.py"
+      "${PROTO_PYTHON_MODULE}"
+    RESULT_VARIABLE COPY_PYTHON_RESULT
+  )
+  if(NOT COPY_PYTHON_RESULT EQUAL 0)
+    message(FATAL_ERROR "Failed to update generated protobuf Python module.")
+  endif()
+
+  file(WRITE "${PROTO_HASH_FILE}" "${PROTO_INPUT_HASH}")
+endif()
+
+file(TOUCH "${PROTO_STAMP_FILE}")
+]=])
+string(CONFIGURE "${PROTO_GENERATOR_SCRIPT_TEMPLATE}" PROTO_GENERATOR_SCRIPT_CONTENT @ONLY)
+file(WRITE "${PROTO_GENERATOR_SCRIPT}" "${PROTO_GENERATOR_SCRIPT_CONTENT}")
 
 add_custom_command(
   OUTPUT
+    "${PROTO_STAMP_FILE}"
+  BYPRODUCTS
     "${PROTO_CPP_SOURCE}"
     "${PROTO_CPP_HEADER}"
     "${PROTO_PYTHON_MODULE}"
-  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_CPP_OUTPUT_DIR}"
-  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_TMP_OUTPUT_DIR}"
-  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_TMP_OUTPUT_DIR}/protos"
-  COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROTO_PYTHON_OUTPUT_DIR}/protos"
-  COMMAND
-    "${PROTOC_EXECUTABLE}"
-    --proto_path=${CMAKE_SOURCE_DIR}
-    --cpp_out=${PROTO_TMP_OUTPUT_DIR}
-    ${PROTO_FILES}
-  COMMAND
-    "${PROTOC_EXECUTABLE}"
-    --proto_path=${CMAKE_SOURCE_DIR}
-    --python_out=${PROTO_TMP_OUTPUT_DIR}
-    ${PROTO_FILES}
-  COMMAND
-    "${CMAKE_COMMAND}" -E copy_if_different
-    "${PROTO_TMP_OUTPUT_DIR}/protos/api.pb.cc"
-    "${PROTO_CPP_SOURCE}"
-  COMMAND
-    "${CMAKE_COMMAND}" -E copy_if_different
-    "${PROTO_TMP_OUTPUT_DIR}/protos/api.pb.h"
-    "${PROTO_CPP_HEADER}"
-  COMMAND
-    "${CMAKE_COMMAND}" -E copy_if_different
-    "${PROTO_TMP_OUTPUT_DIR}/protos/api_pb2.py"
-    "${PROTO_PYTHON_MODULE}"
-  DEPENDS "${CMAKE_SOURCE_DIR}/protos/api.proto"
+  COMMAND "${CMAKE_COMMAND}" -P "${PROTO_GENERATOR_SCRIPT}"
+  DEPENDS
+    ${PROTO_ABSOLUTE_FILES}
+    "${PROTO_GENERATOR_SCRIPT}"
   COMMENT "Generating protobuf sources"
   VERBATIM
 )
 
-add_custom_target(generate_protos DEPENDS
+set_source_files_properties(
   "${PROTO_CPP_SOURCE}"
   "${PROTO_CPP_HEADER}"
-  "${PROTO_PYTHON_MODULE}"
+  PROPERTIES GENERATED TRUE
+)
+
+add_custom_target(generate_protos DEPENDS
+  "${PROTO_STAMP_FILE}"
 )
 
 # Build wlroots locally via meson/ninja, matching the makefile flow.

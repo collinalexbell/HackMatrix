@@ -507,18 +507,9 @@ Renderer::initCursorResources()
 void
 Renderer::updateTransformMatrices()
 {
-  if (camera->viewMatrixUpdated()) {
-    unsigned int viewLoc = glGetUniformLocation(shader->ID, "view");
-    glUniformMatrix4fv(
-      viewLoc, 1, GL_FALSE, glm::value_ptr(camera->getViewMatrix()));
-  }
-  if (camera->projectionMatrixUpdated()) {
-    unsigned int projectionLoc = glGetUniformLocation(shader->ID, "projection");
-    glUniformMatrix4fv(projectionLoc,
-                       1,
-                       GL_FALSE,
-                       glm::value_ptr(camera->getProjectionMatrix(true)));
-  }
+  // Route camera transforms through Shader so hot reload/reset restores them.
+  shader->setMatrix4("view", camera->getViewMatrix());
+  shader->setMatrix4("projection", camera->getProjectionMatrix(true));
 }
 
 void
@@ -1291,6 +1282,7 @@ Renderer::render(RenderPerspective perspective,
   glFrontFace(invertY ? GL_CW : GL_CCW);
   if (perspective == CAMERA) {
     shader = cameraShader;
+    shader->reloadIfChanged();
     shader->use();
     // must use prior to updating uniforms
 
@@ -1301,6 +1293,7 @@ Renderer::render(RenderPerspective perspective,
       return;
     }
     shader = depthShader;
+    shader->reloadIfChanged();
     shader->use();
   }
   updateShaderUniforms();
