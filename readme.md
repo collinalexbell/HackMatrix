@@ -186,4 +186,6 @@ xinput set-prop <id> "libinput Disable While Typing Enabled" 0
 
 # Ideas
 model real spaces, like the park in my city, put them into hack Matrix, and then improve the design and democratically vote (with money) what design should be implemented, then carry out design in the physical space
+
+A hack Matrix cryptocurrency that is used to fund various hack Matrix projects
 ```
