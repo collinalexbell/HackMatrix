@@ -609,14 +609,19 @@ Controls::handleKeySym(xkb_keysym_t sym,
       int index = static_cast<int>(sym - XKB_KEY_1);
       log_controls("number hotkey: %d" ,index); 
       if (index >= 0 && index < static_cast<int>(wm->getAppsWithHotKeys().size())) {
-        log_controls("didnt have size");
-        if (!wm->getAppsWithHotKeys()[index].has_value()) {
-          log_controls("didn't find value");
-          return resp;
+        if (shiftHeld) {
+          if (wm->getCurrentlyFocusedApp().has_value()) {
+            int source = wm->findAppsHotKey(wm->getCurrentlyFocusedApp().value());
+            wm->swapHotKeys(source, index);
+          }
+        } else {
+          if (!wm->getAppsWithHotKeys()[index].has_value()) {
+            return resp;
+          }
+          wm->unfocusApp();
+          auto ent = wm->getAppsWithHotKeys()[index].value();
+          goToApp(ent);
         }
-        wm->unfocusApp();
-        auto ent = wm->getAppsWithHotKeys()[index].value();
-        goToApp(ent);
       }
       // When jumping via hotkey, drop the current seat focus so pointer/keyboard
       // focus can be rebound to the destination app after the move finishes.
@@ -625,7 +630,33 @@ Controls::handleKeySym(xkb_keysym_t sym,
       resp.consumed = true;
       return resp;
     }
-    wm->handleHotkeySym(sym, modifierHeld, shiftHeld);
+    switch (sym) {
+      case XKB_KEY_p:
+      case XKB_KEY_P:
+        wm->requestScreenshot();
+        break;
+      case XKB_KEY_E:
+      case XKB_KEY_e:
+        wm->unfocusApp();
+        break;
+      case XKB_KEY_q:
+      case XKB_KEY_Q:
+        if (wm->getCurrentlyFocusedApp().has_value()) {
+            if (auto* comp = registry->try_get<WaylandApp::Component>(wm->getCurrentlyFocusedApp().value())) {
+              if (comp->app) {
+                comp->app->close();
+              }
+            }
+        }
+        wm->unfocusApp();
+        break;
+      case XKB_KEY_0:
+        wm->unfocusApp();
+        moveTo(glm::vec3(3.0, 5.0, 16), std::nullopt, 4);
+        break;
+      default:
+        break;
+    }
     resp.blockClientDelivery = true;
     resp.consumed = true;
     return resp;

@@ -62,7 +62,6 @@ public:
   virtual void wire(shared_ptr<WindowManagerInterface>, Camera* camera, Renderer* renderer) = 0;
   virtual std::shared_ptr<Space> getSpace() = 0;
   virtual void registerControls(Controls* controls) = 0;
-  virtual void handleHotkeySym(xkb_keysym_t sym, bool modifierHeld, bool shiftHeld) = 0;
   virtual bool consumeScreenshotRequest() = 0;
   virtual void requestScreenshot() = 0;
   virtual entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
@@ -80,6 +79,8 @@ public:
   virtual void setCursorVisible(bool visible) = 0;
   virtual bool isWaylandMode() const = 0;
   virtual vector<optional<entt::entity>> getAppsWithHotKeys() = 0;
+  virtual void swapHotKeys(int a, int b) = 0;
+  virtual int findAppsHotKey(entt::entity theApp) = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -129,7 +130,6 @@ class WindowManager : public WindowManagerInterface
   int waitForRemovalChangeSize(int curSize);
   void logWaitForRemovalChangeSize(int changeSize);
   void adjustAppsToAddAfterAdditions(vector<X11App*>& waitForRemoval);
-  void pruneInvalidFocus();
   void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
   bool computeFocusedSpawn(entt::entity newApp, glm::vec3& pos, glm::vec3& rot) const;
@@ -167,7 +167,6 @@ public:
   void setCursorVisible(bool visible) override;
   std::shared_ptr<Space> getSpace() override { return space; }
   void registerControls(Controls* controls) override;
-  void handleHotkeySym(xkb_keysym_t sym, bool superHeld, bool shiftHeld) override;
   bool consumeScreenshotRequest() override;
   void requestScreenshot() override;
   // Wayland-only: register a surface-backed app through the WM for placement

@@ -35,6 +35,7 @@ class Controls
   ControlMappings controlMappings;
   shared_ptr<blocks::TexturePack> texturePack;
   WindowManager::WindowManagerPtr wm;
+  shared_ptr<EntityRegistry> registry;
   float windowFlop = 0.25;
   float windowFlop_dt = 0.002;
   World* world;
@@ -97,12 +98,14 @@ public:
            World* world,
            Camera* camera,
            Renderer* renderer,
+           shared_ptr<EntityRegistry> registry,
            shared_ptr<blocks::TexturePack> texturePack)
     : wm(wm)
     , world(world)
     , camera(camera)
     , renderer(renderer)
     , texturePack(texturePack)
+    , registry(registry)
   {
     lastWaylandFocusActive = false;
   }

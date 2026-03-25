@@ -169,7 +169,7 @@ Engine::initializeMemberObjs()
   renderer = new Renderer(registry, camera, world, texturePack, options.invertYAxis);
   camera->setInvertY(options.invertYAxis);
   if (options.enableControls) {
-    controls = new Controls(wm, world, camera, renderer, texturePack);
+    controls = new Controls(wm, world, camera, renderer, registry, texturePack);
   } else {
     controls = nullptr;
   }
