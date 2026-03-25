@@ -943,12 +943,9 @@ handle_output_frame(wl_listener* listener, void* data)
     Camera* camera = server->engine->getCamera();
     if (camera) {
       if (controls) {
-        controls->applyMovementInput(
-          server->input.forward, server->input.back, server->input.left, server->input.right);
-      } else {
-        camera->handleTranslateForce(
-          server->input.forward, server->input.back, server->input.left, server->input.right);
-      }
+        //controls->applyMovementInput(
+         // server->input.forward, server->input.back, server->input.left, server->input.right);
+      } 
       bool pointerFocusRequested = wayland_pointer_focus_requested(server);
       bool cursorOverrideVisible = false;
       bool cursorOverrideSet = false;

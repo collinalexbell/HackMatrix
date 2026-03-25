@@ -18,6 +18,7 @@ uniform bool isLine;
 uniform bool appSelected;
 uniform bool appFocused;
 uniform bool isMesh;
+uniform float uAmbientStrength;
 uniform bool isDynamicObject;
 uniform bool isLight;
 uniform bool appTransparent;
@@ -116,7 +117,12 @@ float ShadowCalculation(samplerCube depthMap, vec3 fragPos, vec3 norm, vec3 ligh
 
 vec4 Light(int i, samplerCube depthMap) {
   // ambient
-  float ambientStrength = 0.2;
+  //if(uAmbientStrength > 0.0011) {
+	 //float ambientStrength = uAmbientStrength; // much lighter
+  //} else {
+          // strong visual attenuation in range [0.1,0.15] 
+	  float ambientStrength = 0.20; // lighter 
+  //}
   vec3 ambient = ambientStrength * lightColor[i];
 
   // diffuse
@@ -126,7 +132,7 @@ vec4 Light(int i, samplerCube depthMap) {
   float diff = max(dot(norm, lightDir), 0.0);
   vec3 diffuse = diff * lightColor[i];
 
-  float specularStrength = 0.5;
+  float specularStrength = 0.04;
   float shininess = 32.0;
   vec3 viewDir = normalize(viewPos - FragPos);
   vec3 reflectDir = reflect(-lightDir, norm);

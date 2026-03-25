@@ -75,6 +75,7 @@ Controls::poll(GLFWwindow* window, Camera* camera, World* world)
   doDeferedActions();
 }
 
+// wayland version
 void Controls::handleKeys() {
   auto appFocused = wm->hasCurrentOrPendingFocus();
   if(!appFocused){
@@ -83,6 +84,7 @@ void Controls::handleKeys() {
   }
 }
 
+// glfw version (to be deleted, maybe)
 void
 Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
 {
@@ -275,12 +277,14 @@ Controls::handleFocus()
 void
 Controls::handleMovement()
 {
-
+  bool zPlus = pressed.count(XKB_KEY_e) > 0;
+  bool zNegative = pressed.count(XKB_KEY_e) > 0;
   bool up = pressed.count(XKB_KEY_w) > 0;
   bool down = pressed.count(XKB_KEY_s) > 0;
   bool left = pressed.count(XKB_KEY_a) > 0;
   bool right = pressed.count(XKB_KEY_d) > 0;
-  camera->handleTranslateForce(up, down, left, right);
+  // I need to change this to get zPlus and zNegative working
+  camera->handleTranslateForce(up, down, left, right, zPlus, zNegative);
 }
 
 void
@@ -803,7 +807,7 @@ void
 Controls::applyMovementInput(bool forward, bool back, bool left, bool right)
 {
   if (camera) {
-    camera->handleTranslateForce(forward, back, left, right);
+    camera->handleTranslateForce(forward, back, left, right, false, false);
   }
 }
 

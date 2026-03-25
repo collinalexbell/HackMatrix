@@ -52,7 +52,7 @@ Camera::setInvertY(bool invert)
 }
 
 void
-Camera::handleTranslateForce(bool up, bool down, bool left, bool right)
+Camera::handleTranslateForce(bool up, bool down, bool left, bool right, bool zPlus, bool zMinus)
 {
   if (up)
     position += cameraSpeed * front;
@@ -62,6 +62,10 @@ Camera::handleTranslateForce(bool up, bool down, bool left, bool right)
     position -= glm::normalize(glm::cross(front, this->up)) * cameraSpeed;
   if (right)
     position += glm::normalize(glm::cross(front, this->up)) * cameraSpeed;
+  if (zPlus)
+    position += glm::normalize(glm::cross(this->up, front)) * cameraSpeed;
+  if (zMinus)
+    position -= glm::normalize(glm::cross(this->up, front)) * cameraSpeed;
   viewUpdated = true;
   if (up || down || left || right) {
     FILE* f = std::fopen("/tmp/camera-move.log", "a");

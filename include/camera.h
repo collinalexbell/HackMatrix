@@ -85,7 +85,7 @@ public:
   glm::vec3 front;
   glm::vec3 position;
   Camera();
-  void handleTranslateForce(bool up, bool down, bool left, bool right);
+  void handleTranslateForce(bool up, bool down, bool left, bool right, bool zPlus, bool zMinus);
   void handleRotateForce(GLFWwindow* window, double xoffset, double yoffset);
   ~Camera();
   void setInvertY(bool invert);

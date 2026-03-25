@@ -396,6 +396,7 @@ Renderer::Renderer(shared_ptr<EntityRegistry> registry,
   shader->setBool("directRender", false);
   shader->setBool("isVoxel", false);
   shader->setBool("voxelsEnabled", voxelsEnabled);
+  shader->setFloat("uAmbientStrength", 0.001);
 
   voxelSpace.add(glm::vec3(0, 4, 4), voxelSize);
   voxelSpace.add(glm::vec3(voxelSize, 4, 4), voxelSize);
