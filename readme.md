@@ -183,12 +183,12 @@ python scripts/player-move.py
 xinput list | grep -i touchpad
 # grab the id and replace <id> below with it
 xinput set-prop <id> "libinput Disable While Typing Enabled" 0
+```
 
 # Ideas
-model real spaces, like the park in my city, put them into hack Matrix, and then improve the design and democratically vote (with money) what design should be implemented, then carry out design in the physical space
+- Model real spaces, like the park in my city, put them into hack Matrix, and then improve the design and democratically vote (with money) what design should be implemented, then carry out design in the physical space
 
-A hack Matrix cryptocurrency that is used to fund various hack Matrix projects
-```
+- A hack Matrix cryptocurrency that is used to fund various hack Matrix projects
 
 # Bugs
 - Scrolling when in WM mode (not focused on a workspace) is handled by an unfocused window, cause undefined state that is only recoverable by focusing and unfocusing a window.
