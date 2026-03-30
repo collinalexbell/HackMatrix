@@ -11,22 +11,33 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(USE_BUNDLED_WLROOTS "Build bundled wlroots" ON)
+
 find_package(PkgConfig REQUIRED)
-find_package(Git QUIET)
 find_program(PROTOC_EXECUTABLE protoc REQUIRED)
+find_program(WAYLAND_SCANNER_EXECUTABLE wayland-scanner REQUIRED)
 
 # Prefer the locally built wlroots tree.
-set(WLROOTS_DIR "${CMAKE_SOURCE_DIR}/wlroots")
-set(WLROOTS_BUILD_DIR "${WLROOTS_DIR}/build")
-set(WLROOTS_PC_DIR "${WLROOTS_BUILD_DIR}/meson-uninstalled")
-set(WLROOTS_PROTOCOL_DIR "${WLROOTS_BUILD_DIR}/protocol")
-
 set(WLROOTS_PC_NAME "wlroots-0.19")
-find_program(MESON_EXECUTABLE meson)
-find_program(NINJA_EXECUTABLE ninja)
+
+if(USE_BUNDLED_WLROOTS)
+  # Prefer the locally built wlroots tree.
+  set(WLROOTS_DIR "${CMAKE_SOURCE_DIR}/wlroots")
+  set(WLROOTS_BUILD_DIR "${WLROOTS_DIR}/build")
+  set(WLROOTS_PC_DIR "${WLROOTS_BUILD_DIR}/meson-uninstalled")
+  set(WLROOTS_PROTOCOL_DIR "${WLROOTS_BUILD_DIR}/protocol")
+
+  find_program(MESON_EXECUTABLE meson)
+  find_program(NINJA_EXECUTABLE ninja)
+endif()
+
 
 # Build wlroots locally via meson/ninja, matching the makefile flow, and bootstrap the submodule if missing.
 function(build_wlroots_if_needed)
+  if(NOT USE_BUNDLED_WLROOTS)
+    return()
+  endif()
+
   if(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19-uninstalled.pc" OR EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19.pc")
     return()
   endif()
@@ -69,20 +80,75 @@ function(build_wlroots_if_needed)
   endif()
 endfunction()
 
-build_wlroots_if_needed()
+  build_wlroots_if_needed()
 
-if(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19-uninstalled.pc")
-  set(WLROOTS_PC_NAME "wlroots-0.19-uninstalled")
-elseif(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19.pc")
-  set(WLROOTS_PC_NAME "wlroots-0.19")
-endif()
-if(EXISTS "${WLROOTS_PC_DIR}")
-  set(ENV{PKG_CONFIG_PATH} "${WLROOTS_PC_DIR}:$ENV{PKG_CONFIG_PATH}")
+if(USE_BUNDLED_WLROOTS)
+  if(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19-uninstalled.pc")
+    set(WLROOTS_PC_NAME "wlroots-0.19-uninstalled")
+  elseif(EXISTS "${WLROOTS_PC_DIR}/wlroots-0.19.pc")
+    set(WLROOTS_PC_NAME "wlroots-0.19")
+  endif()
+
+  if(EXISTS "${WLROOTS_PC_DIR}")
+    set(ENV{PKG_CONFIG_PATH} "${WLROOTS_PC_DIR}:$ENV{PKG_CONFIG_PATH}")
+  endif()
 endif()
 
 pkg_check_modules(WLROOTS REQUIRED ${WLROOTS_PC_NAME} wayland-server xkbcommon)
 pkg_check_modules(GLFW REQUIRED glfw3)
 pkg_check_modules(PROTOBUF REQUIRED protobuf)
+
+pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
+
+if(NOT USE_BUNDLED_WLROOTS)
+  set(GENERATED_PROTOCOL_DIR "${CMAKE_BINARY_DIR}/generated-protocols")
+  file(MAKE_DIRECTORY "${GENERATED_PROTOCOL_DIR}")
+
+  set(LAYER_SHELL_XML "${CMAKE_SOURCE_DIR}/wlroots/protocol/wlr-layer-shell-unstable-v1.xml")
+  set(LAYER_SHELL_HEADER "${GENERATED_PROTOCOL_DIR}/wlr-layer-shell-unstable-v1-protocol.h")
+
+  set(POINTER_CONSTRAINTS_XML "${WAYLAND_PROTOCOLS_DIR}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml")
+  set(POINTER_CONSTRAINTS_HEADER "${GENERATED_PROTOCOL_DIR}/pointer-constraints-unstable-v1-protocol.h")
+
+  set(XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml")
+  set(XDG_SHELL_HEADER "${GENERATED_PROTOCOL_DIR}/xdg-shell-protocol.h")
+
+  add_custom_command(
+    OUTPUT "${LAYER_SHELL_HEADER}"
+    COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" server-header
+            "${LAYER_SHELL_XML}"
+            "${LAYER_SHELL_HEADER}"
+    DEPENDS "${LAYER_SHELL_XML}"
+    COMMENT "Generating wlr-layer-shell-unstable-v1-protocol.h"
+    VERBATIM
+  )
+
+  add_custom_command(
+    OUTPUT "${POINTER_CONSTRAINTS_HEADER}"
+    COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" server-header
+            "${POINTER_CONSTRAINTS_XML}"
+            "${POINTER_CONSTRAINTS_HEADER}"
+    DEPENDS "${POINTER_CONSTRAINTS_XML}"
+    COMMENT "Generating pointer-constraints-unstable-v1-protocol.h"
+    VERBATIM
+  )
+
+  add_custom_command(
+    OUTPUT "${XDG_SHELL_HEADER}"
+    COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" server-header
+            "${XDG_SHELL_XML}"
+            "${XDG_SHELL_HEADER}"
+    DEPENDS "${XDG_SHELL_XML}"
+    COMMENT "Generating xdg-shell-protocol.h"
+    VERBATIM
+  )
+
+  add_custom_target(system_wlr_protocols DEPENDS
+    "${LAYER_SHELL_HEADER}"
+    "${POINTER_CONSTRAINTS_HEADER}"
+    "${XDG_SHELL_HEADER}"
+  )
+endif()
 
 set(PROTO_FILES
   "protos/api.proto"
@@ -235,7 +301,7 @@ add_custom_target(generate_protos DEPENDS
 )
 
 # Build wlroots locally via meson/ninja, matching the makefile flow.
-if(MESON_EXECUTABLE AND NINJA_EXECUTABLE)
+if(USE_BUNDLED_WLROOTS AND MESON_EXECUTABLE AND NINJA_EXECUTABLE)
   add_custom_command(
     OUTPUT "${WLROOTS_BUILD_DIR}/build.ninja"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/wlroots"
@@ -282,7 +348,11 @@ list(REMOVE_DUPLICATES MATRIX_SOURCES)
 
 add_executable(matrix ${MATRIX_SOURCES})
 
-if(TARGET wlroots_build)
+if(NOT USE_BUNDLED_WLROOTS)
+  add_dependencies(matrix system_wlr_protocols)
+endif()
+
+if(USE_BUNDLED_WLROOTS AND TARGET wlroots_build)
   add_dependencies(matrix wlroots_build)
 endif()
 add_dependencies(matrix generate_protos)
@@ -290,6 +360,7 @@ add_dependencies(matrix generate_protos)
 set_target_properties(matrix PROPERTIES
   POSITION_INDEPENDENT_CODE ON
 )
+
 
 target_include_directories(matrix PRIVATE
   include
@@ -300,8 +371,19 @@ target_include_directories(matrix PRIVATE
   ${WLROOTS_INCLUDE_DIRS}
   ${GLFW_INCLUDE_DIRS}
   ${PROTOBUF_INCLUDE_DIRS}
-  ${WLROOTS_PROTOCOL_DIR}
 )
+
+if(USE_BUNDLED_WLROOTS)
+  target_include_directories(matrix PRIVATE
+    ${WLROOTS_PROTOCOL_DIR}
+  )
+else()
+  target_include_directories(matrix PRIVATE
+    "${GENERATED_PROTOCOL_DIR}"
+  )
+endif()
+
+
 
 target_compile_definitions(matrix PRIVATE
   WLR_USE_UNSTABLE
@@ -330,11 +412,7 @@ target_link_directories(matrix PRIVATE
   ${CMAKE_SOURCE_DIR}/lib
 )
 
-set(WLROOTS_RPATH_1 "${WLROOTS_BUILD_DIR}")
-set(WLROOTS_RPATH_2 "${WLROOTS_BUILD_DIR}/subprojects/wayland/src")
 target_link_options(matrix PRIVATE
-  "-Wl,-rpath,${WLROOTS_RPATH_1}"
-  "-Wl,-rpath,${WLROOTS_RPATH_2}"
   "-Wl,--as-needed"
 )
 
