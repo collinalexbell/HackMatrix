@@ -9,6 +9,7 @@
 #include "engineGui.h"
 #include "MultiPlayer/Client.h"
 #include "MultiPlayer/Server.h"
+#include "MultiPlayer/WebGui.h"
 
 #include <GLFW/glfw3.h>
 #include <memory>
@@ -40,8 +41,11 @@ class Engine
   std::shared_ptr<spdlog::logger> logger;
   std::shared_ptr<EntityRegistry> registry;
   std::shared_ptr<EngineGui> engineGui;
+
   std::shared_ptr<MultiPlayer::Client> client;
   std::shared_ptr<MultiPlayer::Server> server;
+  std::unique_ptr<MultiPlayer::WebGui> webGui;
+
   spdlog::sink_ptr loggerSink;
   std::shared_ptr<LoggerVector> setupLogger();
   void disableKeysIfImguiActive();

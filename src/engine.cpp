@@ -24,6 +24,7 @@
 #include "systems/Door.h"
 #include "tracy/Tracy.hpp"
 #include "tracy/TracyOpenGL.hpp"
+#include "MultiPlayer/WebGui.h"
 
 #include <memory>
 #include <spdlog/common.h>
@@ -164,6 +165,7 @@ Engine::initializeMemberObjs()
   auto texturePack = blocks::initializeBasicPack();
   wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true, envp);
   camera = new Camera();
+  webGui = std::make_unique<MultiPlayer::WebGui>(this);
   world = new World(
     registry, camera, texturePack, true, loggerSink);
   renderer = new Renderer(registry, camera, world, texturePack, options.invertYAxis);
