@@ -6,7 +6,7 @@ import hackMatrix.protos.api_pb2 as api_pb2
 class Client:
     def __init__(self, address: str = None) -> None:
         if address is None:
-            address = os.getenv("VOXEL_API_ADDRESS", "tcp://127.0.0.1:4455")
+            address = os.getenv("VOXEL_API_ADDRESS", "tcp://127.0.0.1:3345")
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.connect(address)
