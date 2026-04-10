@@ -1,0 +1,9 @@
+app as voxels 1080x720x1 (etc)
+bring back all the cool old features:
+- variable app w:h aspect ratio (i.e. half screen apps etc) 
+	~ widnow_manager_elements
+- api based voxel apps
+	~ map solver
+	~ audio visualizer
+	~ neural network visualizer
+		
