@@ -25,7 +25,7 @@ namespace MultiPlayer {
 	WebGui::WebGui(Engine* engine)
 		: connect(false)
 		  , address("127.0.0.1")
-		  , port(7778)
+		  , port(7777)
 		  , engine(engine)
 	{
 
