@@ -3,7 +3,8 @@
 #include "MultiPlayer/Server.h"
 #include "MultiPlayer/Client.h"
 #include "imgui.h"
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
 
 
 
@@ -22,10 +23,29 @@ std::string read_file(const std::string& path) {
 
 
 namespace MultiPlayer {
+	namespace {
+		int readWebGuiPort()
+		{
+			const char* portEnv = std::getenv("MULTIPLAYER_WEBGUI_PORT");
+			if (!portEnv || !*portEnv) {
+				return 7776;
+			}
+
+			errno = 0;
+			char* end = nullptr;
+			long parsedPort = std::strtol(portEnv, &end, 10);
+			if (errno != 0 || end == portEnv || *end != '\0' || parsedPort <= 0 || parsedPort > 65535) {
+				return 7776;
+			}
+
+			return static_cast<int>(parsedPort);
+		}
+	}
+
 	WebGui::WebGui(Engine* engine)
 		: connect(false)
 		  , address("127.0.0.1")
-		  , port(7777)
+		  , port(7775)
 		  , engine(engine)
 	{
 
@@ -51,7 +71,7 @@ namespace MultiPlayer {
 			engine->registerClient(client);
 
 			// TODO:Investigate how the client is closed
-			client->connect(host, atoi(port));
+			client->connect(host, std::atoi(port));
 			if(client->isConnected()) {
 			 ss << "connected to ... <" << host << ">:<" << port << ">";
 			} else {
