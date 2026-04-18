@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+import os
+import shutil
+import signal
+import subprocess
+import sys
+import time
+
+
+START_DELAY_SECONDS = 2
+SPAWN_DURATION_SECONDS = 20
+SPAWN_INTERVAL_SECONDS = 0.2
+CLEANUP_DELAY_SECONDS = 10 * 60
+
+MESSAGE = "Chat: have you drank your fluids and checked your posture today?"
+TITLE = "hydration-posture-psyop"
+
+
+def require_command(name: str) -> None:
+    if shutil.which(name) is None:
+        print(f"missing required command: {name}", file=sys.stderr)
+        sys.exit(1)
+
+
+def launch_kitty() -> subprocess.Popen:
+    command = f"cowsay -f tux {MESSAGE!r}"
+    return subprocess.Popen(
+        [
+            "kitty",
+            "--title",
+            TITLE,
+            "--hold",
+            "sh",
+            "-lc",
+            command,
+        ],
+        start_new_session=True,
+    )
+
+
+def stop_processes(processes: list[subprocess.Popen]) -> None:
+    live_processes = [process for process in processes if process.poll() is None]
+
+    for process in live_processes:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        if all(process.poll() is not None for process in live_processes):
+            return
+        time.sleep(0.1)
+
+    for process in live_processes:
+        if process.poll() is None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
+def main() -> int:
+    require_command("kitty")
+    require_command("cowsay")
+
+    processes: list[subprocess.Popen] = []
+
+    try:
+        print(f"waiting {START_DELAY_SECONDS} seconds before launch")
+        time.sleep(START_DELAY_SECONDS)
+
+        print(
+            f"launching kitty every {SPAWN_INTERVAL_SECONDS} seconds "
+            f"for {SPAWN_DURATION_SECONDS} seconds"
+        )
+        spawn_until = time.monotonic() + SPAWN_DURATION_SECONDS
+        while time.monotonic() < spawn_until:
+            processes.append(launch_kitty())
+            time.sleep(SPAWN_INTERVAL_SECONDS)
+
+        print(
+            f"launched {len(processes)} kitty terminals; "
+            f"cleanup starts in {CLEANUP_DELAY_SECONDS} seconds"
+        )
+        time.sleep(CLEANUP_DELAY_SECONDS)
+    except KeyboardInterrupt:
+        print("\ninterrupted; cleaning up launched kitty terminals", file=sys.stderr)
+    finally:
+        stop_processes(processes)
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
