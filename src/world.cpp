@@ -39,11 +39,15 @@ World::World(shared_ptr<EntityRegistry> registry,
   initLogger(loggerSink);
   logger->debug("Hello World!");
   initChunks();
-  dynamicObjects = make_shared<DynamicObjectSpace>();
-  dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 5.0f, 0.0f),
-                                         glm::vec3(3.0f, 3.0f, 3.0f),
+  /*
+  for(int i = 0; i < 64; i++) {
+    auto cube = make_shared<DynamicCube>(glm::vec3(0.0f + i * 0.2, 5.0f, 0.0f),
+                                         glm::vec3(0.1f, 0.1f, 0.1f),
                                          glm::vec3(0.2f, 0.2f, 0.8f));
-  dynamicObjects->addObject(dynamicCube);
+
+    //dynamicObjects->addObject(cube);
+  }
+  */
 }
 
 void
@@ -1116,6 +1120,12 @@ World::tick()
   if (dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
   }
-  dynamicCube->move(glm::vec3(0.0f, 0.0f, 0.01f));
+  auto ids = dynamicObjects->getObjectIds();
+  /*
+  for(int i = 0; i < ids.size(); i++) {
+    auto obj = dynamicObjects->getObjectById(ids[i]);
+    obj->move(glm::vec3(0.0f, 0.0f, 0.01f));
+  }
+  */
   //mesh();
 }
