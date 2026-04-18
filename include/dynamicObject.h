@@ -11,6 +11,7 @@ using namespace std;
 struct Renderable
 {
   vector<glm::vec3> vertices;
+  vector<glm::vec3> colors;
 };
 
 class DynamicObject
@@ -63,12 +64,13 @@ class DynamicCube : public DynamicObject
 {
   glm::vec3 _position;
   glm::vec3 size;
+  glm::vec3 color;
   atomic_bool _damaged = true;
   void setPosition(glm::vec3 newPos);
   shared_mutex readWriteMutex;
 
 public:
-  DynamicCube(glm::vec3 position, glm::vec3 size);
+  DynamicCube(glm::vec3 position, glm::vec3 size, glm::vec3 color);
   Renderable makeRenderable() override;
   void move(glm::vec3 addition) override;
   bool damaged() override;

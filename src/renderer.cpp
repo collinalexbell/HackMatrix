@@ -115,6 +115,7 @@ Renderer::genDynamicObjectResources()
 {
   DYNAMIC_OBJECT_VERTEX.create();
   DYNAMIC_OBJECT_POSITIONS.create(GL_ARRAY_BUFFER);
+  DYNAMIC_OBJECT_COLORS.create(GL_ARRAY_BUFFER);
 };
 
 void
@@ -169,6 +170,10 @@ Renderer::setupDynamicObjectVertexAttributePointers()
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(1);
 }
 
 void
@@ -236,6 +241,10 @@ Renderer::fillDynamicObjectBuffers()
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
   glBufferData(
     GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 30000), (void*)0, GL_DYNAMIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
+  glBufferData(
+               GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 30000), (void*)0, GL_DYNAMIC_DRAW);
 }
 
 void
@@ -556,6 +565,14 @@ Renderer::updateDynamicObjects(shared_ptr<DynamicObject> obj)
                   0,
                   sizeof(glm::vec3) * renderable.vertices.size(),
                   renderable.vertices.data());
+
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  0,
+                  sizeof(glm::vec3) * renderable.colors.size(),
+                  renderable.colors.data());
+
+
   verticesInDynamicObjects = renderable.vertices.size();
 }
 
@@ -1303,6 +1320,7 @@ Renderer::render(RenderPerspective perspective,
   if (perspective == CAMERA) {
     renderVoxels();
     renderApps();
+    renderDynamicObjects();
   }
   //renderChunkMesh();
 }

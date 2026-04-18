@@ -40,8 +40,9 @@ World::World(shared_ptr<EntityRegistry> registry,
   logger->debug("Hello World!");
   initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
-  dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f),
-                                         glm::vec3(0.1f, 0.1f, 0.1f));
+  dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 5.0f, 0.0f),
+                                         glm::vec3(3.0f, 3.0f, 3.0f),
+                                         glm::vec3(0.2f, 0.2f, 0.8f));
   dynamicObjects->addObject(dynamicCube);
 }
 

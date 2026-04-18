@@ -12,6 +12,7 @@ uniform sampler2DArray allBlocks;
 uniform sampler2D texture_diffuse1;
 uniform sampler2D appTex;
 uniform bool isApp;
+uniform vec3 dynamicObjectColor;
 uniform bool SHADOWS_ENABLED;
 uniform bool isModel;
 uniform bool isLine;
@@ -200,5 +201,7 @@ void main()
 		}
 	} else if (isLine) {
 		FragColor = vec4(lineColor, 1.0);
-	}
+	} else if (isDynamicObject) {
+    FragColor = vec4(VoxelColor,1);
+  }
 }
