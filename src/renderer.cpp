@@ -238,13 +238,15 @@ int MAX_CUBES = 1000000;
 void
 Renderer::fillDynamicObjectBuffers()
 {
+  int CUBES = 1000000;
+  int VERTS = CUBES * 36;
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
   glBufferData(
-    GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 30000), (void*)0, GL_DYNAMIC_DRAW);
+    GL_ARRAY_BUFFER, (sizeof(glm::vec3) * VERTS), (void*)0, GL_DYNAMIC_DRAW);
 
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
   glBufferData(
-               GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 30000), (void*)0, GL_DYNAMIC_DRAW);
+               GL_ARRAY_BUFFER, (sizeof(glm::vec3) * VERTS), (void*)0, GL_DYNAMIC_DRAW);
 }
 
 void

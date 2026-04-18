@@ -40,13 +40,17 @@ World::World(shared_ptr<EntityRegistry> registry,
   logger->debug("Hello World!");
   initChunks();
   dynamicObjects = make_shared<DynamicObjectSpace>();
-  for(int i = 0; i < 64; i++) {
-    auto cube = make_shared<DynamicCube>(glm::vec3(0.0f + i * 0.2, 5.0f, 0.0f),
-                                         glm::vec3(0.1f, 0.1f, 0.1f),
-                                         glm::vec3(0.2f, 0.2f, 0.8f));
-
-    dynamicObjects->addObject(cube);
-  }
+  dynamicObjects2 = make_shared<DynamicObjectSpace>();
+  for(int x = 0; x < 64; x++)
+    for(int y = 0; y < 64; y++)
+      for(int z = 0; z < 64; z++) {
+        auto pos = glm::vec3(0.0f + x * 0.2, 5.0f + y*0.2, 0.0f + z * 0.2);
+        auto voxelSize = glm::vec3(0.1f, 0.1f, 0.1f);
+        auto color = glm::vec3(float(x)/64.0, float(y)/64.0,float(z)/64.0);
+        auto cube = make_shared<DynamicCube>(pos, voxelSize, color);
+        dynamicObjects->addObject(cube);
+        //auto cube2 = make_shared<DynamicCube>(pos + glm::vec3(0,10.0f, 0), voxelSize, color);
+      }
 }
 
 void
@@ -1118,6 +1122,9 @@ World::tick()
   systems::updateAll(registry, renderer);
   if (dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
+  }
+  if (dynamicObjects2->damaged()) {
+    //renderer->updateDynamicObjects(dynamicObjects2);
   }
   auto ids = dynamicObjects->getObjectIds();
   /*
