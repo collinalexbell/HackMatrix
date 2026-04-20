@@ -145,8 +145,11 @@ sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xin
 
 ***warning*** this is a new Wayland build. It will be buggy, but I merged it to main regardless
 
+***note*** remember to clone the repo using git clone and not downloading the source as a zip
 
 ```bash
+git clone --recursive-submodules https://github.com/collinalexbell/HackMatrix
+cd HackMatrix
 mkdir -p build
 cd build
 cmake ..
