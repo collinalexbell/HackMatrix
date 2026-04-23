@@ -39,18 +39,24 @@ World::World(shared_ptr<EntityRegistry> registry,
   initLogger(loggerSink);
   logger->debug("Hello World!");
   initChunks();
+  // class VoxelSpace (an abstraction on DynamicObjectSpace) {
+  //    todo actually implement as class
   dynamicObjects = make_shared<DynamicObjectSpace>();
   dynamicObjects2 = make_shared<DynamicObjectSpace>();
   for(int x = 0; x < 64; x++)
     for(int y = 0; y < 64; y++)
       for(int z = 0; z < 64; z++) {
-        auto pos = glm::vec3(0.0f + x * 0.2, 5.0f + y*0.2, 0.0f + z * 0.2);
+        float xMargin = 0.2;
+        float yMargin = 0.2;
+        float zMargin = 0.2;
+        auto pos = glm::vec3(0.0f + x * xMargin, 5.0f + y*yMargin, 0.0f + z * zMargin);
         auto voxelSize = glm::vec3(0.1f, 0.1f, 0.1f);
         auto color = glm::vec3(float(x)/64.0, float(y)/64.0,float(z)/64.0);
         auto cube = make_shared<DynamicCube>(pos, voxelSize, color);
         dynamicObjects->addObject(cube);
         //auto cube2 = make_shared<DynamicCube>(pos + glm::vec3(0,10.0f, 0), voxelSize, color);
       }
+  // } end class VoxelSpace (not implemented yet)
 }
 
 void

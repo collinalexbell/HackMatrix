@@ -613,8 +613,14 @@ Renderer::setLines(const std::vector<Line>& lines)
 void
 Renderer::renderDynamicObjects()
 {
-  glBindVertexArray(DYNAMIC_OBJECT_VERTEX);
+  shader->setBool("isApp", false);
+  shader->setBool("isModel", false);
+  shader->setBool("isVoxel", false);
   shader->setBool("isDynamicObject", true);
+  shader->setBool("directRender", false);
+  shader->setBool("isLine", false);
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
+  glBindVertexArray(DYNAMIC_OBJECT_VERTEX);
   glDrawArrays(GL_TRIANGLES, 0, verticesInDynamicObjects);
   shader->setBool("isDynamicObject", false);
 }
@@ -939,7 +945,6 @@ Renderer::renderApps()
     1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
   glDisable(GL_CULL_FACE);
- 
 
   auto bindAppTexture = [&](WaylandApp* app) {
     glActiveTexture(GL_TEXTURE0);
@@ -1318,11 +1323,11 @@ Renderer::render(RenderPerspective perspective,
   }
   updateShaderUniforms();
   lightUniforms(perspective, fromLight);
+  renderDynamicObjects();
   renderModels(perspective);
   if (perspective == CAMERA) {
     renderVoxels();
     renderApps();
-    renderDynamicObjects();
   }
   //renderChunkMesh();
 }
