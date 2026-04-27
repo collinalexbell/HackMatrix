@@ -798,6 +798,7 @@ handle_output_destroy(wl_listener* listener, void* data)
   }
   wl_list_remove(&handle->frame.link);
   wl_list_remove(&handle->destroy.link);
+  wl_list_remove(&handle->commit.link);
   if (handle->swapchain) {
     wlr_swapchain_destroy(handle->swapchain);
   }
@@ -1054,6 +1055,36 @@ handle_output_frame(wl_listener* listener, void* data)
   wlr_buffer_unlock(buffer);
 }
 
+static void
+handle_output_commit(wl_listener* listener, void* data)
+{
+  auto* handle =
+    wl_container_of(listener, static_cast<WlrOutputHandle*>(nullptr), commit);
+  auto* event = static_cast<wlr_output_event_commit*>(data);
+  auto* server = handle->server;
+  auto* output = event->output;
+
+  if (!server || handle->output != output) {
+    return;
+  }
+
+  if (handle->width == output->width && handle->height == output->height) {
+    return;
+  }
+
+  handle->width = output->width;
+  handle->height = output->height;
+
+  if (server->primary_output == output) {
+    SCREEN_WIDTH = static_cast<float>(output->width);
+    SCREEN_HEIGHT = static_cast<float>(output->height);
+    server->pointer_x = std::clamp(server->pointer_x, 0.0, static_cast<double>(output->width));
+    server->pointer_y = std::clamp(server->pointer_y, 0.0, static_cast<double>(output->height));
+  }
+
+  std::fprintf(stderr, "output resized: %dx%d\n", handle->width, handle->height);
+}
+
 // This is called when wayland detects a new output such as a monitor
 // It sets up size, cursor info, and frame notify handler (which will render each frame)
 void
@@ -1089,10 +1120,14 @@ handle_new_output(wl_listener* listener, void* data)
   // projection and texture sizing match the real buffer size.
   SCREEN_WIDTH = static_cast<float>(output->width);
   SCREEN_HEIGHT = static_cast<float>(output->height);
+  //SCREEN_WIDTH = static_cast<float>(1920);
+  //SCREEN_HEIGHT = static_cast<float>(1080);
 
   auto* handle = new WlrOutputHandle();
   handle->server = server;
   handle->output = output;
+  handle->width = output->width;
+  handle->height = output->height;
   server->pointer_x = output->width / 2.0;
   server->pointer_y = output->height / 2.0;
   if (server->cursor) {
@@ -1110,10 +1145,13 @@ handle_new_output(wl_listener* listener, void* data)
     wlr_surface_send_enter(entry.first, output);
   }
   wlr_log(WLR_DEBUG, "new output %s %dx%d", output->name, output->width, output->height);
+
   handle->frame.notify = handle_output_frame;
   wl_signal_add(&output->events.frame, &handle->frame);
   handle->destroy.notify = handle_output_destroy;
   wl_signal_add(&output->events.destroy, &handle->destroy);
+  handle->commit.notify = handle_output_commit;
+  wl_signal_add(&output->events.commit, &handle->commit);
 
   wlr_output_schedule_frame(output);
 }
@@ -1158,6 +1196,8 @@ void initialize_wlr_logging() { wlr_log_init(WLR_DEBUG, nullptr); }
 void
 apply_backend_env_defaults()
 {
+  // TODO: Investigate backends
+
   // If WLR_BACKENDS not set, prefer wayland when under Wayland, otherwise try
   // X11 so running from an X session or tty can still work.
   if (!std::getenv("WLR_BACKENDS")) {
