@@ -156,7 +156,7 @@ make -j
 ```
 
 ## Running
-
+It is recommended to launch from tty. In the root directory of the project
 Run `./launch` 
 
 ### How to get the client_libraries working
