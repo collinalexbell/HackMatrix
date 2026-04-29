@@ -131,6 +131,8 @@ sudo dnf install wayland-protocols wayland wofi rofi xdotool xorg-x11-utils prot
 I'm currently working on an issue with protobuf compilation errors for Arch. [This PR](https://github.com/collinalexbell/HackMatrix/pull/48) shows how to resolve the issue.
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
+On arch you can also install the PKGBUILD in the directory distributions/arch/
+
 ```bash
 sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```

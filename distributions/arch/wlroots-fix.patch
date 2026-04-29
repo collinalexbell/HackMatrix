@@ -1,0 +1,22 @@
+--- wlroots/backend/libinput/switch.c	2026-04-27 17:31:58.380560460 +0200
++++ wlroots/backend/libinput/switch.c	2026-04-27 17:16:07.316682031 +0200
+@@ -36,6 +36,8 @@
+ 	case LIBINPUT_SWITCH_TABLET_MODE:
+ 		wlr_event.switch_type = WLR_SWITCH_TYPE_TABLET_MODE;
+ 		break;
++	default:
++		return;
+ 	}
+ 	switch (libinput_event_switch_get_switch_state(sevent)) {
+ 	case LIBINPUT_SWITCH_STATE_OFF:
+--- wlroots/xcursor/xcursor.c	2026-04-27 17:31:58.397099167 +0200
++++ wlroots/xcursor/xcursor.c	2026-04-27 17:16:56.438892523 +0200
+@@ -602,7 +602,7 @@
+ static const char *
+ xcursor_next_path(const char *path)
+ {
+-	char *colon = strchr(path, ':');
++	const char *colon = strchr(path, ':');
+ 
+ 	if (!colon)
+ 		return NULL;

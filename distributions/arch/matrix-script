@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+set -x
+
+BIN="${MATRIX_WLROOTS_BIN:-/usr/share/HackMatrix/hackmatrix-binary}"
+
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg-runtime-$USER}"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+export XCURSOR_THEME="${XCURSOR_THEME:-Adwaita}"
+export XCURSOR_SIZE="${XCURSOR_SIZE:-24}"
+export XCURSOR_PATH="${XCURSOR_PATH:-/usr/share/icons}"
+
+export WLR_NO_HARDWARE_CURSORS=1
+export MATRIX_WAYLANDAPP_SAMPLE_LOGS="${MATRIX_WAYLANDAPP_SAMPLE_LOGS:-1}"
+export WLR_APP_SAMPLE_LOG=1
+export ENABLE_RENDER_TMP_LOGS=1
+
+BACKEND=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --headless|--drm|--wayland)
+      BACKEND="${1#--}"
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+# auto-detect wayland session
+if [[ -z "$BACKEND" && -n "${WAYLAND_DISPLAY:-}" ]]; then
+  BACKEND="wayland"
+fi
+
+if [[ -n "$BACKEND" ]]; then
+  export WLR_BACKENDS="$BACKEND"
+
+  if [[ "$BACKEND" == "drm" ]]; then
+    export LIBSEAT_BACKEND="${LIBSEAT_BACKEND:-logind}"
+
+    if [[ -z "${WLR_DRM_DEVICES:-}" && -e /dev/dri/card0 ]]; then
+      export WLR_DRM_DEVICES="/dev/dri/card0"
+    fi
+
+    export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    mkdir -p "$XDG_RUNTIME_DIR"
+    chmod 700 "$XDG_RUNTIME_DIR"
+  fi
+fi
+
+export CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/HackMatrix"
+if [ ! -d "$CONFIG_DIR" ]; then
+  mkdir -p "$CONFIG_DIR"
+  cp -r /usr/share/HackMatrix/db /usr/share/HackMatrix/vox /usr/share/HackMatrix/scripts/ /usr/share/HackMatrix/shaders /usr/share/HackMatrix/config.yaml "$CONFIG_DIR/"
+fi
+
+cd "$CONFIG_DIR" || {
+  echo "Failed to cd into $CONFIG_DIR"
+  exit 1
+}
+
+exec "$BIN" "$@"
