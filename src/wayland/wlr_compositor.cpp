@@ -41,6 +41,7 @@ extern "C" {
 #include <wlr/types/wlr_xdg_output_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output.h>
+#include <wlr/backend/wayland.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/util/log.h>
@@ -1015,6 +1016,9 @@ handle_output_frame(wl_listener* listener, void* data)
         }
       }
       bool pointerVisible = pointerFocusRequested || (cursorOverrideSet && cursorOverrideVisible);
+      if (handle->output && wlr_output_is_wl(handle->output)) {
+        wlr_wl_output_set_pointer_lock(handle->output, !pointerVisible);
+      }
       if (!pointerVisible &&
           (server->input.delta_x != 0.0 || server->input.delta_y != 0.0)) {
         if (controls) {
@@ -1232,6 +1236,9 @@ handle_new_output(wl_listener* listener, void* data)
   }
   if (!server->primary_output) {
     server->primary_output = output;
+  }
+  if (wlr_output_is_wl(output)) {
+    wlr_wl_output_set_fullscreen(output, true);
   }
   for (auto& entry : server->surface_map) {
     wlr_surface_send_enter(entry.first, output);

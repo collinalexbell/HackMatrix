@@ -110,6 +110,29 @@ parseInlineEnvXdg(const std::string& program)
   return "";
 }
 
+static void
+configureWaylandChildEnvironment(const std::string& waylandDisplay,
+                                 const std::string& runtimeDir)
+{
+  if (!waylandDisplay.empty()) {
+    setenv("WAYLAND_DISPLAY", waylandDisplay.c_str(), 1);
+  }
+  if (!runtimeDir.empty()) {
+    setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
+  }
+
+  // Force toolkit stacks to prefer the nested HackMatrix Wayland session.
+  // Keep DISPLAY inherited so XWayland clients can still fall back inside
+  // HackMatrix instead of leaking to the parent desktop.
+  setenv("XDG_SESSION_TYPE", "wayland", 1);
+  setenv("GDK_BACKEND", "wayland,x11", 1);
+  setenv("QT_QPA_PLATFORM", "wayland;xcb", 1);
+  setenv("SDL_VIDEODRIVER", "wayland,x11", 1);
+  setenv("CLUTTER_BACKEND", "wayland", 1);
+  setenv("ELM_DISPLAY", "wl", 1);
+  setenv("MOZ_ENABLE_WAYLAND", "1", 1);
+}
+
 static unsigned int
 resolveHotkeyMaskFromConfig()
 {
@@ -133,12 +156,10 @@ resolveHotkeyMaskFromConfig()
 
 void WindowManager::menu() {
   auto program = menuProgram;
-  // Use current environment so we capture updated WAYLAND_DISPLAY/XDG_RUNTIME_DIR.
-  char** envForChild = environ;
   std::string runtimeDir = parseInlineEnvXdg(program);
-  std::string waylandDisplay = getEnv("WAYLAND_DISPLAY", envForChild);
+  std::string waylandDisplay = getEnv("WAYLAND_DISPLAY", environ);
   if (runtimeDir.empty()) {
-    const char* envVal = getEnv("XDG_RUNTIME_DIR", envForChild);
+    const char* envVal = getEnv("XDG_RUNTIME_DIR", environ);
     if (envVal) {
       runtimeDir = envVal;
     }
@@ -149,18 +170,17 @@ void WindowManager::menu() {
       int mk = mkdir(runtimeDir.c_str(), 0700);
     }
   }
-  std::thread([program, envForChild, runtimeDir, waylandDisplay] {
+  std::thread([program, runtimeDir, waylandDisplay] {
     pid_t pid = fork();
     if (pid == 0) {
       setsid();
-      if (!waylandDisplay.empty()) {
-        setenv("WAYLAND_DISPLAY", waylandDisplay.c_str(), 1);
-      }
-      if (!runtimeDir.empty()) {
-        setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
-      }
-      execle("/bin/sh", "sh", "-c", program.c_str(), (char*)nullptr, envForChild);
-      // execle only returns on failure.
+      configureWaylandChildEnvironment(waylandDisplay, runtimeDir);
+      WL_WM_LOG("WM: launching menu with WAYLAND_DISPLAY=%s XDG_RUNTIME_DIR=%s DISPLAY=%s\n",
+                std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)",
+                std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)",
+                std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)");
+      execl("/bin/sh", "sh", "-c", program.c_str(), (char*)nullptr);
+      // execl only returns on failure.
       _exit(127);
     }
     int status = 0;

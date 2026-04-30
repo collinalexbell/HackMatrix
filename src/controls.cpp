@@ -114,6 +114,16 @@ is_configured_or_fallback_pressed(ControlMappings& controlMappings,
 }
 
 bool
+is_configured_or_fallback_glfw_pressed(ControlMappings& controlMappings,
+                                       GLFWwindow* window,
+                                       const std::string& fn,
+                                       int fallback)
+{
+  int glfwKey = configured_or_fallback_glfw_key(controlMappings, fn, fallback);
+  return glfwGetKey(window, glfwKey) == GLFW_PRESS;
+}
+
+bool
 matches_configured_or_fallback_key(ControlMappings& controlMappings,
                                    xkb_keysym_t sym,
                                    const std::string& fn,
@@ -236,15 +246,15 @@ void Controls::handleKeys() {
     return;
   }
 
-  const bool allowControls = !appFocused || waylandModifierHeld;
-  if (!allowControls) {
+  if (appFocused) {
+    handleWaylandHotkeys();
     return;
   }
 
-  handleModEscape();
   handleDMenu();
   handleToggleCursor();
   handleScreenshot();
+  handleModEscape();
   if (handleWaylandHotkeys()) {
     return;
   }
@@ -267,6 +277,16 @@ Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
 {
   //handleQuit(window);
   if (keysEnabled) {
+    bool up = is_configured_or_fallback_glfw_pressed(
+      controlMappings, window, "move_forward", GLFW_KEY_W);
+    bool down = is_configured_or_fallback_glfw_pressed(
+      controlMappings, window, "move_back", GLFW_KEY_S);
+    bool left = is_configured_or_fallback_glfw_pressed(
+      controlMappings, window, "move_left", GLFW_KEY_A);
+    bool right = is_configured_or_fallback_glfw_pressed(
+      controlMappings, window, "move_right", GLFW_KEY_D);
+    camera->handleTranslateForce(up, down, left, right, false, false);
+
     handleModEscape(window);
     handleToggleCursor(window);
     handleToggleApp(window, world, camera);
@@ -896,10 +916,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
   }
 
   bool waylandFocusActive = wm->hasCurrentOrPendingFocus();
-  if (waylandFocusActive && !modifierHeld) {
-    return resp;
-  }
-
   if (matchesConfiguredKey(sym, "quit")) {
     resp.requestQuit = true;
     resp.blockClientDelivery = true;
@@ -912,14 +928,19 @@ Controls::handleKeySym(xkb_keysym_t sym,
     matches_configured_or_fallback_key(
       controlMappings, sym, "toggle_cursor", XKB_KEY_f, XKB_KEY_F);
   const xkb_keysym_t hotkeySym = normalize_hotkey_sym(sym);
-  if (sym == XKB_KEY_v || sym == XKB_KEY_V ||
-      screenshotKey ||
-      toggleCursorKey) {
+  if (!waylandFocusActive &&
+      (sym == XKB_KEY_v || sym == XKB_KEY_V ||
+       screenshotKey ||
+       toggleCursorKey)) {
     if (sym == XKB_KEY_v || sym == XKB_KEY_V) {
       resp.clearInputForces = true;
     }
     resp.blockClientDelivery = true;
     resp.consumed = true;
+    return resp;
+  }
+
+  if (waylandFocusActive && !modifierHeld) {
     return resp;
   }
 
@@ -938,13 +959,18 @@ Controls::handleKeySym(xkb_keysym_t sym,
       resp.consumed = true;
       return resp;
     }
-    if (sym == XKB_KEY_p || sym == XKB_KEY_P ||
-        sym == XKB_KEY_q || sym == XKB_KEY_Q ||
-        sym == XKB_KEY_0 || is_shifted_digit_sym(sym)) {
+    if (!waylandFocusActive &&
+        (sym == XKB_KEY_p || sym == XKB_KEY_P ||
+         sym == XKB_KEY_q || sym == XKB_KEY_Q ||
+         sym == XKB_KEY_0 || is_shifted_digit_sym(sym))) {
       resp.blockClientDelivery = true;
       resp.consumed = true;
       return resp;
     }
+  }
+
+  if (waylandFocusActive) {
+    return resp;
   }
 
   const bool regularControl =
@@ -1050,6 +1076,72 @@ bool
 Controls::handleWaylandHotkeys()
 {
   if (!waylandModifierHeld || !wm) {
+    return false;
+  }
+
+  const bool appFocused = wm->hasCurrentOrPendingFocus();
+
+  if (appFocused) {
+    if (is_configured_or_fallback_pressed(
+          controlMappings, pressed, "unfocus_app", XKB_KEY_e, XKB_KEY_E) &&
+        debounce(lastKeyPressTime)) {
+      wm->unfocusApp();
+      return true;
+    }
+
+    for (int i = 0; i < 9; ++i) {
+      xkb_keysym_t digit = static_cast<xkb_keysym_t>(XKB_KEY_1 + i);
+      xkb_keysym_t shifted = normalize_hotkey_sym(digit);
+      switch (digit) {
+        case XKB_KEY_1:
+          shifted = XKB_KEY_exclam;
+          break;
+        case XKB_KEY_2:
+          shifted = XKB_KEY_at;
+          break;
+        case XKB_KEY_3:
+          shifted = XKB_KEY_numbersign;
+          break;
+        case XKB_KEY_4:
+          shifted = XKB_KEY_dollar;
+          break;
+        case XKB_KEY_5:
+          shifted = XKB_KEY_percent;
+          break;
+        case XKB_KEY_6:
+          shifted = XKB_KEY_asciicircum;
+          break;
+        case XKB_KEY_7:
+          shifted = XKB_KEY_ampersand;
+          break;
+        case XKB_KEY_8:
+          shifted = XKB_KEY_asterisk;
+          break;
+        case XKB_KEY_9:
+          shifted = XKB_KEY_parenleft;
+          break;
+        default:
+          break;
+      }
+      if (!isPressed(digit) && !isPressed(shifted)) {
+        continue;
+      }
+      if (!debounce(lastKeyPressTime)) {
+        return true;
+      }
+      log_controls("number hotkey: %d", i);
+      if (waylandShiftHeld) {
+        if (wm->getCurrentlyFocusedApp().has_value()) {
+          int source = wm->findAppsHotKey(wm->getCurrentlyFocusedApp().value());
+          wm->swapHotKeys(source, i);
+        }
+      } else if (auto ent = wm->getHotkeyTarget(i)) {
+        wm->unfocusApp();
+        goToApp(*ent);
+      }
+      return true;
+    }
+
     return false;
   }
 

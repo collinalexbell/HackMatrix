@@ -288,9 +288,21 @@ handle_pointer_motion_abs(wl_listener* listener, void* data)
     listener, static_cast<WlrPointerHandle*>(nullptr), motion_abs);
   auto* event = static_cast<wlr_pointer_motion_absolute_event*>(data);
   if (handle->server->input.have_abs) {
-    // Normalize deltas into something closer to pixel units.
-    double dx = (event->x - handle->server->input.last_abs_x) * 1000.0;
-    double dy = (event->y - handle->server->input.last_abs_y) * 1000.0;
+    // Wayland absolute motion arrives normalized to [0,1]. Scale it back into
+    // output-space units so nested sessions don't feel like they only have a
+    // fraction of the normal mouse range.
+    double scaleX = 1000.0;
+    double scaleY = 1000.0;
+    if (handle->server && handle->server->primary_output) {
+      if (handle->server->primary_output->width > 0) {
+        scaleX = static_cast<double>(handle->server->primary_output->width);
+      }
+      if (handle->server->primary_output->height > 0) {
+        scaleY = static_cast<double>(handle->server->primary_output->height);
+      }
+    }
+    double dx = (event->x - handle->server->input.last_abs_x) * scaleX;
+    double dy = (event->y - handle->server->input.last_abs_y) * scaleY;
     handle->server->input.delta_x += dx;
     handle->server->input.delta_y += dy;
   }
