@@ -79,6 +79,7 @@ public:
   virtual void setCursorVisible(bool visible) = 0;
   virtual bool isWaylandMode() const = 0;
   virtual vector<optional<entt::entity>> getAppsWithHotKeys() = 0;
+  virtual optional<entt::entity> getHotkeyTarget(int index) = 0;
   virtual void swapHotKeys(int a, int b) = 0;
   virtual int findAppsHotKey(entt::entity theApp) = 0;
 };
@@ -153,6 +154,7 @@ class WindowManager : public WindowManagerInterface
 
 public:
   vector<optional<entt::entity>> getAppsWithHotKeys() override {return appsWithHotKeys;}
+  optional<entt::entity> getHotkeyTarget(int index) override;
   void unfocusApp() override;
   void menu() override;
   void createAndRegisterApps(char** envp) override;

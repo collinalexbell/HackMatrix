@@ -360,7 +360,9 @@ void WindowManager::removeAppForWindow(Window window) {
 }
 
 void WindowManager::swapHotKeys(int a, int b) {
-  if(a < appsWithHotKeys.size() && b < appsWithHotKeys.size()) {
+  if (a >= 0 && b >= 0 &&
+      a < static_cast<int>(appsWithHotKeys.size()) &&
+      b < static_cast<int>(appsWithHotKeys.size())) {
     auto aOpt = appsWithHotKeys[a];
     appsWithHotKeys[a] = appsWithHotKeys[b];
     appsWithHotKeys[b] = aOpt;
@@ -391,6 +393,25 @@ int WindowManager::findAppsHotKey(entt::entity theApp)
     }
   }
   return -1;
+}
+
+optional<entt::entity>
+WindowManager::getHotkeyTarget(int index)
+{
+  if (index < 0 || index >= static_cast<int>(appsWithHotKeys.size())) {
+    return nullopt;
+  }
+  auto& slot = appsWithHotKeys[index];
+  if (!slot.has_value()) {
+    return nullopt;
+  }
+  if (!registry || !registry->valid(*slot) ||
+      !registry->all_of<Positionable>(*slot)) {
+    slot = nullopt;
+    compactHotkeyList();
+    return nullopt;
+  }
+  return slot;
 }
 
 
@@ -454,11 +475,18 @@ void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemova
 void
 WindowManager::focusApp(entt::entity appEntity)
 {
+  if (!registry || !registry->valid(appEntity)) {
+    currentlyFocusedApp = std::nullopt;
+    pendingFocusedApp = std::nullopt;
+    return;
+  }
   // Wayland focus is handled via wlroots; record focus only.
   pendingFocusedApp = std::nullopt;
   currentlyFocusedApp = appEntity;
   // Clear any stuck movement when compositor focus moves to a client.
-  controls->clearMovementInput();
+  if (controls) {
+    controls->clearMovementInput();
+  }
   if (registry->valid(appEntity) &&
       registry->all_of<WaylandApp::Component>(appEntity)) {
     // Notify the Wayland client so keyboard/pointer focus matches click focus.
@@ -469,7 +497,9 @@ WindowManager::focusApp(entt::entity appEntity)
 }
 
 void WindowManager::unfocusApp() {
-  logger->debug("unfocusing app");
+  if (logger) {
+    logger->debug("unfocusing app");
+  }
   if (!currentlyFocusedApp.has_value()) {
     return;
   }
@@ -478,8 +508,13 @@ void WindowManager::unfocusApp() {
     currentlyFocusedApp = std::nullopt;
     return;
   }
-  auto& appComponent = registry->get<WaylandApp::Component>(ent);
-  appComponent.app->unfocus(matrix);
+  if (registry->all_of<WaylandApp::Component>(ent)) {
+    auto& appComponent = registry->get<WaylandApp::Component>(ent);
+    appComponent.app->unfocus(matrix);
+  } else if (registry->all_of<X11App>(ent)) {
+    auto& app = registry->get<X11App>(ent);
+    app.unfocus(matrix);
+  }
   currentlyFocusedApp = std::nullopt;
   pendingFocusedApp = std::nullopt;
   WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n", (int)entt::to_integral(ent));
