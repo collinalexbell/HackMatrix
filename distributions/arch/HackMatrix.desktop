@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=HackMatrix
+Comment=A 3D linux desktop environment (which can also be a game engine)
+Exec=/usr/bin/hackmatrix
+Icon=utilities-terminal
+Terminal=false
+Categories=System;Utility;Graphics;
+StartupNotify=true

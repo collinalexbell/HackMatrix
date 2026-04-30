@@ -131,6 +131,8 @@ sudo dnf install wayland-protocols wayland wofi rofi xdotool xorg-x11-utils prot
 I'm currently working on an issue with protobuf compilation errors for Arch. [This PR](https://github.com/collinalexbell/HackMatrix/pull/48) shows how to resolve the issue.
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
+On arch you can also install the PKGBUILD in the directory distributions/arch/
+
 ```bash
 sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```
@@ -154,7 +156,7 @@ make -j
 ```
 
 ## Running
-
+It is recommended to launch from tty. In the root directory of the project
 Run `./launch` 
 
 ### How to get the client_libraries working
@@ -183,9 +185,12 @@ python scripts/player-move.py
 xinput list | grep -i touchpad
 # grab the id and replace <id> below with it
 xinput set-prop <id> "libinput Disable While Typing Enabled" 0
+```
 
 # Ideas
-model real spaces, like the park in my city, put them into hack Matrix, and then improve the design and democratically vote (with money) what design should be implemented, then carry out design in the physical space
+- Model real spaces, like the park in my city, put them into hack Matrix, and then improve the design and democratically vote (with money) what design should be implemented, then carry out design in the physical space
 
-A hack Matrix cryptocurrency that is used to fund various hack Matrix projects
-```
+- A hack Matrix cryptocurrency that is used to fund various hack Matrix projects
+
+# Bugs
+- Scrolling when in WM mode (not focused on a workspace) is handled by an unfocused window, cause undefined state that is only recoverable by focusing and unfocusing a window.
