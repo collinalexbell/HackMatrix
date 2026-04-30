@@ -48,6 +48,8 @@ class Controls
   double lastShiftPressTime = 0;
   bool resetMouse = true;
   bool lastWaylandFocusActive = false;
+  bool waylandModifierHeld = false;
+  bool waylandShiftHeld = false;
   float lastX;
   float lastY;
   int clickY = 100;
@@ -62,29 +64,49 @@ class Controls
   struct KeysymEvent {
     xkb_keysym_t sym;
     bool pressed;
+    bool modifierHeld;
+    bool shiftHeld;
   };
   std::queue<KeysymEvent> keysymQueue;
   std::mutex keysymMutex;
 
   void handleMovement();
+  void handleModEscape();
   void handleModEscape(GLFWwindow* window);
+  void handleToggleCursor();
   void handleToggleCursor(GLFWwindow* window);
+  void handleToggleApp();
   void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
   void handleSelectApp(GLFWwindow* window);
   void handleFocus();
+  void handleDMenu();
   void handleDMenu(GLFWwindow* window, World* world);
+  void handleScreenshot();
   void handleScreenshot(GLFWwindow* window);
+  void handleSave();
   void handleSave(GLFWwindow* window);
+  void handleSelection();
   void handleSelection(GLFWwindow* window);
+  void handleCodeBlock();
   void handleCodeBlock(GLFWwindow* window);
+  void handleDebug();
   void handleDebug(GLFWwindow* window);
+  void handleToggleMeshing();
   void handleToggleMeshing(GLFWwindow* window);
+  void handleToggleWireframe();
   void handleToggleWireframe(GLFWwindow* window);
+  void handleLogBlockCounts();
   void handleLogBlockCounts(GLFWwindow* window);
+  void handleLogBlockType();
   void handleLogBlockType(GLFWwindow* window);
+  void handleChangePlayerSpeed();
   void handleChangePlayerSpeed(GLFWwindow* window);
+  void handleWindowFlop();
   void handleWindowFlop(GLFWwindow* window);
   void handleMakeWindowBootable(GLFWwindow* window);
+  bool handleWaylandHotkeys();
+  bool isPressed(xkb_keysym_t sym) const;
+  bool isPressedEither(xkb_keysym_t a, xkb_keysym_t b) const;
 
   void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleKeys();
