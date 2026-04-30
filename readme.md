@@ -165,12 +165,11 @@ yay -S hackmatrix-git
 
 ***warning*** this is a new Wayland build. It will be buggy, but I merged it to main regardless
 
-
 ```bash
 mkdir -p build
 cd build
 cmake ..
-make -j
+make -j$(nproc)
 ```
 
 ## Running
