@@ -1,14 +1,72 @@
 #include "Config.h"
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <map>
+#include <optional>
+#include <stdexcept>
+
+namespace fs = std::filesystem;
+
+namespace {
+
+std::optional<fs::path>
+envPath(const char* name)
+{
+  const char* value = std::getenv(name);
+  if (value == nullptr || value[0] == '\0') {
+    return std::nullopt;
+  }
+  return fs::path(value);
+}
+
+} // namespace
 
 Config::Config()
 {
-  std::ifstream ifs("config.yaml");
+  configPath = resolveConfigPath();
+  std::ifstream ifs(configPath);
+  if (!ifs.is_open()) {
+    throw std::runtime_error("Unable to open HackMatrix config: " + configPath);
+  }
   config = fkyaml::node::deserialize(ifs);
 }
 
 std::shared_ptr<Config> Config::_singleton = nullptr;
+
+std::string
+Config::resolveConfigPath()
+{
+  std::vector<fs::path> candidates;
+
+  if (auto explicitPath = envPath("HACKMATRIX_CONFIG_FILE")) {
+    return explicitPath->string();
+  }
+
+  if (auto configHome = envPath("HACKMATRIX_CONFIG_HOME")) {
+    candidates.push_back(*configHome / "config.yaml");
+  }
+
+  if (auto xdgConfigHome = envPath("XDG_CONFIG_HOME")) {
+    candidates.push_back(*xdgConfigHome / "HackMatrix" / "config.yaml");
+  }
+
+  if (auto home = envPath("HOME")) {
+    candidates.push_back(*home / ".config" / "HackMatrix" / "config.yaml");
+  }
+
+  for (const auto& candidate : candidates) {
+    if (fs::exists(candidate)) {
+      return candidate.string();
+    }
+  }
+
+  if (!candidates.empty()) {
+    return candidates.front().string();
+  }
+
+  return "config.yaml";
+}
 
 std::shared_ptr<Config>
 Config::singleton()
@@ -17,6 +75,12 @@ Config::singleton()
     _singleton = std::make_shared<Config>();
   }
   return _singleton;
+}
+
+const std::string&
+Config::getConfigPath() const
+{
+  return configPath;
 }
 
 std::vector<std::string>

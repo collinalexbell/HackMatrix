@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BUNDLE_ROOT="$SCRIPT_DIR"
+BIN="${MATRIX_WLROOTS_BIN:-$BUNDLE_ROOT/bin/matrix}"
+LIB_DIR="$BUNDLE_ROOT/lib"
+SHARE_DIR="$BUNDLE_ROOT/share/HackMatrix"
+USER_HOME="${HACKMATRIX_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/HackMatrix}"
+CONFIG_HOME="${HACKMATRIX_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/HackMatrix}"
+
+if [[ ! -x "$BIN" ]]; then
+  echo "Missing binary: $BIN" >&2
+  exit 1
+fi
+
+if [[ ! -d "$SHARE_DIR" ]]; then
+  echo "Missing bundle data directory: $SHARE_DIR" >&2
+  exit 1
+fi
+
+mkdir -p "$USER_HOME"
+mkdir -p "$CONFIG_HOME"
+
+if [[ ! -e "$CONFIG_HOME/config.yaml" ]]; then
+  cp -a "$SHARE_DIR/config.yaml" "$CONFIG_HOME/config.yaml"
+fi
+
+for path in db vox scripts shaders; do
+  if [[ ! -e "$USER_HOME/$path" ]]; then
+    cp -a "$SHARE_DIR/$path" "$USER_HOME/"
+  fi
+done
+
+mkdir -p "$USER_HOME/screenshots" "$USER_HOME/saves"
+export HACKMATRIX_CONFIG_HOME="$CONFIG_HOME"
+
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg-runtime-$USER}"
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+
+export LD_LIBRARY_PATH="$LIB_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export XCURSOR_THEME="${XCURSOR_THEME:-Adwaita}"
+export XCURSOR_SIZE="${XCURSOR_SIZE:-24}"
+export XCURSOR_PATH="${XCURSOR_PATH:-/usr/share/icons}"
+export WLR_NO_HARDWARE_CURSORS="${WLR_NO_HARDWARE_CURSORS:-1}"
+export MATRIX_WAYLANDAPP_SAMPLE_LOGS="${MATRIX_WAYLANDAPP_SAMPLE_LOGS:-1}"
+export WLR_APP_SAMPLE_LOG="${WLR_APP_SAMPLE_LOG:-1}"
+export ENABLE_RENDER_TMP_LOGS="${ENABLE_RENDER_TMP_LOGS:-1}"
+
+BACKEND=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --headless|--drm|--wayland)
+      BACKEND="${1#--}"
+      shift
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ -z "$BACKEND" && -n "${WAYLAND_DISPLAY:-}" ]]; then
+  BACKEND="wayland"
+fi
+
+if [[ -n "$BACKEND" ]]; then
+  export WLR_BACKENDS="$BACKEND"
+
+  if [[ "$BACKEND" == "drm" ]]; then
+    export LIBSEAT_BACKEND="${LIBSEAT_BACKEND:-logind}"
+
+    if [[ -z "${WLR_DRM_DEVICES:-}" && -e /dev/dri/card0 ]]; then
+      export WLR_DRM_DEVICES="/dev/dri/card0"
+    fi
+
+    if [[ -z "${XDG_RUNTIME_DIR:-}" ]]; then
+      export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+      mkdir -p "$XDG_RUNTIME_DIR"
+      chmod 700 "$XDG_RUNTIME_DIR"
+    fi
+  fi
+fi
+
+cd "$USER_HOME"
+exec "$BIN" "$@"

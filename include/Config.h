@@ -1,19 +1,23 @@
 #pragma once
-#include <string>
-#include "fkYAML/node.hpp"
 #include <memory>
+#include <string>
+#include <vector>
+#include "fkYAML/node.hpp"
 
 std::vector<std::string> split_path(const std::string& path);
 
-  class Config
+class Config
 {
 private:
   fkyaml::node config;
+  std::string configPath;
 
 public:
   static std::shared_ptr<Config> singleton();
   static std::shared_ptr<Config> _singleton;
   Config();
+  static std::string resolveConfigPath();
+  const std::string& getConfigPath() const;
 
   template<typename T>
   T get(const std::string& key_path)
