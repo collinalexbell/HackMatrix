@@ -114,8 +114,15 @@ This project still unfortunately has X11 cruft in it due to a semi botched AI sl
 
 To install these libraries, you can use your distribution's package manager. Here are the commands for some common distributions:
 
-#### YOU MUST INSTALL CROW FROM SOURCE
-[Install crow from source](https://crowcpp.org/0.3/getting_started/setup/)
+#### Crow
+HackMatrix now tries `find_package(Crow)` first and, if that fails, automatically builds Crow from source at the pinned revision `c61a26e`.
+If you want to force the source-build path or use an already checked out local Crow tree, configure CMake like this:
+
+```bash
+cmake -S . -B build -DMATRIX_FORCE_FETCH_CROW=ON -DMATRIX_CROW_SOURCE_DIR=/path/to/Crow
+```
+
+That local source override is mainly useful for offline builds or for testing the fallback path on machines that already have Crow installed globally.
 
 
 #### Ubuntu or Debian

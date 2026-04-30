@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 project(Matrix LANGUAGES C CXX)
 
+include(FetchContent)
+
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
@@ -15,14 +17,56 @@ find_package(PkgConfig REQUIRED)
 find_package(Git QUIET)
 find_program(PROTOC_EXECUTABLE protoc REQUIRED)
 
-find_package(Crow CONFIG QUIET)
-if(NOT Crow_FOUND)
-  find_package(Crow CONFIG REQUIRED
-    PATHS
-      /usr/local
-      /usr/local/lib64/cmake
-      /usr/local/lib/cmake
-  )
+option(MATRIX_FORCE_FETCH_CROW "Build Crow from source even when a system package is installed" OFF)
+set(MATRIX_CROW_GIT_REPOSITORY "https://github.com/CrowCpp/Crow.git" CACHE STRING
+  "Crow git repository used when fetching from source")
+set(MATRIX_CROW_GIT_TAG "c61a26e" CACHE STRING
+  "Pinned Crow git revision used when fetching from source")
+set(MATRIX_CROW_SOURCE_DIR "" CACHE PATH
+  "Existing Crow source checkout to use instead of downloading Crow")
+
+function(configure_crow_source_options)
+  set(CROW_BUILD_EXAMPLES OFF CACHE BOOL "Disable Crow examples when used as a dependency" FORCE)
+  set(CROW_BUILD_TESTS OFF CACHE BOOL "Disable Crow tests when used as a dependency" FORCE)
+  set(CROW_BUILD_FUZZER OFF CACHE BOOL "Disable Crow fuzzer when used as a dependency" FORCE)
+  set(CROW_INSTALL OFF CACHE BOOL "Disable Crow install rules when used as a dependency" FORCE)
+  set(CROW_ENABLE_SSL OFF CACHE BOOL "Disable optional Crow SSL support for HackMatrix" FORCE)
+  set(CROW_ENABLE_COMPRESSION OFF CACHE BOOL "Disable optional Crow compression support for HackMatrix" FORCE)
+endfunction()
+
+if(NOT MATRIX_FORCE_FETCH_CROW)
+  find_package(Crow CONFIG QUIET)
+endif()
+
+if(NOT TARGET Crow::Crow)
+  configure_crow_source_options()
+
+  if(MATRIX_CROW_SOURCE_DIR)
+    if(NOT EXISTS "${MATRIX_CROW_SOURCE_DIR}/CMakeLists.txt")
+      message(FATAL_ERROR
+        "MATRIX_CROW_SOURCE_DIR was set to '${MATRIX_CROW_SOURCE_DIR}', but that directory does not contain a CMakeLists.txt.")
+    endif()
+
+    message(STATUS "Crow not found via find_package; using local source tree ${MATRIX_CROW_SOURCE_DIR}")
+    add_subdirectory("${MATRIX_CROW_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/_deps/crow-build" EXCLUDE_FROM_ALL)
+  else()
+    if(NOT GIT_FOUND)
+      message(FATAL_ERROR
+        "Crow was not found and Git is unavailable. Install Crow, or configure with MATRIX_CROW_SOURCE_DIR to point at a Crow checkout.")
+    endif()
+
+    message(STATUS "Crow not found via find_package; fetching ${MATRIX_CROW_GIT_REPOSITORY} at ${MATRIX_CROW_GIT_TAG}")
+    FetchContent_Declare(crow
+      GIT_REPOSITORY "${MATRIX_CROW_GIT_REPOSITORY}"
+      GIT_TAG "${MATRIX_CROW_GIT_TAG}"
+      GIT_SHALLOW FALSE
+    )
+    FetchContent_MakeAvailable(crow)
+  endif()
+endif()
+
+if(NOT TARGET Crow::Crow)
+  message(FATAL_ERROR "Crow dependency setup failed to provide the Crow::Crow target.")
 endif()
 
 # Prefer the locally built wlroots tree.
