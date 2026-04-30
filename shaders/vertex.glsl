@@ -64,6 +64,13 @@ void main()
     Barycentric = vec3(0.0);
     lineColor = attr1;
     VoxelColor = vec3(1.0);
+  } else if (isDynamicObject) {
+    gl_Position = projection * view * vec4(position, 1.0);
+    FragPos = vec3(position);
+    TexCoord = vec2(0.0);
+    Normal = vec3(0.0, 1.0, 0.0);
+    Barycentric = vec3(0.0);
+    VoxelColor = attr1;
   } else {
     gl_Position = projection * view * vec4(position, 1.0);
     FragPos = vec3(position);
@@ -72,4 +79,5 @@ void main()
     Barycentric = vec3(0.0);
     VoxelColor = vec3(1.0);
   }
+
 }

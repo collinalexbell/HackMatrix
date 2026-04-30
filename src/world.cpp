@@ -39,10 +39,24 @@ World::World(shared_ptr<EntityRegistry> registry,
   initLogger(loggerSink);
   logger->debug("Hello World!");
   initChunks();
+  // class VoxelSpace (an abstraction on DynamicObjectSpace) {
+  //    todo actually implement as class
   dynamicObjects = make_shared<DynamicObjectSpace>();
-  dynamicCube = make_shared<DynamicCube>(glm::vec3(0.0f, 8.0f, 0.0f),
-                                         glm::vec3(0.1f, 0.1f, 0.1f));
-  dynamicObjects->addObject(dynamicCube);
+  dynamicObjects2 = make_shared<DynamicObjectSpace>();
+  for(int x = 0; x < 64; x++)
+    for(int y = 0; y < 64; y++)
+      for(int z = 0; z < 64; z++) {
+        float xMargin = 0.2;
+        float yMargin = 0.2;
+        float zMargin = 0.2;
+        auto pos = glm::vec3(0.0f + x * xMargin, 5.0f + y*yMargin, 0.0f + z * zMargin);
+        auto voxelSize = glm::vec3(0.1f, 0.1f, 0.1f);
+        auto color = glm::vec3(float(x)/64.0, float(y)/64.0,float(z)/64.0);
+        auto cube = make_shared<DynamicCube>(pos, voxelSize, color);
+        dynamicObjects->addObject(cube);
+        //auto cube2 = make_shared<DynamicCube>(pos + glm::vec3(0,10.0f, 0), voxelSize, color);
+      }
+  // } end class VoxelSpace (not implemented yet)
 }
 
 void
@@ -1115,6 +1129,15 @@ World::tick()
   if (dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
   }
-  dynamicCube->move(glm::vec3(0.0f, 0.0f, 0.01f));
+  if (dynamicObjects2->damaged()) {
+    //renderer->updateDynamicObjects(dynamicObjects2);
+  }
+  auto ids = dynamicObjects->getObjectIds();
+  /*
+  for(int i = 0; i < ids.size(); i++) {
+    auto obj = dynamicObjects->getObjectById(ids[i]);
+    obj->move(glm::vec3(0.0f, 0.0f, 0.01f));
+  }
+  */
   //mesh();
 }

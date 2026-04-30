@@ -1,4 +1,6 @@
 #include "systems/Update.h"
+#include "systems/ApplyRotation.h"
+#include "systems/ApplyTranslation.h"
 #include "components/BoundingSphere.h"
 #include "model.h"
 #include "systems/Intersections.h"
@@ -18,6 +20,9 @@ systems::updateAll(std::shared_ptr<EntityRegistry> registry, Renderer* renderer)
   if (updatedSomething) {
     systems::updateLighting(registry, renderer);
   }
+
+  systems::applyRotation(registry);
+  systems::applyTranslations(registry);
 }
 
 void

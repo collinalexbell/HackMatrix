@@ -11,9 +11,10 @@ DynamicObject::id()
   return _id;
 }
 
-DynamicCube::DynamicCube(glm::vec3 position, glm::vec3 size)
+DynamicCube::DynamicCube(glm::vec3 position, glm::vec3 size, glm::vec3 color)
   : _position(position)
-  , size(size){};
+  , size(size)
+  , color(color) {};
 
 Renderable
 DynamicCube::makeRenderable()
@@ -57,6 +58,7 @@ DynamicCube::makeRenderable()
   // Fill vertices for each triangle
   for (int i = 0; i < 36; i++) {
     renderable.vertices.push_back(position + vertices[indices[i]]);
+    renderable.colors.push_back(color);
   }
 
   return renderable;
@@ -72,6 +74,7 @@ DynamicCube::getPosition()
 void
 DynamicCube::move(glm::vec3 addition)
 {
+  //unique_lock<shared_mutex> lock(readWriteMutex);
   setDamaged(true);
   setPosition(getPosition() + addition);
 }
@@ -97,6 +100,7 @@ DynamicCube::setDamaged(bool damaged)
   _damaged = damaged;
 }
 
+
 Renderable
 DynamicObjectSpace::makeRenderable()
 {
@@ -109,6 +113,10 @@ DynamicObjectSpace::makeRenderable()
     combinedRenderable.vertices.insert(combinedRenderable.vertices.end(),
                                        objRenderable.vertices.begin(),
                                        objRenderable.vertices.end());
+
+    combinedRenderable.colors.insert(combinedRenderable.colors.end(),
+                                     objRenderable.colors.begin(),
+                                     objRenderable.colors.end());
   }
 
   return combinedRenderable;

@@ -360,7 +360,8 @@ Controls::handleChangePlayerSpeed(GLFWwindow* window)
 void
 Controls::goToApp(entt::entity app)
 {
-  if (!wm || !windowManagerSpace) {
+  if (!wm || !windowManagerSpace || !registry || !registry->valid(app) ||
+      !registry->all_of<Positionable>(app)) {
     return;
   }
   float deltaZ = windowManagerSpace->getViewDistanceForWindowSize(app);
@@ -612,20 +613,14 @@ Controls::handleKeySym(xkb_keysym_t sym,
       resp.clearInputForces = true;
       int index = static_cast<int>(sym - XKB_KEY_1);
       log_controls("number hotkey: %d" ,index); 
-      if (index >= 0 && index < static_cast<int>(wm->getAppsWithHotKeys().size())) {
-        if (shiftHeld) {
-          if (wm->getCurrentlyFocusedApp().has_value()) {
-            int source = wm->findAppsHotKey(wm->getCurrentlyFocusedApp().value());
-            wm->swapHotKeys(source, index);
-          }
-        } else {
-          if (!wm->getAppsWithHotKeys()[index].has_value()) {
-            return resp;
-          }
-          wm->unfocusApp();
-          auto ent = wm->getAppsWithHotKeys()[index].value();
-          goToApp(ent);
+      if (shiftHeld) {
+        if (wm->getCurrentlyFocusedApp().has_value()) {
+          int source = wm->findAppsHotKey(wm->getCurrentlyFocusedApp().value());
+          wm->swapHotKeys(source, index);
         }
+      } else if (auto ent = wm->getHotkeyTarget(index)) {
+        wm->unfocusApp();
+        goToApp(*ent);
       }
       // When jumping via hotkey, drop the current seat focus so pointer/keyboard
       // focus can be rebound to the destination app after the move finishes.

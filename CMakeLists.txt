@@ -15,6 +15,16 @@ find_package(PkgConfig REQUIRED)
 find_package(Git QUIET)
 find_program(PROTOC_EXECUTABLE protoc REQUIRED)
 
+find_package(Crow CONFIG QUIET)
+if(NOT Crow_FOUND)
+  find_package(Crow CONFIG REQUIRED
+    PATHS
+      /usr/local
+      /usr/local/lib64/cmake
+      /usr/local/lib/cmake
+  )
+endif()
+
 # Prefer the locally built wlroots tree.
 set(WLROOTS_DIR "${CMAKE_SOURCE_DIR}/wlroots")
 set(WLROOTS_BUILD_DIR "${WLROOTS_DIR}/build")
@@ -339,6 +349,7 @@ target_link_options(matrix PRIVATE
 )
 
 target_link_libraries(matrix PRIVATE
+  Crow::Crow
   ${WLROOTS_LIBRARIES}
   ${GLFW_LIBRARIES}
   ${PROTOBUF_LIBRARIES}
@@ -357,4 +368,24 @@ target_link_libraries(matrix PRIVATE
   sqlite3
   EGL
   GLESv2
+)
+
+add_executable(bootServer
+  src/MultiPlayer/bootServer.cpp
+  src/MultiPlayer/Server.cpp
+)
+
+set_target_properties(bootServer PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tools/deployTools"
+)
+
+target_include_directories(bootServer PRIVATE
+  include
+  /usr/local/include
+)
+
+target_compile_options(bootServer PRIVATE -O3 -g)
+
+target_link_libraries(bootServer PRIVATE
+  pthread
 )

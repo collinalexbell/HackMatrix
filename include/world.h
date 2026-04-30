@@ -77,6 +77,7 @@ class World : public WorldInterface
   void initPreloadedChunks();
   void logCoordinates(array<Coordinate, 2> c, string label);
   shared_ptr<DynamicObjectSpace> dynamicObjects;
+  shared_ptr<DynamicObjectSpace> dynamicObjects2;
   void cubeAction(Action toTake);
   void dynamicObjectAction(Action toTake);
 

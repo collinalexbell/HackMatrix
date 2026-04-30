@@ -115,6 +115,7 @@ Renderer::genDynamicObjectResources()
 {
   DYNAMIC_OBJECT_VERTEX.create();
   DYNAMIC_OBJECT_POSITIONS.create(GL_ARRAY_BUFFER);
+  DYNAMIC_OBJECT_COLORS.create(GL_ARRAY_BUFFER);
 };
 
 void
@@ -169,6 +170,10 @@ Renderer::setupDynamicObjectVertexAttributePointers()
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
+
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(1);
 }
 
 void
@@ -233,9 +238,15 @@ int MAX_CUBES = 1000000;
 void
 Renderer::fillDynamicObjectBuffers()
 {
+  int CUBES = 1000000;
+  int VERTS = CUBES * 36;
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
   glBufferData(
-    GL_ARRAY_BUFFER, (sizeof(glm::vec3) * 30000), (void*)0, GL_DYNAMIC_DRAW);
+    GL_ARRAY_BUFFER, (sizeof(glm::vec3) * VERTS), (void*)0, GL_DYNAMIC_DRAW);
+
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
+  glBufferData(
+               GL_ARRAY_BUFFER, (sizeof(glm::vec3) * VERTS), (void*)0, GL_DYNAMIC_DRAW);
 }
 
 void
@@ -556,6 +567,14 @@ Renderer::updateDynamicObjects(shared_ptr<DynamicObject> obj)
                   0,
                   sizeof(glm::vec3) * renderable.vertices.size(),
                   renderable.vertices.data());
+
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
+  glBufferSubData(GL_ARRAY_BUFFER,
+                  0,
+                  sizeof(glm::vec3) * renderable.colors.size(),
+                  renderable.colors.data());
+
+
   verticesInDynamicObjects = renderable.vertices.size();
 }
 
@@ -594,8 +613,14 @@ Renderer::setLines(const std::vector<Line>& lines)
 void
 Renderer::renderDynamicObjects()
 {
-  glBindVertexArray(DYNAMIC_OBJECT_VERTEX);
+  shader->setBool("isApp", false);
+  shader->setBool("isModel", false);
+  shader->setBool("isVoxel", false);
   shader->setBool("isDynamicObject", true);
+  shader->setBool("directRender", false);
+  shader->setBool("isLine", false);
+  glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
+  glBindVertexArray(DYNAMIC_OBJECT_VERTEX);
   glDrawArrays(GL_TRIANGLES, 0, verticesInDynamicObjects);
   shader->setBool("isDynamicObject", false);
 }
@@ -920,7 +945,6 @@ Renderer::renderApps()
     1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
   glEnableVertexAttribArray(1);
   glDisable(GL_CULL_FACE);
- 
 
   auto bindAppTexture = [&](WaylandApp* app) {
     glActiveTexture(GL_TEXTURE0);
@@ -1299,6 +1323,7 @@ Renderer::render(RenderPerspective perspective,
   }
   updateShaderUniforms();
   lightUniforms(perspective, fromLight);
+  renderDynamicObjects();
   renderModels(perspective);
   if (perspective == CAMERA) {
     renderVoxels();

@@ -117,7 +117,7 @@ To install these libraries, you can use your distribution's package manager. Her
 #### Ubuntu or Debian
 
 ```bash
-sudo apt-get install wofi wayland-protocols rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
+sudo apt-get install cmake wofi wayland-protocols rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
 ```
 
 #### Fedora or CentOS
