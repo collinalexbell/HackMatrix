@@ -602,6 +602,39 @@ Controls::handleKeySym(xkb_keysym_t sym,
 
   // Modifier-driven window manager hotkeys.
   if (modifierHeld && wm) {
+    xkb_keysym_t hotkeySym = sym;
+    if (shiftHeld) {
+      switch (sym) {
+        case XKB_KEY_exclam:
+          hotkeySym = XKB_KEY_1;
+          break;
+        case XKB_KEY_at:
+          hotkeySym = XKB_KEY_2;
+          break;
+        case XKB_KEY_numbersign:
+          hotkeySym = XKB_KEY_3;
+          break;
+        case XKB_KEY_dollar:
+          hotkeySym = XKB_KEY_4;
+          break;
+        case XKB_KEY_percent:
+          hotkeySym = XKB_KEY_5;
+          break;
+        case XKB_KEY_asciicircum:
+          hotkeySym = XKB_KEY_6;
+          break;
+        case XKB_KEY_ampersand:
+          hotkeySym = XKB_KEY_7;
+          break;
+        case XKB_KEY_asterisk:
+          hotkeySym = XKB_KEY_8;
+          break;
+        case XKB_KEY_parenleft:
+          hotkeySym = XKB_KEY_9;
+          break;
+      }
+    }
+
     if (sym == XKB_KEY_E || sym == XKB_KEY_e) {
       wm->unfocusApp();
       resp.blockClientDelivery = true;
@@ -609,9 +642,9 @@ Controls::handleKeySym(xkb_keysym_t sym,
       resp.consumed = true;
       return resp;
     }
-    if (sym >= XKB_KEY_1 && sym <= XKB_KEY_9) {
+    if (hotkeySym >= XKB_KEY_1 && hotkeySym <= XKB_KEY_9) {
       resp.clearInputForces = true;
-      int index = static_cast<int>(sym - XKB_KEY_1);
+      int index = static_cast<int>(hotkeySym - XKB_KEY_1);
       log_controls("number hotkey: %d" ,index); 
       if (shiftHeld) {
         if (wm->getCurrentlyFocusedApp().has_value()) {

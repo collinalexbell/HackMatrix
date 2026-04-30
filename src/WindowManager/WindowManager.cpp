@@ -360,14 +360,18 @@ void WindowManager::removeAppForWindow(Window window) {
 }
 
 void WindowManager::swapHotKeys(int a, int b) {
-  if (a >= 0 && b >= 0 &&
-      a < static_cast<int>(appsWithHotKeys.size()) &&
-      b < static_cast<int>(appsWithHotKeys.size())) {
-    auto aOpt = appsWithHotKeys[a];
-    appsWithHotKeys[a] = appsWithHotKeys[b];
-    appsWithHotKeys[b] = aOpt;
-    compactHotkeyList();
+  if (a < 0 || b < 0) {
+    return;
   }
+
+  std::lock_guard<std::mutex> lock(renderLoopMutex);
+  size_t requiredSize = static_cast<size_t>(std::max(a, b) + 1);
+  if (appsWithHotKeys.size() < requiredSize) {
+    appsWithHotKeys.resize(requiredSize);
+  }
+
+  std::swap(appsWithHotKeys[a], appsWithHotKeys[b]);
+  compactHotkeyList();
 }
 
 void WindowManager::assignHotkeySlot(entt::entity ent)
