@@ -60,6 +60,7 @@ struct WlrOutputHandle {
   int depth_height = 0;
   int width = 0;
   int height = 0;
+  wl_listener request_state;
   wl_listener commit;
 };
 

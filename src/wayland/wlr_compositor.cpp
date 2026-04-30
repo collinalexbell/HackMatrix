@@ -89,6 +89,52 @@ float SCREEN_HEIGHT = 0;
 
 namespace {
 
+static std::pair<int, int>
+get_current_output_size(WlrServer* server)
+{
+  if (server && server->primary_output && server->primary_output->width > 0 &&
+      server->primary_output->height > 0) {
+    return { server->primary_output->width, server->primary_output->height };
+  }
+
+  int width = SCREEN_WIDTH > 0 ? static_cast<int>(SCREEN_WIDTH) : 0;
+  int height = SCREEN_HEIGHT > 0 ? static_cast<int>(SCREEN_HEIGHT) : 0;
+
+  if (width <= 0 || height <= 0) {
+    if (const char* w_env = std::getenv("WLR_X11_OUTPUT_WIDTH")) {
+      width = std::max(width, std::atoi(w_env));
+    }
+    if (const char* h_env = std::getenv("WLR_X11_OUTPUT_HEIGHT")) {
+      height = std::max(height, std::atoi(h_env));
+    }
+  }
+  if (width <= 0 || height <= 0) {
+    if (const char* w_env = std::getenv("SCREEN_WIDTH")) {
+      width = std::max(width, std::atoi(w_env));
+    }
+    if (const char* h_env = std::getenv("SCREEN_HEIGHT")) {
+      height = std::max(height, std::atoi(h_env));
+    }
+  }
+
+  width = std::max(width, 1280);
+  height = std::max(height, 720);
+  return { width, height };
+}
+
+static std::pair<int, int>
+get_initial_toplevel_size(WlrServer* server)
+{
+  auto [output_w, output_h] = get_current_output_size(server);
+  int width = Bootable::DEFAULT_WIDTH;
+  int height = Bootable::DEFAULT_HEIGHT;
+  if (width <= 0 || height <= 0) {
+    width = std::max(1, output_w * 85 / 100);
+    height = std::max(1, output_h * 85 / 100);
+  }
+  return { width, height };
+}
+
 static void
 add_action(WlrServer* server, PendingWlAction action)
 {
@@ -503,7 +549,8 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
   auto* xdg_surface = static_cast<wlr_xdg_surface*>(data);
   wlr_log(WLR_DEBUG, "new xdg_surface %p", (void*)xdg_surface);
   if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && xdg_surface->toplevel) {
-    wlr_xdg_toplevel_set_size(xdg_surface->toplevel, 1280, 720);
+    auto [width, height] = get_initial_toplevel_size(server);
+    wlr_xdg_toplevel_set_size(xdg_surface->toplevel, width, height);
     wlr_xdg_surface_schedule_configure(xdg_surface);
   } else if (xdg_surface->role == WLR_XDG_SURFACE_ROLE_POPUP) {
     // Popups need an initial configure to define their anchor/geometry.
@@ -533,7 +580,8 @@ handle_new_xdg_surface(wl_listener* listener, void* data)
     }
     if (!handle->configured_sent) {
       if (handle->xdg->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL && handle->xdg->toplevel) {
-        wlr_xdg_toplevel_set_size(handle->xdg->toplevel, 1280, 720);
+        auto [width, height] = get_initial_toplevel_size(handle->server);
+        wlr_xdg_toplevel_set_size(handle->xdg->toplevel, width, height);
       }
       wlr_log(WLR_DEBUG, "xdg_surface %p initial configure", (void*)handle->xdg);
       wlr_xdg_surface_schedule_configure(handle->xdg);
@@ -598,7 +646,11 @@ handle_new_xwayland_surface(wl_listener* listener, void* data)
   handle->server = server;
   handle->xsurface = xsurface;
   handle->accessory = xsurface->override_redirect;
-  wlr_xwayland_surface_configure(xsurface, 0, 0, 1280, 720);
+  {
+    auto [width, height] = get_initial_toplevel_size(server);
+    wlr_xwayland_surface_configure(
+      xsurface, 0, 0, static_cast<uint16_t>(width), static_cast<uint16_t>(height));
+  }
   
 
   handle->request_configure.notify = [](wl_listener* listener, void* data) {
@@ -609,8 +661,11 @@ handle_new_xwayland_surface(wl_listener* listener, void* data)
     if (!handle || !handle->xsurface || !event) {
       return;
     }
-    uint16_t width = Bootable::DEFAULT_WIDTH;
-    uint16_t height = Bootable::DEFAULT_HEIGHT;
+    auto [default_width, default_height] = get_initial_toplevel_size(handle->server);
+    uint16_t width = static_cast<uint16_t>(
+      event->width > 0 ? event->width : default_width);
+    uint16_t height = static_cast<uint16_t>(
+      event->height > 0 ? event->height : default_height);
     wlr_xwayland_surface_configure(
       handle->xsurface, 0, 0, width, height);
     if (handle->app) {
@@ -798,6 +853,7 @@ handle_output_destroy(wl_listener* listener, void* data)
   }
   wl_list_remove(&handle->frame.link);
   wl_list_remove(&handle->destroy.link);
+  wl_list_remove(&handle->request_state.link);
   wl_list_remove(&handle->commit.link);
   if (handle->swapchain) {
     wlr_swapchain_destroy(handle->swapchain);
@@ -1085,6 +1141,44 @@ handle_output_commit(wl_listener* listener, void* data)
   std::fprintf(stderr, "output resized: %dx%d\n", handle->width, handle->height);
 }
 
+static void
+handle_output_request_state(wl_listener* listener, void* data)
+{
+  auto* handle =
+    wl_container_of(listener, static_cast<WlrOutputHandle*>(nullptr), request_state);
+  auto* event = static_cast<wlr_output_event_request_state*>(data);
+  if (!handle || !handle->output || !event || event->output != handle->output) {
+    return;
+  }
+
+  if (!wlr_output_commit_state(handle->output, event->state)) {
+    wlr_log(WLR_ERROR,
+            "Failed to commit requested state for output %s",
+            handle->output->name ? handle->output->name : "(unknown)");
+    return;
+  }
+
+  if (handle->width != handle->output->width ||
+      handle->height != handle->output->height) {
+    handle->width = handle->output->width;
+    handle->height = handle->output->height;
+    if (handle->server && handle->server->primary_output == handle->output) {
+      SCREEN_WIDTH = static_cast<float>(handle->output->width);
+      SCREEN_HEIGHT = static_cast<float>(handle->output->height);
+      handle->server->pointer_x =
+        std::clamp(handle->server->pointer_x, 0.0, static_cast<double>(handle->output->width));
+      handle->server->pointer_y =
+        std::clamp(handle->server->pointer_y, 0.0, static_cast<double>(handle->output->height));
+    }
+    std::fprintf(stderr,
+                 "output request_state applied: %dx%d\n",
+                 handle->width,
+                 handle->height);
+  }
+
+  wlr_output_schedule_frame(handle->output);
+}
+
 // This is called when wayland detects a new output such as a monitor
 // It sets up size, cursor info, and frame notify handler (which will render each frame)
 void
@@ -1120,8 +1214,6 @@ handle_new_output(wl_listener* listener, void* data)
   // projection and texture sizing match the real buffer size.
   SCREEN_WIDTH = static_cast<float>(output->width);
   SCREEN_HEIGHT = static_cast<float>(output->height);
-  //SCREEN_WIDTH = static_cast<float>(1920);
-  //SCREEN_HEIGHT = static_cast<float>(1080);
 
   auto* handle = new WlrOutputHandle();
   handle->server = server;
@@ -1150,6 +1242,8 @@ handle_new_output(wl_listener* listener, void* data)
   wl_signal_add(&output->events.frame, &handle->frame);
   handle->destroy.notify = handle_output_destroy;
   wl_signal_add(&output->events.destroy, &handle->destroy);
+  handle->request_state.notify = handle_output_request_state;
+  wl_signal_add(&output->events.request_state, &handle->request_state);
   handle->commit.notify = handle_output_commit;
   wl_signal_add(&output->events.commit, &handle->commit);
 
