@@ -114,6 +114,10 @@ This project still unfortunately has X11 cruft in it due to a semi botched AI sl
 
 To install these libraries, you can use your distribution's package manager. Here are the commands for some common distributions:
 
+#### YOU MUST INSTALL CROW FROM SOURCE
+[Install crow from source](https://crowcpp.org/0.3/getting_started/setup/)
+
+
 #### Ubuntu or Debian
 
 ```bash
