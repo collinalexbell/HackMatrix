@@ -138,6 +138,23 @@ pkg_check_modules(WLROOTS REQUIRED ${WLROOTS_PC_NAME} wayland-server xkbcommon)
 pkg_check_modules(GLFW REQUIRED glfw3)
 pkg_check_modules(PROTOBUF REQUIRED protobuf)
 
+execute_process(
+  COMMAND "${PROTOC_EXECUTABLE}" --version
+  OUTPUT_VARIABLE PROTOC_VERSION_OUTPUT
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  RESULT_VARIABLE PROTOC_VERSION_RESULT
+)
+if(NOT PROTOC_VERSION_RESULT EQUAL 0)
+  message(FATAL_ERROR "Failed to query protoc version from ${PROTOC_EXECUTABLE}.")
+endif()
+
+string(REGEX REPLACE "^libprotoc " "" PROTOC_VERSION "${PROTOC_VERSION_OUTPUT}")
+if(NOT PROTOC_VERSION VERSION_EQUAL PROTOBUF_VERSION)
+  message(FATAL_ERROR
+    "protoc (${PROTOC_VERSION}) does not match libprotobuf (${PROTOBUF_VERSION}). "
+    "Use matching versions to avoid generated-code/runtime incompatibilities.")
+endif()
+
 set(PROTO_FILES
   "protos/api.proto"
 )
@@ -155,6 +172,7 @@ set(PROTO_HASH_FILE "${CMAKE_BINARY_DIR}/generated/proto-inputs.sha256")
 set(PROTO_STAMP_FILE "${CMAKE_BINARY_DIR}/generated/protos.stamp")
 set(PROTO_GENERATOR_SCRIPT
   "${CMAKE_BINARY_DIR}/generated/generate_protos_if_changed.cmake")
+set(PROTO_TOOLCHAIN_FINGERPRINT "protoc=${PROTOC_VERSION};libprotobuf=${PROTOBUF_VERSION}")
 
 string(JOIN "\"\n  \"" PROTO_ABSOLUTE_FILES_LITERAL ${PROTO_ABSOLUTE_FILES})
 
@@ -170,11 +188,12 @@ set(PROTO_PYTHON_OUTPUT_DIR "@PROTO_PYTHON_OUTPUT_DIR@")
 set(PROTO_PYTHON_MODULE "@PROTO_PYTHON_MODULE@")
 set(PROTO_HASH_FILE "@PROTO_HASH_FILE@")
 set(PROTO_STAMP_FILE "@PROTO_STAMP_FILE@")
+set(PROTO_TOOLCHAIN_FINGERPRINT "@PROTO_TOOLCHAIN_FINGERPRINT@")
 set(PROTO_FILES
   "@PROTO_ABSOLUTE_FILES_LITERAL@"
 )
 
-set(PROTO_INPUT_HASH "")
+set(PROTO_INPUT_HASH "toolchain:${PROTO_TOOLCHAIN_FINGERPRINT}\n")
 foreach(PROTO_FILE IN LISTS PROTO_FILES)
   file(SHA256 "${PROTO_FILE}" PROTO_FILE_HASH)
   string(APPEND PROTO_INPUT_HASH "${PROTO_FILE}:${PROTO_FILE_HASH}\n")
