@@ -142,11 +142,18 @@ sudo dnf install wayland-protocols wayland wofi rofi xdotool xorg-x11-utils prot
 I'm currently working on an issue with protobuf compilation errors for Arch. [This PR](https://github.com/collinalexbell/HackMatrix/pull/48) shows how to resolve the issue.
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
-On arch you can also install the PKGBUILD in the directory distributions/arch/
-
 ```bash
 sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
 ```
+
+On arch you can also install the AUR package, or use the PKGBUILD in distributions/arch/
+
+Replace "yay" with your package manager.
+
+```bash
+yay -S hackmatrix-git
+```
+
 #### Gentoo
 ```bash
  sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland-protocols x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
@@ -158,17 +165,22 @@ sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xin
 
 ***warning*** this is a new Wayland build. It will be buggy, but I merged it to main regardless
 
-
 ```bash
 mkdir -p build
 cd build
 cmake ..
-make -j
+make -j$(nproc)
 ```
 
 ## Running
 It is recommended to launch from tty. In the root directory of the project
 Run `./launch` 
+
+If you installed HackMatrix using the AUR package, run it with the command
+
+```bash
+hackmatrix
+```
 
 ### How to get the client_libraries working
 run `scripts/install-python-clientlib.sh` from the HackMatrix root to do an automated install
