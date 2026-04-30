@@ -144,9 +144,23 @@ If you are on Arch and would like to help with a PR that I can get merged into m
 
 On arch you can also install the PKGBUILD in the directory distributions/arch/
 
+##### Option 1
 ```bash
-sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
+sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite asio
 ```
+You also need to install meson and ninja
+```
+sudo pacman -S --needed meson ninja
+```
+
+##### Option 2
+There also exists an aur package of Hackmatrix maintened by flumpsi
+(Use your preferred aur helper)
+```
+yay -S hackmatrix-git
+```
+(there is currently a bug with the aur version where you have create the screenshot directory for screenshots to work.)
+
 #### Gentoo
 ```bash
  sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland-protocols x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
