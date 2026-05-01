@@ -1,6 +1,4 @@
-# HackMatrix (Archived)
-
-This repository is Archived. Work has moved to https://collinalexbell.itch.io/hackmatrix
+# This repository is Archived. Work has moved to https://collinalexbell.itch.io/hackmatrix
 
 <img src="images/header_img.png" width="800">
 
