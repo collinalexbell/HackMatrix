@@ -1080,12 +1080,31 @@ Controls::handleWaylandHotkeys()
     return false;
   }
 
+  auto focusedAppCandidate = [&]() -> std::optional<entt::entity> {
+    if (auto pending = wm->getPendingFocusedApp()) {
+      return pending;
+    }
+    return wm->getCurrentlyFocusedApp();
+  };
+
   const bool appFocused = wm->hasCurrentOrPendingFocus();
 
   if (appFocused) {
     if (is_configured_or_fallback_pressed(
           controlMappings, pressed, "unfocus_app", XKB_KEY_e, XKB_KEY_E) &&
         debounce(lastKeyPressTime)) {
+      wm->unfocusApp();
+      return true;
+    }
+
+    if (isPressedEither(XKB_KEY_q, XKB_KEY_Q) && debounce(lastKeyPressTime)) {
+      if (auto ent = focusedAppCandidate()) {
+        if (auto* comp = registry->try_get<WaylandApp::Component>(*ent)) {
+          if (comp->app) {
+            comp->app->close();
+          }
+        }
+      }
       wm->unfocusApp();
       return true;
     }
@@ -1159,9 +1178,8 @@ Controls::handleWaylandHotkeys()
   }
 
   if (isPressedEither(XKB_KEY_q, XKB_KEY_Q) && debounce(lastKeyPressTime)) {
-    if (wm->getCurrentlyFocusedApp().has_value()) {
-      if (auto* comp = registry->try_get<WaylandApp::Component>(
-            wm->getCurrentlyFocusedApp().value())) {
+    if (auto ent = focusedAppCandidate()) {
+      if (auto* comp = registry->try_get<WaylandApp::Component>(*ent)) {
         if (comp->app) {
           comp->app->close();
         }
