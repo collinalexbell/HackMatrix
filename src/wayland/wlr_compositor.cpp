@@ -1016,9 +1016,11 @@ handle_output_frame(wl_listener* listener, void* data)
         }
       }
       bool pointerVisible = pointerFocusRequested || (cursorOverrideSet && cursorOverrideVisible);
+      /* wlroots no longer supports pointer locking on the newest
+         version via wlr_wl_output
       if (handle->output && wlr_output_is_wl(handle->output)) {
         wlr_wl_output_set_pointer_lock(handle->output, !pointerVisible);
-      }
+      } */
       if (!pointerVisible &&
           (server->input.delta_x != 0.0 || server->input.delta_y != 0.0)) {
         if (controls) {
@@ -1237,9 +1239,10 @@ handle_new_output(wl_listener* listener, void* data)
   if (!server->primary_output) {
     server->primary_output = output;
   }
+  /* wlroots no longer exposes fullscreen control via wlr_wl_output
   if (wlr_output_is_wl(output)) {
     wlr_wl_output_set_fullscreen(output, true);
-  }
+  } */
   for (auto& entry : server->surface_map) {
     wlr_surface_send_enter(entry.first, output);
   }
