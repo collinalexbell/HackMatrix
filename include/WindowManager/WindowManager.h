@@ -162,7 +162,7 @@ public:
   bool isWaylandMode() const override { return waylandMode; }
   ~WindowManager();
   optional<entt::entity> getCurrentlyFocusedApp() override;
-  optional<entt::entity> getPendingFocusedApp() override { return pendingFocusedApp; }
+  optional<entt::entity> getPendingFocusedApp() override;
   bool hasCurrentOrPendingFocus() override; 
   void focusApp(entt::entity) override;
   void wire(WindowManagerPtr sharedThis, Camera* camera, Renderer* renderer) override;

@@ -112,13 +112,17 @@ parseInlineEnvXdg(const std::string& program)
 
 static void
 configureWaylandChildEnvironment(const std::string& waylandDisplay,
-                                 const std::string& runtimeDir)
+                                 const std::string& runtimeDir,
+                                 const std::string& xDisplay)
 {
   if (!waylandDisplay.empty()) {
     setenv("WAYLAND_DISPLAY", waylandDisplay.c_str(), 1);
   }
   if (!runtimeDir.empty()) {
     setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
+  }
+  if (!xDisplay.empty()) {
+    setenv("DISPLAY", xDisplay.c_str(), 1);
   }
 
   // Force toolkit stacks to prefer the nested HackMatrix Wayland session.
@@ -131,6 +135,11 @@ configureWaylandChildEnvironment(const std::string& waylandDisplay,
   setenv("CLUTTER_BACKEND", "wayland", 1);
   setenv("ELM_DISPLAY", "wl", 1);
   setenv("MOZ_ENABLE_WAYLAND", "1", 1);
+  // Chromium/Electron don't honor the GTK/Qt hints above. Prefer Wayland
+  // explicitly so nested launches stay inside HackMatrix instead of falling
+  // back to the parent compositor's X11 session.
+  setenv("OZONE_PLATFORM", "wayland", 1);
+  setenv("ELECTRON_OZONE_PLATFORM_HINT", "wayland", 1);
 }
 
 static unsigned int
@@ -157,7 +166,14 @@ resolveHotkeyMaskFromConfig()
 void WindowManager::menu() {
   auto program = menuProgram;
   std::string runtimeDir = parseInlineEnvXdg(program);
-  std::string waylandDisplay = getEnv("WAYLAND_DISPLAY", environ);
+  std::string waylandDisplay = getEnv("HACKMATRIX_WAYLAND_DISPLAY", environ);
+  std::string xDisplay = getEnv("HACKMATRIX_DISPLAY", environ);
+  if (waylandDisplay.empty()) {
+    waylandDisplay = getEnv("WAYLAND_DISPLAY", environ);
+  }
+  if (xDisplay.empty()) {
+    xDisplay = getEnv("DISPLAY", environ);
+  }
   if (runtimeDir.empty()) {
     const char* envVal = getEnv("XDG_RUNTIME_DIR", environ);
     if (envVal) {
@@ -170,11 +186,11 @@ void WindowManager::menu() {
       int mk = mkdir(runtimeDir.c_str(), 0700);
     }
   }
-  std::thread([program, runtimeDir, waylandDisplay] {
+  std::thread([program, runtimeDir, waylandDisplay, xDisplay] {
     pid_t pid = fork();
     if (pid == 0) {
       setsid();
-      configureWaylandChildEnvironment(waylandDisplay, runtimeDir);
+      configureWaylandChildEnvironment(waylandDisplay, runtimeDir, xDisplay);
       WL_WM_LOG("WM: launching menu with WAYLAND_DISPLAY=%s XDG_RUNTIME_DIR=%s DISPLAY=%s\n",
                 std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)",
                 std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)",
@@ -229,20 +245,42 @@ WindowManager::wire(WindowManagerPtr sharedThis,
 bool
 WindowManager::hasCurrentOrPendingFocus()
 {
-  auto rv = false;
-  std::optional<entt::entity> focusCandidate = getPendingFocusedApp();
-  if (!focusCandidate) {
-    focusCandidate = getCurrentlyFocusedApp();
+  auto isValidFocus = [this](const std::optional<entt::entity>& ent) {
+    return ent.has_value() && registry && registry->valid(*ent);
+  };
+
+  if (isValidFocus(pendingFocusedApp)) {
+    return true;
   }
-  if (focusCandidate) {
-    rv = true;
+  if (pendingFocusedApp.has_value()) {
+    pendingFocusedApp = std::nullopt;
   }
-  return rv;
+
+  if (isValidFocus(currentlyFocusedApp)) {
+    return true;
+  }
+  if (currentlyFocusedApp.has_value()) {
+    currentlyFocusedApp = std::nullopt;
+  }
+
+  return false;
 }
 
 optional<entt::entity> WindowManager::getCurrentlyFocusedApp() {
-    return currentlyFocusedApp;
- }
+  if (currentlyFocusedApp && (!registry || !registry->valid(*currentlyFocusedApp))) {
+    currentlyFocusedApp = std::nullopt;
+  }
+  return currentlyFocusedApp;
+}
+
+optional<entt::entity>
+WindowManager::getPendingFocusedApp()
+{
+  if (pendingFocusedApp && (!registry || !registry->valid(*pendingFocusedApp))) {
+    pendingFocusedApp = std::nullopt;
+  }
+  return pendingFocusedApp;
+}
 
 bool WindowManager::computeAppCameraTarget(entt::entity ent,
                                            glm::vec3& targetPos,

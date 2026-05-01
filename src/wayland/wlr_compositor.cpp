@@ -629,6 +629,7 @@ handle_xwayland_ready(wl_listener* listener, void* /*data*/)
   if (!server || !server->xwayland || !server->xwayland->display_name) {
     return;
   }
+  setenv("HACKMATRIX_DISPLAY", server->xwayland->display_name, true);
   setenv("DISPLAY", server->xwayland->display_name, true);
   wlr_log(WLR_INFO, "XWayland ready; DISPLAY=%s", server->xwayland->display_name);
 }
@@ -1510,6 +1511,7 @@ WlrServer::start_backend_and_socket()
     std::fprintf(stderr, "Failed to create Wayland socket\n");
     return false;
   }
+  setenv("HACKMATRIX_WAYLAND_DISPLAY", socket, true);
   setenv("WAYLAND_DISPLAY", socket, true);
 
   wlr_log(WLR_DEBUG,
