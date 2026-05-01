@@ -1,4 +1,4 @@
-# This repository was a prototype and is archived. https://collinalexbell.itch.io/hackmatrix
+# This repository is archived. It was a prototype for https://collinalexbell.itch.io/hackmatrix
 
 <img src="images/header_img.png" width="800">
 
