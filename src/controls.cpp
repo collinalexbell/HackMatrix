@@ -916,12 +916,6 @@ Controls::handleKeySym(xkb_keysym_t sym,
   }
 
   bool waylandFocusActive = wm->hasCurrentOrPendingFocus();
-  if (matchesConfiguredKey(sym, "quit")) {
-    resp.requestQuit = true;
-    resp.blockClientDelivery = true;
-    resp.consumed = true;
-    return resp;
-  }
 
   const bool screenshotKey = matchesConfiguredKey(sym, "screenshot");
   const bool toggleCursorKey =
@@ -941,6 +935,13 @@ Controls::handleKeySym(xkb_keysym_t sym,
   }
 
   if (waylandFocusActive && !modifierHeld) {
+    return resp;
+  }
+
+  if (matchesConfiguredKey(sym, "quit")) {
+    resp.requestQuit = true;
+    resp.blockClientDelivery = true;
+    resp.consumed = true;
     return resp;
   }
 
