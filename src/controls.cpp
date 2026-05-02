@@ -237,6 +237,10 @@ Controls::poll(GLFWwindow* window, Camera* camera, World* world)
 // wayland version
 void Controls::handleKeys() {
   auto appFocused = wm->hasCurrentOrPendingFocus();
+  if (appFocused != lastWaylandFocusActive) {
+    resetWaylandInputState();
+    lastWaylandFocusActive = appFocused;
+  }
   if (!appFocused) {
     handleMovement();
     handleToggleApp();
@@ -1040,6 +1044,18 @@ void
 Controls::clearMovementInput()
 {
   applyMovementInput(false, false, false, false);
+}
+
+void
+Controls::resetWaylandInputState()
+{
+  std::lock_guard<std::mutex> lock(keysymMutex);
+  pressed.clear();
+  while (!keysymQueue.empty()) {
+    keysymQueue.pop();
+  }
+  waylandModifierHeld = false;
+  waylandShiftHeld = false;
 }
 
 void

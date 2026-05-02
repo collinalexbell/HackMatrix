@@ -146,6 +146,7 @@ public:
                                bool pressed,
                                bool modifierHeld,
                                bool shiftHeld);
+  void resetWaylandInputState();
   void applyMovementInput(bool forward, bool back, bool left, bool right);
   void clearMovementInput();
   void applyLookDelta(double dx, double dy);
