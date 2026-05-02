@@ -137,6 +137,17 @@ get_initial_toplevel_size(WlrServer* server)
 }
 
 static void
+sync_default_window_size_to_output(int width, int height)
+{
+  width = std::max(width, 1);
+  height = std::max(height, 1);
+  Bootable::DEFAULT_WIDTH =
+    std::max(1, static_cast<int>(std::lround(width * 0.85f)));
+  Bootable::DEFAULT_HEIGHT =
+    std::max(1, static_cast<int>(std::lround(height * 0.85f)));
+}
+
+static void
 add_action(WlrServer* server, PendingWlAction action)
 {
   auto* renderer = server->engine->getRenderer();
@@ -976,6 +987,34 @@ handle_output_frame(wl_listener* listener, void* data)
   GLuint fbo = wlr_gles2_renderer_get_buffer_fbo(server->renderer, buffer);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   ensure_depth_buffer(handle, width, height, fbo);
+  auto submit_output_frame = [&](bool send_frame_done) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    wlr_render_pass_submit(pass);
+
+    if (send_frame_done) {
+      struct timespec now;
+      clock_gettime(CLOCK_MONOTONIC, &now);
+      for (auto& entry : server->surface_map) {
+        wlr_surface* root = entry.first;
+        wlr_surface_for_each_surface(
+          root,
+          [](wlr_surface* surface, int, int, void* data) {
+            auto* ts = static_cast<timespec*>(data);
+            wlr_surface_send_frame_done(surface, ts);
+          },
+          &now);
+      }
+    }
+
+    wlr_output_state_set_buffer(&output_state, buffer);
+    if (!wlr_output_commit_state(handle->output, &output_state)) {
+      wlr_log(WLR_ERROR, "Failed to commit output frame");
+    }
+    wlr_output_state_finish(&output_state);
+    wlr_buffer_unlock(buffer);
+  };
+
   if (!server->engine) {
     EngineOptions options;
     options.enableControls = true; // wlroots path feeds input through Controls
@@ -1091,29 +1130,7 @@ handle_output_frame(wl_listener* listener, void* data)
     }
   }
 
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  wlr_render_pass_submit(pass);
-
-  struct timespec now;
-  clock_gettime(CLOCK_MONOTONIC, &now);
-  for (auto& entry : server->surface_map) {
-    wlr_surface* root = entry.first;
-    wlr_surface_for_each_surface(
-      root,
-      [](wlr_surface* surface, int, int, void* data) {
-        auto* ts = static_cast<timespec*>(data);
-        wlr_surface_send_frame_done(surface, ts);
-      },
-      &now);
-  }
-
-  wlr_output_state_set_buffer(&output_state, buffer);
-  if (!wlr_output_commit_state(handle->output, &output_state)) {
-    wlr_log(WLR_ERROR, "Failed to commit output frame");
-  }
-  wlr_output_state_finish(&output_state);
-  wlr_buffer_unlock(buffer);
+  submit_output_frame(true);
 }
 
 static void
@@ -1139,6 +1156,7 @@ handle_output_commit(wl_listener* listener, void* data)
   if (server->primary_output == output) {
     SCREEN_WIDTH = static_cast<float>(output->width);
     SCREEN_HEIGHT = static_cast<float>(output->height);
+    sync_default_window_size_to_output(output->width, output->height);
     server->pointer_x = std::clamp(server->pointer_x, 0.0, static_cast<double>(output->width));
     server->pointer_y = std::clamp(server->pointer_y, 0.0, static_cast<double>(output->height));
   }
@@ -1170,6 +1188,8 @@ handle_output_request_state(wl_listener* listener, void* data)
     if (handle->server && handle->server->primary_output == handle->output) {
       SCREEN_WIDTH = static_cast<float>(handle->output->width);
       SCREEN_HEIGHT = static_cast<float>(handle->output->height);
+      sync_default_window_size_to_output(handle->output->width,
+                                         handle->output->height);
       handle->server->pointer_x =
         std::clamp(handle->server->pointer_x, 0.0, static_cast<double>(handle->output->width));
       handle->server->pointer_y =
@@ -1208,6 +1228,11 @@ handle_new_output(wl_listener* listener, void* data)
   if (wlr_output_mode* mode = wlr_output_preferred_mode(output)) {
     wlr_output_state_set_mode(&state, mode);
   }
+  if (wlr_output_is_wl(output)) {
+    // In nested Wayland mode, inherit a neutral scale so parent compositor
+    // HiDPI settings don't shrink client geometry inside HackMatrix.
+    wlr_output_state_set_scale(&state, 1.0f);
+  }
   if (!wlr_output_commit_state(output, &state)) {
     wlr_log(WLR_ERROR, "Failed to commit output %s", output->name);
     wlr_output_state_finish(&state);
@@ -1219,6 +1244,7 @@ handle_new_output(wl_listener* listener, void* data)
   // projection and texture sizing match the real buffer size.
   SCREEN_WIDTH = static_cast<float>(output->width);
   SCREEN_HEIGHT = static_cast<float>(output->height);
+  sync_default_window_size_to_output(output->width, output->height);
 
   auto* handle = new WlrOutputHandle();
   handle->server = server;
