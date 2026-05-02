@@ -994,7 +994,7 @@ World::dynamicObjectAction(Action toTake)
             << ", " << camera->position.z;
       logger->debug(debug.str());
       if (systems::intersect(
-            boundingSphere, camera->position, camera->front, 10.0)) {
+            boundingSphere, camera->position, camera->front, 20.0)) {
         logger->debug("true");
         systems::editScript(registry, entity);
       }
