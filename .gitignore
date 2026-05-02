@@ -1,3 +1,4 @@
+dist
 .codex-session
 **/*.o
 tinygrad

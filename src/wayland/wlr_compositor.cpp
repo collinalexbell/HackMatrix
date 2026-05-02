@@ -197,6 +197,7 @@ remove_action(WlrServer* server, PendingWlAction action)
             focused && *focused == e) {
           wm->unfocusApp();
         }
+        wm->releaseHotkeySlot(e);
       }
       if (auto* renderer = server->engine->getRenderer()) {
         if (auto* comp = server->registry->try_get<WaylandApp::Component>(e)) {

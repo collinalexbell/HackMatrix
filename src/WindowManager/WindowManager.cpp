@@ -394,24 +394,12 @@ void WindowManager::onMapRequest(XMapRequestEvent event) {
   }
 }
 
-void WindowManager::compactHotkeyList()
-{
-  // Trim trailing empty slots to keep indices dense.
-  while (!appsWithHotKeys.empty() && !appsWithHotKeys.back().has_value()) {
-    appsWithHotKeys.pop_back();
-  }
-}
-
 void WindowManager::removeAppForWindow(Window window) {
   renderLoopMutex.lock();
   if (dynamicApps.contains(window)) {
     auto appEntity = dynamicApps.at(window);
     dynamicApps.erase(window);
-    auto hotkey = find(appsWithHotKeys.begin(), appsWithHotKeys.end(), appEntity);
-    if(hotkey != appsWithHotKeys.end()) {
-      appsWithHotKeys.erase(hotkey);
-      compactHotkeyList();
-    }
+    releaseHotkeySlot(appEntity);
     appsToRemove.push_back(appEntity);
   }
   renderLoopMutex.unlock();
@@ -421,29 +409,34 @@ void WindowManager::swapHotKeys(int a, int b) {
   if (a < 0 || b < 0) {
     return;
   }
-
-  std::lock_guard<std::mutex> lock(renderLoopMutex);
-  size_t requiredSize = static_cast<size_t>(std::max(a, b) + 1);
-  if (appsWithHotKeys.size() < requiredSize) {
-    appsWithHotKeys.resize(requiredSize);
+  if (a >= static_cast<int>(appsWithHotKeys.size()) ||
+      b >= static_cast<int>(appsWithHotKeys.size())) {
+    return;
   }
 
+  std::lock_guard<std::mutex> lock(renderLoopMutex);
   std::swap(appsWithHotKeys[a], appsWithHotKeys[b]);
-  compactHotkeyList();
 }
 
 void WindowManager::assignHotkeySlot(entt::entity ent)
 {
-  // Reuse the first empty slot if one exists; otherwise append.
+  // Reuse the first empty fixed slot.
   for (auto& opt : appsWithHotKeys) {
     if (!opt.has_value()) {
       opt = ent;
-      compactHotkeyList();
       return;
     }
   }
-  appsWithHotKeys.push_back(ent);
-  compactHotkeyList();
+}
+
+void WindowManager::releaseHotkeySlot(entt::entity theApp)
+{
+  for (auto& slot : appsWithHotKeys) {
+    if (slot.has_value() && slot.value() == theApp) {
+      slot = nullopt;
+      return;
+    }
+  }
 }
 
 int WindowManager::findAppsHotKey(entt::entity theApp)
@@ -470,7 +463,6 @@ WindowManager::getHotkeyTarget(int index)
   if (!registry || !registry->valid(*slot) ||
       !registry->all_of<Positionable>(*slot)) {
     slot = nullopt;
-    compactHotkeyList();
     return nullopt;
   }
   return slot;

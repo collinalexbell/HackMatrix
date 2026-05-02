@@ -9,6 +9,7 @@
 #include <xkbcommon/xkbcommon.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xcomposite.h>
+#include <array>
 #include <atomic>
 #include <string>
 #include <map>
@@ -33,6 +34,8 @@ struct IdeSelection {
 };
 
 namespace WindowManager {
+constexpr size_t kHotkeySlotCount = 10;
+
 enum WINDOW_EVENT_TYPE
 {
   SMALLER,
@@ -82,6 +85,7 @@ public:
   virtual optional<entt::entity> getHotkeyTarget(int index) = 0;
   virtual void swapHotKeys(int a, int b) = 0;
   virtual int findAppsHotKey(entt::entity theApp) = 0;
+  virtual void releaseHotkeySlot(entt::entity theApp) = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -122,7 +126,6 @@ class WindowManager : public WindowManagerInterface
   std::shared_ptr<spdlog::logger> logger;
   void setupLogger();
   void assignHotkeySlot(entt::entity ent);
-  void compactHotkeyList();
   void createApp(Window window,
                  unsigned int width = Bootable::DEFAULT_WIDTH,
                  unsigned int height = Bootable::DEFAULT_HEIGHT);
@@ -133,6 +136,7 @@ class WindowManager : public WindowManagerInterface
   void adjustAppsToAddAfterAdditions(vector<X11App*>& waitForRemoval);
   void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
+  void releaseHotkeySlot(entt::entity theApp);
   bool computeFocusedSpawn(entt::entity newApp, glm::vec3& pos, glm::vec3& rot) const;
   void positionRelativeToFocus(entt::entity appEntity);
   bool computeAppCameraTarget(entt::entity ent,
@@ -150,10 +154,13 @@ class WindowManager : public WindowManagerInterface
   unsigned int hotkeyModifierMask = Mod4Mask;
   std::optional<bool> cursorVisible;
   std::optional<entt::entity> pendingFocusedApp;
-  vector<optional<entt::entity>> appsWithHotKeys;
+  std::array<std::optional<entt::entity>, kHotkeySlotCount> appsWithHotKeys{};
 
 public:
-  vector<optional<entt::entity>> getAppsWithHotKeys() override {return appsWithHotKeys;}
+  vector<optional<entt::entity>> getAppsWithHotKeys() override {
+    return vector<optional<entt::entity>>(appsWithHotKeys.begin(),
+                                          appsWithHotKeys.end());
+  }
   optional<entt::entity> getHotkeyTarget(int index) override;
   void unfocusApp() override;
   void menu() override;
