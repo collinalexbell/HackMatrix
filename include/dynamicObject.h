@@ -3,8 +3,9 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <mutex>
-#include <vector>
 #include <shared_mutex>
+#include <unordered_set>
+#include <vector>
 
 using namespace std;
 
@@ -12,6 +13,13 @@ struct Renderable
 {
   vector<glm::vec3> vertices;
   vector<glm::vec3> colors;
+};
+
+struct RenderUploadSpan
+{
+  size_t startVertex = 0;
+  size_t vertexCount = 0;
+  bool fullRefresh = true;
 };
 
 class DynamicObject
@@ -41,12 +49,25 @@ struct DynamicObjectIntersection
 class DynamicObjectSpace : public DynamicObject
 {
   vector<shared_ptr<DynamicObject>> objects;
+  unordered_set<int> queuedRemovalIds;
+  Renderable cachedRenderable;
+  RenderUploadSpan pendingUpload;
+  bool cacheInitialized = false;
+  bool needsFullRebuild = true;
   bool _damaged = true;
-  shared_mutex readWriteMutex;
+  mutable shared_mutex readWriteMutex;
 
 public:
   void addObject(shared_ptr<DynamicObject> obj);
+  void queueRemoveObjectById(int id);
+  void queueRemoveObjectsById(const vector<int>& ids);
+  void queueRemoveObjectsInBox(glm::vec3 min, glm::vec3 max);
+  void queueRemoveAllObjects();
+  size_t flushQueuedRemovals();
   Renderable makeRenderable() override;
+  const Renderable& renderableCache();
+  RenderUploadSpan pendingUploadSpan() const;
+  void clearPendingUpload();
   bool damaged() override;
   void move(glm::vec3) override
   {

@@ -60,32 +60,49 @@ class Client:
         )
         return self._send(apiRequest)
 
-    def add_voxels(self, positions, replace=False, size=1.0, color=None):
+    def add_voxels(self, positions, replace=False, size=1.0, color=None, colors=None):
         color_msg = None
         if color is not None:
             color_msg = api_pb2.Vector(x=color[0], y=color[1], z=color[2])
+        color_msgs = None
+        if colors is not None:
+            color_msgs = [api_pb2.Vector(x=c[0], y=c[1], z=c[2]) for c in colors]
         voxels_msg = api_pb2.AddVoxels(
             replace=replace,
             size=size,
             voxels=[api_pb2.VoxelCoord(x=p[0], y=p[1], z=p[2]) for p in positions],
             color=color_msg,
+            colors=color_msgs,
         )
         apiRequest = api_pb2.ApiRequest(
             entityId=0, type="ADD_VOXELS", addVoxels=voxels_msg
         )
-        return self._send(apiRequest)
+        response = self._send(apiRequest)
+        return list(response.voxel_ids)
 
     def clear_voxels(self, x_range, y_range, z_range):
         clear_msg = api_pb2.ClearVoxels(
-            x=api_pb2.Range(min=min(x_range), max=max(x_range)),
-            y=api_pb2.Range(min=min(y_range), max=max(y_range)),
-            z=api_pb2.Range(min=min(z_range), max=max(z_range)),
+            box=api_pb2.ClearVoxelsBox(
+                x=api_pb2.Range(min=min(x_range), max=max(x_range)),
+                y=api_pb2.Range(min=min(y_range), max=max(y_range)),
+                z=api_pb2.Range(min=min(z_range), max=max(z_range)),
+            )
         )
         apiRequest = api_pb2.ApiRequest(
             entityId=0, type="CLEAR_VOXELS", clearVoxels=clear_msg
         )
         response = self._send(apiRequest)
         return response.actionId
+
+    def clear_voxel_ids(self, ids):
+        clear_msg = api_pb2.ClearVoxels(
+            ids=api_pb2.ClearVoxelIds(ids=ids),
+        )
+        apiRequest = api_pb2.ApiRequest(
+            entityId=0, type="CLEAR_VOXELS", clearVoxels=clear_msg
+        )
+        response = self._send(apiRequest)
+        return list(response.voxel_ids)
 
     def confirm_action(self, action_id: int):
         confirm_msg = api_pb2.ConfirmAction(actionId=action_id)

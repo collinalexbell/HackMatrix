@@ -215,7 +215,11 @@ Api::ProtobufCommandServer::poll()
         socket.send(reply, zmq::send_flags::none);
         return;
       } else if (apiRequest.type() == LIST_ENTITIES ||
-                 apiRequest.type() == GET_COMPONENT) {
+                 apiRequest.type() == GET_COMPONENT ||
+                 apiRequest.type() == ADD_VOXELS ||
+                 (apiRequest.type() == CLEAR_VOXELS &&
+                  apiRequest.has_clearvoxels() &&
+                  apiRequest.clearvoxels().has_ids())) {
         auto pending = std::make_shared<PendingApiResponse>();
         pending->requestId = request.id;
         {
@@ -335,6 +339,8 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       break;
     }
     case ADD_VOXELS: {
+      ApiRequestResponse response;
+      response.set_requestid(batchedRequest.id);
       auto voxels = batchedRequest.request.addvoxels();
       std::vector<glm::vec3> positions;
       positions.reserve(voxels.voxels_size());
@@ -344,12 +350,27 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       float size = voxels.size() > 0 ? voxels.size() : 1.0f;
       bool replace = voxels.replace();
       glm::vec3 color(1.0f);
+      vector<glm::vec3> colors;
       if (voxels.has_color()) {
         color = glm::vec3(voxels.color().x(), voxels.color().y(), voxels.color().z());
       }
+      if (voxels.colors_size() > 0) {
+        colors.reserve(voxels.colors_size());
+        for (const auto& c : voxels.colors()) {
+          colors.emplace_back(c.x(), c.y(), c.z());
+        }
+      }
       // Allow empty positions when replace is true so callers can clear voxels.
       bool shouldUpdate = replace || !positions.empty();
-      if (renderer != nullptr && shouldUpdate) {
+      if (world != nullptr && shouldUpdate) {
+        auto ids = colors.empty()
+                     ? world->addApiVoxels(positions, size, color, replace)
+                     : world->addApiVoxels(positions, size, colors, replace);
+        for (auto id : ids) {
+          response.add_voxel_ids(id);
+        }
+        response.set_success(true);
+      } else if (renderer != nullptr && shouldUpdate) {
         if (logger) {
           logger->info("AddVoxels: count={}, replace={}, size={}",
                        positions.size(),
@@ -363,13 +384,41 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
         renderer->setLines(world != nullptr ? world->getLines()
                                             : std::vector<Line>{});
         renderer->addVoxels(positions, replace, size, color);
+        response.set_success(true);
+      } else {
+        response.set_success(false);
       }
+      fulfillPendingResponse(batchedRequest.id, response);
       break;
     }
     case CLEAR_VOXELS: {
       auto clear = batchedRequest.request.clearvoxels();
-      glm::vec3 min(clear.x().min(), clear.y().min(), clear.z().min());
-      glm::vec3 max(clear.x().max(), clear.y().max(), clear.z().max());
+      if (clear.has_ids()) {
+        ApiRequestResponse response;
+        response.set_requestid(batchedRequest.id);
+        vector<int64_t> ids;
+        ids.reserve(clear.ids().ids_size());
+        for (auto id : clear.ids().ids()) {
+          ids.push_back(id);
+          response.add_voxel_ids(id);
+        }
+        if (world != nullptr) {
+          world->clearApiVoxelsByIds(ids);
+          response.set_success(true);
+        } else {
+          response.set_success(false);
+        }
+        fulfillPendingResponse(batchedRequest.id, response);
+        break;
+      }
+
+      if (!clear.has_box()) {
+        break;
+      }
+
+      const auto& box = clear.box();
+      glm::vec3 min(box.x().min(), box.y().min(), box.z().min());
+      glm::vec3 max(box.x().max(), box.y().max(), box.z().max());
       if (logger) {
         logger->info("ClearVoxels request: min=({}, {}, {}), max=({}, {}, {})",
                      min.x,
@@ -894,7 +943,7 @@ Api::confirmClearArea(int64_t actionId)
     renderer->clearVoxelsInBox(action.min, action.max);
   }
   if (world != nullptr) {
-    // No lines used anymore; voxel outline is cleared by the clear box itself.
+    world->clearApiVoxelsInBox(action.min, action.max);
   }
   if (logger) {
     logger->info("Confirmed clear area {}", actionId);
@@ -907,8 +956,8 @@ Api::confirmClearArea(int64_t actionId)
 void
 Api::mutateEntities()
 {
-  long time = nowSeconds();
-  long target = time + 0.005;
+  double time = nowSeconds();
+  double target = time + 0.005;
   grabBatched();
   auto batchedRequests = getBatchedRequests();
   for (; time <= target && batchedRequests->size() != 0; time = nowSeconds()) {

@@ -15,6 +15,7 @@
 #include "logger.h"
 #include <spdlog/common.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <queue>
 #include <future>
@@ -76,8 +77,8 @@ class World : public WorldInterface
   void loadChunksIfNeccissary();
   void initPreloadedChunks();
   void logCoordinates(array<Coordinate, 2> c, string label);
+  unordered_set<int> apiDynamicObjectIds;
   shared_ptr<DynamicObjectSpace> dynamicObjects;
-  shared_ptr<DynamicObjectSpace> dynamicObjects2;
   void cubeAction(Action toTake);
   void dynamicObjectAction(Action toTake);
 
@@ -95,6 +96,16 @@ public:
   Position getLookedAtCube() override;
 
   void addCube(int x, int y, int z, int blockType) override;
+  vector<int64_t> addApiVoxels(const vector<glm::vec3>& positions,
+                               float size,
+                               const glm::vec3& color,
+                               bool replace);
+  vector<int64_t> addApiVoxels(const vector<glm::vec3>& positions,
+                               float size,
+                               const vector<glm::vec3>& colors,
+                               bool replace);
+  void clearApiVoxelsByIds(const vector<int64_t>& ids);
+  void clearApiVoxelsInBox(const glm::vec3& min, const glm::vec3& max);
   void addLine(Line line) override;
   void removeLine(Line line) override;
 

@@ -561,21 +561,48 @@ Renderer::updateChunkMeshBuffers(vector<shared_ptr<ChunkMesh>>& meshes)
 void
 Renderer::updateDynamicObjects(shared_ptr<DynamicObject> obj)
 {
-  auto renderable = obj->makeRenderable();
+  auto objectSpace = dynamic_pointer_cast<DynamicObjectSpace>(obj);
+  if (objectSpace == NULL) {
+    auto renderable = obj->makeRenderable();
+    glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    sizeof(glm::vec3) * renderable.vertices.size(),
+                    renderable.vertices.data());
+
+    glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    0,
+                    sizeof(glm::vec3) * renderable.colors.size(),
+                    renderable.colors.data());
+    verticesInDynamicObjects = renderable.vertices.size();
+    return;
+  }
+
+  const auto& renderable = objectSpace->renderableCache();
+  const auto upload = objectSpace->pendingUploadSpan();
+  if (upload.vertexCount == 0 && !upload.fullRefresh) {
+    return;
+  }
+
+  const size_t start = upload.fullRefresh ? 0 : upload.startVertex;
+  const size_t count =
+    upload.fullRefresh ? renderable.vertices.size() : upload.vertexCount;
+
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_POSITIONS);
   glBufferSubData(GL_ARRAY_BUFFER,
-                  0,
-                  sizeof(glm::vec3) * renderable.vertices.size(),
-                  renderable.vertices.data());
+                  sizeof(glm::vec3) * start,
+                  sizeof(glm::vec3) * count,
+                  renderable.vertices.data() + start);
 
   glBindBuffer(GL_ARRAY_BUFFER, DYNAMIC_OBJECT_COLORS);
   glBufferSubData(GL_ARRAY_BUFFER,
-                  0,
-                  sizeof(glm::vec3) * renderable.colors.size(),
-                  renderable.colors.data());
-
+                  sizeof(glm::vec3) * start,
+                  sizeof(glm::vec3) * count,
+                  renderable.colors.data() + start);
 
   verticesInDynamicObjects = renderable.vertices.size();
+  objectSpace->clearPendingUpload();
 }
 
 void

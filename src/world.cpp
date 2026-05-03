@@ -8,7 +8,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <deque>
-#include <filesystem>
 #include <fstream>
 #include <glm/glm.hpp>
 #include <glm/gtx/intersect.hpp>
@@ -42,20 +41,23 @@ World::World(shared_ptr<EntityRegistry> registry,
   // class VoxelSpace (an abstraction on DynamicObjectSpace) {
   //    todo actually implement as class
   dynamicObjects = make_shared<DynamicObjectSpace>();
-  dynamicObjects2 = make_shared<DynamicObjectSpace>();
-  for(int x = 0; x < 64; x++)
-    for(int y = 0; y < 64; y++)
-      for(int z = 0; z < 64; z++) {
-        float xMargin = 0.2;
-        float yMargin = 0.2;
-        float zMargin = 0.2;
-        auto pos = glm::vec3(0.0f + x * xMargin, 5.0f + y*yMargin, 0.0f + z * zMargin);
+
+  for (int x = 0; x < 64; x++) {
+    for (int y = 0; y < 64; y++) {
+      for (int z = 0; z < 64; z++) {
+        float xMargin = 0.2f;
+        float yMargin = 0.2f;
+        float zMargin = 0.2f;
+        auto pos =
+          glm::vec3(0.0f + x * xMargin, 5.0f + y * yMargin, 0.0f + z * zMargin);
         auto voxelSize = glm::vec3(0.1f, 0.1f, 0.1f);
-        auto color = glm::vec3(float(x)/64.0, float(y)/64.0,float(z)/64.0);
+        auto color =
+          glm::vec3(float(x) / 64.0f, float(y) / 64.0f, float(z) / 64.0f);
         auto cube = make_shared<DynamicCube>(pos, voxelSize, color);
         dynamicObjects->addObject(cube);
-        //auto cube2 = make_shared<DynamicCube>(pos + glm::vec3(0,10.0f, 0), voxelSize, color);
       }
+    }
+  }
   // } end class VoxelSpace (not implemented yet)
 }
 
@@ -631,6 +633,114 @@ World::addCube(int x, int y, int z, int blockType)
   }
 }
 
+vector<int64_t>
+World::addApiVoxels(const vector<glm::vec3>& positions,
+                    float size,
+                    const glm::vec3& color,
+                    bool replace)
+{
+  return addApiVoxels(positions,
+                      size,
+                      vector<glm::vec3>(positions.size(), color),
+                      replace);
+}
+
+vector<int64_t>
+World::addApiVoxels(const vector<glm::vec3>& positions,
+                    float size,
+                    const vector<glm::vec3>& colors,
+                    bool replace)
+{
+  vector<int64_t> ids;
+  if (dynamicObjects == NULL) {
+    return ids;
+  }
+
+  if (replace && !apiDynamicObjectIds.empty()) {
+    vector<int> idsToRemove;
+    idsToRemove.reserve(apiDynamicObjectIds.size());
+    for (int id : apiDynamicObjectIds) {
+      idsToRemove.push_back(id);
+    }
+    dynamicObjects->queueRemoveObjectsById(idsToRemove);
+    apiDynamicObjectIds.clear();
+  }
+
+  const float edge = size > 0.0f ? size : CUBE_SIZE;
+  const auto cubeSize = glm::vec3(edge, edge, edge);
+  ids.reserve(positions.size());
+  for (size_t index = 0; index < positions.size(); index++) {
+    const auto& pos = positions[index];
+    glm::vec3 color = glm::vec3(1.0f);
+    if (!colors.empty()) {
+      color = colors[std::min(index, colors.size() - 1)];
+    }
+    auto cube = make_shared<DynamicCube>(pos, cubeSize, color);
+    ids.push_back(cube->id());
+    apiDynamicObjectIds.insert(cube->id());
+    dynamicObjects->addObject(cube);
+  }
+  return ids;
+}
+
+void
+World::clearApiVoxelsByIds(const vector<int64_t>& ids)
+{
+  if (dynamicObjects == NULL || ids.empty()) {
+    return;
+  }
+
+  vector<int> intIds;
+  intIds.reserve(ids.size());
+  for (int64_t id : ids) {
+    const int intId = static_cast<int>(id);
+    if (!apiDynamicObjectIds.contains(intId)) {
+      continue;
+    }
+    intIds.push_back(intId);
+    apiDynamicObjectIds.erase(intId);
+  }
+  if (!intIds.empty()) {
+    dynamicObjects->queueRemoveObjectsById(intIds);
+  }
+}
+
+void
+World::clearApiVoxelsInBox(const glm::vec3& min, const glm::vec3& max)
+{
+  if (dynamicObjects == NULL || apiDynamicObjectIds.empty()) {
+    return;
+  }
+  const glm::vec3 lower(std::min(min.x, max.x),
+                        std::min(min.y, max.y),
+                        std::min(min.z, max.z));
+  const glm::vec3 upper(std::max(min.x, max.x),
+                        std::max(min.y, max.y),
+                        std::max(min.z, max.z));
+
+  vector<int> idsToRemove;
+  idsToRemove.reserve(apiDynamicObjectIds.size());
+  for (int id : apiDynamicObjectIds) {
+    auto obj = dynamicObjects->getObjectById(id);
+    if (obj == NULL) {
+      continue;
+    }
+    const auto pos = obj->getPosition();
+    if (pos.x < lower.x || pos.x > upper.x || pos.y < lower.y ||
+        pos.y > upper.y || pos.z < lower.z || pos.z > upper.z) {
+      continue;
+    }
+    idsToRemove.push_back(id);
+  }
+
+  for (int id : idsToRemove) {
+    apiDynamicObjectIds.erase(id);
+  }
+  if (!idsToRemove.empty()) {
+    dynamicObjects->queueRemoveObjectsById(idsToRemove);
+  }
+}
+
 void
 World::addLine(Line line)
 {
@@ -1126,11 +1236,9 @@ World::tick()
   systems::applyRotation(registry);
   systems::applyTranslations(registry);
   systems::updateAll(registry, renderer);
+  dynamicObjects->flushQueuedRemovals();
   if (dynamicObjects->damaged()) {
     renderer->updateDynamicObjects(dynamicObjects);
-  }
-  if (dynamicObjects2->damaged()) {
-    //renderer->updateDynamicObjects(dynamicObjects2);
   }
   auto ids = dynamicObjects->getObjectIds();
   /*

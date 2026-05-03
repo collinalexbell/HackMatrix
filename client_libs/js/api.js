@@ -4,6 +4,8 @@ const proto = protobuf.loadSync("../../protos/api.proto");
 const ApiRequestResponse = proto.lookupType("ApiRequestResponse");
 const ApiRequest = proto.lookupType("ApiRequest");
 const AddVoxels = proto.lookupType("AddVoxels");
+const ClearVoxelsBox = proto.lookupType("ClearVoxelsBox");
+const ClearVoxelIds = proto.lookupType("ClearVoxelIds");
 const ClearVoxels = proto.lookupType("ClearVoxels");
 const ConfirmAction = proto.lookupType("ConfirmAction");
 const Range = proto.lookupType("Range");
@@ -16,12 +18,13 @@ async function init(address) {
     await socket.connect(target);
 }
 
-async function addVoxels(voxels, replace = false, size = 1.0, color) {
+async function addVoxels(voxels, replace = false, size = 1.0, color, colors) {
     const addVoxels = AddVoxels.create({
         replace,
         size,
         voxels: voxels.map(v => VoxelCoord.create({ x: v[0], y: v[1], z: v[2] })),
         color: color ? Vector.create({ x: color[0], y: color[1], z: color[2] }) : undefined,
+        colors: colors ? colors.map(c => Vector.create({ x: c[0], y: c[1], z: c[2] })) : undefined,
     });
     const request = ApiRequest.create({
         type: proto.MessageType.ADD_VOXELS,
@@ -30,14 +33,16 @@ async function addVoxels(voxels, replace = false, size = 1.0, color) {
     const serializedRequest = ApiRequest.encode(request).finish();
     await socket.send(serializedRequest);
     const [result] = await socket.receive();
-    return ApiRequestResponse.decode(result);
+    return ApiRequestResponse.decode(result).voxelIds;
 }
 
 async function clearVoxels(xRange, yRange, zRange) {
     const clearVoxels = ClearVoxels.create({
-        x: Range.create({ min: Math.min(...xRange), max: Math.max(...xRange) }),
-        y: Range.create({ min: Math.min(...yRange), max: Math.max(...yRange) }),
-        z: Range.create({ min: Math.min(...zRange), max: Math.max(...zRange) }),
+        box: ClearVoxelsBox.create({
+            x: Range.create({ min: Math.min(...xRange), max: Math.max(...xRange) }),
+            y: Range.create({ min: Math.min(...yRange), max: Math.max(...yRange) }),
+            z: Range.create({ min: Math.min(...zRange), max: Math.max(...zRange) }),
+        }),
     });
     const request = ApiRequest.create({
         type: proto.MessageType.CLEAR_VOXELS,
@@ -47,6 +52,20 @@ async function clearVoxels(xRange, yRange, zRange) {
     await socket.send(serializedRequest);
     const [result] = await socket.receive();
     return ApiRequestResponse.decode(result).actionId;
+}
+
+async function clearVoxelIds(ids) {
+    const clearVoxels = ClearVoxels.create({
+        ids: ClearVoxelIds.create({ ids }),
+    });
+    const request = ApiRequest.create({
+        type: proto.MessageType.CLEAR_VOXELS,
+        clearVoxels,
+    });
+    const serializedRequest = ApiRequest.encode(request).finish();
+    await socket.send(serializedRequest);
+    const [result] = await socket.receive();
+    return ApiRequestResponse.decode(result).voxelIds;
 }
 
 async function confirmAction(actionId) {
@@ -66,5 +85,6 @@ module.exports = {
     init,
     addVoxels,
     clearVoxels,
+    clearVoxelIds,
     confirmAction,
 };
