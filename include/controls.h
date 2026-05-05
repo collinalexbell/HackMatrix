@@ -3,7 +3,9 @@
 #include <functional>
 #include <mutex>
 #include <queue>
+#include <string>
 #include <unordered_set>
+#include <vector>
 #include <glad/glad.h>
 #include <xkbcommon/xkbcommon.h>
 #include <memory>
@@ -65,6 +67,9 @@ class Controls
   };
   std::queue<KeysymEvent> keysymQueue;
   std::mutex keysymMutex;
+  mutable std::mutex typedKeyOverlayMutex;
+  std::vector<std::string> typedKeyOverlayTokens;
+  double typedKeyOverlayExpiresAt = 0.0;
 
   void handleMovement();
   void handleModEscape();
@@ -91,6 +96,7 @@ class Controls
   bool isPressedEither(xkb_keysym_t a, xkb_keysym_t b) const;
 
   void handleKeys();
+  void recordTypedKeyOverlay(xkb_keysym_t sym);
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
   void enqueueAction(std::function<void()> fn);
@@ -133,4 +139,5 @@ public:
   void enableKeys();
   void triggerScreenshot();
   void wireWindowManager(shared_ptr<WindowManager::Space>);
+  std::string getTypedKeyOverlayText() const;
 };

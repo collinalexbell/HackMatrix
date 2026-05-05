@@ -14,8 +14,10 @@
 #include "app.h"
 #include "WindowManager/Space.h"
 #include "gl_resource.h"
+#include <array>
 #include <map>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include "AppSurface.h"
@@ -47,6 +49,7 @@ class Renderer
   GlBuffer CURSOR_VBO;
   GlVertexArray CURSOR_VAO;
   unsigned int cursorTexture = 0;
+  unsigned int keyOverlayTexture = 0;
   bool cursorInitialized = false;
 
   GlBuffer LINE_VBO;
@@ -86,6 +89,7 @@ class Renderer
   WindowManager::WindowManagerPtr wm;
 
   unsigned int emacsID;
+  std::string typedKeyOverlayText;
 
   float deltaTime = 0.0f; // Time between current frame and last frame
   float lastFrame = 0.0f; // Time of last frame
@@ -147,6 +151,8 @@ public:
   void renderSoftwareCursor(float xPixels, float yPixels, float sizePixels);
   void reloadChunk();
   void screenshotFromCurrentFramebuffer(int width, int height, unsigned int fbo = 0);
+  void renderTypedKeyOverlay(const std::string& text);
+  void setTypedKeyOverlayText(std::string text) { typedKeyOverlayText = std::move(text); }
   void toggleMeshing();
   void toggleWireframe();
   void wireWindowManager(WindowManager::WindowManagerPtr, shared_ptr<WindowManager::Space>);

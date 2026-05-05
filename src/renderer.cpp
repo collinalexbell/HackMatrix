@@ -56,9 +56,136 @@ wlroots_renderer_log()
 #include "stb/stb_image_write.h"
 #include <ctime>
 #include <cmath>
+#include <array>
 #include <iomanip>
 #include <cstring>
 #include <cstdio>
+#include <unordered_map>
+
+namespace {
+
+using GlyphRows = std::array<const char*, 7>;
+
+const GlyphRows&
+glyph_rows(char ch)
+{
+  static const std::unordered_map<char, GlyphRows> kGlyphs = {
+    {'A', {"01110", "10001", "10001", "11111", "10001", "10001", "10001"}},
+    {'B', {"11110", "10001", "10001", "11110", "10001", "10001", "11110"}},
+    {'C', {"01111", "10000", "10000", "10000", "10000", "10000", "01111"}},
+    {'D', {"11110", "10001", "10001", "10001", "10001", "10001", "11110"}},
+    {'E', {"11111", "10000", "10000", "11110", "10000", "10000", "11111"}},
+    {'F', {"11111", "10000", "10000", "11110", "10000", "10000", "10000"}},
+    {'G', {"01111", "10000", "10000", "10111", "10001", "10001", "01111"}},
+    {'H', {"10001", "10001", "10001", "11111", "10001", "10001", "10001"}},
+    {'I', {"11111", "00100", "00100", "00100", "00100", "00100", "11111"}},
+    {'J', {"00111", "00010", "00010", "00010", "10010", "10010", "01100"}},
+    {'K', {"10001", "10010", "10100", "11000", "10100", "10010", "10001"}},
+    {'L', {"10000", "10000", "10000", "10000", "10000", "10000", "11111"}},
+    {'M', {"10001", "11011", "10101", "10101", "10001", "10001", "10001"}},
+    {'N', {"10001", "10001", "11001", "10101", "10011", "10001", "10001"}},
+    {'O', {"01110", "10001", "10001", "10001", "10001", "10001", "01110"}},
+    {'P', {"11110", "10001", "10001", "11110", "10000", "10000", "10000"}},
+    {'Q', {"01110", "10001", "10001", "10001", "10101", "10010", "01101"}},
+    {'R', {"11110", "10001", "10001", "11110", "10100", "10010", "10001"}},
+    {'S', {"01111", "10000", "10000", "01110", "00001", "00001", "11110"}},
+    {'T', {"11111", "00100", "00100", "00100", "00100", "00100", "00100"}},
+    {'U', {"10001", "10001", "10001", "10001", "10001", "10001", "01110"}},
+    {'V', {"10001", "10001", "10001", "10001", "10001", "01010", "00100"}},
+    {'W', {"10001", "10001", "10001", "10101", "10101", "10101", "01010"}},
+    {'X', {"10001", "10001", "01010", "00100", "01010", "10001", "10001"}},
+    {'Y', {"10001", "10001", "01010", "00100", "00100", "00100", "00100"}},
+    {'Z', {"11111", "00001", "00010", "00100", "01000", "10000", "11111"}},
+    {'0', {"01110", "10001", "10011", "10101", "11001", "10001", "01110"}},
+    {'1', {"00100", "01100", "00100", "00100", "00100", "00100", "01110"}},
+    {'2', {"01110", "10001", "00001", "00010", "00100", "01000", "11111"}},
+    {'3', {"11110", "00001", "00001", "01110", "00001", "00001", "11110"}},
+    {'4', {"00010", "00110", "01010", "10010", "11111", "00010", "00010"}},
+    {'5', {"11111", "10000", "10000", "11110", "00001", "00001", "11110"}},
+    {'6', {"01110", "10000", "10000", "11110", "10001", "10001", "01110"}},
+    {'7', {"11111", "00001", "00010", "00100", "01000", "01000", "01000"}},
+    {'8', {"01110", "10001", "10001", "01110", "10001", "10001", "01110"}},
+    {'9', {"01110", "10001", "10001", "01111", "00001", "00001", "01110"}},
+    {'+', {"00000", "00100", "00100", "11111", "00100", "00100", "00000"}},
+    {'-', {"00000", "00000", "00000", "11111", "00000", "00000", "00000"}},
+    {'.', {"00000", "00000", "00000", "00000", "00000", "01100", "01100"}},
+    {',', {"00000", "00000", "00000", "00000", "00110", "00110", "00100"}},
+    {'/', {"00001", "00010", "00100", "01000", "10000", "00000", "00000"}},
+    {'\\', {"10000", "01000", "00100", "00010", "00001", "00000", "00000"}},
+    {'=', {"00000", "11111", "00000", "11111", "00000", "00000", "00000"}},
+    {';', {"00000", "01100", "01100", "00000", "01100", "01100", "00100"}},
+    {':', {"00000", "01100", "01100", "00000", "01100", "01100", "00000"}},
+    {'[', {"01110", "01000", "01000", "01000", "01000", "01000", "01110"}},
+    {']', {"01110", "00010", "00010", "00010", "00010", "00010", "01110"}},
+    {'\'', {"00100", "00100", "00010", "00000", "00000", "00000", "00000"}},
+    {'"', {"01010", "01010", "00100", "00000", "00000", "00000", "00000"}},
+    {'?', {"01110", "10001", "00001", "00010", "00100", "00000", "00100"}},
+    {'!', {"00100", "00100", "00100", "00100", "00100", "00000", "00100"}},
+    {' ', {"00000", "00000", "00000", "00000", "00000", "00000", "00000"}},
+  };
+  static const GlyphRows kUnknown = {
+    "11111", "10001", "00010", "00100", "00100", "00000", "00100"
+  };
+
+  auto it = kGlyphs.find(ch);
+  return it != kGlyphs.end() ? it->second : kUnknown;
+}
+
+std::vector<unsigned char>
+rasterize_overlay_text(const std::string& text, int& outWidth, int& outHeight)
+{
+  constexpr int glyphWidth = 5;
+  constexpr int glyphHeight = 7;
+  const int scale = std::max(4, static_cast<int>(std::lround(48.0 / glyphHeight)));
+  const int glyphAdvance = (glyphWidth + 1) * scale;
+  const int paddingX = scale;
+  const int paddingY = scale;
+  outWidth = std::max(1, paddingX * 2 + static_cast<int>(text.size()) * glyphAdvance);
+  outHeight = paddingY * 2 + glyphHeight * scale;
+
+  std::vector<unsigned char> pixels(static_cast<size_t>(outWidth * outHeight * 4), 0);
+  const unsigned char fill[4] = {245, 245, 235, 255};
+  const unsigned char shadow[4] = {20, 20, 20, 160};
+
+  auto paintCell = [&](int x0, int y0, const unsigned char color[4]) {
+    for (int y = 0; y < scale; ++y) {
+      for (int x = 0; x < scale; ++x) {
+        int px = x0 + x;
+        int py = y0 + y;
+        if (px < 0 || px >= outWidth || py < 0 || py >= outHeight) {
+          continue;
+        }
+        size_t idx =
+          static_cast<size_t>(((outHeight - 1 - py) * outWidth + px) * 4);
+        pixels[idx + 0] = color[0];
+        pixels[idx + 1] = color[1];
+        pixels[idx + 2] = color[2];
+        pixels[idx + 3] = color[3];
+      }
+    }
+  };
+
+  for (size_t i = 0; i < text.size(); ++i) {
+    const auto& rows = glyph_rows(text[i]);
+    const int baseX = paddingX + static_cast<int>(i) * glyphAdvance;
+    const int baseY = paddingY;
+    for (int row = 0; row < glyphHeight; ++row) {
+      for (int col = 0; col < glyphWidth; ++col) {
+        if (rows[row][col] != '1') {
+          continue;
+        }
+        paintCell(baseX + col * scale + scale / 4,
+                  baseY + row * scale + scale / 4,
+                  shadow);
+        paintCell(baseX + col * scale, baseY + row * scale, fill);
+      }
+    }
+  }
+
+  return pixels;
+}
+
+} // namespace
 
 static bool
 gl_version_at_least(int wantMajor, int wantMinor)
@@ -844,6 +971,69 @@ Renderer::renderSoftwareCursor(float xPixels, float yPixels, float sizePixels)
   }
 }
 
+void
+Renderer::renderTypedKeyOverlay(const std::string& text)
+{
+  if (text.empty()) {
+    return;
+  }
+
+  int texWidth = 0;
+  int texHeight = 0;
+  std::vector<unsigned char> pixels = rasterize_overlay_text(text, texWidth, texHeight);
+  if (pixels.empty() || texWidth <= 0 || texHeight <= 0) {
+    return;
+  }
+
+  if (keyOverlayTexture == 0) {
+    glGenTextures(1, &keyOverlayTexture);
+  }
+
+  cursorShader->use();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, keyOverlayTexture);
+  glTexImage2D(GL_TEXTURE_2D,
+               0,
+               GL_RGBA,
+               texWidth,
+               texHeight,
+               0,
+               GL_RGBA,
+               GL_UNSIGNED_BYTE,
+               pixels.data());
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  float overlayWidth = static_cast<float>(texWidth);
+  float overlayHeight = static_cast<float>(texHeight);
+  float originX = (SCREEN_WIDTH - overlayWidth) * 0.5f;
+  float originY = 18.0f;
+  float yFlipped = SCREEN_HEIGHT - originY - overlayHeight;
+  float left = originX / SCREEN_WIDTH * 2.0f - 1.0f;
+  float right = (originX + overlayWidth) / SCREEN_WIDTH * 2.0f - 1.0f;
+  float top = 1.0f - yFlipped / SCREEN_HEIGHT * 2.0f;
+  float bottom = 1.0f - (yFlipped + overlayHeight) / SCREEN_HEIGHT * 2.0f;
+
+  float verts[] = {
+    left,  bottom, 0.0f, 0.0f, 1.0f, right, bottom, 0.0f, 1.0f, 1.0f,
+    right, top,    0.0f, 1.0f, 0.0f, left,  top,    0.0f, 0.0f, 0.0f,
+    left,  bottom, 0.0f, 0.0f, 1.0f, right, top,    0.0f, 1.0f, 0.0f
+  };
+
+  glBindVertexArray(CURSOR_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, CURSOR_VBO);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
+
+  GLboolean depthEnabled = glIsEnabled(GL_DEPTH_TEST);
+  glDisable(GL_DEPTH_TEST);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+  if (depthEnabled) {
+    glEnable(GL_DEPTH_TEST);
+  }
+}
+
 glm::vec2
 Renderer::mapCursorToScreen(float xPixels, float yPixels) const
 {
@@ -1355,6 +1545,7 @@ Renderer::render(RenderPerspective perspective,
   if (perspective == CAMERA) {
     renderVoxels();
     renderApps();
+    renderTypedKeyOverlay(typedKeyOverlayText);
   }
   //renderChunkMesh();
 }

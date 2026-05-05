@@ -209,6 +209,7 @@ Engine::frame()
   double frameStart = currentTimeSeconds();
   api->mutateEntities();
   controls->pollPressedKeys();
+  renderer->setTypedKeyOverlayText(controls->getTypedKeyOverlayText());
   renderer->render();
   world->tick();
   controls->poll();

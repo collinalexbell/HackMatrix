@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <ctime>
 #include <cctype>
+#include <cstdint>
 #include <cstdarg>
 #include <fstream>
 #include <mutex>
@@ -134,6 +135,13 @@ is_shifted_digit_sym(xkb_keysym_t sym)
   }
 }
 
+bool
+is_super_keysym(xkb_keysym_t sym)
+{
+  return sym == XKB_KEY_Super_L || sym == XKB_KEY_Super_R ||
+         sym == XKB_KEY_Meta_L || sym == XKB_KEY_Meta_R;
+}
+
 xkb_keysym_t
 normalize_hotkey_sym(xkb_keysym_t sym)
 {
@@ -159,6 +167,71 @@ normalize_hotkey_sym(xkb_keysym_t sym)
     default:
       return sym;
   }
+}
+
+std::string
+display_token_for_keysym(xkb_keysym_t sym)
+{
+  switch (sym) {
+    case XKB_KEY_Return:
+    case XKB_KEY_KP_Enter:
+      return "ENTER";
+    case XKB_KEY_Tab:
+      return "TAB";
+    case XKB_KEY_BackSpace:
+      return "BKSP";
+    case XKB_KEY_Delete:
+      return "DEL";
+    case XKB_KEY_Escape:
+      return "ESC";
+    case XKB_KEY_space:
+      return "SPACE";
+    case XKB_KEY_Left:
+      return "LEFT";
+    case XKB_KEY_Right:
+      return "RIGHT";
+    case XKB_KEY_Up:
+      return "UP";
+    case XKB_KEY_Down:
+      return "DOWN";
+    case XKB_KEY_Shift_L:
+    case XKB_KEY_Shift_R:
+      return "SHIFT";
+    case XKB_KEY_Control_L:
+    case XKB_KEY_Control_R:
+      return "CTRL";
+    case XKB_KEY_Alt_L:
+    case XKB_KEY_Alt_R:
+      return "ALT";
+    case XKB_KEY_Super_L:
+    case XKB_KEY_Super_R:
+    case XKB_KEY_Meta_L:
+    case XKB_KEY_Meta_R:
+      return "SUPER";
+    default:
+      break;
+  }
+
+  uint32_t codepoint = xkb_keysym_to_utf32(sym);
+  if (codepoint >= 33 && codepoint <= 126) {
+    char ch = static_cast<char>(codepoint);
+    if (std::isalpha(static_cast<unsigned char>(ch))) {
+      ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+    }
+    return std::string(1, ch);
+  }
+
+  char name[64] = {};
+  int len = xkb_keysym_get_name(sym, name, sizeof(name));
+  if (len > 0) {
+    std::string token(name, static_cast<size_t>(len));
+    for (char& ch : token) {
+      ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+    }
+    return token;
+  }
+
+  return "";
 }
 
 const std::array<KeyBinding, 3> kUnfocusedGlobalBindings = {{
@@ -569,6 +642,31 @@ Controls::wireWindowManager(std::shared_ptr<WindowManager::Space> space)
   windowManagerSpace = space;
 }
 
+std::string
+Controls::getTypedKeyOverlayText() const
+{
+  if (!wm || wm->hasCurrentOrPendingFocus()) {
+    return "";
+  }
+
+  std::lock_guard<std::mutex> lock(typedKeyOverlayMutex);
+  if (typedKeyOverlayTokens.empty()) {
+    return "";
+  }
+  if (nowSeconds() > typedKeyOverlayExpiresAt) {
+    return "";
+  }
+
+  std::string text;
+  for (size_t i = 0; i < typedKeyOverlayTokens.size(); ++i) {
+    if (i > 0) {
+      text += ' ';
+    }
+    text += typedKeyOverlayTokens[i];
+  }
+  return text;
+}
+
 bool
 Controls::handlePointerButton(uint32_t button, bool pressed)
 {
@@ -635,8 +733,15 @@ Controls::handleKeySym(xkb_keysym_t sym,
 
   ControlResponse key_not_handled_by_wm;
   const bool waylandFocusActive = wm->hasCurrentOrPendingFocus();
+  const bool superKey = is_super_keysym(sym);
 
   if (waylandFocusActive) {
+    if (superKey) {
+      if (is_pressed) {
+        recordTypedKeyOverlay(sym);
+      }
+      return key_handled_by_wm();
+    }
     if (!modifierHeld) {
       return key_not_handled_by_wm;
     }
@@ -644,12 +749,40 @@ Controls::handleKeySym(xkb_keysym_t sym,
 
   if (matches_configured_or_fallback_key(
         controlMappings, sym, "quit", XKB_KEY_Escape, XKB_KEY_Escape)) {
+    if (is_pressed) {
+      recordTypedKeyOverlay(sym);
+    }
     // quit key gets its own special consume function
     // because the caller must be notified of quit flag
     return quit_key_handled_by_wm();
   }
 
+  if (is_pressed) {
+    recordTypedKeyOverlay(sym);
+  }
   return key_handled_by_wm();
+}
+
+void
+Controls::recordTypedKeyOverlay(xkb_keysym_t sym)
+{
+  std::string token = display_token_for_keysym(sym);
+  if (token.empty()) {
+    return;
+  }
+
+  std::lock_guard<std::mutex> lock(typedKeyOverlayMutex);
+  typedKeyOverlayTokens.push_back(std::move(token));
+  typedKeyOverlayExpiresAt = nowSeconds() + 2.0;
+
+  size_t totalChars = 0;
+  for (const auto& item : typedKeyOverlayTokens) {
+    totalChars += item.size() + 1;
+  }
+  while (typedKeyOverlayTokens.size() > 12 || totalChars > 48) {
+    totalChars -= typedKeyOverlayTokens.front().size() + 1;
+    typedKeyOverlayTokens.erase(typedKeyOverlayTokens.begin());
+  }
 }
 
 bool
