@@ -1,5 +1,6 @@
 #include "world.h"
 #include <glad/glad.h>
+#include <array>
 #include <optional>
 
 #include <iostream>
@@ -22,6 +23,13 @@
 using namespace std;
 
 namespace {
+struct KeyBinding
+{
+  const char* fn = nullptr;
+  xkb_keysym_t fallbackLower = XKB_KEY_NoSymbol;
+  xkb_keysym_t fallbackUpper = XKB_KEY_NoSymbol;
+};
+
 bool
 is_configured_or_fallback_pressed(ControlMappings& controlMappings,
                                   const std::unordered_set<xkb_keysym_t>& pressed,
@@ -49,6 +57,63 @@ matches_configured_or_fallback_key(ControlMappings& controlMappings,
   }
   return sym == fallbackLower || sym == fallbackUpper;
 }
+
+bool
+matches_key_binding(ControlMappings& controlMappings,
+                    xkb_keysym_t sym,
+                    const KeyBinding& binding)
+{
+  if (binding.fn != nullptr) {
+    return matches_configured_or_fallback_key(controlMappings,
+                                              sym,
+                                              binding.fn,
+                                              binding.fallbackLower,
+                                              binding.fallbackUpper);
+  }
+  return sym == binding.fallbackLower || sym == binding.fallbackUpper;
+}
+
+template<size_t N>
+bool
+matches_any_key_binding(ControlMappings& controlMappings,
+                        xkb_keysym_t sym,
+                        const std::array<KeyBinding, N>& bindings)
+{
+  for (const auto& binding : bindings) {
+    if (matches_key_binding(controlMappings, sym, binding)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+ControlResponse
+key_not_handled_by_wm()
+{
+  ControlResponse resp;
+  resp.handledByWM = false;
+  resp.shouldExit = false;
+  return resp;
+}
+
+ControlResponse
+key_handled_by_wm()
+{
+  ControlResponse resp;
+  resp.handledByWM = true;
+  resp.shouldExit = false;
+  return resp;
+}
+
+ControlResponse
+quit_key_handled_by_wm()
+{
+  ControlResponse resp;
+  resp.handledByWM = true;
+  resp.shouldExit = true;
+  return resp;
+}
+
 
 bool
 is_shifted_digit_sym(xkb_keysym_t sym)
@@ -96,6 +161,28 @@ normalize_hotkey_sym(xkb_keysym_t sym)
   }
 }
 
+const std::array<KeyBinding, 3> kUnfocusedGlobalBindings = {{
+  {.fallbackLower = XKB_KEY_v, .fallbackUpper = XKB_KEY_V},
+  {.fn = "screenshot", .fallbackLower = XKB_KEY_p, .fallbackUpper = XKB_KEY_P},
+  {.fn = "toggle_cursor", .fallbackLower = XKB_KEY_f, .fallbackUpper = XKB_KEY_F},
+}};
+
+const std::array<KeyBinding, 11> kRegularWorldControlBindings = {{
+  {.fallbackLower = XKB_KEY_b, .fallbackUpper = XKB_KEY_B},
+  {.fallbackLower = XKB_KEY_t, .fallbackUpper = XKB_KEY_T},
+  {.fn = "debug_mesh",
+   .fallbackLower = XKB_KEY_comma,
+   .fallbackUpper = XKB_KEY_comma},
+  {.fallbackLower = XKB_KEY_m, .fallbackUpper = XKB_KEY_M},
+  {.fallbackLower = XKB_KEY_slash, .fallbackUpper = XKB_KEY_question},
+  {.fn = "select", .fallbackLower = XKB_KEY_e, .fallbackUpper = XKB_KEY_E},
+  {.fallbackLower = XKB_KEY_period, .fallbackUpper = XKB_KEY_greater},
+  {.fallbackLower = XKB_KEY_l, .fallbackUpper = XKB_KEY_L},
+  {.fallbackLower = XKB_KEY_equal, .fallbackUpper = XKB_KEY_plus},
+  {.fallbackLower = XKB_KEY_minus, .fallbackUpper = XKB_KEY_underscore},
+  {.fallbackLower = XKB_KEY_Delete, .fallbackUpper = XKB_KEY_Delete},
+}};
+
 void
 log_controls(const char* fmt, ...)
 {
@@ -127,28 +214,33 @@ void Controls::handleKeys() {
     resetWaylandInputState();
     lastWaylandFocusActive = appFocused;
   }
-  if (!appFocused) {
-    handleMovement();
-    handleToggleApp();
-  }
 
+  // Order is important here.
+
+  // First don't handle keys if they are disabled
+  // (ie for some in game ui feature that isn't app, but has a textbox)
   if (!keysEnabled) {
     return;
   }
 
+  // Second, handle 0-9 hotkeys, regardless of focus or not
+  handleWaylandHotkeys();
+
+  // Third, handle keys when the app is focused and return,
+  // because no other keys should be handled when focused
   if (appFocused) {
-    handleWaylandHotkeys();
+    handleUnfocusApp();
+    handleCloseFocusedApp();
     return;
   }
 
+  // Finally, handle standard wm keys
+  handleMovement();
+  handleToggleApp();
   handleDMenu();
   handleToggleCursor();
   handleScreenshot();
   handleModEscape();
-  if (handleWaylandHotkeys()) {
-    return;
-  }
-
   handleSave();
   handleSelection();
   handleCodeBlock();
@@ -361,6 +453,7 @@ Controls::moveTo(glm::vec3 pos,
   });
 }
 
+//TODO: remove the shift detect fallback
 void
 Controls::handleWindowFlop()
 {
@@ -535,97 +628,27 @@ Controls::handleKeySym(xkb_keysym_t sym,
     keysymQueue.push(KeysymEvent{sym, is_pressed, modifierHeld, shiftHeld});
   }
 
-  ControlResponse resp;
-  if (!is_pressed) {
-    return resp;
-  }
-
   if (sym == XKB_KEY_Shift_L || sym == XKB_KEY_Shift_R || shiftHeld) {
     lastShiftPressTime = nowSeconds();
   }
 
-  bool waylandFocusActive = wm->hasCurrentOrPendingFocus();
-
-  const bool screenshotKey = matchesConfiguredKey(sym, "screenshot");
-  const bool toggleCursorKey =
-    matches_configured_or_fallback_key(
-      controlMappings, sym, "toggle_cursor", XKB_KEY_f, XKB_KEY_F);
-  const xkb_keysym_t hotkeySym = normalize_hotkey_sym(sym);
-  if (!waylandFocusActive &&
-      (sym == XKB_KEY_v || sym == XKB_KEY_V ||
-       screenshotKey ||
-       toggleCursorKey)) {
-    if (sym == XKB_KEY_v || sym == XKB_KEY_V) {
-      resp.clearInputForces = true;
-    }
-    resp.blockClientDelivery = true;
-    resp.consumed = true;
-    return resp;
-  }
-
-  if (waylandFocusActive && !modifierHeld) {
-    return resp;
-  }
-
-  if (matchesConfiguredKey(sym, "quit")) {
-    resp.requestQuit = true;
-    resp.blockClientDelivery = true;
-    resp.consumed = true;
-    return resp;
-  }
-
-  if (modifierHeld && wm) {
-    if (matches_configured_or_fallback_key(
-          controlMappings, sym, "unfocus_app", XKB_KEY_e, XKB_KEY_E)) {
-      resp.clearSeatFocus = true;
-      resp.blockClientDelivery = true;
-      resp.consumed = true;
-      return resp;
-    }
-    if (hotkeySym >= XKB_KEY_1 && hotkeySym <= XKB_KEY_9) {
-      resp.clearInputForces = true;
-      resp.clearSeatFocus = true;
-      resp.blockClientDelivery = true;
-      resp.consumed = true;
-      return resp;
-    }
-    if (!waylandFocusActive &&
-        (sym == XKB_KEY_p || sym == XKB_KEY_P ||
-         sym == XKB_KEY_q || sym == XKB_KEY_Q ||
-         sym == XKB_KEY_0 || is_shifted_digit_sym(sym))) {
-      resp.blockClientDelivery = true;
-      resp.consumed = true;
-      return resp;
-    }
-  }
+  ControlResponse key_not_handled_by_wm;
+  const bool waylandFocusActive = wm->hasCurrentOrPendingFocus();
 
   if (waylandFocusActive) {
-    return resp;
+    if (!modifierHeld) {
+      return key_not_handled_by_wm;
+    }
   }
 
-  const bool regularControl =
-    sym == XKB_KEY_b || sym == XKB_KEY_B ||
-    sym == XKB_KEY_t || sym == XKB_KEY_T ||
-    matches_configured_or_fallback_key(
-      controlMappings, sym, "debug_mesh", XKB_KEY_comma, XKB_KEY_comma) ||
-    sym == XKB_KEY_m || sym == XKB_KEY_M ||
-    sym == XKB_KEY_slash || sym == XKB_KEY_question ||
-    matches_configured_or_fallback_key(
-      controlMappings, sym, "select", XKB_KEY_e, XKB_KEY_E) ||
-    sym == XKB_KEY_period || sym == XKB_KEY_greater ||
-    sym == XKB_KEY_l || sym == XKB_KEY_L ||
-    sym == XKB_KEY_equal || sym == XKB_KEY_plus ||
-    sym == XKB_KEY_minus || sym == XKB_KEY_underscore ||
-    sym == XKB_KEY_0 || sym == XKB_KEY_9 ||
-    sym == XKB_KEY_Delete;
-
-  if (regularControl) {
-    resp.blockClientDelivery = true;
-    resp.consumed = true;
-    return resp;
+  if (matches_configured_or_fallback_key(
+        controlMappings, sym, "quit", XKB_KEY_Escape, XKB_KEY_Escape)) {
+    // quit key gets its own special consume function
+    // because the caller must be notified of quit flag
+    return quit_key_handled_by_wm();
   }
 
-  return resp;
+  return key_handled_by_wm();
 }
 
 bool
@@ -715,10 +738,35 @@ Controls::handleToggleApp()
 }
 
 bool
-Controls::handleWaylandHotkeys()
+Controls::handleUnfocusApp()
 {
   if (!waylandModifierHeld || !wm) {
     return false;
+  }
+  if (!is_configured_or_fallback_pressed(
+        controlMappings, pressed, "unfocus_app", XKB_KEY_e, XKB_KEY_E)) {
+    return false;
+  }
+  if (!debounce(lastKeyPressTime)) {
+    return true;
+  }
+  wm->unfocusApp();
+  return true;
+}
+
+bool
+Controls::handleCloseFocusedApp()
+{
+  if (!waylandModifierHeld || !wm) {
+    return false;
+  }
+  bool shouldClose = is_configured_or_fallback_pressed(
+    controlMappings, pressed, "close_app", XKB_KEY_q, XKB_KEY_Q);
+  if (!shouldClose) {
+    return false;
+  }
+  if (!debounce(lastKeyPressTime)) {
+    return true;
   }
 
   auto focusedAppCandidate = [&]() -> std::optional<entt::entity> {
@@ -728,112 +776,22 @@ Controls::handleWaylandHotkeys()
     return wm->getCurrentlyFocusedApp();
   };
 
-  const bool appFocused = wm->hasCurrentOrPendingFocus();
-
-  if (appFocused) {
-    if (is_configured_or_fallback_pressed(
-          controlMappings, pressed, "unfocus_app", XKB_KEY_e, XKB_KEY_E) &&
-        debounce(lastKeyPressTime)) {
-      wm->unfocusApp();
-      return true;
+  if (auto ent = focusedAppCandidate()) {
+    if (auto* comp = registry->try_get<WaylandApp::Component>(*ent)) {
+      if (comp->app) {
+        comp->app->close();
+      }
     }
+  }
+  wm->unfocusApp();
+  return true;
+}
 
-    if (isPressedEither(XKB_KEY_q, XKB_KEY_Q) && debounce(lastKeyPressTime)) {
-      if (auto ent = focusedAppCandidate()) {
-        if (auto* comp = registry->try_get<WaylandApp::Component>(*ent)) {
-          if (comp->app) {
-            comp->app->close();
-          }
-        }
-      }
-      wm->unfocusApp();
-      return true;
-    }
-
-    for (int i = 0; i < 9; ++i) {
-      xkb_keysym_t digit = static_cast<xkb_keysym_t>(XKB_KEY_1 + i);
-      xkb_keysym_t shifted = normalize_hotkey_sym(digit);
-      switch (digit) {
-        case XKB_KEY_1:
-          shifted = XKB_KEY_exclam;
-          break;
-        case XKB_KEY_2:
-          shifted = XKB_KEY_at;
-          break;
-        case XKB_KEY_3:
-          shifted = XKB_KEY_numbersign;
-          break;
-        case XKB_KEY_4:
-          shifted = XKB_KEY_dollar;
-          break;
-        case XKB_KEY_5:
-          shifted = XKB_KEY_percent;
-          break;
-        case XKB_KEY_6:
-          shifted = XKB_KEY_asciicircum;
-          break;
-        case XKB_KEY_7:
-          shifted = XKB_KEY_ampersand;
-          break;
-        case XKB_KEY_8:
-          shifted = XKB_KEY_asterisk;
-          break;
-        case XKB_KEY_9:
-          shifted = XKB_KEY_parenleft;
-          break;
-        default:
-          break;
-      }
-      if (!isPressed(digit) && !isPressed(shifted)) {
-        continue;
-      }
-      if (!debounce(lastKeyPressTime)) {
-        return true;
-      }
-      log_controls("number hotkey: %d", i);
-      if (waylandShiftHeld) {
-        if (wm->getCurrentlyFocusedApp().has_value()) {
-          int source = wm->findAppsHotKey(wm->getCurrentlyFocusedApp().value());
-          wm->swapHotKeys(source, i);
-        }
-      } else if (auto ent = wm->getHotkeyTarget(i)) {
-        wm->unfocusApp();
-        goToApp(*ent);
-      }
-      return true;
-    }
-
+bool
+Controls::handleWaylandHotkeys()
+{
+  if (!waylandModifierHeld || !wm) {
     return false;
-  }
-
-  if (isPressedEither(XKB_KEY_p, XKB_KEY_P) && debounce(lastKeyPressTime)) {
-    wm->requestScreenshot();
-    return true;
-  }
-
-  if (is_configured_or_fallback_pressed(
-        controlMappings, pressed, "unfocus_app", XKB_KEY_e, XKB_KEY_E) &&
-      debounce(lastKeyPressTime)) {
-    wm->unfocusApp();
-    return true;
-  }
-
-  if (isPressedEither(XKB_KEY_q, XKB_KEY_Q) && debounce(lastKeyPressTime)) {
-    if (auto ent = focusedAppCandidate()) {
-      if (auto* comp = registry->try_get<WaylandApp::Component>(*ent)) {
-        if (comp->app) {
-          comp->app->close();
-        }
-      }
-    }
-    wm->unfocusApp();
-    return true;
-  }
-
-  if (isPressed(XKB_KEY_0) && debounce(lastKeyPressTime)) {
-    wm->unfocusApp();
-    moveTo(glm::vec3(3.0, 5.0, 16), std::nullopt, 4);
-    return true;
   }
 
   for (int i = 0; i < 9; ++i) {

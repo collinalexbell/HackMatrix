@@ -22,11 +22,8 @@ struct DeferedAction
 
 struct ControlResponse
 {
-  bool consumed = false;
-  bool blockClientDelivery = false;
-  bool clearInputForces = false;
-  bool clearSeatFocus = false;
-   bool requestQuit = false;
+  bool handledByWM = false;
+  bool shouldExit = false;
 };
 
 class Controls
@@ -74,6 +71,8 @@ class Controls
   void handleToggleCursor();
   void handleToggleApp();
   void handleFocus();
+  bool handleUnfocusApp();
+  bool handleCloseFocusedApp();
   void handleDMenu();
   void handleScreenshot();
   void handleSave();

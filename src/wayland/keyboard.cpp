@@ -38,7 +38,6 @@ process_key_sym(WlrServer* server,
     return;
   }
 
-  auto wm = server->engine->getWindowManager();
   auto controls = server->engine->getControls();
 
   uint32_t mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
@@ -46,22 +45,16 @@ process_key_sym(WlrServer* server,
   bool modifierHeld = (mods & server->hotkeyModifierMask);
   bool shiftHeld = (mods & WLR_MODIFIER_SHIFT);
 
-  // This is where all WM controls are handled (except for QUIT, see below)
+  // Controls decides whether the WM owns this key event and whether it
+  // requests compositor shutdown.
   auto resp = controls->handleKeySym(sym, pressed, modifierHeld, shiftHeld);
 
-
-  // QUIT can not be handled inside the controls itself
-  // It must be handled in the serve that owns the display
-  if (resp.requestQuit) {
+  if (resp.shouldExit) {
     wl_display_terminate(server->display);
     return;
   }
 
-
-  // In the event that WM controls handled a symkey,
-  // it should not be passed to the app,
-  // so return before the seat is notified.
-  if (resp.consumed) {
+  if (resp.handledByWM) {
     return;
   }
 
