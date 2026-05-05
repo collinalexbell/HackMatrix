@@ -2,6 +2,7 @@ database_file: "./db/matrix.db"
 menu_program: "wofi --show drun"
 scriptable_terminal_program: "kitty"
 scriptable_editor_program: "vim"
+show_key_press_overlay: true
 fov: 45.0
 zFar: 400.0
 key_mappings:

@@ -3,6 +3,7 @@
 #include "camera.h"
 #include "controls.h"
 #include "renderer.h"
+#include "TypedKeyOverlay.h"
 #include "WindowManager/WindowManager.h"
 #include "world.h"
 #include "entity.h"

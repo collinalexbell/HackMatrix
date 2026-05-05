@@ -14,6 +14,7 @@
 #include "app.h"
 #include "WindowManager/Space.h"
 #include "gl_resource.h"
+#include "TypedKeyOverlay.h"
 #include <array>
 #include <map>
 #include <memory>
@@ -49,7 +50,6 @@ class Renderer
   GlBuffer CURSOR_VBO;
   GlVertexArray CURSOR_VAO;
   unsigned int cursorTexture = 0;
-  unsigned int keyOverlayTexture = 0;
   bool cursorInitialized = false;
 
   GlBuffer LINE_VBO;
@@ -87,9 +87,9 @@ class Renderer
   World* world = NULL;
   shared_ptr<WindowManager::Space> windowManagerSpace;
   WindowManager::WindowManagerPtr wm;
+  std::shared_ptr<TypedKeyOverlay> typedKeyOverlay;
 
   unsigned int emacsID;
-  std::string typedKeyOverlayText;
 
   float deltaTime = 0.0f; // Time between current frame and last frame
   float lastFrame = 0.0f; // Time of last frame
@@ -134,6 +134,7 @@ public:
   Renderer(shared_ptr<EntityRegistry> registry,
            Camera*,
            World*,
+           std::shared_ptr<TypedKeyOverlay>,
            shared_ptr<blocks::TexturePack>,
            bool invertY = false);
   ~Renderer();
@@ -151,8 +152,6 @@ public:
   void renderSoftwareCursor(float xPixels, float yPixels, float sizePixels);
   void reloadChunk();
   void screenshotFromCurrentFramebuffer(int width, int height, unsigned int fbo = 0);
-  void renderTypedKeyOverlay(const std::string& text);
-  void setTypedKeyOverlayText(std::string text) { typedKeyOverlayText = std::move(text); }
   void toggleMeshing();
   void toggleWireframe();
   void wireWindowManager(WindowManager::WindowManagerPtr, shared_ptr<WindowManager::Space>);

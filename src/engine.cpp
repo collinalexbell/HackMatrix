@@ -16,6 +16,7 @@
 #include "logger.h"
 #include "model.h"
 #include "persister.h"
+#include "TypedKeyOverlay.h"
 #include "systems/Boot.h"
 #include "systems/Derivative.h"
 #include "systems/Light.h"
@@ -163,15 +164,18 @@ Engine::initializeMemberObjs()
   }
 
   auto texturePack = blocks::initializeBasicPack();
+  auto typedKeyOverlay = std::make_shared<TypedKeyOverlay>();
   wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true, envp);
   camera = new Camera();
   webGui = std::make_unique<MultiPlayer::WebGui>(this);
   world = new World(
     registry, camera, texturePack, true, loggerSink);
-  renderer = new Renderer(registry, camera, world, texturePack, options.invertYAxis);
+  renderer = new Renderer(
+    registry, camera, world, typedKeyOverlay, texturePack, options.invertYAxis);
   camera->setInvertY(options.invertYAxis);
   if (options.enableControls) {
-    controls = new Controls(wm, world, camera, renderer, registry, texturePack);
+    controls = new Controls(
+      wm, world, camera, renderer, typedKeyOverlay, registry, texturePack);
   } else {
     controls = nullptr;
   }
@@ -209,7 +213,6 @@ Engine::frame()
   double frameStart = currentTimeSeconds();
   api->mutateEntities();
   controls->pollPressedKeys();
-  renderer->setTypedKeyOverlayText(controls->getTypedKeyOverlayText());
   renderer->render();
   world->tick();
   controls->poll();
