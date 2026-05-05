@@ -142,6 +142,51 @@ configureWaylandChildEnvironment(const std::string& waylandDisplay,
   setenv("ELECTRON_OZONE_PLATFORM_HINT", "wayland", 1);
 }
 
+static void
+launchNestedProgram(const std::string& program, const char* logLabel)
+{
+  std::string runtimeDir = parseInlineEnvXdg(program);
+  std::string waylandDisplay = getEnv("HACKMATRIX_WAYLAND_DISPLAY", environ);
+  std::string xDisplay = getEnv("HACKMATRIX_DISPLAY", environ);
+  if (waylandDisplay.empty()) {
+    waylandDisplay = getEnv("WAYLAND_DISPLAY", environ);
+  }
+  if (xDisplay.empty()) {
+    xDisplay = getEnv("DISPLAY", environ);
+  }
+  if (runtimeDir.empty()) {
+    const char* envVal = getEnv("XDG_RUNTIME_DIR", environ);
+    if (envVal) {
+      runtimeDir = envVal;
+    }
+  }
+  if (!runtimeDir.empty()) {
+    struct stat st;
+    if (stat(runtimeDir.c_str(), &st) != 0) {
+      mkdir(runtimeDir.c_str(), 0700);
+    }
+  }
+
+  std::thread([program, runtimeDir, waylandDisplay, xDisplay, logLabel] {
+    pid_t pid = fork();
+    if (pid == 0) {
+      setsid();
+      configureWaylandChildEnvironment(waylandDisplay, runtimeDir, xDisplay);
+      WL_WM_LOG("WM: launching %s with WAYLAND_DISPLAY=%s XDG_RUNTIME_DIR=%s DISPLAY=%s\n",
+                logLabel,
+                std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)",
+                std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)",
+                std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)");
+      execl("/bin/sh", "sh", "-c", program.c_str(), (char*)nullptr);
+      _exit(127);
+    }
+    int status = 0;
+    if (pid > 0) {
+      waitpid(pid, &status, 0);
+    }
+  }).detach();
+}
+
 static unsigned int
 resolveHotkeyMaskFromConfig()
 {
@@ -164,46 +209,14 @@ resolveHotkeyMaskFromConfig()
 }
 
 void WindowManager::menu() {
-  auto program = menuProgram;
-  std::string runtimeDir = parseInlineEnvXdg(program);
-  std::string waylandDisplay = getEnv("HACKMATRIX_WAYLAND_DISPLAY", environ);
-  std::string xDisplay = getEnv("HACKMATRIX_DISPLAY", environ);
-  if (waylandDisplay.empty()) {
-    waylandDisplay = getEnv("WAYLAND_DISPLAY", environ);
+  launchNestedProgram(menuProgram, "menu");
+}
+
+void WindowManager::launchTerminal() {
+  if (terminalProgram.empty()) {
+    return;
   }
-  if (xDisplay.empty()) {
-    xDisplay = getEnv("DISPLAY", environ);
-  }
-  if (runtimeDir.empty()) {
-    const char* envVal = getEnv("XDG_RUNTIME_DIR", environ);
-    if (envVal) {
-      runtimeDir = envVal;
-    }
-  }
-  if (!runtimeDir.empty()) {
-    struct stat st;
-    if (stat(runtimeDir.c_str(), &st) != 0) {
-      int mk = mkdir(runtimeDir.c_str(), 0700);
-    }
-  }
-  std::thread([program, runtimeDir, waylandDisplay, xDisplay] {
-    pid_t pid = fork();
-    if (pid == 0) {
-      setsid();
-      configureWaylandChildEnvironment(waylandDisplay, runtimeDir, xDisplay);
-      WL_WM_LOG("WM: launching menu with WAYLAND_DISPLAY=%s XDG_RUNTIME_DIR=%s DISPLAY=%s\n",
-                std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)",
-                std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)",
-                std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)");
-      execl("/bin/sh", "sh", "-c", program.c_str(), (char*)nullptr);
-      // execl only returns on failure.
-      _exit(127);
-    }
-    int status = 0;
-    if (pid > 0) {
-      waitpid(pid, &status, 0);
-    }
-  }).detach();
+  launchNestedProgram(terminalProgram, "terminal");
 }
 
 void WindowManager::createAndRegisterApps(char **envp) {
@@ -674,8 +687,17 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
   , envp(envp)
 {
   menuProgram = Config::singleton()->get<std::string>("menu_program");
+  try {
+    terminalProgram =
+      Config::singleton()->get<std::string>("scriptable_terminal_program");
+  } catch (...) {
+    terminalProgram.clear();
+  }
   if (const char* envMenu = std::getenv("MENU_PROGRAM")) {
     menuProgram = envMenu;
+  }
+  if (const char* envTerminal = std::getenv("TERMINAL_PROGRAM")) {
+    terminalProgram = envTerminal;
   }
   hotkeyModifierMask = resolveHotkeyMaskFromConfig();
   setupLogger();

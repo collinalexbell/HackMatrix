@@ -237,6 +237,7 @@ void Controls::handleKeys() {
   // Finally, handle standard wm keys
   handleMovement();
   handleToggleApp();
+  handleSpawnTerminal();
   handleDMenu();
   handleToggleCursor();
   handleScreenshot();
@@ -735,6 +736,20 @@ Controls::handleToggleApp()
       debounce(lastKeyPressTime)) {
     goToApp(app.value());
   }
+}
+
+void
+Controls::handleSpawnTerminal()
+{
+  if (!waylandModifierHeld || !wm) {
+    return;
+  }
+  bool shouldSpawn =
+    isPressed(XKB_KEY_Return) || isPressed(XKB_KEY_KP_Enter);
+  if (!shouldSpawn || !debounce(lastKeyPressTime)) {
+    return;
+  }
+  wm->launchTerminal();
 }
 
 bool

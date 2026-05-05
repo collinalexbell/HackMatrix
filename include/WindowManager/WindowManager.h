@@ -57,6 +57,7 @@ public:
   virtual ~WindowManagerInterface() = default;
   virtual void unfocusApp() = 0;
   virtual void menu() = 0;
+  virtual void launchTerminal() = 0;
   virtual void createAndRegisterApps(char** envp) = 0;
   virtual optional<entt::entity> getCurrentlyFocusedApp() = 0;
   virtual optional<entt::entity> getPendingFocusedApp() = 0;
@@ -104,6 +105,7 @@ class WindowManager : public WindowManagerInterface
   entt::entity obs;
   entt::entity terminator;
   std::string menuProgram;
+  std::string terminalProgram;
   char** envp = nullptr;
 
   IdeSelection ideSelection;
@@ -164,6 +166,7 @@ public:
   optional<entt::entity> getHotkeyTarget(int index) override;
   void unfocusApp() override;
   void menu() override;
+  void launchTerminal() override;
   void createAndRegisterApps(char** envp) override;
   WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, bool waylandMode, char** envp = nullptr);
   bool isWaylandMode() const override { return waylandMode; }

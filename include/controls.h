@@ -70,6 +70,7 @@ class Controls
   void handleModEscape();
   void handleToggleCursor();
   void handleToggleApp();
+  void handleSpawnTerminal();
   void handleFocus();
   bool handleUnfocusApp();
   bool handleCloseFocusedApp();
