@@ -8,6 +8,7 @@ zFar: 400.0
 key_mappings:
   screenshot: "p"
   toggle_cursor: "f"
+  reload_config: "y"
   quit: "escape"
   super_modifier: "super"
   debug_mesh: ","

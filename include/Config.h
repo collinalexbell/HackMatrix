@@ -18,6 +18,7 @@ public:
   Config();
   static std::string resolveConfigPath();
   const std::string& getConfigPath() const;
+  void reload();
 
   template<typename T>
   T get(const std::string& key_path)

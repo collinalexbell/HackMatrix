@@ -76,6 +76,7 @@ class Controls
   void handleToggleCursor();
   void handleToggleApp();
   void handleSpawnTerminal();
+  void handleReloadConfig();
   void handleFocus();
   bool handleUnfocusApp();
   bool handleCloseFocusedApp();

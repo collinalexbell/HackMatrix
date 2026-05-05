@@ -16,6 +16,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <linux/input-event-codes.h>
 
+#include "Config.h"
 #include "controls.h"
 #include "camera.h"
 #include "renderer.h"
@@ -247,6 +248,7 @@ void Controls::handleKeys() {
   handleMovement();
   handleToggleApp();
   handleSpawnTerminal();
+  handleReloadConfig();
   handleDMenu();
   handleToggleCursor();
   handleScreenshot();
@@ -772,6 +774,19 @@ Controls::handleSpawnTerminal()
     return;
   }
   wm->launchTerminal();
+}
+
+void
+Controls::handleReloadConfig()
+{
+  bool shouldReload = is_configured_or_fallback_pressed(
+    controlMappings, pressed, "reload_config", XKB_KEY_y, XKB_KEY_Y);
+  if (!shouldReload || !debounce(lastKeyPressTime)) {
+    return;
+  }
+
+  Config::singleton()->reload();
+  controlMappings = ControlMappings();
 }
 
 bool

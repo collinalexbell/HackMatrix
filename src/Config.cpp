@@ -24,6 +24,12 @@ envPath(const char* name)
 
 Config::Config()
 {
+  reload();
+}
+
+void
+Config::reload()
+{
   configPath = resolveConfigPath();
   std::ifstream ifs(configPath);
   if (!ifs.is_open()) {
