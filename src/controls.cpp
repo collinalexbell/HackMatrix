@@ -1,9 +1,6 @@
 #include "world.h"
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <optional>
-#define GLFW_EXPOSE_NATIVE_X11
-#include <GLFW/glfw3native.h>
 
 #include <iostream>
 #include <sstream>
@@ -25,80 +22,6 @@
 using namespace std;
 
 namespace {
-std::optional<int>
-glfw_key_from_name(const std::string& keyName)
-{
-  if (keyName.size() == 1) {
-    const unsigned char ch = static_cast<unsigned char>(keyName[0]);
-    if (std::isalpha(ch)) {
-      return GLFW_KEY_A + (std::toupper(ch) - 'A');
-    }
-    if (std::isdigit(ch)) {
-      return GLFW_KEY_0 + (ch - '0');
-    }
-    switch (ch) {
-      case ',':
-        return GLFW_KEY_COMMA;
-      case '.':
-        return GLFW_KEY_PERIOD;
-      case '/':
-        return GLFW_KEY_SLASH;
-      case ';':
-        return GLFW_KEY_SEMICOLON;
-      case '\'':
-        return GLFW_KEY_APOSTROPHE;
-      case '[':
-        return GLFW_KEY_LEFT_BRACKET;
-      case ']':
-        return GLFW_KEY_RIGHT_BRACKET;
-      case '\\':
-        return GLFW_KEY_BACKSLASH;
-      case '=':
-        return GLFW_KEY_EQUAL;
-      case '-':
-        return GLFW_KEY_MINUS;
-      case '`':
-        return GLFW_KEY_GRAVE_ACCENT;
-      default:
-        return std::nullopt;
-    }
-  }
-
-  if (keyName == "escape") {
-    return GLFW_KEY_ESCAPE;
-  }
-  if (keyName == "delete") {
-    return GLFW_KEY_DELETE;
-  }
-  if (keyName == "space") {
-    return GLFW_KEY_SPACE;
-  }
-  if (keyName == "tab") {
-    return GLFW_KEY_TAB;
-  }
-  if (keyName == "enter" || keyName == "return") {
-    return GLFW_KEY_ENTER;
-  }
-  if (keyName == "backspace") {
-    return GLFW_KEY_BACKSPACE;
-  }
-
-  return std::nullopt;
-}
-
-int
-configured_or_fallback_glfw_key(ControlMappings& controlMappings,
-                                const std::string& fn,
-                                int fallback)
-{
-  if (auto keyName = controlMappings.getKeyName(fn)) {
-    if (auto glfwKey = glfw_key_from_name(*keyName)) {
-      return *glfwKey;
-    }
-  }
-  return fallback;
-}
-
 bool
 is_configured_or_fallback_pressed(ControlMappings& controlMappings,
                                   const std::unordered_set<xkb_keysym_t>& pressed,
@@ -111,16 +34,6 @@ is_configured_or_fallback_pressed(ControlMappings& controlMappings,
     return pressed.count(static_cast<xkb_keysym_t>(mapped)) > 0;
   }
   return pressed.count(fallbackLower) > 0 || pressed.count(fallbackUpper) > 0;
-}
-
-bool
-is_configured_or_fallback_glfw_pressed(ControlMappings& controlMappings,
-                                       GLFWwindow* window,
-                                       const std::string& fn,
-                                       int fallback)
-{
-  int glfwKey = configured_or_fallback_glfw_key(controlMappings, fn, fallback);
-  return glfwGetKey(window, glfwKey) == GLFW_PRESS;
 }
 
 bool
@@ -200,37 +113,10 @@ log_controls(const char* fmt, ...)
 } // namespace
 
 void
-Controls::mouseCallback(GLFWwindow* window, double xpos, double ypos)
-{
-  if (grabbedCursor) {
-    if (resetMouse) {
-      lastX = xpos;
-      lastY = ypos;
-      resetMouse = false;
-    }
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-
-    renderer->getCamera()->handleRotateForce(window, xoffset, yoffset);
-  }
-}
-
-void
 Controls::poll() {
   runQueuedActions();
   pollPressedKeys();
   handleKeys();
-  doDeferedActions();
-}
-
-void
-Controls::poll(GLFWwindow* window, Camera* camera, World* world)
-{
-  runQueuedActions();
-  handleKeys(window, camera, world);
-  handleClicks(window, world);
   doDeferedActions();
 }
 
@@ -275,40 +161,6 @@ void Controls::handleKeys() {
   handleChangePlayerSpeed();
 }
 
-// glfw version (to be deleted, maybe)
-void
-Controls::handleKeys(GLFWwindow* window, Camera* camera, World* world)
-{
-  //handleQuit(window);
-  if (keysEnabled) {
-    bool up = is_configured_or_fallback_glfw_pressed(
-      controlMappings, window, "move_forward", GLFW_KEY_W);
-    bool down = is_configured_or_fallback_glfw_pressed(
-      controlMappings, window, "move_back", GLFW_KEY_S);
-    bool left = is_configured_or_fallback_glfw_pressed(
-      controlMappings, window, "move_left", GLFW_KEY_A);
-    bool right = is_configured_or_fallback_glfw_pressed(
-      controlMappings, window, "move_right", GLFW_KEY_D);
-    camera->handleTranslateForce(up, down, left, right, false, false);
-
-    handleModEscape(window);
-    handleToggleCursor(window);
-    handleToggleApp(window, world, camera);
-    handleScreenshot(window);
-    handleSave(window);
-    handleSelection(window);
-    handleCodeBlock(window);
-    handleDebug(window);
-    handleToggleMeshing(window);
-    handleToggleWireframe(window);
-    handleLogBlockCounts(window);
-    handleLogBlockType(window);
-    handleDMenu(window, world);
-    handleWindowFlop(window);
-    handleChangePlayerSpeed(window);
-  }
-}
-
 void
 Controls::disableKeys()
 {
@@ -331,18 +183,6 @@ debounce(double& lastTime)
 }
 
 void
-Controls::handleDMenu(GLFWwindow* window, World* world)
-{
-  // its V menu for now :(
-  bool dMenuActive = glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS;
-  if (dMenuActive && debounce(lastKeyPressTime)) {
-    if (wm) {
-      wm->menu();
-    }
-  }
-}
-
-void
 Controls::handleDMenu()
 {
   bool dMenuActive = isPressedEither(XKB_KEY_v, XKB_KEY_V);
@@ -351,15 +191,6 @@ Controls::handleDMenu()
       log_controls("controls: menu\n");
       wm->menu();
     }
-  }
-}
-
-void
-Controls::handleLogBlockType(GLFWwindow* window)
-{
-  bool shouldDebug = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
-  if (shouldDebug && debounce(lastKeyPressTime)) {
-    world->action(LOG_BLOCK_TYPE);
   }
 }
 
@@ -374,32 +205,12 @@ Controls::handleLogBlockType()
 }
 
 void
-Controls::handleLogBlockCounts(GLFWwindow* window)
-{
-  bool shouldDebug = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
-  if (shouldDebug && debounce(lastKeyPressTime)) {
-    texturePack->logCounts();
-  }
-}
-
-void
 Controls::handleLogBlockCounts()
 {
   bool shouldDebug = isPressedEither(XKB_KEY_b, XKB_KEY_B);
   if (shouldDebug && debounce(lastKeyPressTime)) {
     texturePack->logCounts();
     log_controls("controls: logCounts\n");
-  }
-}
-
-void
-Controls::handleDebug(GLFWwindow* window)
-{
-  int debugKey =
-    configured_or_fallback_glfw_key(controlMappings, "debug_mesh", GLFW_KEY_COMMA);
-  bool shouldDebug = glfwGetKey(window, debugKey) == GLFW_PRESS;
-  if (shouldDebug && debounce(lastKeyPressTime)) {
-    world->mesh();
   }
 }
 
@@ -415,31 +226,12 @@ Controls::handleDebug()
 }
 
 void
-Controls::handleToggleMeshing(GLFWwindow* window)
-{
-  bool shouldToggleMeshing = glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS;
-  if (shouldToggleMeshing && debounce(lastKeyPressTime)) {
-
-    world->mesh(false);
-  }
-}
-
-void
 Controls::handleToggleMeshing()
 {
   bool shouldToggleMeshing = isPressedEither(XKB_KEY_m, XKB_KEY_M);
   if (shouldToggleMeshing && debounce(lastKeyPressTime)) {
     world->mesh(false);
     log_controls("controls: mesh=false\n");
-  }
-}
-
-void
-Controls::handleToggleWireframe(GLFWwindow* window)
-{
-  bool shouldToggleWireframe = glfwGetKey(window, GLFW_KEY_SLASH) == GLFW_PRESS;
-  if (shouldToggleWireframe && debounce(lastKeyPressTime)) {
-    renderer->toggleWireframe();
   }
 }
 
@@ -455,35 +247,12 @@ Controls::handleToggleWireframe()
 }
 
 void
-Controls::handleSelection(GLFWwindow* window)
-{
-  int selectKey =
-    configured_or_fallback_glfw_key(controlMappings, "select", GLFW_KEY_E);
-  bool shouldSelect = glfwGetKey(window, selectKey) == GLFW_PRESS;
-  if (shouldSelect && debounce(lastKeyPressTime)) {
-    // world->action(SELECT_CUBE);
-  }
-}
-
-void
 Controls::handleSelection()
 {
   bool shouldSelect = is_configured_or_fallback_pressed(
     controlMappings, pressed, "select", XKB_KEY_e, XKB_KEY_E);
   if (shouldSelect && debounce(lastKeyPressTime)) {
     // world->action(SELECT_CUBE);
-  }
-}
-
-void
-Controls::handleCodeBlock(GLFWwindow* window)
-{
-  bool shouldOpenCodeBlock = glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS;
-  if (shouldOpenCodeBlock && debounce(lastKeyPressTime)) {
-    auto newPos = camera->position + camera->front * -3.0f;
-    moveTo(newPos, std::nullopt, 0.5, [this]() -> void {
-      world->action(OPEN_SELECTION_CODE);
-    });
   }
 }
 
@@ -497,19 +266,6 @@ Controls::handleCodeBlock()
     moveTo(newPos, std::nullopt, 0.5, [this]() -> void {
       world->action(OPEN_SELECTION_CODE);
     });
-  }
-}
-
-void
-Controls::handleSave(GLFWwindow* window)
-{
-  bool shouldSave = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
-  if (shouldSave && debounce(lastKeyPressTime)) {
-    auto t = std::time(nullptr);
-    auto tm = *std::localtime(&t);
-    stringstream filenameSS;
-    filenameSS << "saves/" << std::put_time(&tm, "%Y-%m-%d:%H-%M-%S.save");
-    world->save(filenameSS.str());
   }
 }
 
@@ -528,17 +284,6 @@ Controls::handleSave()
 }
 
 void
-Controls::handleScreenshot(GLFWwindow* window)
-{
-  int screenshotKey =
-    configured_or_fallback_glfw_key(controlMappings, "screenshot", GLFW_KEY_P);
-  bool shouldCapture = glfwGetKey(window, screenshotKey) == GLFW_PRESS;
-  if (shouldCapture && debounce(lastKeyPressTime)) {
-    triggerScreenshot();
-  }
-}
-
-void
 Controls::handleScreenshot()
 {
   int screenshotKey = controlMappings.getKey("screenshot");
@@ -553,33 +298,6 @@ void
 Controls::triggerScreenshot()
 {
   wm->requestScreenshot();
-}
-
-void
-Controls::handleClicks(GLFWwindow* window, World* world)
-{
-  int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-  if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    if(grabbedCursor) {
-      auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
-                                    : std::optional<entt::entity>();
-      if (app.has_value()) {
-        goToApp(app.value());
-      } else {
-        world->action(PLACE_VOXEL);
-      }
-    } else {
-      // move objects
-      //
-      // auto mouseRay = createMouseRay(mouseX, mouseY, screenWidth, screenHeight, projectionMatrix, viewMatrix)
-      // do intersection
-    }
-  }
-
-  state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
-  if (state == GLFW_PRESS && debounce(lastClickTime)) {
-    // world->action(REMOVE_CUBE);
-  }
 }
 
 void
@@ -607,14 +325,6 @@ Controls::handleMovement()
     controlMappings, pressed, "move_right", XKB_KEY_d, XKB_KEY_D);
   // I need to change this to get zPlus and zNegative working
   camera->handleTranslateForce(up, down, left, right, zPlus, zNegative);
-}
-
-void
-Controls::handleModEscape(GLFWwindow* window)
-{
-  if (glfwGetKey(window, GLFW_KEY_DELETE) == GLFW_PRESS) {
-    throw "errorEscape";
-  }
 }
 
 void
@@ -652,20 +362,6 @@ Controls::moveTo(glm::vec3 pos,
 }
 
 void
-Controls::handleWindowFlop(GLFWwindow* window)
-{
-  if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) {
-    windowFlop += windowFlop_dt;
-  }
-  if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS) {
-    windowFlop -= windowFlop_dt;
-  }
-  if (windowFlop <= 0.01) {
-    windowFlop = 0.01;
-  }
-}
-
-void
 Controls::handleWindowFlop()
 {
   if (isPressed(XKB_KEY_0) &&
@@ -677,28 +373,6 @@ Controls::handleWindowFlop()
   }
   if (windowFlop <= 0.01) {
     windowFlop = 0.01;
-  }
-}
-
-void
-Controls::handleChangePlayerSpeed(GLFWwindow* window)
-{
-  auto delta = 0.05f;
-  if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS &&
-      debounce(lastKeyPressTime)) {
-    camera->changeSpeed(delta);
-  }
-  if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS &&
-      debounce(lastKeyPressTime)) {
-    camera->changeSpeed(-delta);
-  }
-
-  int shiftPressed = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                     glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
-  int zeroPressed = glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS;
-
-  if (shiftPressed && zeroPressed && debounce(lastKeyPressTime)) {
-    camera->resetSpeed();
   }
 }
 
@@ -745,32 +419,6 @@ Controls::goToApp(entt::entity app)
 }
 
 void
-Controls::handleToggleApp(GLFWwindow* window, World* world, Camera* camera)
-{
-  auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
-                                : std::optional<entt::entity>();
-  if (app.has_value()) {
-    int rKeyPressed = glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS;
-    if (rKeyPressed && debounce(lastKeyPressTime)) {
-      goToApp(app.value());
-    }
-  }
-}
-
-void
-Controls::handleSelectApp(GLFWwindow* window)
-{
-  auto app = windowManagerSpace ? windowManagerSpace->getLookedAtApp()
-                                : std::optional<entt::entity>();
-  if (app) {
-    int keyPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
-    if (keyPressed && debounce(lastKeyPressTime)) {
-      windowManagerSpace->toggleAppSelect(*app);
-    }
-  }
-}
-
-void
 Controls::doAfter(shared_ptr<bool> isDone, function<void()> actionFn)
 {
   DeferedAction action;
@@ -791,24 +439,6 @@ Controls::doDeferedActions()
   }
   for (auto it : toDelete) {
     deferedActions.erase(it);
-  }
-}
-
-void
-Controls::handleToggleCursor(GLFWwindow* window)
-{
-  int toggleCursorKey =
-    configured_or_fallback_glfw_key(controlMappings, "toggle_cursor", GLFW_KEY_F);
-  if (glfwGetKey(window, toggleCursorKey) == GLFW_PRESS &&
-      debounce(lastKeyPressTime)) {
-    if (grabbedCursor) {
-      grabbedCursor = false;
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    } else {
-      grabbedCursor = true;
-      resetMouse = true;
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    }
   }
 }
 
@@ -843,11 +473,6 @@ void
 Controls::wireWindowManager(std::shared_ptr<WindowManager::Space> space)
 {
   windowManagerSpace = space;
-}
-
-void
-Controls::handleMakeWindowBootable(GLFWwindow* window)
-{
 }
 
 bool

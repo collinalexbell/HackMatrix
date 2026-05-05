@@ -5,7 +5,6 @@
 #include <queue>
 #include <unordered_set>
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <xkbcommon/xkbcommon.h>
 #include <memory>
 #include "blocks.h"
@@ -72,45 +71,26 @@ class Controls
 
   void handleMovement();
   void handleModEscape();
-  void handleModEscape(GLFWwindow* window);
   void handleToggleCursor();
-  void handleToggleCursor(GLFWwindow* window);
   void handleToggleApp();
-  void handleToggleApp(GLFWwindow* window, World* world, Camera* camera);
-  void handleSelectApp(GLFWwindow* window);
   void handleFocus();
   void handleDMenu();
-  void handleDMenu(GLFWwindow* window, World* world);
   void handleScreenshot();
-  void handleScreenshot(GLFWwindow* window);
   void handleSave();
-  void handleSave(GLFWwindow* window);
   void handleSelection();
-  void handleSelection(GLFWwindow* window);
   void handleCodeBlock();
-  void handleCodeBlock(GLFWwindow* window);
   void handleDebug();
-  void handleDebug(GLFWwindow* window);
   void handleToggleMeshing();
-  void handleToggleMeshing(GLFWwindow* window);
   void handleToggleWireframe();
-  void handleToggleWireframe(GLFWwindow* window);
   void handleLogBlockCounts();
-  void handleLogBlockCounts(GLFWwindow* window);
   void handleLogBlockType();
-  void handleLogBlockType(GLFWwindow* window);
   void handleChangePlayerSpeed();
-  void handleChangePlayerSpeed(GLFWwindow* window);
   void handleWindowFlop();
-  void handleWindowFlop(GLFWwindow* window);
-  void handleMakeWindowBootable(GLFWwindow* window);
   bool handleWaylandHotkeys();
   bool isPressed(xkb_keysym_t sym) const;
   bool isPressedEither(xkb_keysym_t a, xkb_keysym_t b) const;
 
-  void handleKeys(GLFWwindow* window, Camera* camera, World* world);
   void handleKeys();
-  void handleClicks(GLFWwindow* window, World* world);
   void doAfter(shared_ptr<bool> isDone, function<void()> actionFn);
   void doDeferedActions();
   void enqueueAction(std::function<void()> fn);
@@ -131,10 +111,8 @@ public:
   {
     lastWaylandFocusActive = false;
   }
-  void poll(GLFWwindow* window, Camera* camera, World* world);
   void poll();
   void pollPressedKeys();
-  void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void goToApp(entt::entity);
   void moveTo(glm::vec3 pos,
               optional<glm::vec3> rotation,

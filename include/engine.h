@@ -16,9 +16,6 @@
 #include <spdlog/common.h>
 #include <vector>
 
-void
-mouseCallback(GLFWwindow* window, double xpos, double ypos);
-
 struct EngineOptions {
   bool enableGui = true;
   bool enableControls = true;
@@ -51,7 +48,6 @@ class Engine
   void disableKeysIfImguiActive();
   bool imguiMouseCapture = false;
 
-  friend void mouseCallback(GLFWwindow* window, double xpos, double ypos);
   void setupRegistry();
   void initializeMemberObjs();
   void multiplayerClientIteration(double frameStart);
