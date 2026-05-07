@@ -106,6 +106,7 @@ public:
                                bool replace);
   void clearApiVoxelsByIds(const vector<int64_t>& ids);
   void clearApiVoxelsInBox(const glm::vec3& min, const glm::vec3& max);
+  void clearDynamicObjectsInBox(const glm::vec3& min, const glm::vec3& max);
   void addLine(Line line) override;
   void removeLine(Line line) override;
 

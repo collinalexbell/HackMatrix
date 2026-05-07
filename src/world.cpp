@@ -742,6 +742,42 @@ World::clearApiVoxelsInBox(const glm::vec3& min, const glm::vec3& max)
 }
 
 void
+World::clearDynamicObjectsInBox(const glm::vec3& min, const glm::vec3& max)
+{
+  if (dynamicObjects == NULL) {
+    return;
+  }
+
+  const glm::vec3 lower(std::min(min.x, max.x),
+                        std::min(min.y, max.y),
+                        std::min(min.z, max.z));
+  const glm::vec3 upper(std::max(min.x, max.x),
+                        std::max(min.y, max.y),
+                        std::max(min.z, max.z));
+
+  vector<int> idsToRemove;
+  auto objectIds = dynamicObjects->getObjectIds();
+  idsToRemove.reserve(objectIds.size());
+  for (int id : objectIds) {
+    auto obj = dynamicObjects->getObjectById(id);
+    if (obj == NULL) {
+      continue;
+    }
+    const auto pos = obj->getPosition();
+    if (pos.x < lower.x || pos.x > upper.x || pos.y < lower.y ||
+        pos.y > upper.y || pos.z < lower.z || pos.z > upper.z) {
+      continue;
+    }
+    idsToRemove.push_back(id);
+    apiDynamicObjectIds.erase(id);
+  }
+
+  if (!idsToRemove.empty()) {
+    dynamicObjects->queueRemoveObjectsById(idsToRemove);
+  }
+}
+
+void
 World::addLine(Line line)
 {
   if (line.color.r >= 0) {

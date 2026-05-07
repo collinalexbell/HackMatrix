@@ -175,9 +175,6 @@ Api::ProtobufCommandServer::poll()
       api->grabBatched();
       auto batchedRequests = api->getBatchedRequests();
       auto request = BatchedRequest(apiRequest);
-      if (apiRequest.type() == CLEAR_VOXELS) {
-        request.actionId = api->allocateActionId();
-      }
       if (apiRequest.type() == QUIT) {
         log_to_tmp_api("api quit requested\n");
         // Process QUIT immediately so the display is terminated even if the
@@ -217,9 +214,7 @@ Api::ProtobufCommandServer::poll()
       } else if (apiRequest.type() == LIST_ENTITIES ||
                  apiRequest.type() == GET_COMPONENT ||
                  apiRequest.type() == ADD_VOXELS ||
-                 (apiRequest.type() == CLEAR_VOXELS &&
-                  apiRequest.has_clearvoxels() &&
-                  apiRequest.clearvoxels().has_ids())) {
+                 apiRequest.type() == CLEAR_VOXELS) {
         auto pending = std::make_shared<PendingApiResponse>();
         pending->requestId = request.id;
         {
@@ -412,7 +407,11 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
         break;
       }
 
+      ApiRequestResponse response;
+      response.set_requestid(batchedRequest.id);
       if (!clear.has_box()) {
+        response.set_success(false);
+        fulfillPendingResponse(batchedRequest.id, response);
         break;
       }
 
@@ -431,7 +430,13 @@ Api::processBatchedRequest(BatchedRequest batchedRequest)
       std::cout << "[API] ClearVoxels request min=(" << min.x << ", " << min.y
                 << ", " << min.z << ") max=(" << max.x << ", " << max.y << ", "
                 << max.z << ")" << std::endl;
-      registerClearArea(min, max, batchedRequest.actionId);
+      if (world != nullptr) {
+        world->clearDynamicObjectsInBox(min, max);
+        response.set_success(true);
+      } else {
+        response.set_success(false);
+      }
+      fulfillPendingResponse(batchedRequest.id, response);
       break;
     }
     case CONFIRM_ACTION: {
@@ -939,11 +944,8 @@ Api::confirmClearArea(int64_t actionId)
     return false;
   }
   const auto& action = it->second;
-  if (renderer != nullptr) {
-    renderer->clearVoxelsInBox(action.min, action.max);
-  }
   if (world != nullptr) {
-    world->clearApiVoxelsInBox(action.min, action.max);
+    world->clearDynamicObjectsInBox(action.min, action.max);
   }
   if (logger) {
     logger->info("Confirmed clear area {}", actionId);
