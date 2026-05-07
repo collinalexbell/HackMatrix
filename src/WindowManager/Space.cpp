@@ -163,7 +163,7 @@ Space::getViewDistanceForWindowSize(entt::entity entity)
 
   // Analytically solve for z so the quad width maps 1:1 to pixels:
   // x_ndc = (0.5 * P00) / z, target = |x_ndc| => z = 0.5 * P00 / target
-  glm::mat4 proj = camera->getProjectionMatrix();
+  glm::mat4 proj = camera->getProjectionMatrix(true);
   float p00 = proj[0][0];
   float tanHalfXFov = p00 != 0.0f ? 1.0f / p00 : 0.0f;
   float expectedCoverage = targetWidthPx / viewportWidthPx;
@@ -211,7 +211,7 @@ Space::getViewDistanceForWindowSize(entt::entity entity)
   float zBest = 1.0f;
   for (float z = 0.0f; z <= 10.5f; z += 0.001f) {
     glm::vec4 candidate =
-      camera->getProjectionMatrix() *
+      camera->getProjectionMatrix(true) *
       glm::vec4(0.5f * scaleFactor, 0.0f, -z, 1.0f);
     candidate = candidate / candidate.w;
     if (fabs(candidate.x - target) < fabs(gl_pos.x - target)) {
@@ -313,7 +313,7 @@ Space::getLookedAtApp()
                            SCREEN_HEIGHT * 0.5f,
                            SCREEN_WIDTH,
                            SCREEN_HEIGHT,
-                           camera->getProjectionMatrix(),
+                           camera->getProjectionMatrix(true),
                            camera->getViewMatrix());
   if (auto hit = raycastApp(ray, 2.5f, false)) {
     return hit->entity;
@@ -436,7 +436,7 @@ Space::raycastAppFromScreen(float mouseX,
                            mouseY,
                            screenWidth,
                            screenHeight,
-                           camera->getProjectionMatrix(),
+                           camera->getProjectionMatrix(true),
                            camera->getViewMatrix());
   return raycastApp(ray, distLimit, waylandOnly);
 }

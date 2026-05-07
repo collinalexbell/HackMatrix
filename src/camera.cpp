@@ -37,8 +37,9 @@ Camera::Camera()
   zNear = 0.02f;
   auto yFovDegs = Config::singleton()->get<float>("fov");
   yFov = glm::radians(yFovDegs);
-  projectionMatrix =
-    glm::perspective(yFov, SCREEN_WIDTH / SCREEN_HEIGHT, zNear, zFar);
+  projectionAspect =
+    SCREEN_HEIGHT > 0.0f ? (SCREEN_WIDTH / SCREEN_HEIGHT) : (800.0f / 600.0f);
+  projectionMatrix = glm::perspective(yFov, projectionAspect, zNear, zFar);
 }
 
 Camera::~Camera() {}
@@ -157,9 +158,14 @@ Camera::viewMatrixUpdated()
 glm::mat4&
 Camera::getProjectionMatrix(bool isRenderLoop)
 {
-  if (_projectionMatrixUpdated || isRenderLoop) {
+  float currentAspect =
+    SCREEN_HEIGHT > 0.0f ? (SCREEN_WIDTH / SCREEN_HEIGHT) : projectionAspect;
+  bool aspectChanged =
+    currentAspect > 0.0f && std::abs(currentAspect - projectionAspect) > 0.0001f;
+  if (_projectionMatrixUpdated || isRenderLoop || aspectChanged) {
+    projectionAspect = currentAspect > 0.0f ? currentAspect : projectionAspect;
     projectionMatrix =
-      glm::perspective(yFov, SCREEN_WIDTH / SCREEN_HEIGHT, zNear, zFar);
+      glm::perspective(yFov, projectionAspect, zNear, zFar);
     if (invertY) {
       projectionMatrix[1][1] *= -1.0f;
     }

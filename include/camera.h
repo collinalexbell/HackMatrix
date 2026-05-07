@@ -75,6 +75,7 @@ class Camera
   void interpolateMovement(Movement& movement);
   glm::mat4 viewMatrix;
   glm::mat4 projectionMatrix;
+  float projectionAspect = 0.0f;
   float zFar;
   float zNear;
   float yFov;
