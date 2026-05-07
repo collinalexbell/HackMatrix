@@ -10,11 +10,13 @@
 #include "renderer.h"
 #include "wayland_app.h"
 #include "components/Bootable.h"
+#include "model.h"
 #include <glm/gtx/intersect.hpp>
 #include <cassert>
 #include <csignal>
 #include <cstdio>
 #include <cmath>
+#include <algorithm>
 #include <iterator>
 #include <optional>
 
@@ -279,6 +281,14 @@ struct Intersection
   float dist;
 };
 
+static constexpr float kAppQuadHalfWidth = 0.5f;
+
+static float
+appQuadHalfHeight()
+{
+  return SCREEN_HEIGHT / SCREEN_WIDTH / 2.0f;
+}
+
 Intersection
 intersectLineAndPlane(glm::vec3 linePos,
                       glm::vec3 lineDir,
@@ -296,45 +306,139 @@ intersectLineAndPlane(glm::vec3 linePos,
 optional<entt::entity>
 Space::getLookedAtApp()
 {
-  float DIST_LIMIT = 2.5;
-  float height = 0.74;
-  float width = 1.0;
-  auto checkHit = [&](entt::entity entity,
-                      Positionable& positionable) -> optional<entt::entity> {
-    auto appPosition = positionable.pos;
-    glm::quat rotation = glm::quat(glm::radians(positionable.rotate));
-    auto appDir = rotation * glm::vec3(0.0f, 0.0f, 1.0f);
-    Intersection intersection = intersectLineAndPlane(
-      camera->position, camera->front, appPosition, appDir);
-    float minX = appPosition.x - (width / 3);
-    float maxX = appPosition.x + (width / 3);
-    float minY = appPosition.y - (height / 3);
-    float maxY = appPosition.y + (height / 3);
-    float x = intersection.intersectionPoint.x;
-    float y = intersection.intersectionPoint.y;
-    if (x > minX && x < maxX && y > minY && y < maxY &&
-        intersection.dist < DIST_LIMIT && intersection.dist > 0.0) {
-      return entity;
-    }
+  if (!camera || SCREEN_WIDTH <= 0.0f || SCREEN_HEIGHT <= 0.0f) {
     return std::nullopt;
-  };
-
-  auto view = registry->view<X11App, Positionable>();
-  for (auto [entity, app, positionable] : view.each()) {
-    if (auto hit = checkHit(entity, positionable)) {
-      return hit;
-    }
   }
-  auto wlView = registry->view<WaylandApp::Component, Positionable>();
-  for (auto [entity, comp, positionable] : wlView.each()) {
-    if (!comp.app) {
-      continue;
-    }
-    if (auto hit = checkHit(entity, positionable)) {
-      return hit;
-    }
+  Ray ray = createMouseRay(SCREEN_WIDTH * 0.5f,
+                           SCREEN_HEIGHT * 0.5f,
+                           SCREEN_WIDTH,
+                           SCREEN_HEIGHT,
+                           camera->getProjectionMatrix(),
+                           camera->getViewMatrix());
+  if (auto hit = raycastApp(ray, 2.5f, false)) {
+    return hit->entity;
   }
   return std::nullopt;
+}
+
+optional<AppRayHit>
+Space::raycastApp(const Ray& ray, float distLimit, bool waylandOnly)
+{
+  if (!registry) {
+    return std::nullopt;
+  }
+
+  auto getSurface = [&](entt::entity entity) -> AppSurface* {
+    if (!registry->valid(entity)) {
+      return nullptr;
+    }
+    if (!waylandOnly && registry->all_of<X11App>(entity)) {
+      return &registry->get<X11App>(entity);
+    }
+    if (registry->all_of<WaylandApp::Component>(entity)) {
+      auto& comp = registry->get<WaylandApp::Component>(entity);
+      return comp.app.get();
+    }
+    return nullptr;
+  };
+
+  auto checkHit = [&](entt::entity entity,
+                      Positionable& positionable) -> optional<AppRayHit> {
+    AppSurface* app = getSurface(entity);
+    if (!app || app->getWidth() <= 0 || app->getHeight() <= 0) {
+      return std::nullopt;
+    }
+    if (positionable.damaged) {
+      positionable.update();
+    }
+
+    const float halfWidth = kAppQuadHalfWidth;
+    const float halfHeight = appQuadHalfHeight();
+    glm::mat4 localToWorld = positionable.modelMatrix * app->getHeightScalar();
+    glm::mat4 worldToLocal = glm::inverse(localToWorld);
+    glm::vec3 localOrigin =
+      glm::vec3(worldToLocal * glm::vec4(ray.origin, 1.0f));
+    glm::vec3 localDirection =
+      glm::vec3(worldToLocal * glm::vec4(glm::normalize(ray.direction), 0.0f));
+    if (!std::isfinite(localDirection.x) || !std::isfinite(localDirection.y) ||
+        !std::isfinite(localDirection.z)) {
+      return std::nullopt;
+    }
+
+    // Reject near-grazing angles in the app's own plane basis so the local
+    // intersection doesn't explode when the ray is almost parallel to z=0.
+    constexpr float kMinLocalPlaneDot = 0.08f;
+    if (std::abs(localDirection.z) <= kMinLocalPlaneDot) {
+      return std::nullopt;
+    }
+
+    float localDistance = -localOrigin.z / localDirection.z;
+    if (!std::isfinite(localDistance) || localDistance <= 0.0f) {
+      return std::nullopt;
+    }
+
+    glm::vec3 localHit = localOrigin + (localDirection * localDistance);
+    if (!std::isfinite(localHit.x) || !std::isfinite(localHit.y) ||
+        localHit.x < -halfWidth || localHit.x > halfWidth ||
+        localHit.y < -halfHeight || localHit.y > halfHeight) {
+      return std::nullopt;
+    }
+
+    glm::vec3 worldHit = glm::vec3(localToWorld * glm::vec4(localHit, 1.0f));
+    float worldDistance = glm::length(worldHit - ray.origin);
+    if (!std::isfinite(worldDistance) || worldDistance <= 0.0f ||
+        worldDistance > distLimit) {
+      return std::nullopt;
+    }
+
+    float u = (localHit.x + halfWidth) / (halfWidth * 2.0f);
+    float v = (localHit.y + halfHeight) / (halfHeight * 2.0f);
+    u = std::clamp(u, 0.0f, 1.0f);
+    v = std::clamp(v, 0.0f, 1.0f);
+
+    AppRayHit hit;
+    hit.entity = entity;
+    hit.worldPoint = worldHit;
+    hit.distance = worldDistance;
+    hit.surfacePixels =
+      glm::vec2(u * static_cast<float>(app->getWidth()),
+                v * static_cast<float>(app->getHeight()));
+    return hit;
+  };
+
+  optional<AppRayHit> bestHit;
+  auto view = registry->view<Positionable>();
+  for (auto entity : view) {
+    auto& positionable = view.get<Positionable>(entity);
+    auto hit = checkHit(entity, positionable);
+    if (!hit.has_value()) {
+      continue;
+    }
+    if (!bestHit.has_value() || hit->distance < bestHit->distance) {
+      bestHit = hit;
+    }
+  }
+  return bestHit;
+}
+
+optional<AppRayHit>
+Space::raycastAppFromScreen(float mouseX,
+                            float mouseY,
+                            float screenWidth,
+                            float screenHeight,
+                            float distLimit,
+                            bool waylandOnly)
+{
+  if (!camera || screenWidth <= 0.0f || screenHeight <= 0.0f) {
+    return std::nullopt;
+  }
+  Ray ray = createMouseRay(mouseX,
+                           mouseY,
+                           screenWidth,
+                           screenHeight,
+                           camera->getProjectionMatrix(),
+                           camera->getViewMatrix());
+  return raycastApp(ray, distLimit, waylandOnly);
 }
 
 size_t

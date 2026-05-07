@@ -181,6 +181,12 @@ WaylandApp::~WaylandApp()
 
 void WaylandApp::unfocus(unsigned long /*matrix*/) { 
     focused = false;
+    if (xdg_toplevel) {
+      wlr_xdg_toplevel_set_activated(xdg_toplevel, false);
+      if (xdg_surface) {
+        wlr_xdg_surface_schedule_configure(xdg_surface);
+      }
+    }
     if (xwayland_surface) {
       wlr_xwayland_surface_activate(xwayland_surface, false);
     }

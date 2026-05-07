@@ -555,7 +555,9 @@ Controls::handleToggleCursor()
     (toggleCursorKey != -1 &&
      isPressed(static_cast<xkb_keysym_t>(toggleCursorKey))) ||
     isPressedEither(XKB_KEY_f, XKB_KEY_F);
-  if (toggleCursorPressed && debounce(lastKeyPressTime)) {
+  bool toggleCursorJustPressed = toggleCursorPressed && !toggleCursorHeld;
+  toggleCursorHeld = toggleCursorPressed;
+  if (toggleCursorJustPressed && debounce(lastKeyPressTime)) {
     if (grabbedCursor) {
       grabbedCursor = false;
       resetMouse = true;
@@ -647,6 +649,26 @@ Controls::handleKeySym(xkb_keysym_t sym,
   ControlResponse key_not_handled_by_wm;
   const bool waylandFocusActive = wm->hasCurrentOrPendingFocus();
   const bool superKey = is_super_keysym(sym);
+  const bool unfocusShortcut =
+    modifierHeld &&
+    matches_configured_or_fallback_key(
+      controlMappings, sym, "unfocus_app", XKB_KEY_e, XKB_KEY_E);
+
+  if (waylandFocusActive && unfocusShortcut) {
+    if (is_pressed && debounce(lastKeyPressTime) && wm) {
+      const bool hadPerpendicularFocus = wm->getCurrentlyFocusedApp().has_value();
+      wm->unfocusApp();
+      if (!hadPerpendicularFocus) {
+        grabbedCursor = true;
+        resetMouse = true;
+        wm->setCursorVisible(false);
+      }
+    }
+    if (is_pressed && typedKeyOverlay) {
+      typedKeyOverlay->recordKeysym(sym);
+    }
+    return key_handled_by_wm();
+  }
 
   if (waylandFocusActive) {
     if (superKey) {

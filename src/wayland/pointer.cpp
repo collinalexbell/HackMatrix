@@ -2,6 +2,7 @@
 #include "wayland_app.h"
 #include "engine.h"
 #include "wayland/wlr_compositor.h"
+#include "WindowManager/Space.h"
 extern "C" {
 #include <wlr/types/wlr_pointer.h>
 #include <wlr/types/wlr_cursor.h>
@@ -80,6 +81,201 @@ bool isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
 		server->registry->all_of<WaylandApp::Component>(entity);
 }
 
+static bool
+cursor_override_visible(WlrServer* server)
+{
+  if (!server || !server->engine) {
+    return false;
+  }
+  auto wm = server->engine->getWindowManager();
+  if (!wm) {
+    return false;
+  }
+  return wm->getCursorVisibleOverride().value_or(false);
+}
+
+static bool
+hover_focus_enabled(WlrServer* server)
+{
+  if (!server || !server->engine) {
+    return false;
+  }
+  auto wm = server->engine->getWindowManager();
+  if (!wm) {
+    return false;
+  }
+  if (!cursor_override_visible(server) || server->engine->imguiWantsMouse()) {
+    return false;
+  }
+  return !wm->getCurrentlyFocusedApp().has_value();
+}
+
+static wlr_surface*
+surface_for_entity(WlrServer* server, entt::entity entity)
+{
+  if (!server || entity == entt::null) {
+    return nullptr;
+  }
+  for (const auto& [surface, mappedEntity] : server->surface_map) {
+    if (mappedEntity == entity) {
+      return surface;
+    }
+  }
+  return nullptr;
+}
+
+struct HoveredSurfaceInfo
+{
+  wlr_surface* surface = nullptr;
+  entt::entity entity = entt::null;
+  double sx = 0.0;
+  double sy = 0.0;
+};
+
+static WaylandApp*
+wayland_app_for_entity(WlrServer* server, entt::entity entity)
+{
+  if (!server || !server->registry || !isValidWaylandAppComponent(server, entity)) {
+    return nullptr;
+  }
+  auto& comp = server->registry->get<WaylandApp::Component>(entity);
+  return comp.app.get();
+}
+
+static std::optional<std::pair<double, double>>
+project_pointer_to_surface(WlrServer* server, wlr_surface* surface)
+{
+  if (!server || !server->engine || !server->primary_output || !surface) {
+    return std::nullopt;
+  }
+  if (!hover_focus_enabled(server)) {
+    return std::nullopt;
+  }
+  auto it = server->surface_map.find(surface);
+  if (it == server->surface_map.end()) {
+    return std::nullopt;
+  }
+  auto wm = server->engine->getWindowManager();
+  if (!wm) {
+    return std::nullopt;
+  }
+  auto space = wm->getSpace();
+  if (!space) {
+    return std::nullopt;
+  }
+  auto hit = space->raycastAppFromScreen(static_cast<float>(server->pointer_x),
+                                         static_cast<float>(server->pointer_y),
+                                         static_cast<float>(server->primary_output->width),
+                                         static_cast<float>(server->primary_output->height),
+                                         20.0f,
+                                         true);
+  if (!hit.has_value() || hit->entity != it->second) {
+    return std::nullopt;
+  }
+  return std::make_pair(static_cast<double>(hit->surfacePixels.x),
+                        static_cast<double>(hit->surfacePixels.y));
+}
+
+static WaylandApp*
+wayland_app_for_surface(WlrServer* server, wlr_surface* surface)
+{
+  if (!server || !surface) {
+    return nullptr;
+  }
+  auto it = server->surface_map.find(surface);
+  if (it == server->surface_map.end()) {
+    return nullptr;
+  }
+  return wayland_app_for_entity(server, it->second);
+}
+
+static std::optional<HoveredSurfaceInfo>
+pick_hovered_surface(WlrServer* server)
+{
+  if (!server || !server->engine || !server->primary_output) {
+    return std::nullopt;
+  }
+  auto wm = server->engine->getWindowManager();
+  if (!wm) {
+    return std::nullopt;
+  }
+  auto space = wm->getSpace();
+  if (!space) {
+    return std::nullopt;
+  }
+  auto hit = space->raycastAppFromScreen(static_cast<float>(server->pointer_x),
+                                         static_cast<float>(server->pointer_y),
+                                         static_cast<float>(server->primary_output->width),
+                                         static_cast<float>(server->primary_output->height),
+                                         20.0f,
+                                         true);
+  if (!hit.has_value()) {
+    return std::nullopt;
+  }
+  auto* surf = surface_for_entity(server, hit->entity);
+  if (!surf) {
+    return std::nullopt;
+  }
+  return HoveredSurfaceInfo{ surf,
+                             hit->entity,
+                             static_cast<double>(hit->surfacePixels.x),
+                             static_cast<double>(hit->surfacePixels.y) };
+}
+
+static void
+ensure_pointer_focus_at(WlrServer* server,
+                        wlr_surface* surf,
+                        double sx,
+                        double sy,
+                        uint32_t time_msec);
+
+void
+sync_cursor_mode_pointer_focus(WlrServer* server)
+{
+  if (!hover_focus_enabled(server) || !server || !server->seat) {
+    return;
+  }
+  if (auto hovered = pick_hovered_surface(server)) {
+    if (server->engine) {
+      if (auto wm = server->engine->getWindowManager()) {
+        wm->setCursorInputFocus(hovered->entity);
+      }
+    }
+    ensure_pointer_focus_at(server,
+                            hovered->surface,
+                            hovered->sx,
+                            hovered->sy,
+                            0);
+    return;
+  }
+  if (server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      wm->clearCursorInputFocus();
+    }
+  }
+  if (server->seat->pointer_state.focused_surface) {
+    wlr_seat_pointer_notify_clear_focus(server->seat);
+    update_pointer_constraint(server, nullptr);
+  }
+}
+
+void
+clear_cursor_mode_input_focus(WlrServer* server)
+{
+  if (!server || !server->seat) {
+    return;
+  }
+  if (server->engine) {
+    if (auto wm = server->engine->getWindowManager()) {
+      wm->clearCursorInputFocus();
+    }
+  }
+  if (server->seat->pointer_state.focused_surface) {
+    wlr_seat_pointer_notify_clear_focus(server->seat);
+    update_pointer_constraint(server, nullptr);
+  }
+}
+
 // Map the global pointer into surface-local coords assuming the surface is
 // centered in the output (matches render overlay) and clamp to surface size.
 //
@@ -87,6 +283,12 @@ bool isValidWaylandAppComponent(WlrServer* server, entt::entity entity) {
 static std::pair<double, double>
 map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
 {
+  if (server && surf) {
+    if (auto projected = project_pointer_to_surface(server, surf)) {
+      return *projected;
+    }
+  }
+
   double sx = server ? server->pointer_x : 0.0;
   double sy = server ? server->pointer_y : 0.0;
   double surf_w = surf ? surf->current.width : 0;
@@ -140,6 +342,28 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
 }
 
 static void
+ensure_pointer_focus_at(WlrServer* server,
+                        wlr_surface* surf,
+                        double sx,
+                        double sy,
+                        uint32_t time_msec = 0)
+{
+  if (!server || !server->seat || !surf) {
+    return;
+  }
+  if (time_msec == 0) {
+    uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::steady_clock::now().time_since_epoch())
+                        .count();
+    time_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
+  }
+  wlr_seat_pointer_notify_enter(server->seat, surf, sx, sy);
+  wlr_seat_pointer_notify_motion(server->seat, time_msec, sx, sy);
+  wlr_seat_pointer_notify_frame(server->seat);
+  update_pointer_constraint(server, surf);
+}
+
+static void
 ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* preferred = nullptr)
 {
   if (!server || !server->seat) {
@@ -184,18 +408,7 @@ ensure_pointer_focus(WlrServer* server, uint32_t time_msec = 0, wlr_surface* pre
     return;
   }
   auto mapped = map_pointer_to_surface(server, surf);
-  double sx = mapped.first;
-  double sy = mapped.second;
-  if (time_msec == 0) {
-    uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        std::chrono::steady_clock::now().time_since_epoch())
-                        .count();
-    time_msec = static_cast<uint32_t>(now_ms & 0xffffffff);
-  }
-  wlr_seat_pointer_notify_enter(server->seat, surf, sx, sy);
-  wlr_seat_pointer_notify_motion(server->seat, time_msec, sx, sy);
-  wlr_seat_pointer_notify_frame(server->seat);
-  update_pointer_constraint(server, surf);
+  ensure_pointer_focus_at(server, surf, mapped.first, mapped.second, time_msec);
 }
 
 static std::pair<wlr_surface*, entt::entity>
@@ -270,7 +483,23 @@ handle_pointer_motion(wl_listener* listener, void* data)
     handle->server->pointer_y = handle->server->cursor->y;
   }
   bool focusRequested = wayland_pointer_focus_requested(handle->server);
-  if (focusRequested) {
+  if (hover_focus_enabled(handle->server)) {
+    if (auto hovered = pick_hovered_surface(handle->server)) {
+      if (handle->server->engine) {
+        if (auto wm = handle->server->engine->getWindowManager()) {
+          wm->setCursorInputFocus(hovered->entity);
+        }
+      }
+      ensure_pointer_focus_at(handle->server,
+                              hovered->surface,
+                              hovered->sx,
+                              hovered->sy,
+                              event->time_msec);
+    } else if (handle->server->seat &&
+               handle->server->seat->pointer_state.focused_surface) {
+      clear_cursor_mode_input_focus(handle->server);
+    }
+  } else if (focusRequested) {
     auto surfEnt = _pick_any_surface(handle->server);
     auto* surf = surfEnt.first;
     ensure_pointer_focus(handle->server, event->time_msec, surf);
@@ -318,7 +547,23 @@ handle_pointer_motion_abs(wl_listener* listener, void* data)
     handle->server->pointer_y = handle->server->cursor->y;
   }
   bool focusRequested = wayland_pointer_focus_requested(handle->server);
-  if (focusRequested) {
+  if (hover_focus_enabled(handle->server)) {
+    if (auto hovered = pick_hovered_surface(handle->server)) {
+      if (handle->server->engine) {
+        if (auto wm = handle->server->engine->getWindowManager()) {
+          wm->setCursorInputFocus(hovered->entity);
+        }
+      }
+      ensure_pointer_focus_at(handle->server,
+                              hovered->surface,
+                              hovered->sx,
+                              hovered->sy,
+                              event->time_msec);
+    } else if (handle->server->seat &&
+               handle->server->seat->pointer_state.focused_surface) {
+      clear_cursor_mode_input_focus(handle->server);
+    }
+  } else if (focusRequested) {
     auto surfEnt = _pick_any_surface(handle->server);
     auto* surf = surfEnt.first;
     ensure_pointer_focus(handle->server, event->time_msec, surf);
@@ -383,7 +628,16 @@ void handle_pointer_button(wl_listener* listener, void* data)
     }
   }
   if (handle->server->seat && !button_consumed_by_controls) {
-    // Only forward to Wayland clients if a surface currently has pointer focus.
+    if (!preferred_surface && hover_focus_enabled(handle->server)) {
+      if (auto hovered = pick_hovered_surface(handle->server)) {
+        if (handle->server->engine) {
+          if (auto wm = handle->server->engine->getWindowManager()) {
+            wm->setCursorInputFocus(hovered->entity);
+          }
+        }
+        preferred_surface = hovered->surface;
+      }
+    }
     wlr_surface* surf = preferred_surface ? preferred_surface : pointer_surface;
     if (surf) {
       ensure_pointer_focus(handle->server, event->time_msec, surf);

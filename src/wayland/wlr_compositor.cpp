@@ -1044,8 +1044,7 @@ handle_output_frame(wl_listener* listener, void* data)
       if (controls) {
         //controls->applyMovementInput(
          // server->input.forward, server->input.back, server->input.left, server->input.right);
-      } 
-      bool pointerFocusRequested = wayland_pointer_focus_requested(server);
+      }
       bool cursorOverrideVisible = false;
       bool cursorOverrideSet = false;
       if (server->engine) {
@@ -1056,6 +1055,16 @@ handle_output_frame(wl_listener* listener, void* data)
           }
         }
       }
+      if (cursorOverrideSet && cursorOverrideVisible) {
+        sync_cursor_mode_pointer_focus(server);
+      } else if (server->engine) {
+        if (auto wm = server->engine->getWindowManager()) {
+          if (!wm->getCurrentlyFocusedApp().has_value()) {
+            clear_cursor_mode_input_focus(server);
+          }
+        }
+      }
+      bool pointerFocusRequested = wayland_pointer_focus_requested(server);
       bool pointerVisible = pointerFocusRequested || (cursorOverrideSet && cursorOverrideVisible);
       if (handle->output && wlr_output_is_wl(handle->output)) {
         wlr_wl_output_set_pointer_lock(handle->output, !pointerVisible);

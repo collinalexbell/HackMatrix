@@ -87,6 +87,9 @@ public:
   virtual void swapHotKeys(int a, int b) = 0;
   virtual int findAppsHotKey(entt::entity theApp) = 0;
   virtual void releaseHotkeySlot(entt::entity theApp) = 0;
+  virtual void setCursorInputFocus(entt::entity appEntity) = 0;
+  virtual void clearCursorInputFocus() = 0;
+  virtual optional<entt::entity> getCursorInputFocusedApp() = 0;
 };
 
 using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
@@ -156,6 +159,7 @@ class WindowManager : public WindowManagerInterface
   unsigned int hotkeyModifierMask = Mod4Mask;
   std::optional<bool> cursorVisible;
   std::optional<entt::entity> pendingFocusedApp;
+  std::optional<entt::entity> cursorInputFocusedApp;
   std::array<std::optional<entt::entity>, kHotkeySlotCount> appsWithHotKeys{};
 
 public:
@@ -195,6 +199,9 @@ public:
                                   int screenW = 0,
                                   int screenH = 0) override;
   std::optional<bool> getCursorVisibleOverride() const override { return cursorVisible; }
+  void setCursorInputFocus(entt::entity appEntity) override;
+  void clearCursorInputFocus() override;
+  optional<entt::entity> getCursorInputFocusedApp() override;
 
 private:
   Renderer* renderer = nullptr;

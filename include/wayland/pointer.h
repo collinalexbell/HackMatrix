@@ -13,6 +13,8 @@ void handle_new_pointer(WlrServer* server, wlr_input_device* device);
 bool wayland_pointer_focus_requested(WlrServer* server);
 bool wayland_pointer_locked(WlrServer* server);
 void update_pointer_constraint(WlrServer* server, wlr_surface* focused_surface);
+void sync_cursor_mode_pointer_focus(WlrServer* server);
+void clear_cursor_mode_input_focus(WlrServer* server);
 
 // used to hide and show the cursor whenever a window is focused or unfocused
 void set_cursor_visible(WlrServer* server, bool visible, wlr_output* output = nullptr);

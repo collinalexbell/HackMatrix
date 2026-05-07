@@ -819,12 +819,19 @@ Renderer::renderSoftwareCursor(float xPixels, float yPixels, float sizePixels)
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, cursorTexture);
 
-  // Flip Y from top-left pixel coords (Wayland) into GL clip space.
+  // Center the compositor-owned cursor quad on the pointer hotspot so the
+  // drawn cursor matches hit-testing coordinates.
   glm::vec2 mapped = mapCursorToScreen(xPixels, yPixels);
-  float yFlipped = SCREEN_HEIGHT - mapped.y - sizePixels;
-  float left = static_cast<float>(mapped.x) / SCREEN_WIDTH * 2.0f - 1.0f;
+  // Match the cursor art: the visible "tip" is at the bottom-center of the
+  // generated tree, not at the texture center.
+  float hotspotX = sizePixels * 0.5f;
+  float hotspotY = sizePixels * (62.0f / 64.0f);
+  float drawX = mapped.x - hotspotX;
+  float drawY = mapped.y - hotspotY;
+  float yFlipped = SCREEN_HEIGHT - drawY - sizePixels;
+  float left = static_cast<float>(drawX) / SCREEN_WIDTH * 2.0f - 1.0f;
   float right =
-    static_cast<float>(mapped.x + sizePixels) / SCREEN_WIDTH * 2.0f - 1.0f;
+    static_cast<float>(drawX + sizePixels) / SCREEN_WIDTH * 2.0f - 1.0f;
   float top = 1.0f - static_cast<float>(yFlipped) / SCREEN_HEIGHT * 2.0f;
   float bottom =
     1.0f - static_cast<float>(yFlipped + sizePixels) / SCREEN_HEIGHT * 2.0f;
@@ -1360,8 +1367,6 @@ Renderer::render(RenderPerspective perspective,
     renderApps();
     if (typedKeyOverlay) {
       typedKeyOverlay->render(cursorShader,
-                              CURSOR_VAO.get(),
-                              CURSOR_VBO.get(),
                               SCREEN_WIDTH,
                               SCREEN_HEIGHT,
                               wm && wm->hasCurrentOrPendingFocus());

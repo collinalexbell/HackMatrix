@@ -50,6 +50,7 @@ class Controls
   bool lastWaylandFocusActive = false;
   bool waylandModifierHeld = false;
   bool waylandShiftHeld = false;
+  bool toggleCursorHeld = false;
   float lastX;
   float lastY;
   int clickY = 100;

@@ -220,6 +220,12 @@ TypedKeyOverlay::~TypedKeyOverlay()
   if (texture != 0) {
     glDeleteTextures(1, &texture);
   }
+  if (vbo != 0) {
+    glDeleteBuffers(1, &vbo);
+  }
+  if (vao != 0) {
+    glDeleteVertexArrays(1, &vao);
+  }
 }
 
 void
@@ -250,8 +256,6 @@ TypedKeyOverlay::recordKeysym(xkb_keysym_t sym)
 
 void
 TypedKeyOverlay::render(Shader* shader,
-                        GLuint vao,
-                        GLuint vbo,
                         float screenWidth,
                         float screenHeight,
                         bool appFocused)
@@ -278,6 +282,12 @@ TypedKeyOverlay::render(Shader* shader,
 
   if (texture == 0) {
     glGenTextures(1, &texture);
+  }
+  if (vao == 0) {
+    glGenVertexArrays(1, &vao);
+  }
+  if (vbo == 0) {
+    glGenBuffers(1, &vbo);
   }
 
   shader->use();
@@ -316,6 +326,11 @@ TypedKeyOverlay::render(Shader* shader,
   glBindVertexArray(vao);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_DYNAMIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(
+    1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  glEnableVertexAttribArray(1);
 
   GLboolean depthEnabled = glIsEnabled(GL_DEPTH_TEST);
   glDisable(GL_DEPTH_TEST);

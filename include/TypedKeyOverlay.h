@@ -17,8 +17,6 @@ public:
 
   void recordKeysym(xkb_keysym_t sym);
   void render(Shader* shader,
-              GLuint vao,
-              GLuint vbo,
               float screenWidth,
               float screenHeight,
               bool appFocused);
@@ -28,4 +26,6 @@ private:
   std::vector<std::string> tokens;
   double expiresAt = 0.0;
   GLuint texture = 0;
+  GLuint vao = 0;
+  GLuint vbo = 0;
 };

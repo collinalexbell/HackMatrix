@@ -276,6 +276,13 @@ WindowManager::hasCurrentOrPendingFocus()
     currentlyFocusedApp = std::nullopt;
   }
 
+  if (isValidFocus(cursorInputFocusedApp)) {
+    return true;
+  }
+  if (cursorInputFocusedApp.has_value()) {
+    cursorInputFocusedApp = std::nullopt;
+  }
+
   return false;
 }
 
@@ -293,6 +300,16 @@ WindowManager::getPendingFocusedApp()
     pendingFocusedApp = std::nullopt;
   }
   return pendingFocusedApp;
+}
+
+optional<entt::entity>
+WindowManager::getCursorInputFocusedApp()
+{
+  if (cursorInputFocusedApp &&
+      (!registry || !registry->valid(*cursorInputFocusedApp))) {
+    cursorInputFocusedApp = std::nullopt;
+  }
+  return cursorInputFocusedApp;
 }
 
 bool WindowManager::computeAppCameraTarget(entt::entity ent,
@@ -545,10 +562,12 @@ WindowManager::focusApp(entt::entity appEntity)
   if (!registry || !registry->valid(appEntity)) {
     currentlyFocusedApp = std::nullopt;
     pendingFocusedApp = std::nullopt;
+    cursorInputFocusedApp = std::nullopt;
     return;
   }
   // Wayland focus is handled via wlroots; record focus only.
   pendingFocusedApp = std::nullopt;
+  cursorInputFocusedApp = std::nullopt;
   currentlyFocusedApp = appEntity;
   // Clear any stuck movement when compositor focus moves to a client.
   if (controls) {
@@ -563,11 +582,59 @@ WindowManager::focusApp(entt::entity appEntity)
   }
 }
 
+void
+WindowManager::setCursorInputFocus(entt::entity appEntity)
+{
+  if (!registry || !registry->valid(appEntity)) {
+    clearCursorInputFocus();
+    return;
+  }
+  if (currentlyFocusedApp && *currentlyFocusedApp == appEntity) {
+    cursorInputFocusedApp = std::nullopt;
+    return;
+  }
+  if (cursorInputFocusedApp && *cursorInputFocusedApp == appEntity) {
+    return;
+  }
+  clearCursorInputFocus();
+  cursorInputFocusedApp = appEntity;
+  if (registry->all_of<WaylandApp::Component>(appEntity)) {
+    if (auto* comp = registry->try_get<WaylandApp::Component>(appEntity)) {
+      if (comp->app) {
+        comp->app->takeInputFocus();
+      }
+    }
+  }
+}
+
+void
+WindowManager::clearCursorInputFocus()
+{
+  if (!cursorInputFocusedApp.has_value()) {
+    return;
+  }
+  auto ent = *cursorInputFocusedApp;
+  cursorInputFocusedApp = std::nullopt;
+  if (!registry || !registry->valid(ent)) {
+    return;
+  }
+  if (currentlyFocusedApp && *currentlyFocusedApp == ent) {
+    return;
+  }
+  if (registry->all_of<WaylandApp::Component>(ent)) {
+    auto& appComponent = registry->get<WaylandApp::Component>(ent);
+    if (appComponent.app) {
+      appComponent.app->unfocus(matrix);
+    }
+  }
+}
+
 void WindowManager::unfocusApp() {
   if (logger) {
     logger->debug("unfocusing app");
   }
   if (!currentlyFocusedApp.has_value()) {
+    clearCursorInputFocus();
     return;
   }
   auto ent = currentlyFocusedApp.value();
@@ -584,6 +651,7 @@ void WindowManager::unfocusApp() {
   }
   currentlyFocusedApp = std::nullopt;
   pendingFocusedApp = std::nullopt;
+  cursorInputFocusedApp = std::nullopt;
   WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n", (int)entt::to_integral(ent));
 }
 
