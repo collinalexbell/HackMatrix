@@ -675,15 +675,12 @@ WindowManager::computeFocusedSpawn(entt::entity newApp, glm::vec3& pos, glm::vec
     focusedSpawnOffset =
       std::max(0.1f, space->getViewDistanceForWindowSize(newApp));
   }
-  float yaw = camera->getYaw();
-  float pitch = camera->getPitch();
-  glm::quat yawRotation =
-    glm::angleAxis(glm::radians(90 + yaw), glm::vec3(0.0f, -1.0f, 0.0f));
-  glm::quat pitchRotation =
-    glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-  glm::quat finalRotation = yawRotation * pitchRotation;
+  focusedSpawnOffset *= 1.2f;
   rot = focusPos.rotate;
-  pos = focusPos.pos + glm::vec3(focusedSpawnOffset, 0.0f, 0.0f);
+  glm::quat focusRotation = glm::quat(glm::radians(rot));
+  glm::vec3 localOffset(focusedSpawnOffset, 0.0f, 0.0f);
+  glm::vec3 rotatedOffset = focusRotation * localOffset;
+  pos = focusPos.pos + rotatedOffset;
   return true;
 }
 
