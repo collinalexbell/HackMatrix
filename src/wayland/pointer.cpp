@@ -10,9 +10,28 @@ extern "C" {
 #include <wlr/types/wlr_seat.h>
 #include <wlr/types/wlr_compositor.h>
 #include <wlr/types/wlr_xcursor_manager.h>
+#include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <linux/input-event-codes.h>
+}
+
+std::pair<double, double>
+output_local_pointer(WlrServer* server, wlr_output* output)
+{
+  if (!server) {
+    return { 0.0, 0.0 };
+  }
+
+  double x = server->pointer_x;
+  double y = server->pointer_y;
+  if (server->output_layout && output) {
+    wlr_box box = {};
+    wlr_output_layout_get_box(server->output_layout, output, &box);
+    x -= static_cast<double>(box.x);
+    y -= static_cast<double>(box.y);
+  }
+  return { x, y };
 }
 
 static void
@@ -163,8 +182,9 @@ project_pointer_to_surface(WlrServer* server, wlr_surface* surface)
   if (!space) {
     return std::nullopt;
   }
-  auto hit = space->raycastAppFromScreen(static_cast<float>(server->pointer_x),
-                                         static_cast<float>(server->pointer_y),
+  auto pointer = output_local_pointer(server, server->primary_output);
+  auto hit = space->raycastAppFromScreen(static_cast<float>(pointer.first),
+                                         static_cast<float>(pointer.second),
                                          static_cast<float>(server->primary_output->width),
                                          static_cast<float>(server->primary_output->height),
                                          20.0f,
@@ -203,8 +223,9 @@ pick_hovered_surface(WlrServer* server)
   if (!space) {
     return std::nullopt;
   }
-  auto hit = space->raycastAppFromScreen(static_cast<float>(server->pointer_x),
-                                         static_cast<float>(server->pointer_y),
+  auto pointer = output_local_pointer(server, server->primary_output);
+  auto hit = space->raycastAppFromScreen(static_cast<float>(pointer.first),
+                                         static_cast<float>(pointer.second),
                                          static_cast<float>(server->primary_output->width),
                                          static_cast<float>(server->primary_output->height),
                                          20.0f,
@@ -289,8 +310,10 @@ map_pointer_to_surface(WlrServer* server, wlr_surface* surf)
     }
   }
 
-  double sx = server ? server->pointer_x : 0.0;
-  double sy = server ? server->pointer_y : 0.0;
+  auto pointer = output_local_pointer(
+    server, server ? server->primary_output : nullptr);
+  double sx = pointer.first;
+  double sy = pointer.second;
   double surf_w = surf ? surf->current.width : 0;
   double surf_h = surf ? surf->current.height : 0;
 

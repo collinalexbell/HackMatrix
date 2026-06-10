@@ -402,7 +402,7 @@ Space::raycastApp(const Ray& ray, float distLimit, bool waylandOnly)
     hit.distance = worldDistance;
     hit.surfacePixels =
       glm::vec2(u * static_cast<float>(app->getWidth()),
-                v * static_cast<float>(app->getHeight()));
+                (1.0f - v) * static_cast<float>(app->getHeight()));
     return hit;
   };
 

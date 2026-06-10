@@ -241,7 +241,11 @@ void Camera::resetSpeed() {
 Ray createMouseRay(float mouseX, float mouseY, float screenWidth, float screenHeight, 
                   const glm::mat4& projectionMatrix, const glm::mat4& viewMatrix) {
     float ndcX = (2.0f * mouseX) / screenWidth - 1.0f;
-    float ndcY = 1.0f - (2.0f * mouseY) / screenHeight;
+    // Pointer coordinates are top-origin. The wlroots renderer flips the
+    // projection's Y axis to compensate for the output FBO orientation, so
+    // its displayed top edge corresponds to NDC -1 instead of NDC +1.
+    float pointerNdcY = 1.0f - (2.0f * mouseY) / screenHeight;
+    float ndcY = projectionMatrix[1][1] < 0.0f ? -pointerNdcY : pointerNdcY;
 
     glm::vec4 nearClip(ndcX, ndcY, -1.0f, 1.0f);
     glm::vec4 farClip(ndcX, ndcY, 1.0f, 1.0f);

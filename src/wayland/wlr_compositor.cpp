@@ -1136,7 +1136,8 @@ handle_output_frame(wl_listener* listener, void* data)
       (wayland_pointer_focus_requested(server) || cursorVisibleOverride)) {
     if (auto* renderer = server->engine->getRenderer()) {
       float sizePx = 24.0f * (handle->output ? handle->output->scale : 1.0f);
-      renderer->renderSoftwareCursor(server->pointer_x, server->pointer_y, sizePx);
+      auto pointer = output_local_pointer(server, handle->output);
+      renderer->renderSoftwareCursor(pointer.first, pointer.second, sizePx);
     }
   }
 
@@ -1167,8 +1168,18 @@ handle_output_commit(wl_listener* listener, void* data)
     SCREEN_WIDTH = static_cast<float>(output->width);
     SCREEN_HEIGHT = static_cast<float>(output->height);
     sync_default_window_size_to_output(output->width, output->height);
-    server->pointer_x = std::clamp(server->pointer_x, 0.0, static_cast<double>(output->width));
-    server->pointer_y = std::clamp(server->pointer_y, 0.0, static_cast<double>(output->height));
+    wlr_box box = {};
+    if (server->output_layout) {
+      wlr_output_layout_get_box(server->output_layout, output, &box);
+    }
+    double originX = box.x;
+    double originY = box.y;
+    server->pointer_x = std::clamp(server->pointer_x,
+                                   originX,
+                                   originX + output->width);
+    server->pointer_y = std::clamp(server->pointer_y,
+                                   originY,
+                                   originY + output->height);
   }
 
   std::fprintf(stderr, "output resized: %dx%d\n", handle->width, handle->height);
@@ -1200,10 +1211,21 @@ handle_output_request_state(wl_listener* listener, void* data)
       SCREEN_HEIGHT = static_cast<float>(handle->output->height);
       sync_default_window_size_to_output(handle->output->width,
                                          handle->output->height);
+      wlr_box box = {};
+      if (handle->server->output_layout) {
+        wlr_output_layout_get_box(
+          handle->server->output_layout, handle->output, &box);
+      }
+      double originX = box.x;
+      double originY = box.y;
       handle->server->pointer_x =
-        std::clamp(handle->server->pointer_x, 0.0, static_cast<double>(handle->output->width));
+        std::clamp(handle->server->pointer_x,
+                   originX,
+                   originX + handle->output->width);
       handle->server->pointer_y =
-        std::clamp(handle->server->pointer_y, 0.0, static_cast<double>(handle->output->height));
+        std::clamp(handle->server->pointer_y,
+                   originY,
+                   originY + handle->output->height);
     }
     std::fprintf(stderr,
                  "output request_state applied: %dx%d\n",
@@ -1261,18 +1283,23 @@ handle_new_output(wl_listener* listener, void* data)
   handle->output = output;
   handle->width = output->width;
   handle->height = output->height;
-  server->pointer_x = output->width / 2.0;
-  server->pointer_y = output->height / 2.0;
-  if (server->cursor) {
+  bool isPrimaryOutput = !server->primary_output;
+  if (isPrimaryOutput) {
+    server->primary_output = output;
+    wlr_box box = {};
+    if (server->output_layout) {
+      wlr_output_layout_get_box(server->output_layout, output, &box);
+    }
+    server->pointer_x = box.x + output->width / 2.0;
+    server->pointer_y = box.y + output->height / 2.0;
+  }
+  if (isPrimaryOutput && server->cursor) {
     wlr_cursor_map_to_output(server->cursor, output);
     wlr_cursor_warp(server->cursor, nullptr, server->pointer_x, server->pointer_y);
     if (server->cursor_mgr) {
       wlr_xcursor_manager_load(server->cursor_mgr, output->scale);
       set_cursor_visible(server, wayland_pointer_focus_requested(server), output);
     }
-  }
-  if (!server->primary_output) {
-    server->primary_output = output;
   }
   if (wlr_output_is_wl(output)) {
     wlr_wl_output_set_fullscreen(output, true);
