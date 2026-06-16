@@ -48,50 +48,10 @@ struct WindowEvent
   WINDOW_EVENT_TYPE type;
   entt::entity window;
 };
-class WindowManagerInterface
-{
-public:
-  virtual ~WindowManagerInterface() = default;
-  virtual void unfocusApp() = 0;
-  virtual void menu() = 0;
-  virtual void launchTerminal() = 0;
-  virtual void createAndRegisterApps(char** envp) = 0;
-  virtual optional<entt::entity> getCurrentlyFocusedApp() = 0;
-  virtual optional<entt::entity> getPendingFocusedApp() = 0;
-  virtual bool hasCurrentOrPendingFocus() = 0;
-  virtual void focusApp(entt::entity) = 0;
-  virtual void wire(shared_ptr<WindowManagerInterface>, Camera* camera, Renderer* renderer) = 0;
-  virtual std::shared_ptr<Space> getSpace() = 0;
-  virtual void registerControls(Controls* controls) = 0;
-  virtual bool consumeScreenshotRequest() = 0;
-  virtual void requestScreenshot() = 0;
-  virtual entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
-                                          bool spawnAtCamera = true,
-                                          bool accessory = false,
-                                          entt::entity parent = entt::null,
-                                          int offsetX = 0,
-                                          int offsetY = 0,
-                                          bool layerShell = false,
-                                          int screenX = 0,
-                                          int screenY = 0,
-                                          int screenW = 0,
-                                          int screenH = 0) = 0;
-  virtual std::optional<bool> getCursorVisibleOverride() const = 0;
-  virtual void setCursorVisible(bool visible) = 0;
-  virtual bool isWaylandMode() const = 0;
-  virtual vector<optional<entt::entity>> getAppsWithHotKeys() = 0;
-  virtual optional<entt::entity> getHotkeyTarget(int index) = 0;
-  virtual void swapHotKeys(int a, int b) = 0;
-  virtual int findAppsHotKey(entt::entity theApp) = 0;
-  virtual void releaseHotkeySlot(entt::entity theApp) = 0;
-  virtual void setCursorInputFocus(entt::entity appEntity) = 0;
-  virtual void clearCursorInputFocus() = 0;
-  virtual optional<entt::entity> getCursorInputFocusedApp() = 0;
-};
+class WindowManager;
+using WindowManagerPtr = std::shared_ptr<WindowManager>;
 
-using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
-
-class WindowManager : public WindowManagerInterface
+class WindowManager
 {
   shared_ptr<EntityRegistry> registry;
   Controls* controls = NULL;
@@ -119,8 +79,6 @@ class WindowManager : public WindowManagerInterface
   std::shared_ptr<spdlog::logger> logger;
   void setupLogger();
   void assignHotkeySlot(entt::entity ent);
-  void swapHotKeys(int a, int b);
-  void releaseHotkeySlot(entt::entity theApp);
   bool computeFocusedSpawn(entt::entity newApp, glm::vec3& pos, glm::vec3& rot) const;
   void positionRelativeToFocus(entt::entity appEntity);
   bool computeAppCameraTarget(entt::entity ent,
@@ -129,7 +87,6 @@ class WindowManager : public WindowManagerInterface
                               const char* reasonTag);
   std::shared_ptr<bool> moveCameraToApp(entt::entity ent, const char* reasonTag = "moveCameraToApp");
   void focusEntityAfterMove(entt::entity ent);
-  int findAppsHotKey(entt::entity theApp);
   std::vector<ReplayEvent> replayQueue;
   size_t replayIndex = 0;
   bool replayActive = false;
@@ -141,28 +98,31 @@ class WindowManager : public WindowManagerInterface
   std::array<std::optional<entt::entity>, kHotkeySlotCount> appsWithHotKeys{};
 
 public:
-  vector<optional<entt::entity>> getAppsWithHotKeys() override {
+  vector<optional<entt::entity>> getAppsWithHotKeys() {
     return vector<optional<entt::entity>>(appsWithHotKeys.begin(),
                                           appsWithHotKeys.end());
   }
-  optional<entt::entity> getHotkeyTarget(int index) override;
-  void unfocusApp() override;
-  void menu() override;
-  void launchTerminal() override;
-  void createAndRegisterApps(char** envp) override;
+  optional<entt::entity> getHotkeyTarget(int index);
+  void swapHotKeys(int a, int b);
+  int findAppsHotKey(entt::entity theApp);
+  void releaseHotkeySlot(entt::entity theApp);
+  void unfocusApp();
+  void menu();
+  void launchTerminal();
+  void createAndRegisterApps(char** envp);
   WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, char** envp = nullptr);
-  bool isWaylandMode() const override { return true; }
+  bool isWaylandMode() const { return true; }
   ~WindowManager();
-  optional<entt::entity> getCurrentlyFocusedApp() override;
-  optional<entt::entity> getPendingFocusedApp() override;
-  bool hasCurrentOrPendingFocus() override; 
-  void focusApp(entt::entity) override;
-  void wire(WindowManagerPtr sharedThis, Camera* camera, Renderer* renderer) override;
-  void setCursorVisible(bool visible) override;
-  std::shared_ptr<Space> getSpace() override { return space; }
-  void registerControls(Controls* controls) override;
-  bool consumeScreenshotRequest() override;
-  void requestScreenshot() override;
+  optional<entt::entity> getCurrentlyFocusedApp();
+  optional<entt::entity> getPendingFocusedApp();
+  bool hasCurrentOrPendingFocus();
+  void focusApp(entt::entity);
+  void wire(WindowManagerPtr sharedThis, Camera* camera, Renderer* renderer);
+  void setCursorVisible(bool visible);
+  std::shared_ptr<Space> getSpace() { return space; }
+  void registerControls(Controls* controls);
+  bool consumeScreenshotRequest();
+  void requestScreenshot();
   // Wayland-only: register a surface-backed app through the WM for placement
   // and rendering.
   entt::entity registerWaylandApp(std::shared_ptr<WaylandApp> app,
@@ -175,11 +135,11 @@ public:
                                   int screenX = 0,
                                   int screenY = 0,
                                   int screenW = 0,
-                                  int screenH = 0) override;
-  std::optional<bool> getCursorVisibleOverride() const override { return cursorVisible; }
-  void setCursorInputFocus(entt::entity appEntity) override;
-  void clearCursorInputFocus() override;
-  optional<entt::entity> getCursorInputFocusedApp() override;
+                                  int screenH = 0);
+  std::optional<bool> getCursorVisibleOverride() const { return cursorVisible; }
+  void setCursorInputFocus(entt::entity appEntity);
+  void clearCursorInputFocus();
+  optional<entt::entity> getCursorInputFocusedApp();
 
 private:
   Renderer* renderer = nullptr;
