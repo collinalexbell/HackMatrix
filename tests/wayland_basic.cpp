@@ -80,7 +80,7 @@ protected:
     // Start compositor
     compPid = fork();
     if (compPid == 0) {
-      execl("/bin/bash", "bash", "-lc", "./launch --in-wm", (char*)nullptr);
+      execl("/bin/bash", "bash", "-lc", "./launch --headless --in-wm", (char*)nullptr);
       std::exit(127);
     }
     ASSERT_GT(compPid, 0);
@@ -177,7 +177,7 @@ TEST_F(WaylandBasicTest, LogsBackendDetection)
     if (space != std::string::npos) {
       value = value.substr(0, space);
     }
-    EXPECT_EQ(value, "x11") << "Unexpected backend kind: " << value;
+    EXPECT_EQ(value, "headless") << "Unexpected backend kind: " << value;
   }
 }
 

@@ -49,8 +49,7 @@ recomputeHeightScaler(double width, double height)
   if (height == 0.0) {
     return glm::mat4(1.0f);
   }
-  // Match the X11 path: normalize the surface aspect ratio against the default
-  // screen aspect so in-world quads stay a 1:1 pixel mapping.
+  // Normalize the surface aspect ratio against the output aspect.
   float standardRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
   float currentRatio = static_cast<float>(height / width);
   float scaleFactor = currentRatio / standardRatio;
@@ -95,9 +94,7 @@ WaylandApp::WaylandApp(wlr_renderer* renderer,
     wl_client_get_credentials(surface->resource->client, &clientPid, nullptr, nullptr);
   }
 
-  // Default to the same normalized size we ask X11 windows for (85% of screen)
-  // so the initial quad mapping matches screen pixels even before the first
-  // buffer commit provides real dimensions.
+  // Use the configured default before the first buffer commit provides dimensions.
   width = Bootable::DEFAULT_WIDTH;
   height = Bootable::DEFAULT_HEIGHT;
   update_height_scalar();
@@ -179,7 +176,7 @@ WaylandApp::~WaylandApp()
   }
 }
 
-void WaylandApp::unfocus(unsigned long /*matrix*/) { 
+void WaylandApp::unfocus() {
     focused = false;
     if (xdg_toplevel) {
       wlr_xdg_toplevel_set_activated(xdg_toplevel, false);

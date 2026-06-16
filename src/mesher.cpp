@@ -1,4 +1,3 @@
-#include <GLFW/glfw3.h>
 #include <future>
 #include <memory>
 #include "time_utils.h"

@@ -42,9 +42,13 @@ extern "C" {
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/backend/wayland.h>
+#include <wlr/backend/x11.h>
+#include <xdg-shell-client-protocol.h>
 #include <wlr/types/wlr_pointer_constraints_v1.h>
 #include <wlr/types/wlr_relative_pointer_v1.h>
 #include <wlr/util/log.h>
+#include "backend/wayland.h"
+#include "backend/x11.h"
 #define class class_
 #include <wlr/xwayland.h>
 #undef class
@@ -121,6 +125,86 @@ get_current_output_size(WlrServer* server)
   width = std::max(width, 1280);
   height = std::max(height, 720);
   return { width, height };
+}
+
+static xcb_atom_t
+intern_x11_atom(xcb_connection_t* xcb, const char* name)
+{
+  xcb_intern_atom_cookie_t cookie =
+    xcb_intern_atom(xcb, false, std::strlen(name), name);
+  xcb_intern_atom_reply_t* reply = xcb_intern_atom_reply(xcb, cookie, nullptr);
+  if (!reply) {
+    return XCB_ATOM_NONE;
+  }
+  xcb_atom_t atom = reply->atom;
+  std::free(reply);
+  return atom;
+}
+
+static void
+request_wayland_output_fullscreen(wlr_output* output)
+{
+  if (!output || !wlr_output_is_wl(output)) {
+    return;
+  }
+
+  auto* wl_output =
+    wl_container_of(output, static_cast<wlr_wl_output*>(nullptr), wlr_output);
+  if (!wl_output || !wl_output->xdg_toplevel || !wl_output->backend ||
+      !wl_output->backend->remote_display) {
+    return;
+  }
+
+  xdg_toplevel_set_fullscreen(wl_output->xdg_toplevel, nullptr);
+  wl_display_flush(wl_output->backend->remote_display);
+}
+
+static void
+request_x11_output_fullscreen(wlr_output* output)
+{
+  if (!output || !wlr_output_is_x11(output)) {
+    return;
+  }
+
+  auto* x11_output = wl_container_of(output, static_cast<wlr_x11_output*>(nullptr), wlr_output);
+  if (!x11_output || !x11_output->x11 || !x11_output->x11->xcb) {
+    return;
+  }
+
+  xcb_connection_t* xcb = x11_output->x11->xcb;
+  xcb_atom_t wm_state = intern_x11_atom(xcb, "_NET_WM_STATE");
+  xcb_atom_t fullscreen = intern_x11_atom(xcb, "_NET_WM_STATE_FULLSCREEN");
+  if (wm_state == XCB_ATOM_NONE || fullscreen == XCB_ATOM_NONE) {
+    return;
+  }
+
+  xcb_change_property(xcb,
+                      XCB_PROP_MODE_REPLACE,
+                      x11_output->win,
+                      wm_state,
+                      XCB_ATOM_ATOM,
+                      32,
+                      1,
+                      &fullscreen);
+
+  xcb_client_message_event_t event = {};
+  event.response_type = XCB_CLIENT_MESSAGE;
+  event.window = x11_output->win;
+  event.type = wm_state;
+  event.format = 32;
+  event.data.data32[0] = 1; // _NET_WM_STATE_ADD
+  event.data.data32[1] = fullscreen;
+  event.data.data32[2] = XCB_ATOM_NONE;
+  event.data.data32[3] = 1; // normal application source indication
+  event.data.data32[4] = 0;
+
+  xcb_send_event(xcb,
+                 false,
+                 x11_output->x11->screen->root,
+                 XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT |
+                   XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY,
+                 reinterpret_cast<const char*>(&event));
+  xcb_flush(xcb);
 }
 
 static std::pair<int, int>
@@ -1066,16 +1150,12 @@ handle_output_frame(wl_listener* listener, void* data)
       }
       bool pointerFocusRequested = wayland_pointer_focus_requested(server);
       bool pointerVisible = pointerFocusRequested || (cursorOverrideSet && cursorOverrideVisible);
-      if (handle->output && wlr_output_is_wl(handle->output)) {
-        wlr_wl_output_set_pointer_lock(handle->output, !pointerVisible);
-      }
       if (!pointerVisible &&
           (server->input.delta_x != 0.0 || server->input.delta_y != 0.0)) {
         if (controls) {
           controls->applyLookDelta(server->input.delta_x, -server->input.delta_y);
         } else {
-          camera->handleRotateForce(
-            nullptr, server->input.delta_x, -server->input.delta_y);
+          camera->handleRotateForce(server->input.delta_x, -server->input.delta_y);
         }
       }
       // Hide cursor and clear pointer focus when game mode is active so only deltas matter.
@@ -1301,9 +1381,8 @@ handle_new_output(wl_listener* listener, void* data)
       set_cursor_visible(server, wayland_pointer_focus_requested(server), output);
     }
   }
-  if (wlr_output_is_wl(output)) {
-    wlr_wl_output_set_fullscreen(output, true);
-  }
+  request_wayland_output_fullscreen(output);
+  request_x11_output_fullscreen(output);
   for (auto& entry : server->surface_map) {
     wlr_surface_send_enter(entry.first, output);
   }
@@ -1376,8 +1455,9 @@ apply_backend_env_defaults()
   // For the X11 backend, wlroots expects an explicit output size. Provide one
   // (default 1920x1080) unless the user already set WLR_X11_OUTPUT_*.
   const char* backends_env = std::getenv("WLR_BACKENDS");
-  bool likely_x11 = (backends_env && std::string(backends_env).find("x11") != std::string::npos) ||
-                    (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY"));
+  bool likely_x11 =
+    (backends_env && std::string(backends_env).find("x11") != std::string::npos) ||
+    (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY"));
   if (likely_x11) {
     if (!std::getenv("WLR_X11_OUTPUT_WIDTH") || !std::getenv("WLR_X11_OUTPUT_HEIGHT")) {
       int width = 1920;
@@ -1443,19 +1523,6 @@ WlrServer::create_allocator() {
     return false;
   }
 
-  // Detect X11 backend (common for nested testing).
-  const char* backend_env = std::getenv("WLR_BACKENDS");
-  if (backend_env && std::string(backend_env).find("x11") != std::string::npos) {
-    isX11Backend = true;
-  } else if (!std::getenv("WAYLAND_DISPLAY") && std::getenv("DISPLAY")) {
-    isX11Backend = true;
-  }
-  const char* backend_kind = "unknown";
-  if (isX11Backend) {
-    backend_kind = "x11";
-  } else if (std::getenv("WAYLAND_DISPLAY")) {
-    backend_kind = "wayland";
-  }
   return true;
 }
 

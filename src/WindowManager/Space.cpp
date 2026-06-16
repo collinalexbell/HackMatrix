@@ -1,5 +1,4 @@
 #include "WindowManager/Space.h"
-#include "app.h"
 #include "components/Bootable.h"
 #include "camera.h"
 #include "entity.h"
@@ -71,10 +70,7 @@ Space::removeApp(entt::entity entity)
   }
 
   AppSurface* surface = nullptr;
-  if (registry->all_of<X11App>(entity)) {
-    surface = &registry->get<X11App>(entity);
-    registry->remove<X11App>(entity);
-  } else if (registry->all_of<WaylandApp::Component>(entity)) {
+  if (registry->all_of<WaylandApp::Component>(entity)) {
     auto& comp = registry->get<WaylandApp::Component>(entity);
     surface = comp.app.get();
     registry->remove<WaylandApp::Component>(entity);
@@ -89,9 +85,7 @@ float
 Space::getViewDistanceForWindowSize(entt::entity entity)
 {
   AppSurface* surface = nullptr;
-  if (registry->all_of<X11App>(entity)) {
-    surface = &registry->get<X11App>(entity);
-  } else if (registry->all_of<WaylandApp::Component>(entity)) {
+  if (registry->all_of<WaylandApp::Component>(entity)) {
     auto& comp = registry->get<WaylandApp::Component>(entity);
     surface = comp.app.get();
   }
@@ -315,14 +309,14 @@ Space::getLookedAtApp()
                            SCREEN_HEIGHT,
                            camera->getProjectionMatrix(true),
                            camera->getViewMatrix());
-  if (auto hit = raycastApp(ray, 2.5f, false)) {
+  if (auto hit = raycastApp(ray, 2.5f)) {
     return hit->entity;
   }
   return std::nullopt;
 }
 
 optional<AppRayHit>
-Space::raycastApp(const Ray& ray, float distLimit, bool waylandOnly)
+Space::raycastApp(const Ray& ray, float distLimit)
 {
   if (!registry) {
     return std::nullopt;
@@ -331,9 +325,6 @@ Space::raycastApp(const Ray& ray, float distLimit, bool waylandOnly)
   auto getSurface = [&](entt::entity entity) -> AppSurface* {
     if (!registry->valid(entity)) {
       return nullptr;
-    }
-    if (!waylandOnly && registry->all_of<X11App>(entity)) {
-      return &registry->get<X11App>(entity);
     }
     if (registry->all_of<WaylandApp::Component>(entity)) {
       auto& comp = registry->get<WaylandApp::Component>(entity);
@@ -426,8 +417,7 @@ Space::raycastAppFromScreen(float mouseX,
                             float mouseY,
                             float screenWidth,
                             float screenHeight,
-                            float distLimit,
-                            bool waylandOnly)
+                            float distLimit)
 {
   if (!camera || screenWidth <= 0.0f || screenHeight <= 0.0f) {
     return std::nullopt;
@@ -438,7 +428,7 @@ Space::raycastAppFromScreen(float mouseX,
                            screenHeight,
                            camera->getProjectionMatrix(true),
                            camera->getViewMatrix());
-  return raycastApp(ray, distLimit, waylandOnly);
+  return raycastApp(ray, distLimit);
 }
 
 size_t
@@ -447,75 +437,4 @@ Space::getNumPositionableApps()
   return numPositionableApps;
 }
 
-void
-Space::addApp(entt::entity entity, bool spawnAtCamera)
-{
-  try {
-    auto& app = registry->get<X11App>(entity);
-    auto hasPositionable = registry->all_of<Positionable>(entity);
-    auto bootable = registry->try_get<Bootable>(entity);
-    if (!app.isAccessory() && !hasPositionable && !bootable) {
-
-      glm::vec3 pos;
-      glm::vec3 rot = glm::vec3(0.0f);
-      if (spawnAtCamera) {
-
-        float yaw = camera->getYaw();
-        float pitch = camera->getPitch();
-        glm::quat yawRotation =
-          glm::angleAxis(glm::radians(90 + yaw), glm::vec3(0.0f, -1.0f, 0.0f));
-        glm::quat pitchRotation =
-          glm::angleAxis(glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-        glm::quat finalRotation = yawRotation * pitchRotation;
-        rot = glm::degrees(glm::eulerAngles(finalRotation));
-
-        auto dist = getViewDistanceForWindowSize(entity);
-        pos = camera->position + finalRotation * glm::vec3(0, 0, -dist);
-
-      } else {
-        pos = availableAppPositions.front();
-        if (availableAppPositions.size() > 1) {
-          availableAppPositions.pop();
-        }
-      }
-
-      int index = numPositionableApps++;
-      registry->emplace<Positionable>(entity, pos, glm::vec3(0.0), rot, 1);
-    }
-    if (!app.isAccessory() && bootable) {
-      systems::resizeBootable(
-        registry, entity, bootable->getWidth(), bootable->getHeight());
-    }
-    try {
-      renderer->registerApp(&app);
-      auto positionable = registry->try_get<Positionable>(entity);
-      if (positionable) {
-        positionable->damage();
-      }
-    } catch (...) {
-      logger->info("accessory app failed to register texture");
-      registry->remove<X11App>(entity);
-    }
-  } catch (...) {
-  }
-}
-
-void
-Space::toggleAppSelect(entt::entity appEntt)
-{
-  auto app = registry->try_get<X11App>(appEntt);
-  if (app) {
-    std::stringstream ss;
-    ss << "selecting app: " << (int)appEntt << endl;
-    logger->info("selecting app");
-    if (app->isSelected()) {
-      app->deselect();
-    } else {
-      app->select();
-    }
-
-  } else {
-    logger->error("attempted to select a non existent app");
-  }
-}
 } // namespace WindowManager

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "app.h"
 #include "blocks.h"
 #include "camera.h"
 #include "chunk.h"

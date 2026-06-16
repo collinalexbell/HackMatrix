@@ -6,7 +6,6 @@
 #include <queue>
 #include "entity.h"
 #include "loader.h"
-#include "app.h"
 #include <glm/gtx/hash.hpp>
 #include <optional>
 
@@ -43,19 +42,15 @@ namespace WindowManager {
     glm::vec3 getAppRotation(entt::entity);
     optional<entt::entity> getLookedAtApp();
     optional<AppRayHit> raycastApp(const Ray& ray,
-                                   float distLimit = 20.0f,
-                                   bool waylandOnly = false);
+                                   float distLimit = 20.0f);
     optional<AppRayHit> raycastAppFromScreen(float mouseX,
                                              float mouseY,
                                              float screenWidth,
                                              float screenHeight,
-                                             float distLimit = 20.0f,
-                                             bool waylandOnly = false);
+                                             float distLimit = 20.0f);
 
     size_t getNumPositionableApps();
 
-    void addApp(entt::entity, bool = false);
     void removeApp(entt::entity);
-    void toggleAppSelect(entt::entity);
   };
 }

@@ -11,7 +11,6 @@
 #include "systems/KeyAndLock.h"
 #include "systems/Move.h"
 
-#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>

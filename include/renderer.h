@@ -11,7 +11,6 @@
 #include "Voxel/VoxelSpace.h"
 #include "world.h"
 #include "camera.h"
-#include "app.h"
 #include "WindowManager/Space.h"
 #include "gl_resource.h"
 #include "TypedKeyOverlay.h"
@@ -29,7 +28,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 
 enum RenderPerspective
 {

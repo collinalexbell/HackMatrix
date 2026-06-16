@@ -39,19 +39,12 @@ void
 configureWaylandChildEnvironment()
 {
   std::string waylandDisplay;
-  std::string xDisplay;
   std::string runtimeDir;
 
   if (const char* value = getEnv("HACKMATRIX_WAYLAND_DISPLAY", environ)) {
     waylandDisplay = value;
   } else if (const char* value = getEnv("WAYLAND_DISPLAY", environ)) {
     waylandDisplay = value;
-  }
-
-  if (const char* value = getEnv("HACKMATRIX_DISPLAY", environ)) {
-    xDisplay = value;
-  } else if (const char* value = getEnv("DISPLAY", environ)) {
-    xDisplay = value;
   }
 
   if (const char* value = getEnv("XDG_RUNTIME_DIR", environ)) {
@@ -69,10 +62,11 @@ configureWaylandChildEnvironment()
   if (!runtimeDir.empty()) {
     setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
   }
-  if (!xDisplay.empty()) {
-    setenv("DISPLAY", xDisplay.c_str(), 1);
+  if (const char* xwaylandDisplay = std::getenv("HACKMATRIX_DISPLAY")) {
+    setenv("DISPLAY", xwaylandDisplay, 1);
+  } else {
+    unsetenv("DISPLAY");
   }
-
   setenv("XDG_SESSION_TYPE", "wayland", 1);
   setenv("GDK_BACKEND", "wayland,x11", 1);
   setenv("QT_QPA_PLATFORM", "wayland;xcb", 1);

@@ -1,6 +1,6 @@
 #sleep 5; VOXEL_API_BIND=tcp://*:3345 ./matrix
-#sleep 5; WLR_BACKENDS=x11 VOXEL_API_BIND=tcp://*:3345 ./matrix-wlroots
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+SELF="$BASE_DIR/launch"
 CONFIG_HOME="${HACKMATRIX_CONFIG_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/HackMatrix}"
 mkdir -p "$CONFIG_HOME"
 if [ ! -f "$CONFIG_HOME/config.yaml" ]; then
@@ -19,7 +19,6 @@ export XCURSOR_PATH="${XCURSOR_PATH:-/usr/share/icons}"
 #export DRI_PRIME="${DRI_PRIME:-1}"
 # Force NVIDIA offload/proprietary stack; clients inherit these.
 #export __NV_PRIME_RENDER_OFFLOAD="${__NV_PRIME_RENDER_OFFLOAD:-1}"
-#export __GLX_VENDOR_LIBRARY_NAME="${__GLX_VENDOR_LIBRARY_NAME:-nvidia}"
 #export __VK_LAYER_NV_optimus="${__VK_LAYER_NV_optimus:-NVIDIA_only}"
 #export GBM_BACKEND="${GBM_BACKEND:-nvidia-drm}"
 # Hint to kernel/driver; requires nvidia-drm modeset enabled at boot.
@@ -32,6 +31,7 @@ export MATRIX_WAYLANDAPP_SAMPLE_LOGS="${MATRIX_WAYLANDAPP_SAMPLE_LOGS:-1}"
 #   --in-wm     -> delay start when running inside another WM.
 #   --headless  -> force wlroots headless backend (for TTY/headless use).
 #   --drm       -> force wlroots DRM backend (run as a real compositor on TTY).
+#   --x11       -> force wlroots X11 backend for nested testing.
 BACKEND=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -41,6 +41,10 @@ while [ $# -gt 0 ]; do
       ;;
     --drm)
       BACKEND="drm"
+      shift
+      ;;
+    --x11)
+      BACKEND="x11"
       shift
       ;;
     *)
@@ -78,4 +82,5 @@ export ENABLE_RENDER_TMP_LOGS=1
 export WLR_APP_SAMPLE_LOG=1
 export VOXEL_API_BIND="${VOXEL_API_BIND:-tcp://*:3345}"
 export MULTIPLAYER_WEBGUI_PORT="${MULTIPLAYER_WEBGUI_PORT:-7777}"
-"${BIN}" "$@"
+
+exec "${BIN}" "$@"

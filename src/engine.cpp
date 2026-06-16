@@ -31,9 +31,6 @@
 #include <spdlog/common.h>
 #include <cstdlib>
 #include <chrono>
-#define GLFW_EXPOSE_NATIVE_X11
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
 #include <fstream>
 
 #include "imgui/imgui.h"
@@ -165,7 +162,7 @@ Engine::initializeMemberObjs()
 
   auto texturePack = blocks::initializeBasicPack();
   auto typedKeyOverlay = std::make_shared<TypedKeyOverlay>();
-  wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, true, envp);
+  wm = make_shared<WindowManager::WindowManager>(registry, loggerSink, envp);
   camera = new Camera();
   webGui = std::make_unique<MultiPlayer::WebGui>(this);
   world = new World(

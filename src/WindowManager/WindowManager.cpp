@@ -1,5 +1,4 @@
 #include "WindowManager/WindowManager.h"
-#include "app.h"
 #include "components/Bootable.h"
 #include "controls.h"
 #include "entity.h"
@@ -112,8 +111,7 @@ parseInlineEnvXdg(const std::string& program)
 
 static void
 configureWaylandChildEnvironment(const std::string& waylandDisplay,
-                                 const std::string& runtimeDir,
-                                 const std::string& xDisplay)
+                                 const std::string& runtimeDir)
 {
   if (!waylandDisplay.empty()) {
     setenv("WAYLAND_DISPLAY", waylandDisplay.c_str(), 1);
@@ -121,13 +119,11 @@ configureWaylandChildEnvironment(const std::string& waylandDisplay,
   if (!runtimeDir.empty()) {
     setenv("XDG_RUNTIME_DIR", runtimeDir.c_str(), 1);
   }
-  if (!xDisplay.empty()) {
-    setenv("DISPLAY", xDisplay.c_str(), 1);
+  if (const char* xwaylandDisplay = std::getenv("HACKMATRIX_DISPLAY")) {
+    setenv("DISPLAY", xwaylandDisplay, 1);
+  } else {
+    unsetenv("DISPLAY");
   }
-
-  // Force toolkit stacks to prefer the nested HackMatrix Wayland session.
-  // Keep DISPLAY inherited so XWayland clients can still fall back inside
-  // HackMatrix instead of leaking to the parent desktop.
   setenv("XDG_SESSION_TYPE", "wayland", 1);
   setenv("GDK_BACKEND", "wayland,x11", 1);
   setenv("QT_QPA_PLATFORM", "wayland;xcb", 1);
@@ -135,9 +131,7 @@ configureWaylandChildEnvironment(const std::string& waylandDisplay,
   setenv("CLUTTER_BACKEND", "wayland", 1);
   setenv("ELM_DISPLAY", "wl", 1);
   setenv("MOZ_ENABLE_WAYLAND", "1", 1);
-  // Chromium/Electron don't honor the GTK/Qt hints above. Prefer Wayland
-  // explicitly so nested launches stay inside HackMatrix instead of falling
-  // back to the parent compositor's X11 session.
+  // Chromium/Electron need an explicit native Wayland preference.
   setenv("OZONE_PLATFORM", "wayland", 1);
   setenv("ELECTRON_OZONE_PLATFORM_HINT", "wayland", 1);
 }
@@ -147,12 +141,8 @@ launchNestedProgram(const std::string& program, const char* logLabel)
 {
   std::string runtimeDir = parseInlineEnvXdg(program);
   std::string waylandDisplay = getEnv("HACKMATRIX_WAYLAND_DISPLAY", environ);
-  std::string xDisplay = getEnv("HACKMATRIX_DISPLAY", environ);
   if (waylandDisplay.empty()) {
     waylandDisplay = getEnv("WAYLAND_DISPLAY", environ);
-  }
-  if (xDisplay.empty()) {
-    xDisplay = getEnv("DISPLAY", environ);
   }
   if (runtimeDir.empty()) {
     const char* envVal = getEnv("XDG_RUNTIME_DIR", environ);
@@ -167,16 +157,16 @@ launchNestedProgram(const std::string& program, const char* logLabel)
     }
   }
 
-  std::thread([program, runtimeDir, waylandDisplay, xDisplay, logLabel] {
+  std::thread([program, runtimeDir, waylandDisplay, logLabel] {
     pid_t pid = fork();
     if (pid == 0) {
       setsid();
-      configureWaylandChildEnvironment(waylandDisplay, runtimeDir, xDisplay);
-      WL_WM_LOG("WM: launching %s with WAYLAND_DISPLAY=%s XDG_RUNTIME_DIR=%s DISPLAY=%s\n",
+      configureWaylandChildEnvironment(waylandDisplay, runtimeDir);
+      WL_WM_LOG("WM: launching %s with WAYLAND_DISPLAY=%s DISPLAY=%s XDG_RUNTIME_DIR=%s\n",
                 logLabel,
                 std::getenv("WAYLAND_DISPLAY") ? std::getenv("WAYLAND_DISPLAY") : "(null)",
-                std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)",
-                std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)");
+                std::getenv("DISPLAY") ? std::getenv("DISPLAY") : "(null)",
+                std::getenv("XDG_RUNTIME_DIR") ? std::getenv("XDG_RUNTIME_DIR") : "(null)");
       execl("/bin/sh", "sh", "-c", program.c_str(), (char*)nullptr);
       _exit(127);
     }
@@ -185,25 +175,6 @@ launchNestedProgram(const std::string& program, const char* logLabel)
       waitpid(pid, &status, 0);
     }
   }).detach();
-}
-
-static unsigned int
-resolveHotkeyMaskFromConfig()
-{
-  std::string mod = "alt";
-  try {
-    mod = Config::singleton()->get<std::string>("key_mappings.super_modifier");
-  } catch (...) {
-    // Default to "alt" when not provided.
-  }
-  std::transform(mod.begin(), mod.end(), mod.begin(), [](unsigned char c) {
-    return static_cast<char>(std::tolower(c));
-  });
-  if (mod == "alt" || mod == "mod1" || mod == "option") {
-    return Mod1Mask;
-  }
-  // Fallback to the traditional Super/Logo mapping.
-  return Mod4Mask;
 }
 
 }
@@ -220,25 +191,7 @@ void WindowManager::launchTerminal() {
 }
 
 void WindowManager::createAndRegisterApps(char **envp) {
-  if (waylandMode) {
-    // TODO: Fix, we need the bootable system
-    return;
-  }
-  logger->info("enter createAndRegisterApps()");
-  auto alreadyBooted = systems::getAlreadyBooted(registry);
-  for(auto entityAndPid : alreadyBooted) {
-    auto bootable = registry->get<Bootable>(entityAndPid.first);
-    assignHotkeySlot(entityAndPid.first);
-    auto app = X11App::byPID(entityAndPid.second, display, screen,
-                             bootable.getWidth(), bootable.getHeight());
-    addApp(app, entityAndPid.first);
-  }
-  systems::bootAll(registry, envp);
-
-  //forkOrFindApp("/usr/bin/emacs", "emacs", "Emacs", ideSelection.emacs, envp);
-  //forkOrFindApp("/usr/bin/code", "emacs", "Emacs", ideSelection.vsCode, envp);
-  //killTerminator();
-  logger->info("exit createAndRegisterApps()");
+  // Native Wayland surfaces register when they map through the compositor.
 }
 
 void
@@ -352,10 +305,9 @@ void WindowManager::focusEntityAfterMove(entt::entity ent) {
     return;
   }
   pendingFocusedApp = std::nullopt;
-  WL_WM_LOG("WM: focusEntityAfterMove ent=%d isWayland=%d isX11=%d\n",
+  WL_WM_LOG("WM: focusEntityAfterMove ent=%d isWayland=%d\n",
             (int)entt::to_integral(ent),
-            registry->all_of<WaylandApp::Component>(ent) ? 1 : 0,
-            registry->all_of<X11App>(ent) ? 1 : 0);
+            registry->all_of<WaylandApp::Component>(ent) ? 1 : 0);
   if (registry->all_of<WaylandApp::Component>(ent)) {
     currentlyFocusedApp = ent;
     if (controls) {
@@ -368,71 +320,7 @@ void WindowManager::focusEntityAfterMove(entt::entity ent) {
         comp->app->takeInputFocus();
       }
     }
-  } else if (registry->all_of<X11App>(ent)) {
-    focusApp(ent);
   }
-}
-
-void WindowManager::addApp(X11App *app, entt::entity entity) {
-  std::lock_guard<std::mutex> lock(renderLoopMutex);
-  auto window = app->getWindow();
-  appsToAdd.push_back(app);
-  dynamicApps[window] = entity;
-}
-
-void WindowManager::createApp(Window window, unsigned int width,
-                                 unsigned int height) {
-
-  X11App *app = X11App::byWindow(window, display, screen, width, height);
-
-  // some applications grab focus on boot
-  if(!app->isAccessory()) {
-    app->unfocus(matrix);
-  }
-
-  if(currentlyFocusedApp.has_value()) {
-    auto& app = registry->get<X11App>(currentlyFocusedApp.value());
-    app.focus(matrix);
-  }
-
-  entt::entity entity;
-
-  auto bootableEntity = systems::matchApp(registry, app);
-
-  if(bootableEntity.has_value()) {
-    entity = bootableEntity.value();
-  } else {
-    entity = registry->create();
-  }
-  if(!app->isAccessory()) {
-    assignHotkeySlot(entity);
-  }
-  addApp(app, entity);
-}
-
-void WindowManager::onMapRequest(XMapRequestEvent event) {
-  bool alreadyRegistered = dynamicApps.count(event.window);
-
-  stringstream ss;
-  ss << "map request for window: " << event.window << ", "
-     << "alreadyRegistered: " << alreadyRegistered;
-  logger->debug(ss.str());
-  logger->flush();
-
-  if (!alreadyRegistered) {
-    createApp(event.window);
-  }
-}
-
-void WindowManager::removeAppForWindow(Window window) {
-  renderLoopMutex.lock();
-  if (dynamicApps.contains(window)) {
-    auto appEntity = dynamicApps.at(window);
-    dynamicApps.erase(window);
-    releaseHotkeySlot(appEntity);
-    appsToRemove.push_back(appEntity);
-  }
-  renderLoopMutex.unlock();
 }
 
 void WindowManager::swapHotKeys(int a, int b) {
@@ -498,63 +386,6 @@ WindowManager::getHotkeyTarget(int index)
   return slot;
 }
 
-
-void WindowManager::reconfigureWindow(XConfigureEvent configureEvent) {
-  if (waylandMode) {
-    return;
-  }
-  if(dynamicApps.contains(configureEvent.window)) {
-    auto app = registry->try_get<X11App>(dynamicApps[configureEvent.window]);
-    if(app!=NULL) {
-      app->resize(configureEvent.width, configureEvent.height);
-    }
-  }
-}
-
-void WindowManager::createUnfocusHackThread(entt::entity entity) {
-  auto app = registry->try_get<X11App>(entity);
-  try {
-    if (app != NULL && !app->isAccessory() &&
-        !currentlyFocusedApp.has_value()) {
-      auto t = thread([this, entity]() -> void {
-        auto app = registry->try_get<X11App>(entity);
-        usleep(0.5 * 1000000);
-        if (app != NULL) {
-          app->unfocus(matrix);
-        }
-      });
-      t.detach();
-    }
-  } catch (...) {
-    logger->error("likely it was the app->isAccessory");
-  }
-}
-
-void WindowManager::logWaitForRemovalChangeSize(int changeSize) {
-    if (changeSize < 0) {
-      logger->info("waitForRemovalCount decreased");
-    }
-    if (changeSize > 0){
-      logger->info("waitForRemovalCount increased");
-    }
-}
-
-  int WindowManager::waitForRemovalChangeSize(int curSize) {
-  static int lastWaitForRemovalCount = 0;
-  auto changeSize = curSize - lastWaitForRemovalCount;
-  lastWaitForRemovalCount = changeSize;
-  return changeSize;
-}
-
-void WindowManager::adjustAppsToAddAfterAdditions(vector<X11App*> &waitForRemoval) {
-  appsToAdd.clear();
-  int changeSize = waitForRemovalChangeSize(waitForRemoval.size());
-  logWaitForRemovalChangeSize(changeSize);
-  if(waitForRemoval.size() >= 10) {
-    logger->critical("waitForRemoval size is critically large");
-  }
-  appsToAdd.assign(waitForRemoval.begin(), waitForRemoval.end());
-}
 
 void
 WindowManager::focusApp(entt::entity appEntity)
@@ -624,7 +455,7 @@ WindowManager::clearCursorInputFocus()
   if (registry->all_of<WaylandApp::Component>(ent)) {
     auto& appComponent = registry->get<WaylandApp::Component>(ent);
     if (appComponent.app) {
-      appComponent.app->unfocus(matrix);
+      appComponent.app->unfocus();
     }
   }
 }
@@ -644,15 +475,12 @@ void WindowManager::unfocusApp() {
   }
   if (registry->all_of<WaylandApp::Component>(ent)) {
     auto& appComponent = registry->get<WaylandApp::Component>(ent);
-    appComponent.app->unfocus(matrix);
-  } else if (registry->all_of<X11App>(ent)) {
-    auto& app = registry->get<X11App>(ent);
-    app.unfocus(matrix);
+    appComponent.app->unfocus();
   }
   currentlyFocusedApp = std::nullopt;
   pendingFocusedApp = std::nullopt;
   cursorInputFocusedApp = std::nullopt;
-  WL_WM_LOG("WM: unfocusApp (x11) ent=%d\n", (int)entt::to_integral(ent));
+  WL_WM_LOG("WM: unfocusApp ent=%d\n", (int)entt::to_integral(ent));
 }
 
 
@@ -725,10 +553,6 @@ WindowManager::consumeScreenshotRequest()
 }
 
 void WindowManager::registerControls(Controls *controls) {
-  if (waylandMode) {
-    this->controls = controls;
-    return;
-  }
   this->controls = controls;
 }
 
@@ -744,11 +568,9 @@ void WindowManager::setupLogger() {
 
 WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
                              spdlog::sink_ptr loggerSink,
-                             bool waylandMode,
                              char** envp)
   : logSink(loggerSink)
   , registry(registry)
-  , waylandMode(waylandMode)
   , envp(envp)
 {
   menuProgram = Config::singleton()->get<std::string>("menu_program");
@@ -764,7 +586,6 @@ WindowManager::WindowManager(shared_ptr<EntityRegistry> registry,
   if (const char* envTerminal = std::getenv("TERMINAL_PROGRAM")) {
     terminalProgram = envTerminal;
   }
-  hotkeyModifierMask = resolveHotkeyMaskFromConfig();
   setupLogger();
 }
 
@@ -777,9 +598,6 @@ WindowManager::~WindowManager() {
     substructureThread.join();
   }
   systems::killBootablesOnExit(registry);
-  if (!waylandMode && display) {
-    XCompositeReleaseOverlayWindow(display, RootWindow(display, screen));
-  }
 }
 
 entt::entity WindowManager::registerWaylandApp(std::shared_ptr<WaylandApp> app,

@@ -757,7 +757,7 @@ void
 Controls::applyLookDelta(double dx, double dy)
 {
   if (renderer && renderer->getCamera()) {
-    renderer->getCamera()->handleRotateForce(nullptr, dx, dy);
+    renderer->getCamera()->handleRotateForce(dx, dy);
   }
 }
 

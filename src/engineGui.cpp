@@ -33,15 +33,12 @@
 #include <glm/glm.hpp>
 
 EngineGui::EngineGui(Engine* engine,
-                     GLFWwindow* window,
                      shared_ptr<EntityRegistry> registry,
                      shared_ptr<LoggerVector> loggerVector)
   : engine(engine)
   , registry(registry)
   , loggerVector(loggerVector)
 {
-  const bool hasGlfwWindow = window != nullptr;
-
   // Setup Dear ImGui context
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -51,19 +48,11 @@ EngineGui::EngineGui(Engine* engine,
   io.ConfigFlags |=
     ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
-  // Setup Platform/Renderer backends
-  if (hasGlfwWindow) {
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-  } else {
-    static const char* kGlslVersion = "#version 100"; // Target GLES2 for wlroots path.
-    ImGui_ImplOpenGL3_Init(kGlslVersion);
-    // Headless Wayland compositor path: no GLFW window, so provide basic display size.
-    io.DisplaySize = ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT);
-    io.BackendPlatformName = "hackmatrix-wlroots";
-    // Minimal platform flags so ImGui knows we manage mouse cursors/timing.
-    io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
-  }
-  useGlfwBackend = hasGlfwWindow;
+  static const char* kGlslVersion = "#version 100";
+  ImGui_ImplOpenGL3_Init(kGlslVersion);
+  io.DisplaySize = ImVec2(SCREEN_WIDTH, SCREEN_HEIGHT);
+  io.BackendPlatformName = "hackmatrix-wlroots";
+  io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
 }
 
 void
@@ -81,14 +70,9 @@ EngineGui::render(double& fps, int frameIndex, vector<double>& frameTimes)
     imguiGlInitialized = true;
   }
   ImGui_ImplOpenGL3_NewFrame();
-  if (useGlfwBackend) {
-    ImGui_ImplGlfw_NewFrame();
-  } else {
-    // Minimal timing when no platform backend is available.
-    ImGuiIO& io = ImGui::GetIO();
-    if (io.DeltaTime <= 0.0f) {
-      io.DeltaTime = 1.0f / 60.0f;
-    }
+  ImGuiIO& io = ImGui::GetIO();
+  if (io.DeltaTime <= 0.0f) {
+    io.DeltaTime = 1.0f / 60.0f;
   }
   ImGui::NewFrame();
   // ImGui::ShowDemoWindow();

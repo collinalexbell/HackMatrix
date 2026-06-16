@@ -94,23 +94,13 @@ See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engin
 - Protocol Buffers (`libprotobuf`)
 - spdlog (`libspdlog`)
 - fmt (`libfmt`)
-- GLFW (`libglfw`)
-- OpenGL (`libGL`)
+- EGL (`libEGL`)
+- OpenGL ES 2 (`libGLESv2`)
 - pthread (`libpthread`)
 - Assimp (`libassimp`)
 - SQLite3 (`libsqlite3`)
 - Protobuf (`protobuf1`)
 - Base development tools (`basedevel`)
-
-This project still unfortunately has X11 cruft in it due to a semi botched AI slop migration that intended to add wayland support alongside X11 instead of replacing X11 (which is what I ultimately decided to do after starting the Wayland work). Will be cleaned up soon.
-- X11 (`libX11`)
-- Xcomposite (`libXcomposite`)
-- Xtst (`libXtst`)
-- Xext (`libXext`)
-- Xfixes (`libXfixes`)
-- XWinInfo (`x11-utils`)
-- xdotool (`xdotool`
-
 
 To install these libraries, you can use your distribution's package manager. Here are the commands for some common distributions:
 
@@ -128,13 +118,13 @@ That local source override is mainly useful for offline builds or for testing th
 #### Ubuntu or Debian
 
 ```bash
-sudo apt-get install cmake wofi wayland-protocols rofi xdotool x11-utils protobuf-compiler build-essential libzmq3-dev libx11-dev libxcomposite-dev libxtst-dev libxext-dev libxfixes-dev libprotobuf-dev libspdlog-dev libfmt-dev libglfw3-dev libgl-dev libassimp-dev libsqlite3-dev pkgconf
+sudo apt-get install cmake wofi wayland-protocols protobuf-compiler build-essential libzmq3-dev libprotobuf-dev libspdlog-dev libfmt-dev libegl-dev libgles2-mesa-dev libassimp-dev libsqlite3-dev pkgconf
 ```
 
 #### Fedora or CentOS
 
 ```bash
-sudo dnf install wayland-protocols wayland wofi rofi xdotool xorg-x11-utils protobuf-compiler @development-tools zeromq-devel libX11-devel libXcomposite-devel libXtst-devel libXext-devel libXfixes-devel protobuf-devel spdlog-devel fmt-devel glfw-devel mesa-libGL-devel assimp-devel sqlite-devel
+sudo dnf install wayland-protocols wayland wofi protobuf-compiler @development-tools zeromq-devel protobuf-devel spdlog-devel fmt-devel mesa-libEGL-devel mesa-libGLES-devel assimp-devel sqlite-devel
 ```
 
 #### Arch Linux
@@ -143,7 +133,7 @@ I'm currently working on an issue with protobuf compilation errors for Arch. [Th
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
-sudo pacman -S --needed wofi wayland-protocols xdotool rofi xorg-server xorg-xinit xorg-xwininfo xorg-xrandr protobuf base-devel zeromq libx11 libxcomposite libxtst libxext libxfixes spdlog fmt glfw-x11 mesa assimp sqlite
+sudo pacman -S --needed wofi wayland-protocols protobuf base-devel zeromq spdlog fmt mesa assimp sqlite
 ```
 
 On arch you can also install the AUR package, or use the PKGBUILD in distributions/arch/
@@ -156,7 +146,7 @@ yay -S hackmatrix-git
 
 #### Gentoo
 ```bash
- sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland-protocols x11-misc/rofi net-libs/zeromq x11-libs/libX11 x11-libs/libXcomposite x11-libs/libXtst x11-libs/libXext x11-libs/libXfixes dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/glfw x11-libs/libGLw  dev-db/sqlite x11-misc/xdotool dev-libs/pthreadpool media-libs/assimp dmenu
+ sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland-protocols net-libs/zeromq dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/mesa dev-db/sqlite dev-libs/pthreadpool media-libs/assimp
 ```
 > [!NOTE]
 > you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.

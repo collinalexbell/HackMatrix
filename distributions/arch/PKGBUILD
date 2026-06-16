@@ -16,18 +16,7 @@ conflicts=(
 )
 depends=(
   'wayland'
-  'xorg-server'
-  'xorg-xinit'
-  'libx11'
-  'libxcomposite'
-  'libxtst'
-  'libxext'
-  'libxfixes'
   'mesa'
-  'glfw-x11'
-  'xdotool'
-  'xorg-xrandr'
-  'xorg-xwininfo'
   'sqlite'
   'zeromq'
   'assimp'

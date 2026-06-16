@@ -29,8 +29,8 @@ struct wl_listener;
 struct wlr_buffer;
 struct wlr_seat;
 
-// Minimal Wayland-backed app placeholder. Mirrors the public surface API of
-// X11App so renderer/WindowManager can be driven by a backend abstraction.
+// Wayland-backed surface rendered by the compositor. XWayland surfaces are
+// handled here too; the compositor itself still runs on wlroots Wayland/DRM.
 class WaylandApp : public AppSurface {
   wlr_surface* surface = nullptr;
   wlr_xdg_surface* xdg_surface = nullptr;
@@ -107,8 +107,8 @@ public:
   void deselect() override { selected = false; }
   bool isSelected() override { return selected; }
 
-  void focus(unsigned long /*matrix*/) override { focused = true; }
-  void unfocus(unsigned long /*matrix*/) override;
+  void focus() override { focused = true; }
+  void unfocus() override;
   void takeInputFocus() override;
   void requestSize(int width, int height);
   void setSeat(wlr_seat* seat, wlr_surface* surface)

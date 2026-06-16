@@ -1,7 +1,6 @@
 #ifndef __WORLD_H__
 #define __WORLD_H__
 
-#include "app.h"
 #include "blocks.h"
 #include "coreStructs.h"
 #include "cube.h"
@@ -26,12 +25,6 @@
 #include "model.h"
 
 class Renderer;
-
-struct App
-{
-  X11App* app;
-  glm::vec3 position;
-};
 
 class World : public WorldInterface
 {

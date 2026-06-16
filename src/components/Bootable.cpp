@@ -1,21 +1,36 @@
 #include "components/Bootable.h"
 #include <optional>
+#include <sstream>
 #include <glm/gtx/transform.hpp>
 #include "screen.h"
+
+namespace {
+glm::mat4
+recomputeHeightScaler(double width, double height)
+{
+  if (width == 0.0 || height == 0.0 || SCREEN_WIDTH == 0.0f) {
+    return glm::mat4(1.0f);
+  }
+  float standardRatio = SCREEN_HEIGHT / SCREEN_WIDTH;
+  float currentRatio = static_cast<float>(height / width);
+  float scaleFactor = currentRatio / standardRatio;
+  return glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, scaleFactor, 1.0f));
+}
+}
 
 int Bootable::DEFAULT_WIDTH = SCREEN_WIDTH * 0.85;
 int Bootable::DEFAULT_HEIGHT = SCREEN_HEIGHT * 0.85;
 
 Bootable::Bootable(std::string cmd, std::string args, bool killOnExit,
-                   optional<pid_t> pid, bool transparent,
-                   optional<std::string> name, bool bootOnStartup,
+                   std::optional<pid_t> pid, bool transparent,
+                   std::optional<std::string> name, bool bootOnStartup,
                    int width, int height,
-                   optional<int> x, optional<int> y)
+                   std::optional<int> x, std::optional<int> y)
     : cmd(cmd), args(args), killOnExit(killOnExit), pid(pid),
       transparent(transparent), name(name), bootOnStartup(bootOnStartup),
       width(width), height(height) {
 
-  heightScaler = X11App::recomputeHeightScaler(width, height);
+  heightScaler = recomputeHeightScaler(width, height);
   resetDefaultXYBySize();
 
   if (x.has_value()) {
@@ -46,7 +61,7 @@ void Bootable::resize(int width, int height) {
     x = defaultXBySize;
     y = defaultYBySize;
   }
-  heightScaler = X11App::recomputeHeightScaler(getWidth(), getHeight());
+  heightScaler = recomputeHeightScaler(getWidth(), getHeight());
 }
 
 void Bootable::resetDefaultXYBySize() {
@@ -85,7 +100,7 @@ void BootablePersister::saveAll() {
     auto view = registry->view<Persistable, Bootable>();
     SQLite::Database &db = registry->getDatabase();
 
-    stringstream queryStream;
+    std::stringstream queryStream;
     queryStream << "INSERT OR REPLACE INTO " << entityName << " "
                 << "(entity_id, cmd, args, kill_on_exit, pid, "
                 << "transparent, width, height, name, boot_on_startup, x, y)"
@@ -125,7 +140,7 @@ void BootablePersister::loadAll() {
   auto view = registry->view<Persistable>();
   SQLite::Database &db = registry->getDatabase();
 
-  stringstream queryStream;
+  std::stringstream queryStream;
   queryStream << "SELECT entity_id, cmd, args, kill_on_exit, pid ,"
               << "transparent, width, height, name, boot_on_startup, x, y "
               << "FROM " << entityName;
@@ -136,30 +151,30 @@ void BootablePersister::loadAll() {
     auto cmd = query.getColumn(1).getText();
     auto args = query.getColumn(2).getText();
     bool killOnExit = query.getColumn(3).getInt() == 0 ? false : true;
-    optional<int> pid;
+    std::optional<int> pid;
     if(query.isColumnNull(4)) {
-      pid = nullopt;
+      pid = std::nullopt;
     } else {
       pid = query.getColumn(4).getInt();
     }
     bool transparent = query.getColumn(5).getInt() == 0 ? false : true;
     auto width = query.getColumn(6).getInt();
     auto height = query.getColumn(7).getInt();
-    optional<std::string> name;
+    std::optional<std::string> name;
     if(query.isColumnNull(8)) {
-      name = nullopt;
+      name = std::nullopt;
     } else {
       name = query.getColumn(8).getText();
     }
     bool bootOnStartup = query.getColumn(9).getInt() == 0 ? false : true;
-    optional<int> x, y;
+    std::optional<int> x, y;
     if(query.isColumnNull(10)) {
-      x = nullopt;
+      x = std::nullopt;
     } else {
       x = query.getColumn(10).getInt();
     }
     if(query.isColumnNull(11)) {
-      y = nullopt;
+      y = std::nullopt;
     } else {
       y = query.getColumn(11).getInt();
     }

@@ -1,5 +1,4 @@
 #include "api.h"
-#include "app.h"
 #include "camera.h"
 #include "controls.h"
 #include "renderer.h"
@@ -12,7 +11,6 @@
 #include "MultiPlayer/Server.h"
 #include "MultiPlayer/WebGui.h"
 
-#include <GLFW/glfw3.h>
 #include <memory>
 #include <spdlog/common.h>
 #include <vector>

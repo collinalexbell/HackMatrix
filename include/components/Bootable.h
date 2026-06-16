@@ -1,9 +1,10 @@
 #pragma once
 
 #include "SQLPersisterImpl.h"
-#include "app.h"
 #include "systems/Boot.h"
+#include <optional>
 #include <string>
+#include <sys/types.h>
 #include <glm/glm.hpp>
 
 class Bootable {
@@ -16,10 +17,12 @@ class Bootable {
   void resetDefaultXYBySize();
 
 public:
-  Bootable(std::string cmd, std::string args, bool killOnExit, optional<pid_t> pid,
-           bool transparent, optional<std::string> name, bool bootOnStartup = true,
+  Bootable(std::string cmd, std::string args, bool killOnExit,
+           std::optional<pid_t> pid, bool transparent,
+           std::optional<std::string> name, bool bootOnStartup = true,
            int width=DEFAULT_WIDTH, int height=DEFAULT_HEIGHT,
-           optional<int> x = nullopt, optional<int> y = nullopt);
+           std::optional<int> x = std::nullopt,
+           std::optional<int> y = std::nullopt);
   static int DEFAULT_WIDTH;
   static int DEFAULT_HEIGHT;
 
@@ -27,9 +30,9 @@ public:
   std::string cmd;
   std::string args;
   bool killOnExit;
-  optional<pid_t> pid;
+  std::optional<pid_t> pid;
   bool transparent;
-  optional<std::string> name;
+  std::optional<std::string> name;
   bool bootOnStartup;
   int x;
   int y;

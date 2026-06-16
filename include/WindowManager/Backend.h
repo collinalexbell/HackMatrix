@@ -11,7 +11,7 @@ class World;
 
 namespace WindowManager {
 
-// Thin interface to allow multiple windowing backends (X11, Wayland, etc).
+// Interface between controls/rendering and the Wayland window manager.
 class Backend {
 public:
   virtual ~Backend() = default;

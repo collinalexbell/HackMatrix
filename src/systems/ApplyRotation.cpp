@@ -4,7 +4,6 @@
 #include "glm/gtx/transform.hpp"
 #include "model.h"
 #include "components/Parent.h"
-#include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
 #include "time_utils.h"
 

@@ -2,7 +2,6 @@
 #define __CAMERA_H__
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -87,7 +86,7 @@ public:
   glm::vec3 position;
   Camera();
   void handleTranslateForce(bool up, bool down, bool left, bool right, bool zPlus, bool zMinus);
-  void handleRotateForce(GLFWwindow* window, double xoffset, double yoffset);
+  void handleRotateForce(double xoffset, double yoffset);
   ~Camera();
   void setInvertY(bool invert);
   void tick();

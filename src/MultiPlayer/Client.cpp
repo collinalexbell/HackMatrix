@@ -2,10 +2,8 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include "camera.h"
-#include <GLFW/glfw3.h>
 #include <type_traits>
 #include "systems/Player.h"
-#include <GLFW/glfw3.h>
 #include "time_utils.h"
 
 namespace MultiPlayer {

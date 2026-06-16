@@ -5,7 +5,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <math.h>
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <memory>
 #include "Config.h"
 #include <chrono>
@@ -86,7 +85,7 @@ Camera::handleTranslateForce(bool up, bool down, bool left, bool right, bool zPl
 }
 
 void
-Camera::handleRotateForce(GLFWwindow* window, double xoffset, double yoffset)
+Camera::handleRotateForce(double xoffset, double yoffset)
 {
 
   float sensitivity = 0.1f;

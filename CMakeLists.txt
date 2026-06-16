@@ -85,26 +85,28 @@ function(build_wlroots_if_needed)
     return()
   endif()
 
-  if(NOT GIT_FOUND)
-    message(FATAL_ERROR "Git is required to initialize the wlroots submodule automatically.")
-  endif()
   if(NOT MESON_EXECUTABLE OR NOT NINJA_EXECUTABLE)
     message(FATAL_ERROR "Meson and Ninja are required to build wlroots automatically.")
   endif()
 
-  message(STATUS "Initializing wlroots submodule")
-  execute_process(
-    COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive wlroots
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    RESULT_VARIABLE WLROOTS_GIT_RESULT
-  )
-  if(NOT WLROOTS_GIT_RESULT EQUAL 0)
-    message(FATAL_ERROR "Failed to initialize wlroots submodule (exit code ${WLROOTS_GIT_RESULT}).")
+  if(NOT EXISTS "${WLROOTS_DIR}/meson.build")
+    if(NOT GIT_FOUND)
+      message(FATAL_ERROR "Git is required to initialize the wlroots submodule automatically.")
+    endif()
+    message(STATUS "Initializing wlroots submodule")
+    execute_process(
+      COMMAND "${GIT_EXECUTABLE}" submodule update --init --recursive wlroots
+      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+      RESULT_VARIABLE WLROOTS_GIT_RESULT
+    )
+    if(NOT WLROOTS_GIT_RESULT EQUAL 0)
+      message(FATAL_ERROR "Failed to initialize wlroots submodule (exit code ${WLROOTS_GIT_RESULT}).")
+    endif()
   endif()
 
   message(STATUS "Configuring wlroots with meson")
   execute_process(
-    COMMAND "${MESON_EXECUTABLE}" build
+    COMMAND "${MESON_EXECUTABLE}" setup build -Dexamples=false
     WORKING_DIRECTORY "${WLROOTS_DIR}"
     RESULT_VARIABLE WLROOTS_MESON_RESULT
   )
@@ -134,8 +136,7 @@ if(EXISTS "${WLROOTS_PC_DIR}")
   set(ENV{PKG_CONFIG_PATH} "${WLROOTS_PC_DIR}:$ENV{PKG_CONFIG_PATH}")
 endif()
 
-pkg_check_modules(WLROOTS REQUIRED ${WLROOTS_PC_NAME} wayland-server xkbcommon)
-pkg_check_modules(GLFW REQUIRED glfw3)
+pkg_check_modules(WLROOTS_LOCAL REQUIRED ${WLROOTS_PC_NAME} wayland-server wayland-client xkbcommon)
 pkg_check_modules(PROTOBUF REQUIRED protobuf)
 
 execute_process(
@@ -312,7 +313,7 @@ if(MESON_EXECUTABLE AND NINJA_EXECUTABLE)
   add_custom_command(
     OUTPUT "${WLROOTS_BUILD_DIR}/build.ninja"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/wlroots"
-    COMMAND "${MESON_EXECUTABLE}" build
+    COMMAND "${MESON_EXECUTABLE}" setup build -Dexamples=false
     COMMENT "Configuring wlroots with meson"
   )
   add_custom_command(
@@ -370,8 +371,7 @@ target_include_directories(matrix PRIVATE
   include/imgui
   tracy/public
   /usr/local/include
-  ${WLROOTS_INCLUDE_DIRS}
-  ${GLFW_INCLUDE_DIRS}
+  ${WLROOTS_LOCAL_INCLUDE_DIRS}
   ${PROTOBUF_INCLUDE_DIRS}
   ${WLROOTS_PROTOCOL_DIR}
 )
@@ -397,9 +397,13 @@ set_source_files_properties(
   src/miniz.c
   PROPERTIES COMPILE_OPTIONS "-march=native;-funroll-loops"
 )
+set_source_files_properties(
+  src/imgui/imgui_impl_opengl3.cpp
+  PROPERTIES COMPILE_DEFINITIONS IMGUI_IMPL_OPENGL_ES2
+)
 
 target_link_directories(matrix PRIVATE
-  ${WLROOTS_LIBRARY_DIRS}
+  ${WLROOTS_LOCAL_LIBRARY_DIRS}
   ${CMAKE_SOURCE_DIR}/lib
 )
 
@@ -413,19 +417,13 @@ target_link_options(matrix PRIVATE
 
 target_link_libraries(matrix PRIVATE
   Crow::Crow
-  ${WLROOTS_LIBRARIES}
-  ${GLFW_LIBRARIES}
+  ${WLROOTS_LOCAL_LIBRARIES}
   ${PROTOBUF_LIBRARIES}
   zmq
-  X11
-  Xcomposite
-  Xtst
-  Xext
-  Xfixes
+  xcb
   pixman-1
   spdlog
   fmt
-  GL
   pthread
   assimp
   sqlite3

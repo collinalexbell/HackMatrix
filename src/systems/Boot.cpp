@@ -6,7 +6,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <thread>
+#include <vector>
 
 bool
 isShellScript(const std::string& filename)
@@ -24,7 +26,7 @@ getShPID(char* pidfile)
 {
   const int timeoutSeconds = 5;
   // Open the file for reading
-  cout << "opening " << pidfile << endl;
+  std::cout << "opening " << pidfile << std::endl;
   std::ifstream file(pidfile);
   int pid;
 
@@ -48,14 +50,14 @@ getShPID(char* pidfile)
 }
 
 int
-forkApp(string cmd, char** envp, string args)
+forkApp(std::string cmd, char** envp, std::string args)
 {
 
   char pidfile[] = "/tmp/pid.XXXXXX"; // Template for temporary file name
   if (isShellScript(cmd)) {
     int fd = mkstemp(pidfile); // Create a temporary file
     close(fd);
-    args = string(pidfile) + " " + args;
+    args = std::string(pidfile) + " " + args;
   }
 
   int pid = fork();
@@ -117,7 +119,7 @@ systems::boot(std::shared_ptr<EntityRegistry> registry,
 
     bootable->pid = forkApp(bootable->cmd, envp, bootable->args);
     if (bootable->pid == -1) {
-      bootable->pid = nullopt;
+      bootable->pid = std::nullopt;
     }
   }
 }
@@ -138,7 +140,7 @@ systems::killBootablesOnExit(std::shared_ptr<EntityRegistry> registry)
   for (auto [entity, bootable] : bootables.each()) {
     if (bootable.killOnExit && bootable.pid.has_value()) {
       kill(bootable.pid.value(), SIGTERM);
-      bootable.pid = nullopt;
+      bootable.pid = std::nullopt;
     }
   }
 }
@@ -164,38 +166,6 @@ systems::resizeBootable(std::shared_ptr<EntityRegistry> registry,
                         int width,
                         int height)
 {
-  auto app = registry->try_get<X11App>(entity);
   auto& bootable = registry->get<Bootable>(entity);
   bootable.resize(width, height);
-  if (app) {
-    app->resizeMove(width, height, bootable.x, bootable.y);
-  }
-}
-
-optional<entt::entity>
-systems::matchApp(shared_ptr<EntityRegistry> registry, X11App* app)
-{
-  auto bootableView = registry->view<Bootable>();
-  entt::entity entity;
-  bool foundEntity = false;
-
-  for (auto [candidateEntity, bootable] : bootableView.each()) {
-    if (bootable.name.has_value() && app != NULL &&
-        bootable.name.value() == app->getWindowName()) {
-      bootable.pid = app->getPID();
-      foundEntity = true;
-    }
-    if (bootable.pid.has_value() && bootable.pid.value() == app->getPID()) {
-      foundEntity = true;
-    }
-    if (foundEntity) {
-      app->resize(bootable.getWidth(), bootable.getHeight());
-      return candidateEntity;
-    }
-    if (bootable.name.has_value()) {
-      cout << "name: " << bootable.name.value() << endl;
-      cout << "appName: " << app->getWindowName() << endl;
-    }
-  }
-  return nullopt;
 }

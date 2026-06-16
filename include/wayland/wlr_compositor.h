@@ -236,7 +236,6 @@ struct WlrServer {
   std::unordered_map<wlr_surface*, entt::entity> surface_map;
   std::vector<wlr_xdg_surface*> pending_surfaces;
   std::vector<PendingWlAction> pending_wl_actions;
-  bool isX11Backend = false;
   double pointer_x = 0.0;
   double pointer_y = 0.0;
   wl_listener request_set_cursor;

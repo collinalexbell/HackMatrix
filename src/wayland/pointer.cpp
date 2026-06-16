@@ -187,8 +187,7 @@ project_pointer_to_surface(WlrServer* server, wlr_surface* surface)
                                          static_cast<float>(pointer.second),
                                          static_cast<float>(server->primary_output->width),
                                          static_cast<float>(server->primary_output->height),
-                                         20.0f,
-                                         true);
+                                         20.0f);
   if (!hit.has_value() || hit->entity != it->second) {
     return std::nullopt;
   }
@@ -228,8 +227,7 @@ pick_hovered_surface(WlrServer* server)
                                          static_cast<float>(pointer.second),
                                          static_cast<float>(server->primary_output->width),
                                          static_cast<float>(server->primary_output->height),
-                                         20.0f,
-                                         true);
+                                         20.0f);
   if (!hit.has_value()) {
     return std::nullopt;
   }

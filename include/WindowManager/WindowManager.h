@@ -1,14 +1,11 @@
 #pragma once
 #include "WindowManager/Space.h"
-#include "app.h"
 #include "wayland_app.h"
 #include "entity.h"
 #include "logger.h"
 #include "world.h"
 #include "components/Bootable.h"
 #include <xkbcommon/xkbcommon.h>
-#include <X11/Xlib.h>
-#include <X11/extensions/Xcomposite.h>
 #include <array>
 #include <atomic>
 #include <string>
@@ -97,11 +94,8 @@ using WindowManagerPtr = std::shared_ptr<WindowManagerInterface>;
 class WindowManager : public WindowManagerInterface
 {
   shared_ptr<EntityRegistry> registry;
-  Display* display = NULL;
-  bool waylandMode = false;
   Controls* controls = NULL;
   spdlog::sink_ptr logSink;
-  int screen;
   entt::entity emacs;
   entt::entity magicaVoxel;
   entt::entity microsoftEdge;
@@ -115,31 +109,16 @@ class WindowManager : public WindowManagerInterface
 
   optional<entt::entity> currentlyFocusedApp;
   shared_ptr<Space> space;
-  Window matrix;
-  Window overlay;
   atomic_bool firstRenderComplete = false;
-  map<Window, entt::entity> dynamicApps;
   mutex renderLoopMutex;
   mutex continueMutex;
-  vector<X11App*> appsToAdd;
   vector<entt::entity> appsToRemove;
   vector<WindowEvent> events;
   std::thread substructureThread;
   bool continueRunning = true;
-  void removeAppForWindow(Window);
-  void onMapRequest(XMapRequestEvent);
   std::shared_ptr<spdlog::logger> logger;
   void setupLogger();
   void assignHotkeySlot(entt::entity ent);
-  void createApp(Window window,
-                 unsigned int width = Bootable::DEFAULT_WIDTH,
-                 unsigned int height = Bootable::DEFAULT_HEIGHT);
-  void addApp(X11App*, entt::entity);
-  void createUnfocusHackThread(entt::entity entity);
-  int waitForRemovalChangeSize(int curSize);
-  void logWaitForRemovalChangeSize(int changeSize);
-  void adjustAppsToAddAfterAdditions(vector<X11App*>& waitForRemoval);
-  void reconfigureWindow(XConfigureEvent);
   void swapHotKeys(int a, int b);
   void releaseHotkeySlot(entt::entity theApp);
   bool computeFocusedSpawn(entt::entity newApp, glm::vec3& pos, glm::vec3& rot) const;
@@ -156,7 +135,6 @@ class WindowManager : public WindowManagerInterface
   bool replayActive = false;
   std::chrono::steady_clock::time_point replayStart;
   std::atomic_bool screenshotRequested = false;
-  unsigned int hotkeyModifierMask = Mod4Mask;
   std::optional<bool> cursorVisible;
   std::optional<entt::entity> pendingFocusedApp;
   std::optional<entt::entity> cursorInputFocusedApp;
@@ -172,8 +150,8 @@ public:
   void menu() override;
   void launchTerminal() override;
   void createAndRegisterApps(char** envp) override;
-  WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, bool waylandMode, char** envp = nullptr);
-  bool isWaylandMode() const override { return waylandMode; }
+  WindowManager(shared_ptr<EntityRegistry>, spdlog::sink_ptr, char** envp = nullptr);
+  bool isWaylandMode() const override { return true; }
   ~WindowManager();
   optional<entt::entity> getCurrentlyFocusedApp() override;
   optional<entt::entity> getPendingFocusedApp() override;

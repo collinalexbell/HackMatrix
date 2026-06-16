@@ -272,31 +272,6 @@ wait_for_new_file(const std::string& dir,
   return false;
 }
 
-static std::string
-find_window_for_pid(const std::string& pid,
-                    int attempts = 120,
-                    int millis = 100)
-{
-  std::string windowId;
-  for (int i = 0; i < attempts; ++i) {
-    std::string searchCmd = "xdotool search --pid " + pid + " 2>/dev/null";
-    FILE* pipe = popen(searchCmd.c_str(), "r");
-    if (pipe) {
-      char buf[64] = {0};
-      if (fgets(buf, sizeof(buf), pipe)) {
-        windowId = std::string(buf);
-        windowId.erase(windowId.find_last_not_of(" \n\r\t") + 1);
-      }
-      pclose(pipe);
-    }
-    if (!windowId.empty()) {
-      return windowId;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(millis));
-  }
-  return windowId;
-}
-
 static bool
 send_key_replay(const std::vector<std::pair<std::string, uint32_t>>& entries)
 {

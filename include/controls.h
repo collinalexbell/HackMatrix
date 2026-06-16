@@ -11,7 +11,6 @@
 #include <memory>
 #include "blocks.h"
 #include "camera.h"
-#include "app.h"
 #include "world.h"
 #include "WindowManager/WindowManager.h"
 #include "ControlMappings.h"
