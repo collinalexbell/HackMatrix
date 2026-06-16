@@ -90,6 +90,8 @@ See the [wiki page](https://github.com/collinalexbell/HackMatrix/wiki/Game-Engin
 
 - wayland-protocols (`wayland-protocols`) (also pulls in wayland core)
 - wofi (`wofi`)
+- Xwayland (`xwayland`)
+- XCB libraries for the wlroots X11 backend and Xwayland (`xcb`, `xcb-*`)
 - ZeroMQ (`libzmq`)
 - Protocol Buffers (`libprotobuf`)
 - spdlog (`libspdlog`)
@@ -118,13 +120,13 @@ That local source override is mainly useful for offline builds or for testing th
 #### Ubuntu or Debian
 
 ```bash
-sudo apt-get install cmake wofi wayland-protocols protobuf-compiler build-essential libzmq3-dev libprotobuf-dev libspdlog-dev libfmt-dev libegl-dev libgles2-mesa-dev libassimp-dev libsqlite3-dev pkgconf
+sudo apt-get install cmake wofi xwayland wayland-protocols protobuf-compiler build-essential libzmq3-dev libprotobuf-dev libspdlog-dev libfmt-dev libegl-dev libgles2-mesa-dev libassimp-dev libsqlite3-dev pkgconf libwayland-dev libxcb1-dev libxcb-composite0-dev libxcb-dri3-dev libxcb-ewmh-dev libxcb-errors-dev libxcb-icccm4-dev libxcb-present-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-res0-dev libxcb-shm0-dev libxcb-xfixes0-dev libxcb-xinput-dev
 ```
 
 #### Fedora or CentOS
 
 ```bash
-sudo dnf install wayland-protocols wayland wofi protobuf-compiler @development-tools zeromq-devel protobuf-devel spdlog-devel fmt-devel mesa-libEGL-devel mesa-libGLES-devel assimp-devel sqlite-devel
+sudo dnf install wayland-protocols wayland-devel xorg-x11-server-Xwayland wofi protobuf-compiler @development-tools zeromq-devel protobuf-devel spdlog-devel fmt-devel mesa-libEGL-devel mesa-libGLES-devel assimp-devel sqlite-devel libxcb-devel xcb-util-errors-devel xcb-util-renderutil-devel xcb-util-wm-devel
 ```
 
 #### Arch Linux
@@ -133,7 +135,7 @@ I'm currently working on an issue with protobuf compilation errors for Arch. [Th
 If you are on Arch and would like to help with a PR that I can get merged into master, try out [this PR](https://github.com/collinalexbell/HackMatrix/pull/55) and let me know in the PR comments if it works for you. It would be much appreciated!
 
 ```bash
-sudo pacman -S --needed wofi wayland-protocols protobuf base-devel zeromq spdlog fmt mesa assimp sqlite
+sudo pacman -S --needed wofi wayland wayland-protocols xorg-xwayland protobuf base-devel zeromq spdlog fmt mesa assimp sqlite libxcb xcb-util-errors xcb-util-renderutil xcb-util-wm
 ```
 
 On arch you can also install the AUR package, or use the PKGBUILD in distributions/arch/
@@ -146,7 +148,7 @@ yay -S hackmatrix-git
 
 #### Gentoo
 ```bash
- sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland-protocols net-libs/zeromq dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/mesa dev-db/sqlite dev-libs/pthreadpool media-libs/assimp
+ sudo emerge --autounmask-write gui-apps/wofi dev-libs/wayland dev-libs/wayland-protocols x11-base/xwayland x11-libs/libxcb x11-libs/xcb-util-errors x11-libs/xcb-util-renderutil x11-libs/xcb-util-wm net-libs/zeromq dev-libs/protobuf dev-libs/spdlog dev-libs/libfmt media-libs/mesa dev-db/sqlite dev-libs/pthreadpool media-libs/assimp
 ```
 > [!NOTE]
 > you may have some issues with use flags and or masked packages. you will have to figure that out on your own system.
